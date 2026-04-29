@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thailand Market — เปรียบเทียบ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style id="tm-base">
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
+  /* legacy compat */
+  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
+  --bg:#FAFAFA;--white-off:#FAFAFA;
+  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
+  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
+  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
+  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
+  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
+  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
+  --sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
+
+/* ── NAV ── */
+#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
+.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
+.tn-logo .dot{color:var(--red)}
+.tn-links{display:flex;flex:1;overflow:hidden}
+.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
+.tn-link:hover{color:var(--black)}
+.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
+.tn-search{position:relative;margin-left:auto}
+.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
+.tn-search input:focus{border-color:var(--black)}
+.tn-search input::placeholder{color:var(--g400)}
+.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
+.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
+.tn-btn:hover{color:var(--black)}
+.tn-btn.sell{color:var(--red)}
+.tn-ico{font-size:15px;position:relative;line-height:1}
+.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+.tn-cats{border-top:var(--border)}
+.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
+.tn-cats-inner::-webkit-scrollbar{display:none}
+.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
+.tn-cat:hover{color:var(--black)}
+.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
+
+/* ── GLOBAL BUTTONS ── */
+.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
+.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
+.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
+.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
+.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
+
+/* old btn-primary / btn-secondary overrides */
+.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-primary:hover{background:var(--g800)!important}
+.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
+
+/* legacy btn-cart / btn-buy → new style */
+.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
+.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-buy:hover{background:var(--g800)!important}
+.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
+.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
+
+/* ── CARDS ── */
+.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
+.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
+
+/* ── SECTION ── */
+.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
+.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
+.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
+.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
+.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
+
+/* ── PRODUCT CARDS ── */
+.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
+.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
+.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
+.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
+.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
+.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
+.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
+.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
+.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
+.badge-hot{background:var(--black)!important;color:var(--white)!important}
+
+/* ── PRICE BOX ── */
+.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
+.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
+.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
+.flash-tag{background:var(--red)!important;border-radius:0!important}
+
+/* ── NAV OLD → NEW ── */
+.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
+.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
+.nav-search input{border:var(--border)!important;border-radius:0!important}
+.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
+.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
+.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
+.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
+.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
+.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
+.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
+
+/* ── FORMS ── */
+.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
+.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
+.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
+
+/* ── STATUS / BADGE ── */
+.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
+.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
+.status-badge,.badge{border-radius:0!important}
+
+/* ── TABLES ── */
+table{border-collapse:collapse}
+thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
+tbody td{border-bottom:var(--border)!important}
+tbody tr:hover td{background:var(--g50)!important}
+
+/* ── MODALS ── */
+.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
+.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
+.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
+
+/* ── SIDEBAR (seller) ── */
+.sidebar,.sb{background:var(--black)!important}
+.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
+.sni-badge{background:var(--red)!important}
+.sb-logo-mark{background:var(--red)!important}
+.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
+
+/* ── COLORS: strip all gradients/rounded corners ── */
+[style*="background:linear-gradient"]{background:var(--g50)!important}
+[style*="border-radius"]{border-radius:0!important}
+
+/* ── TOAST ── */
+.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
+@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── FOOTER ── */
+#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
+#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
+#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-logo .dot{color:var(--red)}
+#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
+#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
+#tm-footer .tf-link:hover{color:var(--white)}
+#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
+  .tn-links{display:none}
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
+</style>
+<style id="page-css">
+
+:root{--primary:#0A0A0A;--accent:#E63329;--teal:#404040;--bg:#FFFFFF;--white:#fff;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;--gn:#16A34A;--r8:8px;--r12:12px;--r16:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);font-size:14px}
+.nav{background:var(--primary);padding:11px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'DM Sans',sans-serif;font-weight:900;font-size:20px;color:#fff}.nav-logo span{color:var(--accent)}
+.nav-title{font-size:14px;font-weight:600;color:rgba(255,255,255,0.6)}
+.page{max-width:1280px;margin:0 auto;padding:20px 16px}
+.page-header{margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.ph-title{font-family:'DM Sans',sans-serif;font-weight:800;font-size:22px}
+.ph-count{font-size:13px;color:var(--g500);background:var(--g100);padding:3px 10px;border-radius:20px}
+.ph-clear{margin-left:auto;font-size:13px;color:var(--accent);cursor:pointer;padding:6px 14px;border:1px solid var(--accent);border-radius:2px;background:#fff;font-family:'DM Sans',sans-serif}
+.compare-table{background:#fff;border:1px solid var(--g200);border-radius:4px;overflow:hidden;margin-bottom:24px}
+/* Header row */
+.ct-header{display:grid;grid-template-columns:200px repeat(3,1fr);border-bottom:1px solid var(--g200)}
+.ct-label-col{padding:16px;background:var(--g100);border-right:1px solid var(--g200);display:flex;align-items:center;font-size:12px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:0.5px}
+.ct-prod-col{padding:16px;border-right:1px solid var(--g200);position:relative;text-align:center}
+.ct-prod-col:last-child{border-right:none}
+.ct-prod-col.best-value{background:#FFF8E1}
+.best-badge{position:absolute;top:0;left:50%;transform:translateX(-50%);background:var(--gold,#F2F2F2);color:#92400E;font-size:10px;font-weight:700;padding:2px 12px;border-radius:0 0 2px 2px}
+.prod-img-wrap{width:80px;height:80px;margin:12px auto 10px;display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--g100);border-radius:4px}
+.prod-name-cmp{font-size:12.5px;font-weight:700;color:var(--g900);line-height:1.4;margin-bottom:4px}
+.prod-shop-cmp{font-size:10px;color:var(--g400);margin-bottom:8px}
+.prod-price-cmp{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:900;color:var(--accent);margin-bottom:3px}
+.prod-old-cmp{font-size:11px;color:var(--g400);text-decoration:line-through;margin-bottom:8px}
+.prod-rating-cmp{font-size:12px;color:var(--g700);margin-bottom:10px}
+.btn-buy-cmp{width:100%;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:6px;transition:all 0.2s}
+.btn-buy-cmp:hover{background:#B5261F}
+.btn-rm{width:100%;padding:6px;background:#fff;color:var(--g500);border:1px solid var(--g200);border-radius:2px;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all 0.15s}
+.btn-rm:hover{border-color:var(--accent);color:var(--accent)}
+/* Spec rows */
+.ct-row{display:grid;grid-template-columns:200px repeat(3,1fr);border-bottom:1px solid var(--g100)}
+.ct-row:last-child{border-bottom:none}
+.ct-row.section-head{background:var(--g100);border-bottom:1px solid var(--g200)}
+.ct-spec-label{padding:12px 16px;background:var(--g50,#FAFAFA);border-right:1px solid var(--g200);font-size:12px;color:var(--g500);display:flex;align-items:center;border-bottom:1px solid var(--g100)}
+.ct-spec-label.section{font-weight:700;color:var(--g700);text-transform:uppercase;font-size:11px;letter-spacing:0.5px;background:var(--g100)}
+.ct-val{padding:12px 14px;border-right:1px solid var(--g100);font-size:12.5px;color:var(--g900);text-align:center;display:flex;align-items:center;justify-content:center;line-height:1.5}
+.ct-val:last-child{border-right:none}
+.ct-val.best{color:var(--gn);font-weight:700;background:#F0FFF4}
+.ct-val.worst{color:var(--accent);background:#FFF5F5}
+.check{color:var(--gn);font-size:16px}
+.cross{color:var(--accent);font-size:16px}
+.add-slot{border:2px dashed var(--g200);border-radius:4px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:#fff}
+.add-slot:hover{border-color:var(--accent);background:#FFF5F5}
+.add-icon{font-size:32px;margin-bottom:8px}
+.add-text{font-size:13px;color:var(--g400)}
+.add-text strong{color:var(--accent);display:block;margin-bottom:4px}
+/* SUGGESTION */
+.suggestion-section{margin-top:24px}
+.ss-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;margin-bottom:14px}
+.sug-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sug-card{background:#fff;border:1px solid var(--g200);border-radius:4px;padding:12px;cursor:pointer;transition:all 0.2s;text-align:center}
+.sug-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.sug-ico{font-size:40px;margin-bottom:6px}
+.sug-name{font-size:12px;font-weight:600;line-height:1.4;margin-bottom:4px;color:var(--g900)}
+.sug-price{font-family:'DM Sans',sans-serif;font-size:15px;font-weight:800;color:var(--accent)}
+.sug-add{font-size:11px;color:var(--black);margin-top:4px;font-weight:600}
+.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999}
+.toast{background:var(--primary);color:#fff;padding:11px 16px;border-radius:4px;font-size:13px;animation:tIn 0.3s ease}
+@keyframes tIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+</style>
+<style id="tm-responsive">
+/* ── Mobile fixes ── */
+@media(max-width:768px){
+  .tn-links{display:none!important}
+  .tn-srch{display:none!important}
+  /* hamburger hint */
+  .tn-top{padding:0 16px}
+  .tn-logo{margin-right:auto}
+  /* sidebar pages on mobile */
+  .app{flex-direction:column}
+  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
+  .sb-logo,.sb-user{flex-basis:100%}
+  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
+  .sb-lbl{display:none}
+  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
+  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
+  .sb-foot{display:none}
+  .main{margin-left:0!important}
+  /* layout grids */
+  .layout{grid-template-columns:1fr!important}
+  .form-row{grid-template-columns:1fr!important}
+  /* tables */
+  table{font-size:12px}
+  td,th{padding:8px 10px!important}
+  /* stat grids */
+  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  [style*="grid-template-columns:repeat(3"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* hero */
+  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
+  .hero-right{display:none}
+  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
+  /* product grids */
+  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* footer */
+  #tm-footer .tf-grid{grid-template-columns:1fr!important}
+  /* wrap padding */
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:36px!important}
+  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
+  .hero-stat-row{grid-template-columns:1fr 1fr}
+}
+/* ── Print friendly ── */
+@media print{
+  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
+  body{font-size:12px}
+}
+/* ── Focus / accessibility ── */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid #0A0A0A;outline-offset:2px
+}
+/* ── Smooth image loading ── */
+img{max-width:100%;height:auto}
+/* ── Selection color ── */
+::selection{background:#0A0A0A;color:#fff}
+</style>
+</head>
+<body>
+<nav id="tm-nav">
+  <div class="tn-top">
+    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="tn-links">
+      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
+      <a href="live-shopping.html" class="tn-link">Live</a>
+      <a href="brand-day.html" class="tn-link">Brand Day</a>
+      <a href="coupon-hub.html" class="tn-link">Coupon</a>
+      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
+      <a href="subscription.html" class="tn-link">TM Plus</a>
+      <a href="b2b-portal.html" class="tn-link">B2B</a>
+      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
+    </div>
+    <div class="tn-search">
+      <input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'">
+    </div>
+    <div class="tn-acts">
+      <button class="tn-btn" onclick="location.href='wishlist.html'"><span class="tn-ico">♡</span>Saved</button>
+      <button class="tn-btn" onclick="location.href='notification-center.html'"><span class="tn-ico">🔔</span>Alerts</button>
+      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
+      <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
+      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
+    </div>
+  </div>
+  <div class="tn-cats">
+    <div class="tn-cats-inner">
+      <a href="category.html" class="tn-cat">🏠 Home</a>
+      <a href="category.html" class="tn-cat">👗 Fashion</a>
+      <a href="category.html" class="tn-cat">💄 Beauty</a>
+      <a href="category.html" class="tn-cat">🛒 FMCG</a>
+      <a href="category.html" class="tn-cat">💻 Tech</a>
+      <a href="category.html" class="tn-cat">🚗 Auto</a>
+      <a href="category.html" class="tn-cat">🐾 Pets</a>
+      <a href="category.html" class="tn-cat">📚 Education</a>
+    </div>
+  </div>
+</nav>
+
+
+
+
+
+
+
+
+
+
+
+<div class="page">
+  <div class="page-header">
+    <div class="ph-title">⚖️ เปรียบเทียบสินค้า</div>
+    <div class="ph-count">3 รายการ</div>
+    <button class="ph-clear" onclick="toast('🗑️ ล้างรายการเปรียบเทียบ')">ล้างทั้งหมด</button>
+  </div>
+
+  <div class="compare-table">
+    <!-- PRODUCT HEADER -->
+    <div class="ct-header">
+      <div class="ct-label-col">สินค้า</div>
+
+      <div class="ct-prod-col">
+        <div class="prod-img-wrap">📺</div>
+        <div class="prod-name-cmp">Samsung 55" QLED 4K Smart TV Q80D</div>
+        <div class="prod-shop-cmp">Samsung Official TH</div>
+        <div class="prod-price-cmp">฿14,900</div>
+        <div class="prod-old-cmp">฿22,900</div>
+        <div class="prod-rating-cmp">★★★★★ 4.8 (2,847 รีวิว)</div>
+        <button class="btn-buy-cmp" onclick="toast('🛒 ซื้อ Samsung QLED')">🛒 ซื้อเลย</button>
+        <button class="btn-rm" onclick="toast('ลบออกจากการเปรียบเทียบ')">✕ ลบออก</button>
+      </div>
+
+      <div class="ct-prod-col best-value">
+        <div class="best-badge">🏆 ดีที่สุด</div>
+        <div class="prod-img-wrap" style="background:#E0FEF9">📺</div>
+        <div class="prod-name-cmp">LG 55" OLED evo C4 4K Smart TV</div>
+        <div class="prod-shop-cmp">LG Official Thailand</div>
+        <div class="prod-price-cmp">฿19,900</div>
+        <div class="prod-old-cmp">฿34,900</div>
+        <div class="prod-rating-cmp">★★★★★ 4.9 (1,284 รีวิว)</div>
+        <button class="btn-buy-cmp" onclick="toast('🛒 ซื้อ LG OLED')">🛒 ซื้อเลย</button>
+        <button class="btn-rm" onclick="toast('ลบออกจากการเปรียบเทียบ')">✕ ลบออก</button>
+      </div>
+
+      <div class="ct-prod-col">
+        <div class="prod-img-wrap" style="background:#FFF5F5">📺</div>
+        <div class="prod-name-cmp">Sony BRAVIA 7 55" Mini LED 4K XR</div>
+        <div class="prod-shop-cmp">Sony Center TH</div>
+        <div class="prod-price-cmp">฿22,900</div>
+        <div class="prod-old-cmp">฿34,900</div>
+        <div class="prod-rating-cmp">★★★★☆ 4.7 (842 รีวิว)</div>
+        <button class="btn-buy-cmp" onclick="toast('🛒 ซื้อ Sony BRAVIA')">🛒 ซื้อเลย</button>
+        <button class="btn-rm" onclick="toast('ลบออกจากการเปรียบเทียบ')">✕ ลบออก</button>
+      </div>
+    </div>
+
+    <!-- SECTION: ราคาและบริการ -->
+    <div class="ct-row">
+      <div class="ct-spec-label section">💰 ราคาและบริการ</div>
+      <div class="ct-val"></div><div class="ct-val"></div><div class="ct-val"></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ราคาปกติ</div>
+      <div class="ct-val">฿22,900</div>
+      <div class="ct-val">฿34,900</div>
+      <div class="ct-val">฿34,900</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ราคาขาย</div>
+      <div class="ct-val best">฿14,900</div>
+      <div class="ct-val">฿19,900</div>
+      <div class="ct-val worst">฿22,900</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ส่วนลด</div>
+      <div class="ct-val">-35%</div>
+      <div class="ct-val best">-43%</div>
+      <div class="ct-val worst">-34%</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ผ่อน 0%</div>
+      <div class="ct-val"><span class="check">✓</span> 3–12 เดือน</div>
+      <div class="ct-val"><span class="check">✓</span> 3–12 เดือน</div>
+      <div class="ct-val"><span class="check">✓</span> 3–6 เดือน</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ส่งฟรี</div>
+      <div class="ct-val"><span class="check">✓</span></div>
+      <div class="ct-val"><span class="check">✓</span></div>
+      <div class="ct-val"><span class="check">✓</span></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">บริการติดตั้ง</div>
+      <div class="ct-val"><span class="check">✓</span> ฟรี</div>
+      <div class="ct-val"><span class="cross">✕</span> ไม่รวม</div>
+      <div class="ct-val"><span class="check">✓</span> ฟรี</div>
+    </div>
+
+    <!-- SECTION: สเปค -->
+    <div class="ct-row">
+      <div class="ct-spec-label section">📺 สเปคหน้าจอ</div>
+      <div class="ct-val"></div><div class="ct-val"></div><div class="ct-val"></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ขนาดหน้าจอ</div>
+      <div class="ct-val">55"</div>
+      <div class="ct-val">55"</div>
+      <div class="ct-val">55"</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">เทคโนโลยีแผง</div>
+      <div class="ct-val">QLED (Quantum Dot)</div>
+      <div class="ct-val best">OLED evo</div>
+      <div class="ct-val">Mini LED</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ความละเอียด</div>
+      <div class="ct-val">4K UHD</div>
+      <div class="ct-val">4K UHD</div>
+      <div class="ct-val">4K UHD</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">อัตรารีเฟรช</div>
+      <div class="ct-val">120 Hz</div>
+      <div class="ct-val best">144 Hz</div>
+      <div class="ct-val">120 Hz</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ความสว่าง (nit)</div>
+      <div class="ct-val">2,000 nit</div>
+      <div class="ct-val">1,300 nit</div>
+      <div class="ct-val best">2,500 nit</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">HDR</div>
+      <div class="ct-val">HDR10+ · HLG</div>
+      <div class="ct-val best">Dolby Vision · HDR10 · HLG</div>
+      <div class="ct-val">HDR10 · HLG · Dolby Vision</div>
+    </div>
+
+    <!-- SECTION: ระบบเสียง -->
+    <div class="ct-row">
+      <div class="ct-spec-label section">🔊 ระบบเสียง</div>
+      <div class="ct-val"></div><div class="ct-val"></div><div class="ct-val"></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">กำลังขับ</div>
+      <div class="ct-val">40W (2.0ch)</div>
+      <div class="ct-val">60W (4.2ch)</div>
+      <div class="ct-val best">60W (3.2ch)</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">Dolby Atmos</div>
+      <div class="ct-val"><span class="check">✓</span></div>
+      <div class="ct-val"><span class="check">✓</span></div>
+      <div class="ct-val"><span class="check">✓</span></div>
+    </div>
+
+    <!-- SECTION: ระบบสมาร์ท -->
+    <div class="ct-row">
+      <div class="ct-spec-label section">🤖 ระบบสมาร์ท</div>
+      <div class="ct-val"></div><div class="ct-val"></div><div class="ct-val"></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">OS</div>
+      <div class="ct-val">Tizen 8.0</div>
+      <div class="ct-val">webOS 24</div>
+      <div class="ct-val">Google TV</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">Voice Assistant</div>
+      <div class="ct-val">Bixby · Alexa · Google</div>
+      <div class="ct-val">ThinQ AI · Alexa</div>
+      <div class="ct-val best">Google · Alexa</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">Gaming Mode</div>
+      <div class="ct-val best">Gaming Hub · 4K@120Hz</div>
+      <div class="ct-val">Game Optimizer</div>
+      <div class="ct-val">Auto Low Latency</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">HDMI 2.1</div>
+      <div class="ct-val">4 พอร์ต</div>
+      <div class="ct-val best">4 พอร์ต (eARC)</div>
+      <div class="ct-val">4 พอร์ต</div>
+    </div>
+
+    <!-- SECTION: ประกัน -->
+    <div class="ct-row">
+      <div class="ct-spec-label section">🛡️ การรับประกัน</div>
+      <div class="ct-val"></div><div class="ct-val"></div><div class="ct-val"></div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ประกันศูนย์</div>
+      <div class="ct-val best">3 ปี</div>
+      <div class="ct-val">2 ปี</div>
+      <div class="ct-val">2 ปี</div>
+    </div>
+    <div class="ct-row">
+      <div class="ct-spec-label">ประกัน Panel</div>
+      <div class="ct-val">1 ปี</div>
+      <div class="ct-val best">3 ปี</div>
+      <div class="ct-val">1 ปี</div>
+    </div>
+
+    <!-- OVERALL SCORE -->
+    <div class="ct-row" style="background:var(--g100);border-top:2px solid var(--g200)">
+      <div class="ct-spec-label" style="font-weight:700;color:var(--g700)">คะแนนรวม Thailand Market</div>
+      <div class="ct-val" style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:900;color:var(--g700)">82<span style="font-size:13px">/100</span></div>
+      <div class="ct-val" style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:900;color:var(--gn)">91<span style="font-size:13px">/100</span></div>
+      <div class="ct-val" style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:900;color:var(--g700)">86<span style="font-size:13px">/100</span></div>
+    </div>
+  </div>
+
+  <!-- SUGGESTIONS -->
+  <div class="suggestion-section">
+    <div class="ss-title">📌 สินค้าที่อาจสนใจเพิ่ม</div>
+    <div class="sug-grid">
+      <div class="sug-card" onclick="toast('เพิ่มในการเปรียบเทียบ: Hisense')"><div class="sug-ico">📺</div><div class="sug-name">Hisense 55" U8N Mini LED 144Hz</div><div class="sug-price">฿11,900</div><div class="sug-add">+ เพิ่มในการเปรียบเทียบ</div></div>
+      <div class="sug-card" onclick="toast('เพิ่มในการเปรียบเทียบ: TCL')"><div class="sug-ico">📺</div><div class="sug-name">TCL 55" C845 Mini LED QD-OLED</div><div class="sug-price">฿12,900</div><div class="sug-add">+ เพิ่มในการเปรียบเทียบ</div></div>
+      <div class="sug-card" onclick="toast('เพิ่มในการเปรียบเทียบ: Philips')"><div class="sug-ico">📺</div><div class="sug-name">Philips 55" The One Ambilight 4K</div><div class="sug-price">฿16,900</div><div class="sug-add">+ เพิ่มในการเปรียบเทียบ</div></div>
+      <div class="sug-card" onclick="toast('เพิ่มในการเปรียบเทียบ: Samsung Neo')"><div class="sug-ico">📺</div><div class="sug-name">Samsung 65" Neo QLED 8K QN900D</div><div class="sug-price">฿89,900</div><div class="sug-add">+ เพิ่มในการเปรียบเทียบ</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="tw"></div>
+<script>
+function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),2800);}
+</script>
+
+
+
+
+
+<div class="tm-toast-wrap" id="tmToastWrap"></div>
+<script>
+function tmToast(msg){
+  var w=document.getElementById('tmToastWrap');
+  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
+  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
+  w.appendChild(t);setTimeout(function(){t.remove()},2600);
+}
+</script>
+<footer id="tm-footer">
+  <div class="tf-inner">
+    <div class="tf-grid">
+      <div>
+        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
+        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
+      </div>
+      <div>
+        <div class="tf-title">ช้อปปิ้ง</div>
+        <a href="index.html" class="tf-link">หน้าแรก</a>
+        <a href="category.html" class="tf-link">หมวดหมู่</a>
+        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
+        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
+        <a href="brand-day.html" class="tf-link">Brand Day</a>
+        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
+      </div>
+      <div>
+        <div class="tf-title">บัญชีของฉัน</div>
+        <a href="profile.html" class="tf-link">โปรไฟล์</a>
+        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
+        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
+        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
+        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
+        <a href="returns.html" class="tf-link">คืนสินค้า</a>
+      </div>
+      <div>
+        <div class="tf-title">ผู้ขาย</div>
+        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
+        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
+        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
+        <a href="seller-analytics.html" class="tf-link">Analytics</a>
+        <a href="b2b-portal.html" class="tf-link">B2B</a>
+        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
+      </div>
+      <div>
+        <div class="tf-title">ช่วยเหลือ</div>
+        <a href="help-center.html" class="tf-link">Help Center</a>
+        <a href="chat.html" class="tf-link">แชทกับเรา</a>
+        <a href="subscription.html" class="tf-link">TM Plus</a>
+        <a href="gift-card.html" class="tf-link">Gift Card</a>
+        <a href="sitemap.html" class="tf-link">Site Map</a>
+        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
+      </div>
+    </div>
+    <div class="tf-bottom">
+      <span>© 2026 Thailand Market · All rights reserved</span>
+      <span>TH · EN · 🔒 SSL · PCI DSS</span>
+    </div>
+  </div>
+</footer>
+<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
+<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+</body>
+</html>

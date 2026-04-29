@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thailand Market — Deploy Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g800:#262626;
+  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
+  --font:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+
+/* NAV */
+.nav{background:var(--black);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--white)}
+.nav-logo .dot{color:var(--red)}
+.nav-links{display:flex;gap:20px}
+.nav-link{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);transition:color .15s}
+.nav-link:hover{color:var(--white)}
+
+/* HERO */
+.hero{background:var(--black);color:var(--white);padding:80px 24px 72px;text-align:center}
+.hero-tag{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:10px}
+.hero-tag::before,.hero-tag::after{content:'';width:32px;height:1px;background:var(--red)}
+.hero h1{font-size:60px;font-weight:300;letter-spacing:-.03em;line-height:1;margin-bottom:20px}
+.hero h1 strong{font-weight:700}
+.hero-sub{font-size:16px;color:rgba(255,255,255,.5);max-width:560px;margin:0 auto 40px;line-height:1.7}
+.hero-stats{display:flex;justify-content:center;gap:0;border-top:1px solid rgba(255,255,255,.1);border-bottom:1px solid rgba(255,255,255,.1);margin:0 -24px;padding:28px 24px}
+.hero-stat{flex:1;text-align:center;border-right:1px solid rgba(255,255,255,.1);max-width:200px}
+.hero-stat:last-child{border-right:none}
+.hero-stat-num{font-family:var(--mono);font-size:28px;font-weight:500;display:block;margin-bottom:4px}
+.hero-stat-lbl{font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.04em}
+
+/* LAYOUT */
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+.section{padding:64px 0;border-bottom:var(--border)}
+.section:last-child{border-bottom:none}
+.section-tag{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--g400);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-tag::after{content:'';flex:1;height:1px;background:var(--g200)}
+.section h2{font-size:32px;font-weight:300;letter-spacing:-.01em;margin-bottom:8px}
+.section h2 strong{font-weight:700}
+.section-sub{font-size:14px;color:var(--g500);margin-bottom:40px;line-height:1.7}
+
+/* DEPLOY CARDS */
+.deploy-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px}
+.deploy-card{border:var(--border);padding:24px;cursor:pointer;transition:border-color .15s;position:relative;overflow:hidden}
+.deploy-card:hover{border-color:var(--black)}
+.deploy-card.star{border-color:var(--black)}
+.deploy-card.star::before{content:'แนะนำ';position:absolute;top:0;right:0;background:var(--black);color:var(--white);font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px}
+.dc-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.dc-ico{font-size:28px}
+.dc-name{font-size:16px;font-weight:600;margin-bottom:2px}
+.dc-badge{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border:var(--border);display:inline-block}
+.dc-badge.free{border-color:var(--green);color:var(--green)}
+.dc-badge.paid{border-color:var(--amber);color:var(--amber)}
+.dc-time{font-family:var(--mono);font-size:11px;color:var(--g500);margin-bottom:14px;letter-spacing:.03em}
+.dc-steps{list-style:none;counter-reset:step}
+.dc-step{counter-increment:step;display:flex;gap:10px;margin-bottom:8px;font-size:13px}
+.dc-step::before{content:counter(step);font-family:var(--mono);font-size:10px;font-weight:500;min-width:20px;height:20px;border:var(--border-dark);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.dc-link{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--black);border-bottom:1px solid var(--black)}
+.dc-link:hover{color:var(--red);border-bottom-color:var(--red)}
+
+/* CODE BLOCKS */
+pre{background:var(--black);color:#e2e8f0;padding:20px 24px;font-family:var(--mono);font-size:12.5px;line-height:1.7;overflow-x:auto;margin:16px 0;position:relative}
+pre .comment{color:#64748b}
+pre .cmd{color:#7dd3fc}
+pre .val{color:#86efac}
+code{font-family:var(--mono);font-size:12.5px;background:var(--g100);padding:2px 6px}
+.copy-btn{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{background:rgba(255,255,255,.2);color:var(--white)}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:0}
+.cl-group{border:var(--border);margin-bottom:16px}
+.cl-group-title{padding:12px 16px;border-bottom:var(--border);font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;background:var(--g50)}
+.cl-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:var(--border);cursor:pointer;transition:background .15s}
+.cl-item:last-child{border-bottom:none}
+.cl-item:hover{background:var(--g50)}
+.cl-box{width:18px;height:18px;border:var(--border-dark);flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .15s}
+.cl-box.done{background:var(--black);border-color:var(--black)}
+.cl-check{font-size:10px;color:var(--white);display:none}
+.cl-box.done .cl-check{display:block}
+.cl-text{flex:1}
+.cl-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.cl-desc{font-size:12px;color:var(--g500);line-height:1.5}
+.cl-tag{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;margin-left:6px}
+.cl-tag.critical{background:var(--red);color:var(--white)}
+.cl-tag.important{background:var(--black);color:var(--white)}
+.cl-tag.nice{border:var(--border);color:var(--g500)}
+
+/* ROADMAP */
+.roadmap{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:var(--border)}
+.rm-col{padding:24px;border-right:var(--border)}
+.rm-col:last-child{border-right:none}
+.rm-phase{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--g400);margin-bottom:8px}
+.rm-title{font-size:18px;font-weight:600;margin-bottom:4px}
+.rm-timeline{font-family:var(--mono);font-size:11px;color:var(--g400);margin-bottom:16px}
+.rm-items{list-style:none}
+.rm-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:13px}
+.rm-item::before{content:'→';font-family:var(--mono);font-size:10px;color:var(--g400);margin-top:2px;flex-shrink:0}
+.rm-cost{border-top:var(--border);margin-top:16px;padding-top:12px;font-family:var(--mono);font-size:12px}
+.rm-cost strong{color:var(--black)}
+
+/* FILE TREE */
+.tree{background:var(--g50);border:var(--border);padding:20px 24px;font-family:var(--mono);font-size:12px;line-height:2;overflow-x:auto}
+.tree .dir{color:var(--black);font-weight:500}
+.tree .new{color:var(--green)}
+.tree .note{color:var(--g400)}
+
+/* TECH TABLE */
+.tech-table{width:100%;border-collapse:collapse}
+.tech-table th{padding:10px 14px;text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);border-bottom:var(--border);background:var(--g50)}
+.tech-table td{padding:12px 14px;border-bottom:var(--border);font-size:13px;vertical-align:top}
+.tech-table tr:last-child td{border-bottom:none}
+.tech-table tr:hover td{background:var(--g50)}
+
+/* PROGRESS BAR */
+.progress-row{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.progress-lbl{font-size:13px;font-weight:500;width:140px;flex-shrink:0}
+.progress-bar{flex:1;height:6px;background:var(--g200);overflow:hidden}
+.progress-fill{height:100%;background:var(--black);transition:width 1s ease}
+.progress-val{font-family:var(--mono);font-size:11px;color:var(--g500);width:40px;text-align:right;flex-shrink:0}
+
+/* ALERT BOXES */
+.alert{padding:16px 20px;margin-bottom:20px;border-left:3px solid var(--black);background:var(--g50);font-size:13px;line-height:1.7}
+.alert.info{border-left-color:var(--blue);background:#EFF6FF}
+.alert.warn{border-left-color:var(--amber);background:#FFFBEB}
+.alert.success{border-left-color:var(--green);background:#F0FDF4}
+.alert strong{display:block;font-size:11px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+
+/* FOOTER */
+.footer{background:var(--black);padding:40px 24px;margin-top:0}
+.footer-inner{max-width:960px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.footer-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--white)}
+.footer-logo .dot{color:var(--red)}
+.footer-links{display:flex;gap:20px}
+.footer-link{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.4);transition:color .15s}
+.footer-link:hover{color:var(--white)}
+.footer-copy{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.04em;margin-top:12px;text-align:center;width:100%}
+
+/* TOAST */
+.tw{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:12.5px;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tIn .2s ease}
+@keyframes tIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .hero h1{font-size:36px}
+  .hero-stats{flex-wrap:wrap}
+  .hero-stat{min-width:50%;border-right:none!important;border-bottom:1px solid rgba(255,255,255,.1);padding:16px}
+  .deploy-grid{grid-template-columns:1fr}
+  .roadmap{grid-template-columns:1fr}
+  .rm-col{border-right:none;border-bottom:var(--border)}
+  .rm-col:last-child{border-bottom:none}
+  .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">Thailand<span class="dot">.</span>Market</div>
+  <div class="nav-links">
+    <a href="#deploy" class="nav-link">Deploy</a>
+    <a href="#checklist" class="nav-link">Checklist</a>
+    <a href="#roadmap" class="nav-link">Roadmap</a>
+    <a href="#files" class="nav-link">Files</a>
+    <a href="index.html" class="nav-link" style="color:var(--red)">→ เปิดเว็บ</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Deploy Guide · Thailand Market 2026</div>
+  <h1>พร้อม<strong>ขึ้น Browser</strong></h1>
+  <p class="hero-sub">54 หน้า HTML พร้อม deploy ทันที ไม่ต้องการ backend สำหรับ prototype — เริ่มได้ใน 2 นาที</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="hero-stat-num">54</span><span class="hero-stat-lbl">HTML Pages</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">54/54</span><span class="hero-stat-lbl">Audit Clean</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">20/20</span><span class="hero-stat-lbl">Flows Connected</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">~2.2MB</span><span class="hero-stat-lbl">Total Size</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">฿0</span><span class="hero-stat-lbl">Prototype Cost</span></div>
+  </div>
+</div>
+
+<!-- DEPLOY METHODS -->
+<div class="wrap">
+<div class="section" id="deploy">
+  <div class="section-tag">Step 1 — เลือกวิธี Deploy</div>
+  <h2>ขึ้น<strong>ออนไลน์</strong></h2>
+  <p class="section-sub">ทุกวิธีใช้ static hosting ไม่ต้องการ server — เลือกตามความสะดวก</p>
+
+  <div class="alert success">
+    <strong>✅ สถานะปัจจุบัน</strong>
+    Audit ผ่าน 54/54 หน้า · ไม่มี broken links · ไม่มี ZenMart · ทุก Flow เชื่อมครบ · Mobile responsive ครบ
+  </div>
+
+  <div class="deploy-grid">
+
+    <!-- Netlify -->
+    <div class="deploy-card star">
+      <div class="dc-head">
+        <div class="dc-ico">🌐</div>
+        <div>
+          <div class="dc-name">Netlify Drop</div>
+          <span class="dc-badge free">ฟรี</span>
+        </div>
+      </div>
+      <div class="dc-time">⏱ 2 นาที · ไม่ต้องสมัคร · CDN ทั่วโลก</div>
+      <ol class="dc-steps">
+        <li class="dc-step">ไปที่ <strong>app.netlify.com/drop</strong></li>
+        <li class="dc-step">Zip ทุกไฟล์ในโฟลเดอร์ → drag &amp; drop ลงหน้า</li>
+        <li class="dc-step">ได้ URL ทันที เช่น <code>tm-abc123.netlify.app</code></li>
+        <li class="dc-step">(Optional) Settings → Domain → ใส่ domain ตัวเอง</li>
+      </ol>
+      <a href="https://app.netlify.com/drop" target="_blank" class="dc-link">เปิด Netlify Drop →</a>
+    </div>
+
+    <!-- GitHub Pages -->
+    <div class="deploy-card">
+      <div class="dc-head">
+        <div class="dc-ico">🐙</div>
+        <div>
+          <div class="dc-name">GitHub Pages</div>
+          <span class="dc-badge free">ฟรี</span>
+        </div>
+      </div>
+      <div class="dc-time">⏱ 5 นาที · ต้องมี GitHub account</div>
+      <ol class="dc-steps">
+        <li class="dc-step">สร้าง repo ใหม่บน github.com</li>
+        <li class="dc-step">Upload ทุกไฟล์ (drag &amp; drop ได้ในเว็บ)</li>
+        <li class="dc-step">Settings → Pages → Source: main branch</li>
+        <li class="dc-step">URL: <code>username.github.io/repo-name</code></li>
+      </ol>
+      <a href="https://github.com/new" target="_blank" class="dc-link">สร้าง Repo →</a>
+    </div>
+
+    <!-- Vercel -->
+    <div class="deploy-card">
+      <div class="dc-head">
+        <div class="dc-ico">▲</div>
+        <div>
+          <div class="dc-name">Vercel</div>
+          <span class="dc-badge free">ฟรี / $20</span>
+        </div>
+      </div>
+      <div class="dc-time">⏱ 3 นาที · เร็วมาก · เหมาะ Production frontend</div>
+      <ol class="dc-steps">
+        <li class="dc-step">ติดตั้ง: <code>npm i -g vercel</code></li>
+        <li class="dc-step">รัน: <code>vercel</code> ในโฟลเดอร์</li>
+        <li class="dc-step">Framework: Other · Root: <code>./</code></li>
+        <li class="dc-step">URL: <code>thailand-market.vercel.app</code></li>
+      </ol>
+      <a href="https://vercel.com/new" target="_blank" class="dc-link">เปิด Vercel →</a>
+    </div>
+
+    <!-- Cloudflare -->
+    <div class="deploy-card">
+      <div class="dc-head">
+        <div class="dc-ico">🔶</div>
+        <div>
+          <div class="dc-name">Cloudflare Pages</div>
+          <span class="dc-badge free">ฟรี</span>
+        </div>
+      </div>
+      <div class="dc-time">⏱ 5 นาที · CDN ไทย · DDoS protection</div>
+      <ol class="dc-steps">
+        <li class="dc-step">ไปที่ <strong>pages.cloudflare.com</strong></li>
+        <li class="dc-step">Create project → Upload assets</li>
+        <li class="dc-step">Upload ทุกไฟล์ (zip หรือ folder)</li>
+        <li class="dc-step">URL: <code>thailand-market.pages.dev</code></li>
+      </ol>
+      <a href="https://pages.cloudflare.com" target="_blank" class="dc-link">เปิด CF Pages →</a>
+    </div>
+
+  </div>
+
+  <!-- Git commands -->
+  <div style="margin-bottom:24px">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:8px">Terminal — Git Deploy (Netlify / Vercel CLI)</div>
+    <pre id="code1"><button class="copy-btn" onclick="copyCode('code1')">Copy</button><span class="comment"># 1. เตรียม Git repository</span>
+<span class="cmd">git init && git add . && git commit -m "Thailand Market v1.0"</span>
+
+<span class="comment"># 2a. Deploy ด้วย Netlify CLI</span>
+<span class="cmd">npm install -g netlify-cli</span>
+<span class="cmd">netlify deploy --prod --dir .</span>
+
+<span class="comment"># 2b. หรือ deploy ด้วย Vercel CLI</span>
+<span class="cmd">npm install -g vercel</span>
+<span class="cmd">vercel --prod</span></pre>
+  </div>
+
+  <!-- Custom domain -->
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:8px">ตั้งค่า Custom Domain (thailandmarket.co.th)</div>
+  <pre id="code2"><button class="copy-btn" onclick="copyCode('code2')">Copy</button><span class="comment"># DNS Settings ที่ Registrar (เช่น godaddy, namecheap, thnic)</span>
+<span class="val">Type: CNAME</span>
+<span class="val">Name: www</span>
+<span class="val">Value: (URL จาก Netlify/Vercel/CF Pages)</span>
+<span class="val">TTL: Auto (หรือ 3600)</span>
+
+<span class="comment"># สำหรับ root domain (@)</span>
+<span class="val">Type: A</span>
+<span class="val">Name: @</span>
+<span class="val">Value: 75.2.60.5  (Netlify) หรือ 76.76.21.21 (Vercel)</span></pre>
+</div>
+
+<!-- CHECKLIST -->
+<div class="section" id="checklist">
+  <div class="section-tag">Step 2 — ก่อน Go Live</div>
+  <h2><strong>Checklist</strong> ตรวจสอบ</h2>
+  <p class="section-sub">คลิกหัวข้อเพื่อ tick off — บันทึกอัตโนมัติ</p>
+
+  <div style="margin-bottom:28px">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:12px">ความคืบหน้า</div>
+    <div class="progress-row"><div class="progress-lbl">Technical</div><div class="progress-bar"><div class="progress-fill" id="pb-tech" style="width:0%"></div></div><div class="progress-val" id="pv-tech">0%</div></div>
+    <div class="progress-row"><div class="progress-lbl">Content</div><div class="progress-bar"><div class="progress-fill" id="pb-cont" style="width:0%"></div></div><div class="progress-val" id="pv-cont">0%</div></div>
+    <div class="progress-row"><div class="progress-lbl">Marketing</div><div class="progress-bar"><div class="progress-fill" id="pb-mkt" style="width:0%"></div></div><div class="progress-val" id="pv-mkt">0%</div></div>
+  </div>
+
+  <!-- Technical -->
+  <div class="cl-group" data-group="tech">
+    <div class="cl-group-title">🔧 Technical — ต้องทำก่อน Launch</div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">Audit ผ่าน 54/54 หน้า <span class="cl-tag critical">Done ✅</span></div><div class="cl-desc">charset · viewport · nav · footer · font · no broken links · no ZenMart</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">Flow ครบ 20/20 <span class="cl-tag critical">Done ✅</span></div><div class="cl-desc">Login→Forgot · Browse→Checkout→Payment · Profile→Orders · Seller Portal · Admin Panel</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">Mobile Responsive <span class="cl-tag critical">Done ✅</span></div><div class="cl-desc">Responsive CSS inject ครบทุกหน้า · tested 320px–1440px</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">ทดสอบบน Browser จริง <span class="cl-tag important">ต้องทำ</span></div><div class="cl-desc">Chrome · Safari · Firefox · Mobile Chrome — เปิดไฟล์ index.html แล้วคลิกทุก flow</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">เพิ่ม Favicon <span class="cl-tag important">ต้องทำ</span></div><div class="cl-desc">สร้าง favicon.ico (32×32) → วางในโฟลเดอร์ → เพิ่ม &lt;link rel="icon"&gt; ใน head ทุกหน้า</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">เพิ่ม Open Graph Meta Tags <span class="cl-tag important">ต้องทำ</span></div><div class="cl-desc">og:title · og:description · og:image · og:url สำหรับ Social sharing preview</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">สร้าง robots.txt + sitemap.xml <span class="cl-tag nice">ควรทำ</span></div><div class="cl-desc">ช่วย SEO · ให้ Google index ได้ถูกต้อง</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">ตรวจ PageSpeed Insights <span class="cl-tag nice">ควรทำ</span></div><div class="cl-desc">เป้าหมาย &gt; 80 คะแนน · pagespeed.web.dev</div></div></div>
+  </div>
+
+  <!-- Content -->
+  <div class="cl-group" data-group="cont">
+    <div class="cl-group-title">📝 Content — แก้ข้อมูลให้เป็นของจริง</div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">แทนที่ Placeholder ด้วยข้อมูลจริง <span class="cl-tag important">ต้องทำ</span></div><div class="cl-desc">ชื่อร้าน · ราคา · รูปภาพสินค้า · รายละเอียดสินค้า · ข้อมูลการจัดส่ง</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">เพิ่มรูปสินค้าจริง <span class="cl-tag important">ต้องทำ</span></div><div class="cl-desc">แทน emoji placeholder ด้วย &lt;img&gt; จริง · แนะนำ Cloudinary หรือ imgbb สำหรับ host รูป</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">แก้ที่อยู่และข้อมูลติดต่อ <span class="cl-tag important">ต้องทำ</span></div><div class="cl-desc">อีเมล · เบอร์โทร · LINE OA · ที่อยู่บริษัท ในหน้า Help Center + Footer</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">นโยบายและเงื่อนไข <span class="cl-tag nice">ควรทำ</span></div><div class="cl-desc">Privacy Policy · Terms of Service · Return Policy — สำคัญสำหรับความน่าเชื่อถือ</div></div></div>
+  </div>
+
+  <!-- Marketing -->
+  <div class="cl-group" data-group="mkt">
+    <div class="cl-group-title">📊 Marketing &amp; Analytics</div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">ติดตั้ง Google Analytics 4 <span class="cl-tag important">ต้องทำ</span></div><div class="cl-desc">analytics.google.com → สร้าง property → copy Measurement ID → วาง script ก่อน &lt;/head&gt;</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">ติดตั้ง Meta Pixel <span class="cl-tag important">ต้องทำ</span></div><div class="cl-desc">สำหรับ Facebook/Instagram Ads retargeting · business.facebook.com → Events Manager</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">เชื่อมต่อ LINE OA <span class="cl-tag nice">ควรทำ</span></div><div class="cl-desc">LINE Notify สำหรับ order confirmation · LINE Login เป็น social login option</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">ตั้งค่า Google Search Console <span class="cl-tag nice">ควรทำ</span></div><div class="cl-desc">ช่วย monitor indexing + search performance</div></div></div>
+  </div>
+</div>
+
+<!-- ROADMAP -->
+<div class="section" id="roadmap">
+  <div class="section-tag">Step 3 — ขั้นตอนถัดไป</div>
+  <h2><strong>Roadmap</strong> สู่ Production</h2>
+  <p class="section-sub">จาก Static Prototype → Full Production Platform — แบ่งเป็น 3 Phase</p>
+
+  <div class="alert info">
+    <strong>ℹ️ ตอนนี้คืออะไร?</strong>
+    ไฟล์ HTML เหล่านี้คือ <strong>UI Prototype</strong> — ทุก click ทำงานได้ ทุก flow เชื่อมกัน แต่ข้อมูลเป็น mock ยังไม่มี real backend, database, หรือ payment จริง
+  </div>
+
+  <div class="roadmap">
+    <div class="rm-col">
+      <div class="rm-phase">Phase 1</div>
+      <div class="rm-title">MVP Backend</div>
+      <div class="rm-timeline">เดือน 1–3 · ~฿150K–300K</div>
+      <ul class="rm-items">
+        <li class="rm-item">NestJS + PostgreSQL API</li>
+        <li class="rm-item">JWT Auth + LINE Login</li>
+        <li class="rm-item">Omise Payment Gateway</li>
+        <li class="rm-item">AWS S3 รูปภาพสินค้า</li>
+        <li class="rm-item">Basic Seller Portal</li>
+        <li class="rm-item">Kerry API Integration</li>
+        <li class="rm-item">Firebase Push Notification</li>
+      </ul>
+      <div class="rm-cost">Hosting: <strong>~$55/เดือน</strong><br><span style="color:var(--g500);font-size:11px">Vercel + RDS + EC2 t3.medium</span></div>
+    </div>
+    <div class="rm-col">
+      <div class="rm-phase">Phase 2</div>
+      <div class="rm-title">Growth Features</div>
+      <div class="rm-timeline">เดือน 3–6 · ~฿300K–500K</div>
+      <ul class="rm-items">
+        <li class="rm-item">Elasticsearch Product Search</li>
+        <li class="rm-item">Flash Sale Engine</li>
+        <li class="rm-item">Live Shopping (WebRTC)</li>
+        <li class="rm-item">Loyalty Points System</li>
+        <li class="rm-item">Analytics Dashboard</li>
+        <li class="rm-item">Mobile App (React Native)</li>
+        <li class="rm-item">Seller Ads Platform</li>
+      </ul>
+      <div class="rm-cost">Hosting: <strong>~$200/เดือน</strong><br><span style="color:var(--g500);font-size:11px">+ Redis cluster + Elasticsearch</span></div>
+    </div>
+    <div class="rm-col">
+      <div class="rm-phase">Phase 3</div>
+      <div class="rm-title">Scale &amp; Optimize</div>
+      <div class="rm-timeline">เดือน 6–12 · ~฿500K+</div>
+      <ul class="rm-items">
+        <li class="rm-item">Kubernetes + Auto-scaling</li>
+        <li class="rm-item">AI Recommendation Engine</li>
+        <li class="rm-item">B2B Procurement Portal</li>
+        <li class="rm-item">Multi-vendor Fulfillment</li>
+        <li class="rm-item">Fraud Detection</li>
+        <li class="rm-item">International Expansion</li>
+        <li class="rm-item">IPO Ready Reporting</li>
+      </ul>
+      <div class="rm-cost">Hosting: <strong>~$1,000+/เดือน</strong><br><span style="color:var(--g500);font-size:11px">AWS Multi-AZ + CDN + WAF</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- TECH STACK -->
+<div class="section">
+  <div class="section-tag">Tech Stack</div>
+  <h2>Production <strong>Architecture</strong></h2>
+  <p class="section-sub">เทคโนโลยีที่แนะนำสำหรับ production build ต่อจาก prototype นี้</p>
+
+  <table class="tech-table">
+    <thead><tr><th>Layer</th><th>Technology</th><th>ทำไม</th><th>ราคา</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:500">Frontend</td><td><code>Next.js 14 + TypeScript</code></td><td style="font-size:12px;color:var(--g600)">SSR + SEO + Image optimization · ต่อยอดจาก HTML นี้ได้ทันที</td><td style="font-family:var(--mono);font-size:12px">$20/เดือน (Vercel)</td></tr>
+      <tr><td style="font-weight:500">Backend API</td><td><code>NestJS + PostgreSQL</code></td><td style="font-size:12px;color:var(--g600)">Type-safe · Microservices ready · ดู database-schema.sql</td><td style="font-family:var(--mono);font-size:12px">$30/เดือน (EC2)</td></tr>
+      <tr><td style="font-weight:500">Database</td><td><code>PostgreSQL + Redis</code></td><td style="font-size:12px;color:var(--g600)">ACID compliant · Redis สำหรับ session + cache + flash sale</td><td style="font-family:var(--mono);font-size:12px">$25/เดือน (RDS)</td></tr>
+      <tr><td style="font-weight:500">Search</td><td><code>Elasticsearch / Algolia</code></td><td style="font-size:12px;color:var(--g600)">Full-text search ภาษาไทย · Filter + Facet</td><td style="font-family:var(--mono);font-size:12px">$50+/เดือน</td></tr>
+      <tr><td style="font-weight:500">Payment</td><td><code>Omise + 2C2P</code></td><td style="font-size:12px;color:var(--g600)">รองรับ Thai banks + PromptPay + installment</td><td style="font-family:var(--mono);font-size:12px">2.9% + ฿10/txn</td></tr>
+      <tr><td style="font-weight:500">Auth</td><td><code>NextAuth + LINE Login</code></td><td style="font-size:12px;color:var(--g600)">คนไทย 90%+ ใช้ LINE · Google + Facebook backup</td><td style="font-family:var(--mono);font-size:12px">ฟรี</td></tr>
+      <tr><td style="font-weight:500">Storage</td><td><code>AWS S3 + CloudFront</code></td><td style="font-size:12px;color:var(--g600)">รูปสินค้า + video live · CDN ลดเวลาโหลด</td><td style="font-family:var(--mono);font-size:12px">~$20/เดือน</td></tr>
+      <tr><td style="font-weight:500">Notify</td><td><code>Firebase FCM + LINE Notify</code></td><td style="font-size:12px;color:var(--g600)">Push notification mobile + LINE message</td><td style="font-family:var(--mono);font-size:12px">ฟรี (FCM)</td></tr>
+      <tr><td style="font-weight:500">Logistics</td><td><code>Kerry + Flash Express API</code></td><td style="font-size:12px;color:var(--g600)">Track &amp; Trace · ใบปะหน้าอัตโนมัติ · COD</td><td style="font-family:var(--mono);font-size:12px">ตามปริมาณ</td></tr>
+      <tr><td style="font-weight:500">Monitor</td><td><code>Datadog / Sentry</code></td><td style="font-size:12px;color:var(--g600)">Error tracking · Performance · Uptime</td><td style="font-family:var(--mono);font-size:12px">$15+/เดือน</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FILE TREE -->
+<div class="section" id="files">
+  <div class="section-tag">ไฟล์ทั้งหมด</div>
+  <h2><strong>54 หน้า</strong> พร้อม Deploy</h2>
+  <p class="section-sub">คลิกชื่อไฟล์เพื่อเปิดดู · <span style="color:var(--green);font-family:var(--mono);font-size:12px">■ สีเขียว</span> = หน้าที่สร้างใหม่ล่าสุด</p>
+
+  <div class="tree">
+<span class="dir">thailand-market/</span>
+├── <a href="index.html">index.html</a>               <span class="note">← Entry Point · หน้าแรก</span>
+│
+├── <span class="note">── BUYER JOURNEY (14 หน้า) ──</span>
+├── <a href="login.html">login.html</a>
+├── <a href="forgot-password.html" class="new">forgot-password.html</a>   <span class="note">← NEW · OTP 3 ขั้นตอน</span>
+├── <a href="category.html">category.html</a>
+├── <a href="search.html">search.html</a>
+├── <a href="product.html">product.html</a>
+├── <a href="compare.html">compare.html</a>
+├── <a href="checkout.html">checkout.html</a>
+├── <a href="payment-result.html">payment-result.html</a>
+├── <a href="tracking.html">tracking.html</a>
+├── <a href="order-history.html" class="new">order-history.html</a>     <span class="note">← NEW · รายการออเดอร์</span>
+├── <a href="order-detail.html" class="new">order-detail.html</a>      <span class="note">← NEW · timeline + summary</span>
+├── <a href="returns.html">returns.html</a>
+├── <a href="review-write.html">review-write.html</a>
+│
+├── <span class="note">── ACCOUNT (5 หน้า) ──</span>
+├── <a href="profile.html">profile.html</a>
+├── <a href="address-book.html">address-book.html</a>
+├── <a href="wishlist.html">wishlist.html</a>
+├── <a href="notification-center.html">notification-center.html</a>
+├── <a href="chat.html">chat.html</a>
+│
+├── <span class="note">── PROMOTIONS (9 หน้า) ──</span>
+├── <a href="flash-sale.html">flash-sale.html</a>  <a href="live-shopping.html">live-shopping.html</a>  <a href="brand-day.html">brand-day.html</a>
+├── <a href="coupon-hub.html">coupon-hub.html</a>  <a href="loyalty-catalog.html">loyalty-catalog.html</a>  <a href="gift-card.html">gift-card.html</a>
+├── <a href="subscription.html">subscription.html</a>  <a href="referral.html">referral.html</a>  <a href="b2b-portal.html">b2b-portal.html</a>
+│
+├── <span class="note">── SELLER CENTER (11 หน้า) ──</span>
+├── <a href="seller-portal.html">seller-portal.html</a>
+├── <a href="seller-products.html">seller-products.html</a>
+├── <a href="seller-orders.html" class="new">seller-orders.html</a>     <span class="note">← NEW</span>
+├── <a href="seller-reviews.html" class="new">seller-reviews.html</a>    <span class="note">← NEW</span>
+├── <a href="seller-coupons.html" class="new">seller-coupons.html</a>    <span class="note">← NEW</span>
+├── <a href="seller-ads.html">seller-ads.html</a>  <a href="seller-analytics.html">seller-analytics.html</a>  <a href="seller-finance.html">seller-finance.html</a>
+├── <a href="seller-live.html" class="new">seller-live.html</a>       <span class="note">← NEW · Go Live toggle</span>
+├── <a href="seller-onboarding.html">seller-onboarding.html</a>  <a href="onboarding.html">onboarding.html</a>
+│
+├── <span class="note">── ADMIN PANEL (10 หน้า) ──</span>
+├── <a href="admin-dashboard.html">admin-dashboard.html</a>
+├── <a href="admin-users.html" class="new">admin-users.html</a>       <span class="note">← NEW</span>
+├── <a href="admin-sellers.html" class="new">admin-sellers.html</a>     <span class="note">← NEW</span>
+├── <a href="admin-orders.html" class="new">admin-orders.html</a>      <span class="note">← NEW</span>
+├── <a href="admin-products.html" class="new">admin-products.html</a>    <span class="note">← NEW · approve queue</span>
+├── <a href="admin-coupons.html" class="new">admin-coupons.html</a>     <span class="note">← NEW</span>
+├── <a href="admin-payouts.html" class="new">admin-payouts.html</a>     <span class="note">← NEW · Payout management</span>
+├── <a href="flash-sale-admin.html">flash-sale-admin.html</a>  <a href="analytics-report.html">analytics-report.html</a>  <a href="campaign-calendar.html">campaign-calendar.html</a>
+│
+├── <span class="note">── MISC ──</span>
+├── <a href="help-center.html">help-center.html</a>  <a href="sitemap.html">sitemap.html</a>  <a href="storefront.html">storefront.html</a>
+├── <a href="api-docs.html">api-docs.html</a>  <a href="microservices-arch.html">microservices-arch.html</a>
+└── database-schema.sql
+  </div>
+</div>
+
+<!-- GA SNIPPET -->
+<div class="section">
+  <div class="section-tag">Quick Start Snippets</div>
+  <h2>Snippet <strong>สำคัญ</strong></h2>
+  <p class="section-sub">Copy-paste ใส่ทุกหน้าก่อน &lt;/head&gt;</p>
+
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:8px">Google Analytics 4</div>
+  <pre id="code-ga"><button class="copy-btn" onclick="copyCode('code-ga')">Copy</button><span class="comment">&lt;!-- วางก่อน &lt;/head&gt; ทุกหน้า --&gt;</span>
+&lt;script async src="https://www.googletagmanager.com/gtag/js?id=<span class="val">G-XXXXXXXXXX</span>"&gt;&lt;/script&gt;
+&lt;script&gt;
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '<span class="val">G-XXXXXXXXXX</span>');
+&lt;/script&gt;</pre>
+
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:8px;margin-top:20px">Open Graph Meta Tags (ใส่ใน &lt;head&gt;)</div>
+  <pre id="code-og"><button class="copy-btn" onclick="copyCode('code-og')">Copy</button><span class="comment">&lt;!-- Social sharing preview --&gt;</span>
+&lt;meta property="og:title" content="<span class="val">Thailand Market — ช้อปครบ จบในที่เดียว</span>"&gt;
+&lt;meta property="og:description" content="<span class="val">500,000+ สินค้า 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</span>"&gt;
+&lt;meta property="og:image" content="<span class="val">https://yoursite.com/og-image.jpg</span>"&gt;
+&lt;meta property="og:url" content="<span class="val">https://yoursite.com</span>"&gt;
+&lt;meta property="og:type" content="website"&gt;
+&lt;meta name="twitter:card" content="summary_large_image"&gt;</pre>
+
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:8px;margin-top:20px">Favicon</div>
+  <pre id="code-fav"><button class="copy-btn" onclick="copyCode('code-fav')">Copy</button><span class="comment">&lt;!-- วางใน &lt;head&gt; --&gt;</span>
+&lt;link rel="icon" type="image/x-icon" href="<span class="val">/favicon.ico</span>"&gt;
+&lt;link rel="icon" type="image/png" sizes="32x32" href="<span class="val">/favicon-32.png</span>"&gt;
+&lt;link rel="apple-touch-icon" sizes="180x180" href="<span class="val">/apple-touch-icon.png</span>"&gt;</pre>
+
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:8px;margin-top:20px">robots.txt (สร้างไฟล์ใหม่ชื่อ robots.txt)</div>
+  <pre id="code-robots"><button class="copy-btn" onclick="copyCode('code-robots')">Copy</button>User-agent: *
+Allow: /
+
+<span class="comment"># Block admin pages from indexing</span>
+Disallow: /admin-
+Disallow: /seller-portal
+Disallow: /seller-orders
+Disallow: /seller-finance
+
+Sitemap: <span class="val">https://yoursite.com/sitemap.xml</span></pre>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-logo">Thailand<span class="dot">.</span>Market</div>
+    <div class="footer-links">
+      <a href="index.html" class="footer-link">หน้าแรก</a>
+      <a href="sitemap.html" class="footer-link">Site Map</a>
+      <a href="admin-dashboard.html" class="footer-link">Admin</a>
+      <a href="seller-portal.html" class="footer-link">Seller</a>
+    </div>
+    <div class="footer-copy">© 2026 Thailand Market · Deploy Guide · 54 pages ready</div>
+  </div>
+</footer>
+
+<div class="tw" id="tw"></div>
+
+<script>
+// Toast
+function toast(m){var w=document.getElementById('tw');var t=document.createElement('div');t.className='toast';t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}
+
+// Copy code
+function copyCode(id){
+  var pre=document.getElementById(id);
+  var txt=pre.innerText.replace(/^Copy\n/,'').replace(/^Copy$/,'').trim();
+  navigator.clipboard.writeText(txt).then(function(){
+    toast('Copied to clipboard ✓');
+  }).catch(function(){
+    toast('Select text manually');
+  });
+}
+
+// Checklist
+var KEYS={tech:[],cont:[],mkt:[]};
+document.querySelectorAll('.cl-group').forEach(function(grp){
+  var gid=grp.dataset.group;
+  grp.querySelectorAll('.cl-item').forEach(function(item,i){
+    var saved=localStorage.getItem('cl-'+gid+'-'+i);
+    if(saved==='1') setDone(item,true);
+  });
+  updateProgress(grp,gid);
+});
+
+function tick(item){
+  var grp=item.closest('.cl-group');
+  var gid=grp.dataset.group;
+  var items=Array.from(grp.querySelectorAll('.cl-item'));
+  var idx=items.indexOf(item);
+  var box=item.querySelector('.cl-box');
+  var done=box.classList.contains('done');
+  setDone(item,!done);
+  localStorage.setItem('cl-'+gid+'-'+idx, done?'0':'1');
+  updateProgress(grp,gid);
+}
+
+function setDone(item,done){
+  var box=item.querySelector('.cl-box');
+  if(done){box.classList.add('done')}else{box.classList.remove('done')}
+}
+
+function updateProgress(grp,gid){
+  var items=grp.querySelectorAll('.cl-item');
+  var doneCount=grp.querySelectorAll('.cl-box.done').length;
+  var pct=Math.round(doneCount/items.length*100);
+  var bar=document.getElementById('pb-'+gid);
+  var val=document.getElementById('pv-'+gid);
+  if(bar)bar.style.width=pct+'%';
+  if(val)val.textContent=pct+'%';
+}
+</script>
+</body>
+</html>

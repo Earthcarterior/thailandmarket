@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thailand Market — สมัครขาย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style id="tm-base">
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
+  /* legacy compat */
+  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
+  --bg:#FAFAFA;--white-off:#FAFAFA;
+  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
+  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
+  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
+  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
+  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
+  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
+  --sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
+
+/* ── NAV ── */
+#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
+.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
+.tn-logo .dot{color:var(--red)}
+.tn-links{display:flex;flex:1;overflow:hidden}
+.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
+.tn-link:hover{color:var(--black)}
+.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
+.tn-search{position:relative;margin-left:auto}
+.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
+.tn-search input:focus{border-color:var(--black)}
+.tn-search input::placeholder{color:var(--g400)}
+.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
+.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
+.tn-btn:hover{color:var(--black)}
+.tn-btn.sell{color:var(--red)}
+.tn-ico{font-size:15px;position:relative;line-height:1}
+.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+.tn-cats{border-top:var(--border)}
+.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
+.tn-cats-inner::-webkit-scrollbar{display:none}
+.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
+.tn-cat:hover{color:var(--black)}
+.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
+
+/* ── GLOBAL BUTTONS ── */
+.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
+.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
+.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
+.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
+.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
+
+/* old btn-primary / btn-secondary overrides */
+.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-primary:hover{background:var(--g800)!important}
+.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
+
+/* legacy btn-cart / btn-buy → new style */
+.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
+.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-buy:hover{background:var(--g800)!important}
+.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
+.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
+
+/* ── CARDS ── */
+.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
+.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
+
+/* ── SECTION ── */
+.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
+.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
+.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
+.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
+.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
+
+/* ── PRODUCT CARDS ── */
+.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
+.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
+.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
+.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
+.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
+.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
+.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
+.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
+.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
+.badge-hot{background:var(--black)!important;color:var(--white)!important}
+
+/* ── PRICE BOX ── */
+.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
+.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
+.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
+.flash-tag{background:var(--red)!important;border-radius:0!important}
+
+/* ── NAV OLD → NEW ── */
+.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
+.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
+.nav-search input{border:var(--border)!important;border-radius:0!important}
+.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
+.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
+.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
+.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
+.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
+.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
+.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
+
+/* ── FORMS ── */
+.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
+.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
+.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
+
+/* ── STATUS / BADGE ── */
+.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
+.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
+.status-badge,.badge{border-radius:0!important}
+
+/* ── TABLES ── */
+table{border-collapse:collapse}
+thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
+tbody td{border-bottom:var(--border)!important}
+tbody tr:hover td{background:var(--g50)!important}
+
+/* ── MODALS ── */
+.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
+.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
+.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
+
+/* ── SIDEBAR (seller) ── */
+.sidebar,.sb{background:var(--black)!important}
+.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
+.sni-badge{background:var(--red)!important}
+.sb-logo-mark{background:var(--red)!important}
+.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
+
+/* ── COLORS: strip all gradients/rounded corners ── */
+[style*="background:linear-gradient"]{background:var(--g50)!important}
+[style*="border-radius"]{border-radius:0!important}
+
+/* ── TOAST ── */
+.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
+@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── FOOTER ── */
+#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
+#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
+#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-logo .dot{color:var(--red)}
+#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
+#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
+#tm-footer .tf-link:hover{color:var(--white)}
+#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
+  .tn-links{display:none}
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
+</style>
+<style id="page-css">
+
+:root{--primary:#0A0A0A;--accent:#E63329;--teal:#404040;--gold:#F2F2F2;--bg:#FFFFFF;--white:#fff;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;--gn:#16A34A;--r8:8px;--r12:12px;--r16:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);font-size:14px;min-height:100vh}
+.layout{display:flex;min-height:100vh}
+/* LEFT SIDEBAR */
+.left{width:320px;background:var(--primary);flex-shrink:0;padding:32px 28px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:'DM Sans',sans-serif;font-weight:900;font-size:22px;color:#fff;margin-bottom:4px}.logo span{color:var(--accent)}
+.logo-sub{font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:36px}
+.steps-nav{flex:1}
+.sn-step{display:flex;gap:12px;padding:12px 0;position:relative}
+.sn-step::after{content:'';position:absolute;left:16px;top:40px;width:2px;height:calc(100% - 16px);background:rgba(255,255,255,0.1)}
+.sn-step:last-child::after{display:none}
+.sn-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;z-index:1;transition:all 0.3s}
+.sc-done{background:var(--gn);color:#fff}
+.sc-active{background:var(--accent);color:#fff;box-shadow:0 0 0 5px rgba(230,57,70,0.2)}
+.sc-wait{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1)}
+.sn-info{padding-top:4px}
+.si-title{font-size:13px;font-weight:600;transition:color 0.2s}
+.si-done{color:var(--gn)}.si-active{color:#fff}.si-wait{color:rgba(255,255,255,0.35)}
+.si-sub{font-size:11px;color:rgba(255,255,255,0.25);margin-top:2px}
+.benefits-box{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:16px;margin-top:auto}
+.bb-title{font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.bb-item{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:12px;color:rgba(255,255,255,0.6);line-height:1.5}
+.bb-ico{font-size:14px;flex-shrink:0;margin-top:-1px}
+/* MAIN */
+.main{flex:1;padding:32px 40px;max-width:680px}
+.progress-bar-wrap{height:3px;background:var(--g200);border-radius:2px;margin-bottom:32px;overflow:hidden}
+.progress-fill{height:3px;background:var(--accent);border-radius:2px;transition:width 0.4s ease}
+.step-content{display:none}
+.step-content.active{display:block}
+.step-header{margin-bottom:28px}
+.sh-step{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.sh-title{font-family:'DM Sans',sans-serif;font-weight:800;font-size:24px;color:var(--g900);margin-bottom:6px}
+.sh-sub{font-size:13px;color:var(--g500);line-height:1.6}
+.form-group{margin-bottom:18px}
+.fg-label{font-size:12px;font-weight:700;color:var(--g700);margin-bottom:7px;display:flex;align-items:center;gap:4px}
+.required{color:var(--accent)}
+input[type=text],input[type=email],input[type=tel],input[type=password],select,textarea{width:100%;padding:11px 14px;border:1.5px solid var(--g200);border-radius:4px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;transition:all 0.15s;color:var(--g900)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(230,57,70,0.08)}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+.input-hint{font-size:11px;color:var(--g400);margin-top:5px}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.type-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:2px}
+.type-opt{border:1.5px solid var(--g200);border-radius:4px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;background:#fff}
+.type-opt:hover{border-color:var(--accent)}
+.type-opt.selected{border-color:var(--accent);background:#FFF5F5}
+.to-ico{font-size:28px;margin-bottom:6px}
+.to-label{font-size:12px;font-weight:600;color:var(--g700)}
+.to-sub{font-size:10px;color:var(--g400);margin-top:2px}
+.upload-box{border:2px dashed var(--g200);border-radius:4px;padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;background:#fff}
+.upload-box:hover{border-color:var(--accent);background:#FFF5F5}
+.ub-ico{font-size:32px;margin-bottom:8px}
+.ub-label{font-size:13px;font-weight:600;color:var(--g700);margin-bottom:4px}
+.ub-sub{font-size:11px;color:var(--g400)}
+.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:2px}
+.plan-card{border:1.5px solid var(--g200);border-radius:4px;padding:18px;cursor:pointer;transition:all 0.2s;background:#fff;position:relative}
+.plan-card:hover{border-color:var(--accent)}
+.plan-card.selected{border-color:var(--accent);background:#FFF5F5}
+.pc-recommended{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;white-space:nowrap}
+.pc-name{font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;margin-bottom:4px}
+.pc-price{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:900;color:var(--accent);margin-bottom:8px}
+.pc-price span{font-size:11px;font-weight:400;color:var(--g400)}
+.pc-feature{font-size:11px;color:var(--g700);margin-bottom:4px;display:flex;gap:5px}
+.check-sm{color:var(--gn)}
+.check-x{color:var(--g400)}
+.cats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cat-opt{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--g200);border-radius:4px;cursor:pointer;transition:all 0.15s;background:#fff}
+.cat-opt:hover{border-color:var(--accent)}
+.cat-opt.selected{border-color:var(--accent);background:#FFF5F5}
+.cat-opt input{accent-color:var(--accent)}
+.co-ico{font-size:18px;flex-shrink:0}
+.co-name{font-size:12.5px;font-weight:600;color:var(--g700)}
+.co-gp{font-size:10px;color:var(--g400)}
+/* SUCCESS */
+.success-state{text-align:center;padding:32px 0}
+.ss-ico{font-size:72px;margin-bottom:16px;animation:popIn 0.5s ease}
+@keyframes popIn{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
+.ss-title{font-family:'DM Sans',sans-serif;font-weight:900;font-size:26px;color:var(--gn);margin-bottom:8px}
+.ss-sub{font-size:14px;color:var(--g500);line-height:1.7;margin-bottom:28px}
+.ss-card{background:#fff;border:1px solid var(--g200);border-radius:4px;padding:20px;text-align:left;margin-bottom:16px}
+.sc-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--g100)}
+.sc-row:last-child{border-bottom:none}
+/* NAV BTNS */
+.nav-btns{display:flex;gap:10px;margin-top:28px;padding-top:20px;border-top:1px solid var(--g200)}
+.btn-prev{flex:1;padding:12px;background:#fff;border:1.5px solid var(--g200);border-radius:4px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;color:var(--g700);transition:all 0.15s}
+.btn-prev:hover{border-color:var(--g400)}
+.btn-next{flex:2;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-next:hover{background:#B5261F;transform:scale(1.01)}
+.btn-next:disabled{background:var(--g200);cursor:not-allowed;transform:none}
+.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999}
+.toast{background:var(--primary);color:#fff;padding:11px 16px;border-radius:4px;font-size:13px;animation:tIn 0.3s ease}
+@keyframes tIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+</style>
+<style id="tm-responsive">
+/* ── Mobile fixes ── */
+@media(max-width:768px){
+  .tn-links{display:none!important}
+  .tn-srch{display:none!important}
+  /* hamburger hint */
+  .tn-top{padding:0 16px}
+  .tn-logo{margin-right:auto}
+  /* sidebar pages on mobile */
+  .app{flex-direction:column}
+  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
+  .sb-logo,.sb-user{flex-basis:100%}
+  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
+  .sb-lbl{display:none}
+  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
+  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
+  .sb-foot{display:none}
+  .main{margin-left:0!important}
+  /* layout grids */
+  .layout{grid-template-columns:1fr!important}
+  .form-row{grid-template-columns:1fr!important}
+  /* tables */
+  table{font-size:12px}
+  td,th{padding:8px 10px!important}
+  /* stat grids */
+  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  [style*="grid-template-columns:repeat(3"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* hero */
+  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
+  .hero-right{display:none}
+  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
+  /* product grids */
+  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* footer */
+  #tm-footer .tf-grid{grid-template-columns:1fr!important}
+  /* wrap padding */
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:36px!important}
+  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
+  .hero-stat-row{grid-template-columns:1fr 1fr}
+}
+/* ── Print friendly ── */
+@media print{
+  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
+  body{font-size:12px}
+}
+/* ── Focus / accessibility ── */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid #0A0A0A;outline-offset:2px
+}
+/* ── Smooth image loading ── */
+img{max-width:100%;height:auto}
+/* ── Selection color ── */
+::selection{background:#0A0A0A;color:#fff}
+</style>
+</head>
+<body>
+<nav id="tm-nav">
+  <div class="tn-top">
+    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="tn-links">
+      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
+      <a href="live-shopping.html" class="tn-link">Live</a>
+      <a href="brand-day.html" class="tn-link">Brand Day</a>
+      <a href="coupon-hub.html" class="tn-link">Coupon</a>
+      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
+      <a href="subscription.html" class="tn-link">TM Plus</a>
+      <a href="b2b-portal.html" class="tn-link">B2B</a>
+      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
+    </div>
+    <div class="tn-search">
+      <input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'">
+    </div>
+    <div class="tn-acts">
+      <button class="tn-btn" onclick="location.href='wishlist.html'"><span class="tn-ico">♡</span>Saved</button>
+      <button class="tn-btn" onclick="location.href='notification-center.html'"><span class="tn-ico">🔔</span>Alerts</button>
+      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
+      <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
+      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
+    </div>
+  </div>
+  <div class="tn-cats">
+    <div class="tn-cats-inner">
+      <a href="category.html" class="tn-cat">🏠 Home</a>
+      <a href="category.html" class="tn-cat">👗 Fashion</a>
+      <a href="category.html" class="tn-cat">💄 Beauty</a>
+      <a href="category.html" class="tn-cat">🛒 FMCG</a>
+      <a href="category.html" class="tn-cat">💻 Tech</a>
+      <a href="category.html" class="tn-cat">🚗 Auto</a>
+      <a href="category.html" class="tn-cat">🐾 Pets</a>
+      <a href="category.html" class="tn-cat">📚 Education</a>
+    </div>
+  </div>
+</nav>
+
+
+
+
+
+
+
+
+
+<div class="layout">
+  <!-- LEFT -->
+  <div class="left">
+    <div class="logo">Thailand <span>Market</span> Seller</div>
+    <div class="logo-sub">เริ่มต้นขายสินค้ากับเรา</div>
+    <div class="steps-nav">
+      <div class="sn-step"><div class="sn-circle sc-done" id="c1">✓</div><div class="sn-info"><div class="si-title si-done">ประเภทผู้ขาย</div><div class="si-sub">บุคคล / นิติบุคคล / แบรนด์</div></div></div>
+      <div class="sn-step"><div class="sn-circle sc-active" id="c2">2</div><div class="sn-info"><div class="si-title si-active">ข้อมูลร้านค้า</div><div class="si-sub">ชื่อร้าน, รายละเอียด</div></div></div>
+      <div class="sn-step"><div class="sn-circle sc-wait" id="c3">3</div><div class="sn-info"><div class="si-title si-wait">เอกสาร & ยืนยันตัวตน</div><div class="si-sub">อัปโหลดเอกสารสำคัญ</div></div></div>
+      <div class="sn-step"><div class="sn-circle sc-wait" id="c4">4</div><div class="sn-info"><div class="si-title si-wait">หมวดหมู่สินค้า</div><div class="si-sub">เลือกหมวดที่ต้องการขาย</div></div></div>
+      <div class="sn-step"><div class="sn-circle sc-wait" id="c5">5</div><div class="sn-info"><div class="si-title si-wait">แผนการใช้งาน</div><div class="si-sub">Free / Basic / Pro</div></div></div>
+      <div class="sn-step"><div class="sn-circle sc-wait" id="c6">6</div><div class="sn-info"><div class="si-title si-wait">บัญชีรับเงิน</div><div class="si-sub">ธนาคารสำหรับรับเงิน</div></div></div>
+    </div>
+    <div class="benefits-box">
+      <div class="bb-title">ทำไมต้องขายกับ Thailand Market?</div>
+      <div class="bb-item"><div class="bb-ico">👥</div>ผู้ซื้อกว่า 2.4 ล้านคนต่อเดือน</div>
+      <div class="bb-item"><div class="bb-ico">📦</div>FBP (Fulfilled by Thailand Market) พร้อมใช้</div>
+      <div class="bb-item"><div class="bb-ico">⚡</div>เข้าร่วม Flash Sale และ Brand Day</div>
+      <div class="bb-item"><div class="bb-ico">💰</div>รับเงินทุก 15 วัน ไม่มีค่าธรรมเนียมซ่อน</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="progress-bar-wrap"><div class="progress-fill" id="progress" style="width:33%"></div></div>
+
+    <!-- STEP 2: SHOP INFO -->
+    <div class="step-content active" id="step-2">
+      <div class="step-header">
+        <div class="sh-step">ขั้นตอนที่ 2 จาก 6</div>
+        <div class="sh-title">ข้อมูลร้านค้าของคุณ</div>
+        <div class="sh-sub">ข้อมูลเหล่านี้จะแสดงบนหน้าร้านค้าของคุณ — แก้ไขได้ภายหลัง</div>
+      </div>
+      <div class="form-group">
+        <div class="fg-label">ชื่อร้านค้า <span class="required">*</span></div>
+        <input type="text" id="shop-name" placeholder="เช่น Samsung Official TH" oninput="updateSlug()">
+        <div class="input-hint" id="slug-preview">URL ร้าน: thailandmarket.th/shop/<span id="slug-val">ชื่อร้านของคุณ</span></div>
+      </div>
+      <div class="form-group">
+        <div class="fg-label">คำอธิบายร้านค้า</div>
+        <textarea placeholder="เล่าเกี่ยวกับร้านของคุณ สินค้าที่ขาย ความเชี่ยวชาญ..."></textarea>
+      </div>
+      <div class="row-2">
+        <div class="form-group">
+          <div class="fg-label">ชื่อผู้ติดต่อ <span class="required">*</span></div>
+          <input type="text" placeholder="ชื่อ-นามสกุล">
+        </div>
+        <div class="form-group">
+          <div class="fg-label">เบอร์โทรร้านค้า <span class="required">*</span></div>
+          <input type="tel" placeholder="08X-XXXX-XXXX">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="fg-label">Email ร้านค้า <span class="required">*</span></div>
+        <input type="email" placeholder="shop@example.com">
+      </div>
+      <div class="form-group">
+        <div class="fg-label">Logo ร้านค้า</div>
+        <div class="upload-box" onclick="toast('📷 เปิดหน้าต่างอัปโหลด')">
+          <div class="ub-ico">🖼️</div>
+          <div class="ub-label">อัปโหลด Logo</div>
+          <div class="ub-sub">PNG, JPG · แนะนำ 400×400px · ไม่เกิน 5MB</div>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-prev" onclick="goPrev()">← ย้อนกลับ</button>
+        <button class="btn-next" onclick="goNext()">ต่อไป: เอกสาร →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: DOCUMENTS -->
+    <div class="step-content" id="step-3">
+      <div class="step-header">
+        <div class="sh-step">ขั้นตอนที่ 3 จาก 6</div>
+        <div class="sh-title">เอกสาร & ยืนยันตัวตน</div>
+        <div class="sh-sub">เอกสารจะถูกตรวจสอบโดยทีมงาน Thailand Market ภายใน 1-3 วันทำการ</div>
+      </div>
+      <div class="form-group">
+        <div class="fg-label">บัตรประชาชน / หนังสือเดินทาง <span class="required">*</span></div>
+        <div class="upload-box" onclick="toast('📷 อัปโหลด ID Card')">
+          <div class="ub-ico">🪪</div>
+          <div class="ub-label">อัปโหลดบัตรประชาชน (ด้านหน้า)</div>
+          <div class="ub-sub">JPG, PNG, PDF · ไม่เกิน 10MB</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="fg-label">เซลฟี่ถือบัตรประชาชน <span class="required">*</span></div>
+        <div class="upload-box" onclick="toast('📷 ถ่ายรูปเซลฟี่')">
+          <div class="ub-ico">🤳</div>
+          <div class="ub-label">รูปเซลฟี่ถือบัตรประชาชน</div>
+          <div class="ub-sub">ต้องเห็นหน้าและบัตรชัดเจน</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="fg-label">หนังสือรับรองบริษัท (กรณีนิติบุคคล)</div>
+        <div class="upload-box" onclick="toast('📄 อัปโหลดเอกสารบริษัท')">
+          <div class="ub-ico">📄</div>
+          <div class="ub-label">อัปโหลดหนังสือรับรองบริษัท</div>
+          <div class="ub-sub">ไม่เกิน 3 เดือน · PDF, JPG</div>
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="form-group">
+          <div class="fg-label">เลขบัตรประชาชน / Tax ID <span class="required">*</span></div>
+          <input type="text" placeholder="1 2345 67890 12 3">
+        </div>
+        <div class="form-group">
+          <div class="fg-label">วันเกิด / วันจดทะเบียน</div>
+          <input type="text" placeholder="วว/ดด/ปปปป">
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-prev" onclick="goPrev()">← ย้อนกลับ</button>
+        <button class="btn-next" onclick="goNext()">ต่อไป: หมวดหมู่ →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: CATEGORIES -->
+    <div class="step-content" id="step-4">
+      <div class="step-header">
+        <div class="sh-step">ขั้นตอนที่ 4 จาก 6</div>
+        <div class="sh-title">เลือกหมวดหมู่สินค้า</div>
+        <div class="sh-sub">เลือกหมวดหมู่ที่ต้องการขาย (เลือกได้หลายหมวด) อัตรา GP จะแตกต่างกันตามหมวด</div>
+      </div>
+      <div class="cats-grid">
+        <div class="cat-opt" onclick="toggleCat(this)"><input type="checkbox"><div class="co-ico">🏠</div><div><div class="co-name">บ้านและเฟอร์นิเจอร์</div><div class="co-gp">GP: 7%</div></div></div>
+        <div class="cat-opt selected" onclick="toggleCat(this)"><input type="checkbox" checked><div class="co-ico">💻</div><div><div class="co-name">Tech & Gadgets</div><div class="co-gp">GP: 4%</div></div></div>
+        <div class="cat-opt" onclick="toggleCat(this)"><input type="checkbox"><div class="co-ico">👗</div><div><div class="co-name">แฟชั่น</div><div class="co-gp">GP: 11%</div></div></div>
+        <div class="cat-opt" onclick="toggleCat(this)"><input type="checkbox"><div class="co-ico">💄</div><div><div class="co-name">Beauty & Health</div><div class="co-gp">GP: 9%</div></div></div>
+        <div class="cat-opt" onclick="toggleCat(this)"><input type="checkbox"><div class="co-ico">🛒</div><div><div class="co-name">FMCG & อาหาร</div><div class="co-gp">GP: 6%</div></div></div>
+        <div class="cat-opt" onclick="toggleCat(this)"><input type="checkbox"><div class="co-ico">🚗</div><div><div class="co-name">ยานยนต์</div><div class="co-gp">GP: 4%</div></div></div>
+        <div class="cat-opt" onclick="toggleCat(this)"><input type="checkbox"><div class="co-ico">🐾</div><div><div class="co-name">สัตว์เลี้ยง</div><div class="co-gp">GP: 9%</div></div></div>
+        <div class="cat-opt" onclick="toggleCat(this)"><input type="checkbox"><div class="co-ico">📚</div><div><div class="co-name">การศึกษา</div><div class="co-gp">GP: 4%</div></div></div>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-prev" onclick="goPrev()">← ย้อนกลับ</button>
+        <button class="btn-next" onclick="goNext()">ต่อไป: แผนการใช้งาน →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: PLAN -->
+    <div class="step-content" id="step-5">
+      <div class="step-header">
+        <div class="sh-step">ขั้นตอนที่ 5 จาก 6</div>
+        <div class="sh-title">เลือกแผนการใช้งาน</div>
+        <div class="sh-sub">เริ่มต้นฟรี อัปเกรดได้ตลอดเวลา — ไม่มีสัญญาผูกมัด</div>
+      </div>
+      <div class="plan-grid">
+        <div class="plan-card" onclick="selPlan(this)">
+          <div class="pc-name">Free</div>
+          <div class="pc-price">฿0 <span>/เดือน</span></div>
+          <div class="pc-feature"><span class="check-sm">✓</span> สินค้าไม่จำกัด</div>
+          <div class="pc-feature"><span class="check-sm">✓</span> Commission ตามหมวด</div>
+          <div class="pc-feature"><span class="check-sm">✓</span> Dashboard พื้นฐาน</div>
+          <div class="pc-feature"><span class="check-x">✕</span> Flash Sale priority</div>
+          <div class="pc-feature"><span class="check-x">✕</span> Analytics advanced</div>
+        </div>
+        <div class="plan-card selected" onclick="selPlan(this)">
+          <div class="pc-recommended">แนะนำ</div>
+          <div class="pc-name">Basic</div>
+          <div class="pc-price">฿499 <span>/เดือน</span></div>
+          <div class="pc-feature"><span class="check-sm">✓</span> ทุกอย่างใน Free</div>
+          <div class="pc-feature"><span class="check-sm">✓</span> Flash Sale เข้าร่วมได้</div>
+          <div class="pc-feature"><span class="check-sm">✓</span> Analytics รายวัน</div>
+          <div class="pc-feature"><span class="check-sm">✓</span> Badge "Verified Seller"</div>
+          <div class="pc-feature"><span class="check-x">✕</span> Sponsored Ads</div>
+        </div>
+        <div class="plan-card" onclick="selPlan(this)">
+          <div class="pc-name">Pro</div>
+          <div class="pc-price">฿1,499 <span>/เดือน</span></div>
+          <div class="pc-feature"><span class="check-sm">✓</span> ทุกอย่างใน Basic</div>
+          <div class="pc-feature"><span class="check-sm">✓</span> Sponsored Ads</div>
+          <div class="pc-feature"><span class="check-sm">✓</span> Brand Day priority</div>
+          <div class="pc-feature"><span class="check-sm">✓</span> Account Manager</div>
+          <div class="pc-feature"><span class="check-sm">✓</span> Analytics real-time</div>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-prev" onclick="goPrev()">← ย้อนกลับ</button>
+        <button class="btn-next" onclick="goNext()">ต่อไป: บัญชีรับเงิน →</button>
+      </div>
+    </div>
+
+    <!-- STEP 6: BANK -->
+    <div class="step-content" id="step-6">
+      <div class="step-header">
+        <div class="sh-step">ขั้นตอนที่ 6 จาก 6 — ขั้นตอนสุดท้าย!</div>
+        <div class="sh-title">บัญชีรับเงิน</div>
+        <div class="sh-sub">Thailand Market จ่ายเงินทุก 15 วัน โอนตรงเข้าบัญชีของคุณ ไม่มีค่าธรรมเนียม</div>
+      </div>
+      <div class="form-group">
+        <div class="fg-label">ธนาคาร <span class="required">*</span></div>
+        <select>
+          <option>-- เลือกธนาคาร --</option>
+          <option>ธนาคารกสิกรไทย (KBank)</option>
+          <option>ธนาคารไทยพาณิชย์ (SCB)</option>
+          <option>ธนาคารกรุงเทพ (BBL)</option>
+          <option>ธนาคารกรุงไทย (KTB)</option>
+          <option>ธนาคารกรุงศรีอยุธยา (BAY)</option>
+          <option>ธนาคาร TMBThanachart (TTB)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="fg-label">เลขบัญชี <span class="required">*</span></div>
+        <input type="text" placeholder="XXX-X-XXXXX-X">
+      </div>
+      <div class="form-group">
+        <div class="fg-label">ชื่อบัญชี <span class="required">*</span></div>
+        <input type="text" placeholder="ต้องตรงกับชื่อผู้ขายหรือนิติบุคคล">
+        <div class="input-hint">⚠️ ชื่อบัญชีต้องตรงกับชื่อที่ลงทะเบียน เพื่อป้องกันการโอนผิด</div>
+      </div>
+      <div class="form-group">
+        <div class="fg-label">สาขา (ถ้ามี)</div>
+        <input type="text" placeholder="ชื่อสาขา (ไม่บังคับ)">
+      </div>
+      <div class="nav-btns">
+        <button class="btn-prev" onclick="goPrev()">← ย้อนกลับ</button>
+        <button class="btn-next" onclick="submitForm()">🎉 ส่งใบสมัครผู้ขาย</button>
+      </div>
+    </div>
+
+    <!-- STEP SUCCESS -->
+    <div class="step-content" id="step-success">
+      <div class="success-state">
+        <div class="ss-ico">🎉</div>
+        <div class="ss-title">สมัครสำเร็จแล้ว!</div>
+        <div class="ss-sub">ขอบคุณที่เลือกเป็นผู้ขายกับ Thailand Market!<br>ทีมงานจะตรวจสอบเอกสารและแจ้งผลภายใน 1-3 วันทำการ<br>ผ่าน Email และ SMS ที่คุณลงทะเบียนไว้</div>
+        <div class="ss-card">
+          <div class="sc-row"><span style="color:var(--g500)">รหัสใบสมัคร</span><strong>SELLER-2026-004821</strong></div>
+          <div class="sc-row"><span style="color:var(--g500)">ชื่อร้าน</span><strong>My Shop TH</strong></div>
+          <div class="sc-row"><span style="color:var(--g500)">แผน</span><strong>Basic (฿499/เดือน)</strong></div>
+          <div class="sc-row"><span style="color:var(--g500)">สถานะ</span><span style="color:var(--gold);font-weight:700">⏳ รอตรวจสอบเอกสาร</span></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button style="padding:12px 24px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer" onclick="window.location.href='seller-portal.html'">เข้า Seller Portal →</button>
+          <button style="padding:12px 24px;background:#fff;color:var(--g700);border:1.5px solid var(--g200);border-radius:4px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer" onclick="window.location.href='index.html'">กลับหน้าแรก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="tw"></div>
+<script>
+let curStep=2;
+const STEPS=[2,3,4,5,6];
+const PROGRESS={2:33,3:50,4:66,5:83,6:95};
+function goNext(){
+  if(curStep<6){
+    curStep++;
+    updateStep();
+  }
+}
+function goPrev(){
+  if(curStep>2){curStep--;updateStep();}
+  else{window.location.href='login.html';}
+}
+function updateStep(){
+  STEPS.forEach(s=>{
+    const el=document.getElementById('step-'+s);
+    el.classList.toggle('active',s===curStep);
+  });
+  document.getElementById('progress').style.width=PROGRESS[curStep]+'%';
+  // Update sidebar circles
+  for(let i=1;i<=6;i++){
+    const c=document.getElementById('c'+i);
+    const t=c.nextElementSibling.querySelector('.si-title');
+    if(i<curStep){c.className='sn-circle sc-done';c.textContent='✓';t.className='si-title si-done';}
+    else if(i===curStep){c.className='sn-circle sc-active';c.textContent=i;t.className='si-title si-active';}
+    else{c.className='sn-circle sc-wait';c.textContent=i;t.className='si-title si-wait';}
+  }
+}
+function submitForm(){
+  STEPS.forEach(s=>document.getElementById('step-'+s).classList.remove('active'));
+  document.getElementById('step-success').classList.add('active');
+  document.getElementById('progress').style.width='100%';
+  toast('🎉 ส่งใบสมัครผู้ขายสำเร็จแล้ว!');
+}
+function updateSlug(){
+  const v=document.getElementById('shop-name').value;
+  const slug=v.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-ก-ฮ]/g,'');
+  document.getElementById('slug-val').textContent=slug||'ชื่อร้านของคุณ';
+}
+function toggleCat(el){el.classList.toggle('selected');el.querySelector('input').checked=el.classList.contains('selected');}
+function selPlan(el){document.querySelectorAll('.plan-card').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');toast('📋 เลือกแผน: '+el.querySelector('.pc-name').textContent);}
+function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
+</script>
+
+
+
+
+
+<div class="tm-toast-wrap" id="tmToastWrap"></div>
+<script>
+function tmToast(msg){
+  var w=document.getElementById('tmToastWrap');
+  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
+  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
+  w.appendChild(t);setTimeout(function(){t.remove()},2600);
+}
+</script>
+<footer id="tm-footer">
+  <div class="tf-inner">
+    <div class="tf-grid">
+      <div>
+        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
+        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
+      </div>
+      <div>
+        <div class="tf-title">ช้อปปิ้ง</div>
+        <a href="index.html" class="tf-link">หน้าแรก</a>
+        <a href="category.html" class="tf-link">หมวดหมู่</a>
+        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
+        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
+        <a href="brand-day.html" class="tf-link">Brand Day</a>
+        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
+      </div>
+      <div>
+        <div class="tf-title">บัญชีของฉัน</div>
+        <a href="profile.html" class="tf-link">โปรไฟล์</a>
+        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
+        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
+        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
+        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
+        <a href="returns.html" class="tf-link">คืนสินค้า</a>
+      </div>
+      <div>
+        <div class="tf-title">ผู้ขาย</div>
+        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
+        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
+        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
+        <a href="seller-analytics.html" class="tf-link">Analytics</a>
+        <a href="b2b-portal.html" class="tf-link">B2B</a>
+        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
+      </div>
+      <div>
+        <div class="tf-title">ช่วยเหลือ</div>
+        <a href="help-center.html" class="tf-link">Help Center</a>
+        <a href="chat.html" class="tf-link">แชทกับเรา</a>
+        <a href="subscription.html" class="tf-link">TM Plus</a>
+        <a href="gift-card.html" class="tf-link">Gift Card</a>
+        <a href="sitemap.html" class="tf-link">Site Map</a>
+        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
+      </div>
+    </div>
+    <div class="tf-bottom">
+      <span>© 2026 Thailand Market · All rights reserved</span>
+      <span>TH · EN · 🔒 SSL · PCI DSS</span>
+    </div>
+  </div>
+</footer>
+<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
+<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+</body>
+</html>

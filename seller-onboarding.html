@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thailand Market — Seller Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style id="tm-base">
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
+  /* legacy compat */
+  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
+  --bg:#FAFAFA;--white-off:#FAFAFA;
+  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
+  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
+  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
+  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
+  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
+  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
+  --sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
+
+/* ── NAV ── */
+#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
+.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
+.tn-logo .dot{color:var(--red)}
+.tn-links{display:flex;flex:1;overflow:hidden}
+.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
+.tn-link:hover{color:var(--black)}
+.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
+.tn-search{position:relative;margin-left:auto}
+.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
+.tn-search input:focus{border-color:var(--black)}
+.tn-search input::placeholder{color:var(--g400)}
+.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
+.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
+.tn-btn:hover{color:var(--black)}
+.tn-btn.sell{color:var(--red)}
+.tn-ico{font-size:15px;position:relative;line-height:1}
+.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+.tn-cats{border-top:var(--border)}
+.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
+.tn-cats-inner::-webkit-scrollbar{display:none}
+.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
+.tn-cat:hover{color:var(--black)}
+.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
+
+/* ── GLOBAL BUTTONS ── */
+.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
+.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
+.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
+.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
+.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
+
+/* old btn-primary / btn-secondary overrides */
+.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-primary:hover{background:var(--g800)!important}
+.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
+
+/* legacy btn-cart / btn-buy → new style */
+.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
+.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-buy:hover{background:var(--g800)!important}
+.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
+.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
+
+/* ── CARDS ── */
+.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
+.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
+
+/* ── SECTION ── */
+.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
+.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
+.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
+.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
+.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
+
+/* ── PRODUCT CARDS ── */
+.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
+.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
+.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
+.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
+.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
+.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
+.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
+.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
+.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
+.badge-hot{background:var(--black)!important;color:var(--white)!important}
+
+/* ── PRICE BOX ── */
+.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
+.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
+.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
+.flash-tag{background:var(--red)!important;border-radius:0!important}
+
+/* ── NAV OLD → NEW ── */
+.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
+.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
+.nav-search input{border:var(--border)!important;border-radius:0!important}
+.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
+.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
+.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
+.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
+.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
+.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
+.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
+
+/* ── FORMS ── */
+.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
+.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
+.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
+
+/* ── STATUS / BADGE ── */
+.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
+.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
+.status-badge,.badge{border-radius:0!important}
+
+/* ── TABLES ── */
+table{border-collapse:collapse}
+thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
+tbody td{border-bottom:var(--border)!important}
+tbody tr:hover td{background:var(--g50)!important}
+
+/* ── MODALS ── */
+.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
+.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
+.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
+
+/* ── SIDEBAR (seller) ── */
+.sidebar,.sb{background:var(--black)!important}
+.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
+.sni-badge{background:var(--red)!important}
+.sb-logo-mark{background:var(--red)!important}
+.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
+
+/* ── COLORS: strip all gradients/rounded corners ── */
+[style*="background:linear-gradient"]{background:var(--g50)!important}
+[style*="border-radius"]{border-radius:0!important}
+
+/* ── TOAST ── */
+.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
+@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── FOOTER ── */
+#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
+#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
+#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-logo .dot{color:var(--red)}
+#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
+#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
+#tm-footer .tf-link:hover{color:var(--white)}
+#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
+  .tn-links{display:none}
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
+</style>
+<style id="page-css">
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pr:#E8541A;--pr-dk:#C4430F;--pr-lt:#FFF3EE;
+  --nv:#1A2744;--gn:#16A34A;--gn-lt:#DCFCE7;
+  --rd:#DC2626;--rd-lt:#FEE2E2;--am:#D97706;--am-lt:#FEF3C7;
+  --g50:#F9FAFB;--g100:#F3F4F6;--g200:#E5E7EB;--g300:#D1D5DB;
+  --g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--g50);min-height:100vh;color:var(--g900)}
+
+/* HEADER */
+.header{background:#fff;border-bottom:1px solid var(--g200);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.h-logo{font-family:'DM Sans',sans-serif;font-weight:900;font-size:20px;color:var(--nv)}
+.h-logo span{color:var(--pr)}
+.h-meta{font-size:13px;color:var(--g500)}
+.h-meta strong{color:var(--pr)}
+
+/* LAYOUT */
+.layout{display:flex;min-height:calc(100vh - 56px)}
+.sidebar{width:280px;background:#fff;border-right:1px solid var(--g200);padding:28px 20px;flex-shrink:0}
+.content{flex:1;padding:28px;max-width:720px}
+
+/* STEPS */
+.step-list{display:flex;flex-direction:column;gap:0}
+.step-item{display:flex;gap:14px;padding-bottom:0;position:relative;cursor:pointer}
+.step-item:not(:last-child)::after{content:'';position:absolute;left:19px;top:40px;width:2px;height:100%;background:var(--g200);z-index:0}
+.step-item.done::after{background:var(--gn)}
+.step-item.active::after{background:linear-gradient(to bottom,var(--pr),var(--g200))}
+.step-circle{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;position:relative;z-index:1;border:2px solid var(--g200);background:#fff;transition:all 0.3s;font-weight:700;font-family:'DM Sans',sans-serif}
+.step-item.done .step-circle{background:var(--gn);border-color:var(--gn);color:#fff}
+.step-item.active .step-circle{background:var(--pr);border-color:var(--pr);color:#fff}
+.step-item.locked .step-circle{background:var(--g100);color:var(--g400)}
+.step-text{padding:10px 0 24px}
+.step-title{font-size:14px;font-weight:600;color:var(--g900)}
+.step-item.locked .step-title{color:var(--g400)}
+.step-desc{font-size:12px;color:var(--g500);margin-top:2px}
+.step-item.active .step-title{color:var(--pr)}
+
+/* FORM */
+.form-page{display:none}.form-page.active{display:block}
+.page-title{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;color:var(--g900);margin-bottom:6px}
+.page-sub{font-size:14px;color:var(--g500);margin-bottom:24px;line-height:1.6}
+.card{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;color:var(--g900);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:13px;color:var(--g700);font-weight:500;margin-bottom:5px}
+.fl .req{color:var(--rd)}
+.fi{width:100%;padding:10px 12px;border:1.5px solid var(--g200);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--g900);transition:border-color 0.2s;outline:none}
+.fi:focus{border-color:var(--pr);box-shadow:0 0 0 3px rgba(232,84,26,0.08)}
+.fi.err{border-color:var(--rd)}
+.fi-hint{font-size:12px;color:var(--g400);margin-top:4px}
+.fi-err{font-size:12px;color:var(--rd);margin-top:4px;display:none}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* CAT SELECT */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.cat-opt{border:2px solid var(--g200);border-radius:10px;padding:12px 8px;cursor:pointer;text-align:center;transition:all 0.2s}
+.cat-opt:hover{border-color:var(--pr)}
+.cat-opt.sel{border-color:var(--pr);background:var(--pr-lt)}
+.cat-opt-icon{font-size:22px;margin-bottom:5px}
+.cat-opt-name{font-size:11px;font-weight:500;color:var(--g700)}
+.cat-opt.sel .cat-opt-name{color:var(--pr)}
+
+/* GP TABLE */
+.gp-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+.gp-table th{background:var(--g50);padding:8px 12px;text-align:left;border-bottom:1px solid var(--g200);font-weight:500;color:var(--g500)}
+.gp-table td{padding:8px 12px;border-bottom:1px solid var(--g100)}
+.gp-table tr.active-cat td{background:var(--pr-lt);font-weight:600;color:var(--pr)}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--g300);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative}
+.upload-zone:hover{border-color:var(--pr);background:var(--pr-lt)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-icon{font-size:28px;margin-bottom:8px}
+.upload-title{font-size:14px;font-weight:500;color:var(--g700)}
+.upload-sub{font-size:12px;color:var(--g400);margin-top:4px}
+
+/* BANK */
+.bank-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bank-opt{border:1.5px solid var(--g200);border-radius:8px;padding:10px 6px;cursor:pointer;text-align:center;transition:all 0.2s}
+.bank-opt:hover{border-color:var(--pr)}
+.bank-opt.sel{border-color:var(--pr);background:var(--pr-lt)}
+.bank-icon{font-size:18px;margin-bottom:4px}
+.bank-name{font-size:11px;font-weight:500}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:10px;margin-top:24px;justify-content:flex-end}
+.btn-p{background:var(--pr);color:#fff;border:none;padding:11px 28px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background 0.2s}
+.btn-p:hover{background:var(--pr-dk)}
+.btn-o{background:#fff;color:var(--g700);border:1px solid var(--g200);padding:10px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:all 0.2s}
+.btn-o:hover{background:var(--g50);border-color:var(--g300)}
+
+/* PROGRESS BAR */
+.progress-bar{height:4px;background:var(--g200);border-radius:2px;margin-bottom:24px;overflow:hidden}
+.progress-fill{height:4px;background:var(--pr);border-radius:2px;transition:width 0.4s ease}
+
+/* SUCCESS */
+.success-page{text-align:center;padding:40px 24px;display:none}
+.success-icon{font-size:72px;margin-bottom:16px;animation:pop 0.5s ease}
+@keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.1)}100%{transform:scale(1)}}
+.success-title{font-family:'DM Sans',sans-serif;font-size:26px;font-weight:800;color:var(--gn);margin-bottom:8px}
+.success-sub{font-size:15px;color:var(--g500);margin-bottom:24px;line-height:1.7}
+.next-steps{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:20px;text-align:left;margin-bottom:20px}
+.ns-item{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;font-size:13px}
+.ns-item:last-child{margin-bottom:0}
+.ns-num{width:24px;height:24px;border-radius:50%;background:var(--pr);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+
+/* SIDEBAR INFO */
+.info-box{background:var(--g50);border:1px solid var(--g200);border-radius:10px;padding:14px;margin-top:20px}
+.info-title{font-size:13px;font-weight:600;color:var(--g900);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.info-item{font-size:12px;color:var(--g500);margin-bottom:5px;display:flex;align-items:flex-start;gap:6px}
+.info-item::before{content:'✓';color:var(--gn);flex-shrink:0;font-weight:700}
+
+/* TOAST */
+.toast-wrap{position:fixed;top:70px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--nv);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;animation:fadeIn 0.3s ease;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+</style>
+<style id="tm-responsive">
+/* ── Mobile fixes ── */
+@media(max-width:768px){
+  .tn-links{display:none!important}
+  .tn-srch{display:none!important}
+  /* hamburger hint */
+  .tn-top{padding:0 16px}
+  .tn-logo{margin-right:auto}
+  /* sidebar pages on mobile */
+  .app{flex-direction:column}
+  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
+  .sb-logo,.sb-user{flex-basis:100%}
+  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
+  .sb-lbl{display:none}
+  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
+  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
+  .sb-foot{display:none}
+  .main{margin-left:0!important}
+  /* layout grids */
+  .layout{grid-template-columns:1fr!important}
+  .form-row{grid-template-columns:1fr!important}
+  /* tables */
+  table{font-size:12px}
+  td,th{padding:8px 10px!important}
+  /* stat grids */
+  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  [style*="grid-template-columns:repeat(3"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* hero */
+  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
+  .hero-right{display:none}
+  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
+  /* product grids */
+  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* footer */
+  #tm-footer .tf-grid{grid-template-columns:1fr!important}
+  /* wrap padding */
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:36px!important}
+  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
+  .hero-stat-row{grid-template-columns:1fr 1fr}
+}
+/* ── Print friendly ── */
+@media print{
+  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
+  body{font-size:12px}
+}
+/* ── Focus / accessibility ── */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid #0A0A0A;outline-offset:2px
+}
+/* ── Smooth image loading ── */
+img{max-width:100%;height:auto}
+/* ── Selection color ── */
+::selection{background:#0A0A0A;color:#fff}
+</style>
+</head>
+<body>
+<nav id="tm-nav">
+  <div class="tn-top">
+    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="tn-links">
+      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
+      <a href="live-shopping.html" class="tn-link">Live</a>
+      <a href="brand-day.html" class="tn-link">Brand Day</a>
+      <a href="coupon-hub.html" class="tn-link">Coupon</a>
+      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
+      <a href="subscription.html" class="tn-link">TM Plus</a>
+      <a href="b2b-portal.html" class="tn-link">B2B</a>
+      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
+    </div>
+    <div class="tn-search">
+      <input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'">
+    </div>
+    <div class="tn-acts">
+      <button class="tn-btn" onclick="location.href='wishlist.html'"><span class="tn-ico">♡</span>Saved</button>
+      <button class="tn-btn" onclick="location.href='notification-center.html'"><span class="tn-ico">🔔</span>Alerts</button>
+      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
+      <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
+      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
+    </div>
+  </div>
+  <div class="tn-cats">
+    <div class="tn-cats-inner">
+      <a href="category.html" class="tn-cat">🏠 Home</a>
+      <a href="category.html" class="tn-cat">👗 Fashion</a>
+      <a href="category.html" class="tn-cat">💄 Beauty</a>
+      <a href="category.html" class="tn-cat">🛒 FMCG</a>
+      <a href="category.html" class="tn-cat">💻 Tech</a>
+      <a href="category.html" class="tn-cat">🚗 Auto</a>
+      <a href="category.html" class="tn-cat">🐾 Pets</a>
+      <a href="category.html" class="tn-cat">📚 Education</a>
+    </div>
+  </div>
+</nav>
+
+
+
+
+
+
+
+
+
+
+<div class="header">
+  <div class="h-logo">SIAM<span>Market</span></div>
+  <div class="h-meta">เปิดร้านค้าฟรี ไม่มีค่าสมัคร · <strong>สมัครใน 5 ขั้นตอน</strong></div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="progress-bar"><div class="progress-fill" id="progress" style="width:20%"></div></div>
+
+    <div class="step-list" id="step-list">
+      <div class="step-item active" onclick="goStep(1)">
+        <div class="step-circle" id="sc1">1</div>
+        <div class="step-text"><div class="step-title">ข้อมูลบัญชีผู้ขาย</div><div class="step-desc">Email, รหัสผ่าน</div></div>
+      </div>
+      <div class="step-item locked" onclick="goStep(2)">
+        <div class="step-circle" id="sc2">2</div>
+        <div class="step-text"><div class="step-title">ข้อมูลร้านค้า</div><div class="step-desc">ชื่อร้าน, หมวดหมู่</div></div>
+      </div>
+      <div class="step-item locked" onclick="goStep(3)">
+        <div class="step-circle" id="sc3">3</div>
+        <div class="step-text"><div class="step-title">เอกสารยืนยันตัวตน</div><div class="step-desc">บัตรประชาชน, ที่อยู่</div></div>
+      </div>
+      <div class="step-item locked" onclick="goStep(4)">
+        <div class="step-circle" id="sc4">4</div>
+        <div class="step-text"><div class="step-title">บัญชีรับเงิน</div><div class="step-desc">ธนาคาร, เลขบัญชี</div></div>
+      </div>
+      <div class="step-item locked" onclick="goStep(5)">
+        <div class="step-circle" id="sc5">5</div>
+        <div class="step-text"><div class="step-title">ตั้งค่าร้านค้า</div><div class="step-desc">โลโก้, คำอธิบาย</div></div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="info-title">🎁 สิทธิพิเศษผู้ขายใหม่</div>
+      <div class="info-item">ค่า GP 0% เดือนแรก</div>
+      <div class="info-item">Seller Ads เครดิต ฿500 ฟรี</div>
+      <div class="info-item">เข้าร่วม Flash Sale ได้ทันที</div>
+      <div class="info-item">Live Chat Support 24/7</div>
+      <div class="info-item">คู่มือผู้ขาย PDF ฟรี</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STEP 1: ACCOUNT -->
+    <div class="form-page active" id="fp1">
+      <div class="page-title">สร้างบัญชีผู้ขาย</div>
+      <div class="page-sub">สร้างบัญชีเพื่อเปิดร้านค้าบน SiamMarket ฟรี ไม่มีค่าธรรมเนียมการสมัคร</div>
+      <div class="card">
+        <div class="card-title">👤 ข้อมูลส่วนตัว</div>
+        <div class="fg-row">
+          <div class="fg"><label class="fl">ชื่อ <span class="req">*</span></label><input class="fi" id="fname" placeholder="สมชาย"><div class="fi-err" id="e-fname">กรุณากรอกชื่อ</div></div>
+          <div class="fg"><label class="fl">นามสกุล <span class="req">*</span></label><input class="fi" id="lname" placeholder="ใจดี"><div class="fi-err" id="e-lname">กรุณากรอกนามสกุล</div></div>
+        </div>
+        <div class="fg"><label class="fl">อีเมล <span class="req">*</span></label><input class="fi" type="email" id="email" placeholder="seller@example.com"><div class="fi-err" id="e-email">กรุณากรอกอีเมลที่ถูกต้อง</div></div>
+        <div class="fg"><label class="fl">เบอร์โทรศัพท์ <span class="req">*</span></label><input class="fi" type="tel" id="phone" placeholder="08X-XXX-XXXX"><div class="fi-hint">รับ OTP ยืนยัน และการแจ้งเตือนออเดอร์</div></div>
+        <div class="fg-row">
+          <div class="fg"><label class="fl">รหัสผ่าน <span class="req">*</span></label><input class="fi" type="password" id="pass" placeholder="อย่างน้อย 8 ตัวอักษร" oninput="checkPw(this.value)"><div class="fi-hint" id="pw-strength">ความปลอดภัยของรหัสผ่าน</div></div>
+          <div class="fg"><label class="fl">ยืนยันรหัสผ่าน <span class="req">*</span></label><input class="fi" type="password" id="pass2" placeholder="กรอกรหัสผ่านอีกครั้ง"><div class="fi-err" id="e-pass">รหัสผ่านไม่ตรงกัน</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 ข้อกำหนดและเงื่อนไข</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="agree1" style="margin-top:2px;accent-color:var(--pr)"><span>ข้าพเจ้ายอมรับ <a href="#" style="color:var(--pr)">ข้อกำหนดการใช้งาน</a> และ <a href="#" style="color:var(--pr)">นโยบายความเป็นส่วนตัว</a> ของ SiamMarket</span></label>
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="agree2" style="margin-top:2px;accent-color:var(--pr)"><span>ข้าพเจ้ายอมรับ <a href="#" style="color:var(--pr)">ข้อกำหนดสำหรับผู้ขาย</a> และอัตราค่าคอมมิชชัน (GP)</span></label>
+        </div>
+      </div>
+      <div class="btn-row"><button class="btn-p" onclick="next(1)">ถัดไป →</button></div>
+    </div>
+
+    <!-- STEP 2: SHOP INFO -->
+    <div class="form-page" id="fp2">
+      <div class="page-title">ข้อมูลร้านค้า</div>
+      <div class="page-sub">ตั้งชื่อร้านและเลือกหมวดหมู่สินค้าหลักของคุณ</div>
+      <div class="card">
+        <div class="card-title">🏪 ชื่อและคำอธิบายร้าน</div>
+        <div class="fg"><label class="fl">ชื่อร้านค้า <span class="req">*</span></label><input class="fi" id="shopname" placeholder="เช่น HomePro พหลโยธิน, Beauty Corner TH" oninput="previewSlug(this.value)"><div class="fi-hint">URL ร้านของคุณ: siammarket.co.th/shop/<span id="slug-preview" style="color:var(--pr);font-weight:500">...</span></div></div>
+        <div class="fg"><label class="fl">คำอธิบายร้าน</label><textarea class="fi" id="shop-desc" rows="3" placeholder="อธิบายสิ่งที่ร้านของคุณขาย จุดเด่น และบริการพิเศษ..."></textarea></div>
+        <div class="fg-row">
+          <div class="fg"><label class="fl">เบอร์ติดต่อร้าน</label><input class="fi" placeholder="02-XXX-XXXX หรือ 08X-XXX-XXXX"></div>
+          <div class="fg"><label class="fl">อีเมลร้านค้า</label><input class="fi" type="email" placeholder="shop@example.com"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🗂️ หมวดหมู่สินค้าหลัก <span class="req">*</span></div>
+        <div style="font-size:13px;color:var(--g500);margin-bottom:10px">เลือกหมวดหมู่ที่คุณจะขายสินค้ามากที่สุด (เลือกได้ 1-3 หมวด)</div>
+        <div class="cat-grid" id="cat-select"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💰 อัตราค่าคอมมิชชัน (GP)</div>
+        <table class="gp-table">
+          <thead><tr><th>หมวดหมู่</th><th>GP</th><th>ตัวอย่าง: ขายได้ ฿1,000</th></tr></thead>
+          <tbody id="gp-table-body"></tbody>
+        </table>
+        <div style="font-size:12px;color:var(--g400);margin-top:8px">* GP สำหรับผู้ขายใหม่ = 0% เดือนแรก !</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-o" onclick="back(2)">← ย้อนกลับ</button>
+        <button class="btn-p" onclick="next(2)">ถัดไป →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: IDENTITY -->
+    <div class="form-page" id="fp3">
+      <div class="page-title">ยืนยันตัวตน</div>
+      <div class="page-sub">เพื่อความปลอดภัยและป้องกันการฉ้อโกง เราต้องการเอกสารยืนยันตัวตน</div>
+      <div class="card">
+        <div class="card-title">🪪 บัตรประชาชน / หนังสือเดินทาง</div>
+        <div class="fg"><label class="fl">เลขบัตรประชาชน <span class="req">*</span></label><input class="fi" placeholder="X-XXXX-XXXXX-XX-X" maxlength="17"></div>
+        <div class="fg-row">
+          <div class="fg"><label class="fl">วันออกบัตร</label><input class="fi" type="date"></div>
+          <div class="fg"><label class="fl">วันหมดอายุ</label><input class="fi" type="date"></div>
+        </div>
+        <div class="fg-row">
+          <div class="fg">
+            <label class="fl">ภาพถ่ายหน้าบัตร <span class="req">*</span></label>
+            <div class="upload-zone" onclick="toast('📷 เปิด camera/gallery')">
+              <input type="file" accept="image/*">
+              <div class="upload-icon">📄</div>
+              <div class="upload-title">หน้าบัตรประชาชน</div>
+              <div class="upload-sub">JPG, PNG ไม่เกิน 5MB</div>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">Selfie ถือบัตร <span class="req">*</span></label>
+            <div class="upload-zone" onclick="toast('🤳 เปิด camera')">
+              <input type="file" accept="image/*">
+              <div class="upload-icon">🤳</div>
+              <div class="upload-title">ถ่ายรูปกับบัตร</div>
+              <div class="upload-sub">ให้เห็นหน้าชัดเจน</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📍 ที่อยู่จดทะเบียน / ที่อยู่ร้านค้า</div>
+        <div class="fg"><label class="fl">ที่อยู่ <span class="req">*</span></label><textarea class="fi" rows="2" placeholder="บ้านเลขที่ หมู่ ซอย ถนน"></textarea></div>
+        <div class="fg-row-3">
+          <div class="fg"><label class="fl">แขวง/ตำบล</label><input class="fi" placeholder="แขวง/ตำบล"></div>
+          <div class="fg"><label class="fl">เขต/อำเภอ</label><input class="fi" placeholder="เขต/อำเภอ"></div>
+          <div class="fg"><label class="fl">จังหวัด <span class="req">*</span></label>
+            <select class="fi" id="province-sel"><option value="">เลือกจังหวัด</option></select>
+          </div>
+        </div>
+        <div class="fg"><label class="fl">รหัสไปรษณีย์</label><input class="fi" placeholder="10XXX" maxlength="5"></div>
+        <div class="fg"><label class="fl">เลขประจำตัวผู้เสียภาษี (ถ้ามี)</label><input class="fi" placeholder="X-XXXX-XXXXX-XX-X"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-o" onclick="back(3)">← ย้อนกลับ</button>
+        <button class="btn-p" onclick="next(3)">ถัดไป →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: BANK -->
+    <div class="form-page" id="fp4">
+      <div class="page-title">บัญชีรับเงิน</div>
+      <div class="page-sub">SiamMarket จะโอนรายได้สุทธิเข้าบัญชีนี้ทุก 15 วัน</div>
+      <div class="card">
+        <div class="card-title">🏦 เลือกธนาคาร <span class="req">*</span></div>
+        <div class="bank-opts" id="bank-opts">
+          <div class="bank-opt sel" onclick="selBank(this,'ธนาคารกสิกรไทย')"><div class="bank-icon">🟢</div><div class="bank-name">KBank</div></div>
+          <div class="bank-opt" onclick="selBank(this,'ธนาคารกรุงไทย')"><div class="bank-icon">🔵</div><div class="bank-name">Krungthai</div></div>
+          <div class="bank-opt" onclick="selBank(this,'ธนาคารไทยพาณิชย์')"><div class="bank-icon">🟣</div><div class="bank-name">SCB</div></div>
+          <div class="bank-opt" onclick="selBank(this,'ธนาคารกรุงเทพ')"><div class="bank-icon">🔵</div><div class="bank-name">BBL</div></div>
+          <div class="bank-opt" onclick="selBank(this,'ธนาคารกรุงศรี')"><div class="bank-icon">🟡</div><div class="bank-name">Krungsri</div></div>
+          <div class="bank-opt" onclick="selBank(this,'ธนาคารทีทีบี')"><div class="bank-icon">🔷</div><div class="bank-name">ttb</div></div>
+          <div class="bank-opt" onclick="selBank(this,'ธนาคารออมสิน')"><div class="bank-icon">🟠</div><div class="bank-name">GSB</div></div>
+          <div class="bank-opt" onclick="selBank(this,'ธนาคารธ.ก.ส.')"><div class="bank-icon">🟢</div><div class="bank-name">BAAC</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">💳 ข้อมูลบัญชี</div>
+        <div class="fg"><label class="fl">ชื่อเจ้าของบัญชี <span class="req">*</span></label><input class="fi" id="bank-name" placeholder="ชื่อ-นามสกุล ตามสมุดบัญชี"></div>
+        <div class="fg"><label class="fl">เลขที่บัญชี <span class="req">*</span></label><input class="fi" id="bank-acc" placeholder="XXX-X-XXXXX-X" maxlength="15"></div>
+        <div class="fg"><label class="fl">ภาพถ่ายหน้าสมุดบัญชี <span class="req">*</span></label>
+          <div class="upload-zone" onclick="toast('📷 เลือกภาพสมุดบัญชี')">
+            <input type="file" accept="image/*">
+            <div class="upload-icon">🏦</div>
+            <div class="upload-title">หน้าสมุดบัญชี</div>
+            <div class="upload-sub">ให้เห็นชื่อและเลขบัญชีชัดเจน</div>
+          </div>
+        </div>
+        <div style="background:var(--am-lt);border:1px solid #FCD34D;border-radius:8px;padding:12px;font-size:13px;color:#92400E;margin-top:4px">
+          ⚠️ ชื่อบัญชีธนาคารต้องตรงกับชื่อในบัตรประชาชนที่ลงทะเบียนไว้เท่านั้น
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-o" onclick="back(4)">← ย้อนกลับ</button>
+        <button class="btn-p" onclick="next(4)">ถัดไป →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: SHOP SETUP -->
+    <div class="form-page" id="fp5">
+      <div class="page-title">ตั้งค่าร้านค้า</div>
+      <div class="page-sub">เพิ่มรูปโลโก้และตั้งค่าเบื้องต้น เพื่อให้ร้านพร้อมเปิด</div>
+      <div class="card">
+        <div class="card-title">🖼️ รูปภาพร้านค้า</div>
+        <div class="fg-row">
+          <div class="fg">
+            <label class="fl">โลโก้ร้าน</label>
+            <div class="upload-zone" onclick="toast('📷 เลือกรูปโลโก้')">
+              <input type="file" accept="image/*">
+              <div class="upload-icon">🏪</div>
+              <div class="upload-title">โลโก้ร้าน</div>
+              <div class="upload-sub">แนะนำ 400×400px PNG</div>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">รูปปกร้าน (Banner)</label>
+            <div class="upload-zone" onclick="toast('📷 เลือกรูปปก')">
+              <input type="file" accept="image/*">
+              <div class="upload-icon">🖼️</div>
+              <div class="upload-title">Banner ร้าน</div>
+              <div class="upload-sub">แนะนำ 1200×400px</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🚚 ตั้งค่าการจัดส่ง</div>
+        <div class="fg"><label class="fl">ผู้ให้บริการขนส่งที่ใช้</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--g200);border-radius:8px;padding:10px;cursor:pointer;font-size:13px"><input type="checkbox" checked style="accent-color:var(--pr)">Kerry Express</label>
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--g200);border-radius:8px;padding:10px;cursor:pointer;font-size:13px"><input type="checkbox" checked style="accent-color:var(--pr)">Flash Express</label>
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--g200);border-radius:8px;padding:10px;cursor:pointer;font-size:13px"><input type="checkbox" style="accent-color:var(--pr)">SCG Logistics</label>
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--g200);border-radius:8px;padding:10px;cursor:pointer;font-size:13px"><input type="checkbox" style="accent-color:var(--pr)">ไปรษณีย์ไทย</label>
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--g200);border-radius:8px;padding:10px;cursor:pointer;font-size:13px"><input type="checkbox" style="accent-color:var(--pr)">J&T Express</label>
+            <label style="display:flex;align-items:center;gap:8px;border:1px solid var(--g200);border-radius:8px;padding:10px;cursor:pointer;font-size:13px"><input type="checkbox" style="accent-color:var(--pr)">DHL</label>
+          </div>
+        </div>
+        <div class="fg-row">
+          <div class="fg"><label class="fl">เวลาเตรียมสินค้า</label>
+            <select class="fi"><option>1-2 วันทำการ</option><option>3-5 วันทำการ</option><option>มากกว่า 5 วัน</option></select>
+          </div>
+          <div class="fg"><label class="fl">ค่าส่งมาตรฐาน</label>
+            <select class="fi"><option>ฟรี เมื่อซื้อครบ ฿500</option><option>฿50 ทุกออเดอร์</option><option>ตามน้ำหนักจริง</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📱 เชื่อมต่อ LINE OA (ไม่บังคับ)</div>
+        <div class="fg"><label class="fl">LINE Official Account ID</label><input class="fi" placeholder="@yourshop"></div>
+        <div style="font-size:12px;color:var(--g400)">เชื่อมต่อเพื่อรับแจ้งเตือนออเดอร์และส่งข้อความหาลูกค้า</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-o" onclick="back(5)">← ย้อนกลับ</button>
+        <button class="btn-p" onclick="submit()">🚀 เปิดร้านค้าเลย!</button>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-page" id="success-page">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">ยินดีด้วย! ร้านของคุณพร้อมแล้ว</div>
+      <div class="success-sub" id="success-sub">ร้าน "<strong id="shop-display"></strong>" ถูกสร้างเรียบร้อยแล้ว<br>ทีมงานจะตรวจสอบเอกสารและอนุมัติภายใน 1-2 วันทำการ</div>
+      <div class="next-steps">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">ขั้นตอนถัดไปที่ควรทำ</div>
+        <div class="ns-item"><div class="ns-num">1</div><span>เข้า Seller Portal เพื่อเพิ่มสินค้าแรกของคุณ</span></div>
+        <div class="ns-item"><div class="ns-num">2</div><span>ตั้งค่า Flash Sale สำหรับสินค้า launch</span></div>
+        <div class="ns-item"><div class="ns-num">3</div><span>ใช้เครดิต Seller Ads ฿500 เพื่อเพิ่ม visibility</span></div>
+        <div class="ns-item"><div class="ns-num">4</div><span>ดาวน์โหลดคู่มือผู้ขายสำหรับมือใหม่</span></div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center">
+        <button class="btn-p" onclick="toast('🏪 ไป Seller Portal...')">ไป Seller Portal →</button>
+        <button class="btn-o" onclick="toast('📚 ดาวน์โหลดคู่มือ...')">📚 คู่มือผู้ขาย</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-wrap" id="tw"></div>
+
+<script>
+const CATS=[
+  {id:'home',icon:'🛋️',name:'บ้าน/เฟอร์นิเจอร์',gp:6},
+  {id:'fashion',icon:'👗',name:'แฟชั่น',gp:11},
+  {id:'beauty',icon:'💄',name:'Beauty',gp:9},
+  {id:'fmcg',icon:'🛒',name:'FMCG/อาหาร',gp:6},
+  {id:'tech',icon:'💻',name:'Tech',gp:4},
+  {id:'auto',icon:'🚗',name:'Automotive',gp:4},
+  {id:'pet',icon:'🐾',name:'Pet',gp:9},
+  {id:'edu',icon:'📚',name:'Education',gp:4},
+];
+const PROVINCES=['กรุงเทพมหานคร','เชียงใหม่','เชียงราย','นครราชสีมา','ขอนแก่น','อุดรธานี','อุบลราชธานี','สุราษฎร์ธานี','ภูเก็ต','สงขลา','พิษณุโลก','นครสวรรค์','ระยอง','ชลบุรี','ปทุมธานี','นนทบุรี','สมุทรปราการ','สมุทรสาคร','นครปฐม','กาญจนบุรี'];
+let currentStep=1;
+let maxReached=1;
+let selCats=[];
+let selBankName='ธนาคารกสิกรไทย';
+
+function toast(msg){
+  const w=document.getElementById('tw');
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  w.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+function updateProgress(){
+  const pct=(currentStep/5)*100;
+  document.getElementById('progress').style.width=pct+'%';
+  document.querySelectorAll('.step-item').forEach((el,i)=>{
+    el.className='step-item';
+    const sc=document.getElementById('sc'+(i+1));
+    if(i+1<currentStep){el.classList.add('done');sc.textContent='✓';}
+    else if(i+1===currentStep){el.classList.add('active');sc.textContent=i+1;}
+    else{el.classList.add('locked');sc.textContent=i+1;}
+  });
+}
+
+function goStep(n){
+  if(n>maxReached)return;
+  document.querySelectorAll('.form-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('fp'+n).classList.add('active');
+  currentStep=n;
+  updateProgress();
+}
+
+function next(step){
+  if(step===1){
+    const fname=document.getElementById('fname').value.trim();
+    const email=document.getElementById('email').value.trim();
+    const pass=document.getElementById('pass').value;
+    const pass2=document.getElementById('pass2').value;
+    const a1=document.getElementById('agree1').checked;
+    const a2=document.getElementById('agree2').checked;
+    if(!fname){toast('⚠️ กรุณากรอกชื่อ');return;}
+    if(!email||!/\S+@\S+\.\S+/.test(email)){toast('⚠️ กรุณากรอกอีเมลให้ถูกต้อง');return;}
+    if(pass.length<8){toast('⚠️ รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');return;}
+    if(pass!==pass2){toast('⚠️ รหัสผ่านไม่ตรงกัน');return;}
+    if(!a1||!a2){toast('⚠️ กรุณายอมรับข้อกำหนดก่อน');return;}
+  }
+  if(step===2){
+    const sn=document.getElementById('shopname').value.trim();
+    if(!sn){toast('⚠️ กรุณากรอกชื่อร้านค้า');return;}
+    if(selCats.length===0){toast('⚠️ กรุณาเลือกหมวดหมู่สินค้าอย่างน้อย 1 หมวด');return;}
+  }
+  const nextStep=step+1;
+  maxReached=Math.max(maxReached,nextStep);
+  document.querySelectorAll('.form-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('fp'+nextStep).classList.add('active');
+  currentStep=nextStep;
+  updateProgress();
+  window.scrollTo(0,0);
+}
+
+function back(step){
+  const prev=step-1;
+  document.querySelectorAll('.form-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('fp'+prev).classList.add('active');
+  currentStep=prev;
+  updateProgress();
+  window.scrollTo(0,0);
+}
+
+function submit(){
+  const shopName=document.getElementById('shopname')?.value||'ร้านค้าของคุณ';
+  document.querySelectorAll('.form-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('success-page').style.display='block';
+  document.getElementById('shop-display').textContent=shopName;
+  document.querySelectorAll('.step-item').forEach(el=>{el.className='step-item done';});
+  document.querySelectorAll('.step-circle').forEach(sc=>{sc.textContent='✓';});
+  document.getElementById('progress').style.width='100%';
+  toast('🎉 สมัครร้านค้าสำเร็จ!');
+}
+
+function previewSlug(val){
+  const slug=val.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-ก-ฮ]/g,'');
+  document.getElementById('slug-preview').textContent=slug||'your-shop-name';
+}
+
+function checkPw(pw){
+  const el=document.getElementById('pw-strength');
+  let score=0;
+  if(pw.length>=8)score++;
+  if(/[A-Z]/.test(pw))score++;
+  if(/[0-9]/.test(pw))score++;
+  if(/[^A-Za-z0-9]/.test(pw))score++;
+  const labels=['','อ่อนมาก','ปานกลาง','ดี','แข็งแกร่ง'];
+  const colors=['','var(--rd)','var(--am)','var(--blue)','var(--gn)'];
+  el.textContent=score>0?'ความปลอดภัย: '+labels[score]:'ความปลอดภัยของรหัสผ่าน';
+  el.style.color=score>0?colors[score]:'var(--g400)';
+}
+
+function selBank(el,name){
+  selBankName=name;
+  document.querySelectorAll('.bank-opt').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  toast('✅ เลือก '+name);
+}
+
+function buildCatSelect(){
+  document.getElementById('cat-select').innerHTML=CATS.map(c=>`
+    <div class="cat-opt ${selCats.includes(c.id)?'sel':''}" onclick="toggleCat('${c.id}',this)">
+      <div class="cat-opt-icon">${c.icon}</div>
+      <div class="cat-opt-name">${c.name}</div>
+    </div>
+  `).join('');
+  buildGPTable();
+}
+
+function toggleCat(id,el){
+  const idx=selCats.indexOf(id);
+  if(idx>-1){selCats.splice(idx,1);el.classList.remove('sel');}
+  else if(selCats.length<3){selCats.push(id);el.classList.add('sel');}
+  else{toast('⚠️ เลือกได้สูงสุด 3 หมวดหมู่');}
+  buildGPTable();
+}
+
+function buildGPTable(){
+  document.getElementById('gp-table-body').innerHTML=CATS.map(c=>`
+    <tr class="${selCats.includes(c.id)?'active-cat':''}">
+      <td>${c.icon} ${c.name}${selCats.includes(c.id)?' ✓':''}</td>
+      <td>${c.gp}%</td>
+      <td>รับ ฿${1000*(1-c.gp/100)}</td>
+    </tr>
+  `).join('');
+}
+
+function buildProvinces(){
+  const sel=document.getElementById('province-sel');
+  PROVINCES.forEach(p=>{const o=document.createElement('option');o.textContent=p;sel.appendChild(o);});
+}
+
+buildCatSelect();
+buildProvinces();
+updateProgress();
+</script>
+
+
+<div class="tm-toast-wrap" id="tmToastWrap"></div>
+<script>
+function tmToast(msg){
+  var w=document.getElementById('tmToastWrap');
+  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
+  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
+  w.appendChild(t);setTimeout(function(){t.remove()},2600);
+}
+</script>
+
+<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
+<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+</body>
+</html>

@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thailand Market — Flash Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style id="tm-base">
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
+  /* legacy compat */
+  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
+  --bg:#FAFAFA;--white-off:#FAFAFA;
+  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
+  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
+  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
+  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
+  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
+  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
+  --sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
+
+/* ── NAV ── */
+#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
+.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
+.tn-logo .dot{color:var(--red)}
+.tn-links{display:flex;flex:1;overflow:hidden}
+.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
+.tn-link:hover{color:var(--black)}
+.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
+.tn-search{position:relative;margin-left:auto}
+.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
+.tn-search input:focus{border-color:var(--black)}
+.tn-search input::placeholder{color:var(--g400)}
+.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
+.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
+.tn-btn:hover{color:var(--black)}
+.tn-btn.sell{color:var(--red)}
+.tn-ico{font-size:15px;position:relative;line-height:1}
+.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+.tn-cats{border-top:var(--border)}
+.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
+.tn-cats-inner::-webkit-scrollbar{display:none}
+.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
+.tn-cat:hover{color:var(--black)}
+.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
+
+/* ── GLOBAL BUTTONS ── */
+.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
+.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
+.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
+.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
+.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
+
+/* old btn-primary / btn-secondary overrides */
+.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-primary:hover{background:var(--g800)!important}
+.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
+
+/* legacy btn-cart / btn-buy → new style */
+.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
+.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-buy:hover{background:var(--g800)!important}
+.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
+.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
+
+/* ── CARDS ── */
+.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
+.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
+
+/* ── SECTION ── */
+.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
+.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
+.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
+.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
+.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
+
+/* ── PRODUCT CARDS ── */
+.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
+.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
+.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
+.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
+.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
+.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
+.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
+.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
+.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
+.badge-hot{background:var(--black)!important;color:var(--white)!important}
+
+/* ── PRICE BOX ── */
+.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
+.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
+.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
+.flash-tag{background:var(--red)!important;border-radius:0!important}
+
+/* ── NAV OLD → NEW ── */
+.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
+.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
+.nav-search input{border:var(--border)!important;border-radius:0!important}
+.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
+.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
+.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
+.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
+.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
+.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
+.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
+
+/* ── FORMS ── */
+.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
+.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
+.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
+
+/* ── STATUS / BADGE ── */
+.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
+.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
+.status-badge,.badge{border-radius:0!important}
+
+/* ── TABLES ── */
+table{border-collapse:collapse}
+thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
+tbody td{border-bottom:var(--border)!important}
+tbody tr:hover td{background:var(--g50)!important}
+
+/* ── MODALS ── */
+.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
+.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
+.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
+
+/* ── SIDEBAR (seller) ── */
+.sidebar,.sb{background:var(--black)!important}
+.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
+.sni-badge{background:var(--red)!important}
+.sb-logo-mark{background:var(--red)!important}
+.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
+
+/* ── COLORS: strip all gradients/rounded corners ── */
+[style*="background:linear-gradient"]{background:var(--g50)!important}
+[style*="border-radius"]{border-radius:0!important}
+
+/* ── TOAST ── */
+.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
+@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── FOOTER ── */
+#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
+#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
+#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-logo .dot{color:var(--red)}
+#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
+#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
+#tm-footer .tf-link:hover{color:var(--white)}
+#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
+  .tn-links{display:none}
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
+</style>
+<style id="page-css">
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pr:#E8541A;--pr-dk:#C4430F;--pr-lt:#FFF3EE;
+  --nv:#1A2744;--nv-lt:#243259;
+  --gn:#16A34A;--gn-lt:#DCFCE7;
+  --rd:#DC2626;--rd-lt:#FEE2E2;
+  --am:#D97706;--am-lt:#FEF3C7;
+  --bl:#2563EB;--bl-lt:#EFF6FF;
+  --g50:#F9FAFB;--g100:#F3F4F6;--g200:#E5E7EB;
+  --g300:#D1D5DB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--g900);font-size:14px}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sb{width:220px;background:var(--nv);flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sb-logo-text{font-family:'DM Sans',sans-serif;font-weight:800;font-size:16px;color:#fff}
+.sb-logo-text span{color:var(--pr)}
+.sb-logo-sub{font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px}
+.sb-sec{padding:10px 0}
+.sb-lbl{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;padding:4px 16px 6px}
+.sni{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;color:rgba(255,255,255,0.55);font-size:13px;transition:all 0.15s;border-left:3px solid transparent}
+.sni:hover{background:rgba(255,255,255,0.06);color:#fff}
+.sni.active{background:rgba(232,84,26,0.2);color:#fff;border-left-color:var(--pr)}
+.sni-ico{font-size:14px;width:18px;text-align:center}
+.sni-badge{margin-left:auto;background:var(--pr);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px}
+
+/* TOPBAR */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#fff;border-bottom:1px solid var(--g200);padding:0 20px;height:52px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.tb-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;color:var(--g900)}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:10px}
+.ib{width:32px;height:32px;border:1px solid var(--g200);border-radius:8px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--g700)}
+.av{width:32px;height:32px;border-radius:50%;background:var(--nv);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer}
+.content{flex:1;overflow-y:auto;padding:20px}
+
+/* PAGE */
+.page-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700}
+
+/* CARDS */
+.card{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ct{font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.sc{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:14px 16px}
+.sc-lbl{font-size:11px;color:var(--g500);margin-bottom:5px}
+.sc-val{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700}
+.sc-chg{font-size:11px;margin-top:3px}
+.up{color:var(--gn)}.dn{color:var(--rd)}
+.badge{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+.b-or{background:var(--pr-lt);color:var(--pr-dk)}.b-gn{background:var(--gn-lt);color:#15803D}
+.b-rd{background:var(--rd-lt);color:#B91C1C}.b-am{background:var(--am-lt);color:#B45309}
+.b-bl{background:var(--bl-lt);color:#1D4ED8}.b-gy{background:var(--g100);color:var(--g500)}
+.btn-p{background:var(--pr);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background 0.2s}
+.btn-p:hover{background:var(--pr-dk)}
+.btn-o{background:#fff;color:var(--g700);border:1px solid var(--g200);padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-o:hover{background:var(--g50);border-color:var(--g300)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-danger{color:var(--rd);border-color:#FCA5A5}
+.btn-danger:hover{background:var(--rd-lt)}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{text-align:left;font-size:11px;color:var(--g500);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--g200);white-space:nowrap}
+td{padding:10px 10px;border-bottom:1px solid var(--g100);font-size:12px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--g50)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:20px}
+.pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0.65}
+
+/* FLASH LIVE CARD */
+.flash-live{border:2px solid var(--pr);border-radius:12px;padding:16px 18px;background:linear-gradient(135deg,#1A2744 0%,#243259 100%);color:#fff;margin-bottom:16px;position:relative;overflow:hidden}
+.flash-live::after{content:'⚡';position:absolute;right:-10px;top:-10px;font-size:80px;opacity:0.08}
+.fl-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.fl-badge{background:var(--pr);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
+.fl-timer{display:flex;align-items:center;gap:6px;margin-left:auto}
+.fl-timer-lbl{font-size:11px;color:rgba(255,255,255,0.6)}
+.tb{background:var(--pr);color:#fff;font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;padding:6px 12px;border-radius:6px;min-width:40px;text-align:center}
+.ts{font-size:20px;font-weight:700;color:rgba(255,255,255,0.5);padding:0 2px}
+.fl-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.fl-stat{background:rgba(255,255,255,0.08);border-radius:8px;padding:10px 12px}
+.fl-stat-val{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;color:#fff}
+.fl-stat-lbl{font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px}
+
+/* PRODUCT CARDS IN FLASH */
+.flash-items-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.fi-card{background:var(--g50);border:1px solid var(--g200);border-radius:10px;overflow:hidden;position:relative}
+.fi-img{height:80px;display:flex;align-items:center;justify-content:center;font-size:36px}
+.fi-info{padding:8px}
+.fi-name{font-size:11px;font-weight:500;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fi-price{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--pr)}
+.fi-old{font-size:10px;color:var(--g400);text-decoration:line-through;margin-left:3px}
+.fi-progress{height:4px;background:var(--g200);border-radius:2px;margin-top:4px}
+.fi-prog-fill{height:4px;border-radius:2px}
+.fi-sold{font-size:10px;color:var(--g500);margin-top:2px}
+.fi-disc{position:absolute;top:6px;left:6px;background:var(--pr);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.fi-actions{display:flex;gap:4px;padding:6px 8px;border-top:1px solid var(--g200)}
+
+/* FORM */
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:12px;color:var(--g500);font-weight:500;margin-bottom:4px}
+.fi-inp{width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--g900)}
+.fi-inp:focus{outline:none;border-color:var(--pr)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center}
+.mo.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:22px;width:560px;max-height:85vh;overflow-y:auto}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--g200)}
+.mt{font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px}
+.mc{background:none;border:none;font-size:20px;cursor:pointer;color:var(--g400);line-height:1}
+.mc:hover{color:var(--g700)}
+
+/* TOAST */
+.tw{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:999}
+.ti{background:var(--nv);color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:8px;animation:tin 0.3s ease;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+@keyframes tin{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px}
+.cal-day{padding:8px 4px;text-align:center;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid transparent;transition:all 0.15s}
+.cal-day:hover{background:var(--pr-lt);border-color:var(--pr)}
+.cal-day.has-sale{background:var(--pr-lt);color:var(--pr-dk);font-weight:600;border-color:var(--pr)}
+.cal-day.today{border:2px solid var(--pr);font-weight:700}
+.cal-day.empty{cursor:default;color:var(--g300)}
+.cal-day.inactive{color:var(--g400)}
+
+</style>
+<style id="tm-responsive">
+/* ── Mobile fixes ── */
+@media(max-width:768px){
+  .tn-links{display:none!important}
+  .tn-srch{display:none!important}
+  /* hamburger hint */
+  .tn-top{padding:0 16px}
+  .tn-logo{margin-right:auto}
+  /* sidebar pages on mobile */
+  .app{flex-direction:column}
+  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
+  .sb-logo,.sb-user{flex-basis:100%}
+  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
+  .sb-lbl{display:none}
+  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
+  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
+  .sb-foot{display:none}
+  .main{margin-left:0!important}
+  /* layout grids */
+  .layout{grid-template-columns:1fr!important}
+  .form-row{grid-template-columns:1fr!important}
+  /* tables */
+  table{font-size:12px}
+  td,th{padding:8px 10px!important}
+  /* stat grids */
+  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  [style*="grid-template-columns:repeat(3"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* hero */
+  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
+  .hero-right{display:none}
+  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
+  /* product grids */
+  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* footer */
+  #tm-footer .tf-grid{grid-template-columns:1fr!important}
+  /* wrap padding */
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:36px!important}
+  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
+  .hero-stat-row{grid-template-columns:1fr 1fr}
+}
+/* ── Print friendly ── */
+@media print{
+  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
+  body{font-size:12px}
+}
+/* ── Focus / accessibility ── */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid #0A0A0A;outline-offset:2px
+}
+/* ── Smooth image loading ── */
+img{max-width:100%;height:auto}
+/* ── Selection color ── */
+::selection{background:#0A0A0A;color:#fff}
+</style>
+</head>
+<body>
+<nav id="tm-nav">
+  <div class="tn-top">
+    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="tn-links">
+      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
+      <a href="live-shopping.html" class="tn-link">Live</a>
+      <a href="brand-day.html" class="tn-link">Brand Day</a>
+      <a href="coupon-hub.html" class="tn-link">Coupon</a>
+      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
+      <a href="subscription.html" class="tn-link">TM Plus</a>
+      <a href="b2b-portal.html" class="tn-link">B2B</a>
+      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
+    </div>
+    <div class="tn-search">
+      <input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'">
+    </div>
+    <div class="tn-acts">
+      <button class="tn-btn" onclick="location.href='wishlist.html'"><span class="tn-ico">♡</span>Saved</button>
+      <button class="tn-btn" onclick="location.href='notification-center.html'"><span class="tn-ico">🔔</span>Alerts</button>
+      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
+      <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
+      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
+    </div>
+  </div>
+  <div class="tn-cats">
+    <div class="tn-cats-inner">
+      <a href="category.html" class="tn-cat">🏠 Home</a>
+      <a href="category.html" class="tn-cat">👗 Fashion</a>
+      <a href="category.html" class="tn-cat">💄 Beauty</a>
+      <a href="category.html" class="tn-cat">🛒 FMCG</a>
+      <a href="category.html" class="tn-cat">💻 Tech</a>
+      <a href="category.html" class="tn-cat">🚗 Auto</a>
+      <a href="category.html" class="tn-cat">🐾 Pets</a>
+      <a href="category.html" class="tn-cat">📚 Education</a>
+    </div>
+  </div>
+</nav>
+
+
+
+
+
+
+
+
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sb">
+    <div class="sb-logo">
+      <div class="sb-logo-text">SIAM<span>Market</span></div>
+      <div class="sb-logo-sub">FLASH SALE ADMIN</div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">ภาพรวม</div>
+      <div class="sni active"><span class="sni-ico">⚡</span>Flash Sale Manager<span class="sni-badge">LIVE</span></div>
+      <div class="sni" onclick="toast('📊 Dashboard...')"><span class="sni-ico">📊</span>Dashboard</div>
+      <div class="sni" onclick="toast('📅 ปฏิทิน...')"><span class="sni-ico">📅</span>ปฏิทิน Campaign</div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">จัดการ</div>
+      <div class="sni" onclick="toast('📦 สินค้า...')"><span class="sni-ico">📦</span>เพิ่มสินค้า Flash</div>
+      <div class="sni" onclick="toast('🏪 ร้านค้า...')"><span class="sni-ico">🏪</span>ร้านค้าที่สมัคร</div>
+      <div class="sni" onclick="toast('📈 รายงาน...')"><span class="sni-ico">📈</span>รายงาน Flash Sale</div>
+      <div class="sni" onclick="toast('⚙️ ตั้งค่า...')"><span class="sni-ico">⚙️</span>ตั้งค่า</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-title">⚡ Flash Sale Manager</div>
+      <div class="tb-r">
+        <div class="ib" onclick="toast('🔔 การแจ้งเตือน')">🔔</div>
+        <div class="av">AD</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page-h">
+        <div class="page-title">⚡ Flash Sale ทั้งหมด</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-o" onclick="openCalModal()">📅 ปฏิทิน</button>
+          <button class="btn-p" onclick="openNewModal()">＋ สร้าง Flash Sale ใหม่</button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="sc"><div class="sc-lbl">⚡ Flash Sale วันนี้</div><div class="sc-val">3</div><div class="sc-chg" style="color:var(--pr)">10:00 · 14:00 · 20:00</div></div>
+        <div class="sc"><div class="sc-lbl">💰 GMV จาก Flash (เดือนนี้)</div><div class="sc-val">฿2.4M</div><div class="sc-chg up">▲ +34%</div></div>
+        <div class="sc"><div class="sc-lbl">📦 สินค้าที่เข้าร่วม</div><div class="sc-val">186</div><div class="sc-chg up">▲ +24 รายการ</div></div>
+        <div class="sc"><div class="sc-lbl">🏪 ร้านค้าเข้าร่วม</div><div class="sc-val">47</div><div class="sc-chg up">▲ +8 ร้าน</div></div>
+      </div>
+
+      <!-- LIVE FLASH SALE -->
+      <div class="flash-live">
+        <div class="fl-top">
+          <div>
+            <div style="font-size:16px;font-weight:700;font-family:'DM Sans',sans-serif">⚡ Flash Sale กำลัง LIVE — รอบ 14:00</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px">เปิดตั้งแต่ 14:00 — สิ้นสุด 16:00</div>
+          </div>
+          <span class="fl-badge">● LIVE NOW</span>
+          <div class="fl-timer">
+            <span class="fl-timer-lbl">เหลือเวลา</span>
+            <div class="tb" id="fh">01</div>
+            <div class="ts">:</div>
+            <div class="tb" id="fm">23</div>
+            <div class="ts">:</div>
+            <div class="tb" id="fs">45</div>
+          </div>
+          <button class="btn-o btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.3)" onclick="toast('⚡ หยุด Flash Sale ชั่วคราว')">⏸ หยุดชั่วคราว</button>
+        </div>
+        <div class="fl-stats">
+          <div class="fl-stat"><div class="fl-stat-val">฿184,200</div><div class="fl-stat-lbl">GMV รอบนี้</div></div>
+          <div class="fl-stat"><div class="fl-stat-val">287</div><div class="fl-stat-lbl">ออเดอร์</div></div>
+          <div class="fl-stat"><div class="fl-stat-val">64%</div><div class="fl-stat-lbl">สต็อกขายแล้ว</div></div>
+          <div class="fl-stat"><div class="fl-stat-val">1,842</div><div class="fl-stat-lbl">คนกำลังดู</div></div>
+        </div>
+      </div>
+
+      <!-- FLASH ITEMS IN CURRENT SALE -->
+      <div class="card">
+        <div class="ch">
+          <div class="ct">สินค้าใน Flash Sale ปัจจุบัน</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-o btn-sm" onclick="toast('📥 เพิ่มสินค้าเข้า Flash...')">＋ เพิ่มสินค้า</button>
+            <button class="btn-o btn-sm" onclick="toast('📤 Export รายงาน')">📤 Export</button>
+          </div>
+        </div>
+        <div class="flash-items-grid" id="flash-items-grid"></div>
+      </div>
+
+      <!-- ALL FLASH SALES TABLE -->
+      <div class="card">
+        <div class="ch">
+          <div class="ct">Flash Sale ทั้งหมด</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="fi-inp" style="width:auto;padding:5px 8px;font-size:11px">
+              <option>ทุกสถานะ</option>
+              <option>กำลัง LIVE</option>
+              <option>รอเริ่ม</option>
+              <option>สิ้นสุดแล้ว</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:20%">ชื่อ Flash Sale</th>
+            <th style="width:18%">วันที่</th>
+            <th style="width:12%">สถานะ</th>
+            <th style="width:10%">สินค้า</th>
+            <th style="width:12%">GMV</th>
+            <th style="width:10%">Conversion</th>
+            <th style="width:18%">การดำเนินการ</th>
+          </tr></thead>
+          <tbody id="flash-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- CALENDAR -->
+      <div class="card">
+        <div class="ch">
+          <div class="ct">📅 ปฏิทิน Flash Sale — เมษายน 2569</div>
+          <button class="btn-o btn-sm" onclick="openNewModal()">＋ เพิ่ม</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+          <div style="text-align:center;font-size:11px;color:var(--g500);padding:4px">อา</div>
+          <div style="text-align:center;font-size:11px;color:var(--g500);padding:4px">จ</div>
+          <div style="text-align:center;font-size:11px;color:var(--g500);padding:4px">อ</div>
+          <div style="text-align:center;font-size:11px;color:var(--g500);padding:4px">พ</div>
+          <div style="text-align:center;font-size:11px;color:var(--g500);padding:4px">พฤ</div>
+          <div style="text-align:center;font-size:11px;color:var(--g500);padding:4px">ศ</div>
+          <div style="text-align:center;font-size:11px;color:var(--g500);padding:4px">ส</div>
+        </div>
+        <div class="calendar-grid" id="cal-grid"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- CREATE MODAL -->
+<div class="mo" id="new-modal" onclick="if(event.target===this)closeModal('new-modal')">
+  <div class="modal">
+    <div class="mh">
+      <div class="mt">⚡ สร้าง Flash Sale ใหม่</div>
+      <button class="mc" onclick="closeModal('new-modal')">✕</button>
+    </div>
+    <div class="fg"><label class="fl">ชื่อ Flash Sale *</label><input class="fi-inp" id="fs-name" placeholder="เช่น Flash Sale รอบ 20:00 วันพรุ่งนี้"></div>
+    <div class="fg-row">
+      <div class="fg"><label class="fl">วันที่เริ่ม *</label><input class="fi-inp" type="date" id="fs-start"></div>
+      <div class="fg"><label class="fl">เวลาเริ่ม *</label>
+        <select class="fi-inp" id="fs-stime">
+          <option value="10:00">10:00 (รอบเช้า)</option>
+          <option value="14:00">14:00 (รอบบ่าย)</option>
+          <option value="20:00" selected>20:00 (รอบค่ำ)</option>
+          <option value="00:00">00:00 (midnight)</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label class="fl">วันที่สิ้นสุด *</label><input class="fi-inp" type="date" id="fs-end"></div>
+      <div class="fg"><label class="fl">เวลาสิ้นสุด</label>
+        <select class="fi-inp" id="fs-etime">
+          <option value="12:00">12:00</option>
+          <option value="16:00">16:00</option>
+          <option value="22:00" selected>22:00</option>
+          <option value="02:00">02:00</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Banner / รูปปก Flash Sale</label>
+      <div style="border:2px dashed var(--g300);border-radius:8px;padding:18px;text-align:center;cursor:pointer" onclick="toast('📸 เลือกรูป banner')">
+        <div style="font-size:24px;margin-bottom:6px">🖼️</div>
+        <div style="font-size:13px;color:var(--g500)">คลิกเพื่อเลือกรูป banner</div>
+        <div style="font-size:11px;color:var(--g400);margin-top:3px">แนะนำ 1200×400px</div>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">จำกัดสินค้าสูงสุดต่อรอบ</label>
+      <input class="fi-inp" type="number" value="30" min="1" max="100">
+      <div style="font-size:11px;color:var(--g400);margin-top:4px">แนะนำ 20-30 รายการ เพื่อให้ดูไม่รก</div>
+    </div>
+    <div class="fg">
+      <label class="fl">ส่วนลดขั้นต่ำที่ยอมรับ</label>
+      <select class="fi-inp">
+        <option>10% ขึ้นไป</option>
+        <option selected>20% ขึ้นไป</option>
+        <option>30% ขึ้นไป</option>
+        <option>50% ขึ้นไป</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+        <input type="checkbox" checked style="accent-color:var(--pr)"> แจ้งเตือนลูกค้าล่วงหน้า 1 ชั่วโมง (LINE + Push Notification)
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--g200)">
+      <button class="btn-p" style="flex:1;justify-content:center" onclick="createFlash()">⚡ สร้าง Flash Sale</button>
+      <button class="btn-o" onclick="closeModal('new-modal')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR MODAL -->
+<div class="mo" id="cal-modal" onclick="if(event.target===this)closeModal('cal-modal')">
+  <div class="modal" style="width:480px">
+    <div class="mh">
+      <div class="mt">📅 ปฏิทิน Flash Sale</div>
+      <button class="mc" onclick="closeModal('cal-modal')">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--g500);margin-bottom:10px">แผน Flash Sale สำหรับเดือน เม.ย. 2569 — คลิกวันเพื่อดู/เพิ่ม</div>
+    <div id="modal-cal"></div>
+    <div style="margin-top:12px;font-size:12px;color:var(--g500);display:flex;align-items:center;gap:8px">
+      <div style="width:12px;height:12px;border-radius:3px;background:var(--pr-lt);border:1px solid var(--pr)"></div> มี Flash Sale
+      <div style="width:12px;height:12px;border-radius:3px;border:2px solid var(--pr)"></div> วันนี้
+    </div>
+  </div>
+</div>
+
+<div class="tw" id="tw"></div>
+
+<script>
+const FLASH_ITEMS_DATA=[
+  {icon:'📱',name:'Samsung S24 Ultra',price:32900,old:38900,disc:15,sold:78,cat:'tech',bg:'#EFF6FF'},
+  {icon:'🛋️',name:'โซฟา L-shape',price:8900,old:14500,disc:39,sold:92,cat:'home',bg:'#EDE9FE'},
+  {icon:'💄',name:'SK-II Facial Treatment',price:2890,old:4500,disc:36,sold:65,cat:'beauty',bg:'#FFF3EE'},
+  {icon:'👟',name:'Nike Air Max',price:2490,old:3990,disc:38,sold:88,cat:'fashion',bg:'#FCE7F3'},
+  {icon:'🐾',name:'Royal Canin 10kg',price:890,old:1290,disc:31,sold:70,cat:'pet',bg:'#DCFCE7'},
+  {icon:'🔨',name:'Bosch Drill 18V',price:2890,old:4200,disc:31,sold:45,cat:'home',bg:'#F3F4F6'},
+];
+const FLASH_TABLE=[
+  {name:'Flash Sale 20:00',date:'28 เม.ย. 20:00–22:00',status:'LIVE',statusC:'b-gn',items:18,gmv:'฿184,200',conv:'12.4%'},
+  {name:'Flash Sale 14:00',date:'28 เม.ย. 14:00–16:00',status:'สิ้นสุด',statusC:'b-gy',items:24,gmv:'฿210,800',conv:'14.2%'},
+  {name:'Flash Sale 10:00',date:'28 เม.ย. 10:00–12:00',status:'สิ้นสุด',statusC:'b-gy',items:20,gmv:'฿98,400',conv:'10.8%'},
+  {name:'Brand Day IKEA',date:'29 เม.ย. 10:00–22:00',status:'รอเริ่ม',statusC:'b-am',items:35,gmv:'—',conv:'—'},
+  {name:'Flash Sale 20:00',date:'29 เม.ย. 20:00–22:00',status:'รอเริ่ม',statusC:'b-am',items:22,gmv:'—',conv:'—'},
+  {name:'Double Day 4.4',date:'4 พ.ค. 00:00–23:59',status:'กำหนดการ',statusC:'b-bl',items:100,gmv:'—',conv:'—'},
+];
+const SALE_DAYS=[3,4,7,10,11,14,15,17,21,22,28];
+
+function toast(m){const w=document.getElementById('tw');const t=document.createElement('div');t.className='ti';t.textContent=m;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openNewModal(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('fs-start').value=today;
+  document.getElementById('fs-end').value=today;
+  openModal('new-modal');
+}
+function openCalModal(){buildModalCal();openModal('cal-modal');}
+
+function createFlash(){
+  const name=document.getElementById('fs-name').value;
+  if(!name){toast('⚠️ กรุณากรอกชื่อ Flash Sale');return;}
+  toast(`✅ สร้าง Flash Sale "${name}" สำเร็จ!`);
+  closeModal('new-modal');
+}
+
+function renderFlashItems(){
+  document.getElementById('flash-items-grid').innerHTML=FLASH_ITEMS_DATA.map(f=>`
+    <div class="fi-card">
+      <div class="fi-img" style="background:${f.bg}">${f.icon}</div>
+      <div class="fi-disc">-${f.disc}%</div>
+      <div class="fi-info">
+        <div class="fi-name">${f.name}</div>
+        <div style="display:flex;align-items:baseline;gap:3px">
+          <div class="fi-price">฿${f.price.toLocaleString()}</div>
+          <div class="fi-old">฿${f.old.toLocaleString()}</div>
+        </div>
+        <div class="fi-progress"><div class="fi-prog-fill" style="width:${f.sold}%;background:${f.sold>80?'var(--rd)':f.sold>50?'var(--am)':'var(--pr)'}"></div></div>
+        <div class="fi-sold">ขาย ${f.sold}%</div>
+      </div>
+      <div class="fi-actions">
+        <button class="btn-o btn-sm" style="flex:1;justify-content:center;font-size:10px" onclick="toast('แก้ไขสินค้า')">แก้ไข</button>
+        <button class="btn-o btn-sm btn-danger" style="font-size:10px" onclick="toast('ลบออกจาก Flash')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderFlashTable(){
+  document.getElementById('flash-table-body').innerHTML=FLASH_TABLE.map(f=>`<tr>
+    <td style="font-weight:500">${f.name}</td>
+    <td style="font-size:11px;color:var(--g500)">${f.date}</td>
+    <td><span class="pill ${f.statusC}">${f.status}</span></td>
+    <td>${f.items} รายการ</td>
+    <td style="font-weight:600;font-family:'DM Sans',sans-serif">${f.gmv}</td>
+    <td style="font-weight:500;color:${f.conv!=='—'?'var(--gn)':'var(--g400)'}">${f.conv}</td>
+    <td>
+      <div style="display:flex;gap:4px">
+        <button class="btn-o btn-sm" onclick="toast('ดู Flash Sale')">ดู</button>
+        <button class="btn-o btn-sm" onclick="toast('แก้ไข Flash Sale')">แก้ไข</button>
+        ${f.status==='รอเริ่ม'?`<button class="btn-o btn-sm btn-danger" onclick="toast('ยกเลิก Flash Sale')">ยกเลิก</button>`:''}
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function buildCalendar(container){
+  const days=[];
+  const firstDay=1; // April 2026 starts on Wednesday = index 3
+  const startPad=3;
+  const totalDays=30;
+  for(let i=0;i<startPad;i++)days.push({day:null,empty:true});
+  for(let d=1;d<=totalDays;d++)days.push({day:d,hasSale:SALE_DAYS.includes(d),isToday:d===28});
+  container.innerHTML=days.map(d=>{
+    if(d.empty)return`<div class="cal-day empty"></div>`;
+    return`<div class="cal-day${d.hasSale?' has-sale':''}${d.isToday?' today':''}" onclick="toast('วันที่ ${d.day} เม.ย.')">
+      <div>${d.day}</div>
+      ${d.hasSale?`<div style="font-size:8px;margin-top:2px;color:var(--pr)">⚡</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function buildModalCal(){
+  const mc=document.getElementById('modal-cal');
+  mc.innerHTML=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+    ${['อา','จ','อ','พ','พฤ','ศ','ส'].map(d=>`<div style="text-align:center;font-size:11px;color:var(--g500);padding:4px">${d}</div>`).join('')}
+  </div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px" id="mc-inner"></div>`;
+  buildCalendar(document.getElementById('mc-inner'));
+}
+
+function startLiveTimer(){
+  let total=5025; // 1h 23m 45s
+  setInterval(()=>{
+    if(total<=0){total=7200;return;}
+    total--;
+    const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),s=total%60;
+    document.getElementById('fh').textContent=String(h).padStart(2,'0');
+    document.getElementById('fm').textContent=String(m).padStart(2,'0');
+    document.getElementById('fs').textContent=String(s).padStart(2,'0');
+  },1000);
+}
+
+buildCalendar(document.getElementById('cal-grid'));
+renderFlashItems();
+renderFlashTable();
+startLiveTimer();
+</script>
+
+
+<div class="tm-toast-wrap" id="tmToastWrap"></div>
+<script>
+function tmToast(msg){
+  var w=document.getElementById('tmToastWrap');
+  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
+  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
+  w.appendChild(t);setTimeout(function(){t.remove()},2600);
+}
+</script>
+
+<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
+<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+</body>
+</html>

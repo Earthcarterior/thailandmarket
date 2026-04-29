@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thailand Market — คู่มือ Deploy ฉบับสมบูรณ์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#0A0A0A;--white:#fff;--red:#E63329;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g800:#262626;
+  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
+  --font:"DM Sans",system-ui,sans-serif;
+  --mono:"DM Mono",monospace;
+  --border:1px solid #E5E5E5;
+  --border-dark:1px solid #0A0A0A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* ── NAV ── */
+.nav{background:var(--black);position:sticky;top:0;z-index:999;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid rgba(255,255,255,.08)}
+.nav-logo{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--white)}.nav-logo .dot{color:var(--red)}
+.nav-links{display:flex;gap:0}
+.nav-link{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:0 14px;height:52px;display:flex;align-items:center;text-decoration:none;transition:color .15s;border-bottom:2px solid transparent}
+.nav-link:hover{color:var(--white)}.nav-link.on{color:var(--white);border-bottom-color:var(--red)}
+.nav-open{padding:6px 16px;background:var(--red);color:var(--white);font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;text-decoration:none;transition:opacity .15s}
+.nav-open:hover{opacity:.85}
+
+/* ── HERO ── */
+.hero{background:var(--black);color:var(--white);padding:72px 32px 64px;text-align:center}
+.hero-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-bottom:18px;display:flex;align-items:center;justify-content:center;gap:12px}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:40px;height:1px;background:var(--red);opacity:.5}
+.hero h1{font-size:56px;font-weight:300;letter-spacing:-.025em;line-height:1.05;margin-bottom:18px}
+.hero h1 strong{font-weight:700;display:block}
+.hero-sub{font-size:15px;color:rgba(255,255,255,.5);max-width:560px;margin:0 auto 40px;line-height:1.8}
+.hero-stats{display:flex;justify-content:center;gap:0;border-top:1px solid rgba(255,255,255,.08)}
+.hero-stat{flex:1;max-width:160px;padding:24px 16px;text-align:center;border-right:1px solid rgba(255,255,255,.08)}
+.hero-stat:last-child{border-right:none}
+.hero-stat-n{font-family:var(--mono);font-size:30px;font-weight:500;display:block;margin-bottom:4px}
+.hero-stat-l{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.04em}
+
+/* ── LAYOUT ── */
+.wrap{max-width:960px;margin:0 auto;padding:0 32px}
+
+/* ── PHASE HEADER ── */
+.phase{padding:64px 0 0}
+.phase-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--g400);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.phase-eyebrow::after{content:'';flex:1;height:1px;background:var(--g200)}
+.phase h2{font-size:36px;font-weight:300;letter-spacing:-.015em;margin-bottom:6px}
+.phase h2 strong{font-weight:700}
+.phase-sub{font-size:14px;color:var(--g500);margin-bottom:36px;line-height:1.7}
+
+/* ── STEP CARDS ── */
+.step-card{border:var(--border);margin-bottom:16px;overflow:hidden;transition:border-color .2s}
+.step-card:hover{border-color:var(--black)}
+.step-head{display:flex;align-items:center;gap:16px;padding:18px 22px;cursor:pointer;user-select:none}
+.step-num{width:32px;height:32px;background:var(--black);color:var(--white);font-family:var(--mono);font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-num.done{background:var(--green)}
+.step-num.warn{background:var(--amber)}
+.step-info{flex:1}
+.step-title{font-size:15px;font-weight:600;margin-bottom:2px}
+.step-meta{font-size:12px;color:var(--g500);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.step-tag{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border:var(--border)}
+.step-tag.free{border-color:var(--green);color:var(--green)}
+.step-tag.time{border-color:var(--blue);color:var(--blue)}
+.step-tag.req{border-color:var(--red);color:var(--red)}
+.step-arrow{font-size:18px;color:var(--g400);transition:transform .2s;flex-shrink:0}
+.step-arrow.open{transform:rotate(90deg)}
+.step-body{display:none;padding:0 22px 22px;border-top:var(--border)}
+.step-body.on{display:block}
+
+/* ── SUBSTEPS ── */
+.substeps{display:flex;flex-direction:column;gap:0;margin:16px 0;border:var(--border)}
+.substep{display:flex;gap:14px;padding:14px 18px;border-bottom:var(--border);align-items:flex-start}
+.substep:last-child{border-bottom:none}
+.substep-n{width:24px;height:24px;background:var(--g800);color:var(--white);font-family:var(--mono);font-size:11px;font-weight:500;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.substep-body{flex:1;line-height:1.7}
+.substep-title{font-size:13.5px;font-weight:500;margin-bottom:3px}
+.substep-desc{font-size:13px;color:var(--g600);line-height:1.7}
+.substep-desc a{color:var(--black);font-weight:500;text-underline-offset:3px}
+.substep-desc strong{color:var(--black)}
+
+/* ── CODE BLOCKS ── */
+.code-block{background:var(--black);color:#e2e8f0;padding:16px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.8;overflow-x:auto;margin:12px 0;position:relative;border-left:3px solid var(--red)}
+.code-block .cm{color:#64748b}
+.code-block .cv{color:#86efac}
+.code-block .ck{color:#7dd3fc}
+.code-block .co{color:#fbbf24}
+.copy-btn{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5);font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;cursor:pointer;transition:all .15s}
+.copy-btn:hover{background:rgba(255,255,255,.15);color:var(--white)}
+
+/* ── ALERTS ── */
+.alert{padding:14px 18px;margin:12px 0;border-left:3px solid;font-size:13px;line-height:1.7}
+.alert strong{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.alert-info{border-color:var(--blue);background:#EFF6FF}
+.alert-info strong{color:var(--blue)}
+.alert-ok{border-color:var(--green);background:#F0FDF4}
+.alert-ok strong{color:var(--green)}
+.alert-warn{border-color:var(--amber);background:#FFFBEB}
+.alert-warn strong{color:var(--amber)}
+
+/* ── FILE TREE ── */
+.filetree{background:var(--g50);border:var(--border);padding:18px 22px;font-family:var(--mono);font-size:12px;line-height:2.1;overflow-x:auto;margin:12px 0}
+.filetree .dir{font-weight:500;color:var(--black)}
+.filetree .new{color:var(--green)}
+.filetree .imp{color:var(--red)}
+.filetree .note{color:var(--g400)}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.tbl th{padding:9px 14px;text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);border-bottom:2px solid var(--g200);background:var(--g50)}
+.tbl td{padding:11px 14px;border-bottom:var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--g50)}
+.tbl code{font-family:var(--mono);font-size:11px;background:var(--g100);padding:2px 6px}
+.tbl-green{color:var(--green);font-family:var(--mono);font-size:11px;font-weight:500}
+.tbl-red{color:var(--red);font-family:var(--mono);font-size:11px}
+
+/* ── CHECKLIST ── */
+.checklist{display:flex;flex-direction:column;gap:0;border:var(--border);margin:12px 0}
+.cl-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:var(--border);cursor:pointer;transition:background .12s}
+.cl-item:last-child{border-bottom:none}
+.cl-item:hover{background:var(--g50)}
+.cl-box{width:18px;height:18px;border:var(--border-dark);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cl-box.done{background:var(--black);border-color:var(--black)}
+.cl-check{font-size:10px;color:var(--white);display:none}
+.cl-box.done .cl-check{display:block}
+.cl-text{flex:1}
+.cl-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.cl-desc{font-size:12px;color:var(--g500);line-height:1.5}
+.cl-badge{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;margin-left:6px;vertical-align:middle}
+.cl-badge-red{background:var(--red);color:var(--white)}
+.cl-badge-green{background:var(--green);color:var(--white)}
+.cl-badge-gray{background:var(--g200);color:var(--g600)}
+
+/* ── PROGRESS ── */
+.progress-section{background:var(--g50);border:var(--border);padding:20px 24px;margin:20px 0}
+.progress-title{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:14px}
+.progress-rows{display:flex;flex-direction:column;gap:10px}
+.progress-row{display:flex;align-items:center;gap:12px}
+.progress-lbl{font-size:12px;font-weight:500;width:120px;flex-shrink:0}
+.progress-bar{flex:1;height:5px;background:var(--g200);overflow:hidden}
+.progress-fill{height:100%;background:var(--black);transition:width 1s ease}
+.progress-pct{font-family:var(--mono);font-size:11px;color:var(--g400);width:36px;text-align:right;flex-shrink:0}
+
+/* ── PLATFORM CARDS ── */
+.platform-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.platform-card{border:var(--border);padding:20px;position:relative;overflow:hidden;cursor:pointer;transition:all .15s}
+.platform-card:hover{border-color:var(--black)}
+.platform-card.recommended{border-color:var(--black)}
+.platform-card.recommended::after{content:"แนะนำ";position:absolute;top:0;right:0;background:var(--black);color:var(--white);font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:4px 10px}
+.platform-ico{font-size:28px;margin-bottom:10px}
+.platform-name{font-size:16px;font-weight:600;margin-bottom:4px}
+.platform-price{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px}
+.platform-price.free{color:var(--green)}
+.platform-desc{font-size:12px;color:var(--g500);line-height:1.6;margin-bottom:12px}
+.platform-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--white);color:var(--black);border:var(--border-dark);font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:all .15s}
+.platform-btn:hover{background:var(--black);color:var(--white)}
+
+/* ── TOAST ── */
+.tw{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:12.5px;display:flex;align-items:center;gap:10px;border-left:3px solid var(--green);animation:tIn .2s ease;min-width:200px}
+@keyframes tIn{from{transform:translateX(8px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── FOOTER ── */
+.footer{background:var(--black);padding:40px 32px 28px;margin-top:80px}
+.footer-inner{max-width:960px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.footer-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--white)}.footer-logo .dot{color:var(--red)}
+.footer-links{display:flex;gap:20px}
+.footer-link{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.4);text-decoration:none;transition:color .15s}.footer-link:hover{color:var(--white)}
+.footer-copy{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.04em;width:100%;margin-top:8px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)}
+
+@media(max-width:768px){.hero h1{font-size:36px}.hero-stats{flex-wrap:wrap}.platform-grid{grid-template-columns:1fr}.nav-links{display:none}.wrap{padding:0 20px}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">Thailand<span class="dot">.</span>Market</div>
+  <div class="nav-links">
+    <a href="#files" class="nav-link on">ไฟล์</a>
+    <a href="#supabase" class="nav-link">Supabase</a>
+    <a href="#deploy" class="nav-link">Deploy</a>
+    <a href="#checklist" class="nav-link">Checklist</a>
+    <a href="#next" class="nav-link">ถัดไป</a>
+  </div>
+  <a href="storefront-live.html" class="nav-open" target="_blank">เปิดเว็บ →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">คู่มือ Deploy ฉบับสมบูรณ์</div>
+  <h1>พร้อม<strong>ขึ้นออนไลน์</strong></h1>
+  <p class="hero-sub">ทุกไฟล์เรียบร้อย · Supabase + Netlify · ใช้งานได้จริงใน 20 นาที</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="hero-stat-n">58</span><span class="hero-stat-l">HTML Pages</span></div>
+    <div class="hero-stat"><span class="hero-stat-n">3</span><span class="hero-stat-l">ระบบ Live</span></div>
+    <div class="hero-stat"><span class="hero-stat-n">฿0</span><span class="hero-stat-l">ค่า Hosting เริ่มต้น</span></div>
+    <div class="hero-stat"><span class="hero-stat-n">20 นาที</span><span class="hero-stat-l">เวลา Setup</span></div>
+    <div class="hero-stat"><span class="hero-stat-n">100%</span><span class="hero-stat-l">Static + Supabase</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION: FILES                                        -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase" id="files">
+  <div class="phase-eyebrow">ภาพรวม</div>
+  <h2>ไฟล์ทั้งหมด<strong>ที่ต้อง Deploy</strong></h2>
+  <p class="phase-sub">โครงสร้างไฟล์ที่เรียงพร้อมแล้ว — รวม 58 หน้า + ระบบ CMS + Database</p>
+
+  <div class="alert alert-ok">
+    <strong>✅ สถานะปัจจุบัน</strong>
+    ทุกไฟล์พร้อม Deploy แล้ว · Audit ผ่านทุกหน้า · Flow ครบ · Mobile-ready · ไม่มี broken links
+  </div>
+
+  <div class="filetree">
+<span class="dir">thailand-market/</span>  <span class="note">← โฟลเดอร์หลักที่จะ Upload ทั้งหมด</span>
+│
+├── <span class="imp">setup.html</span>           <span class="note">← [เริ่มที่นี่] ตั้งค่า Supabase URL + Key</span>
+├── <span class="imp">admin-cms.html</span>       <span class="note">← [ระบบ CMS] Admin/Seller Login + จัดการสินค้า</span>
+├── <span class="imp">storefront-live.html</span> <span class="note">← [หน้าสินค้า] ดึงข้อมูลจาก Supabase จริง</span>
+├── <span class="imp">supabase-setup.sql</span>   <span class="note">← [Database] SQL รัน 1 ครั้งใน Supabase</span>
+│
+├── index.html               <span class="note">← หน้าแรก Storefront (mock UI)</span>
+├── login.html               <span class="note">← Login page</span>
+├── forgot-password.html
+├── category.html / search.html / product.html
+├── compare.html / checkout.html / payment-result.html
+├── tracking.html / order-history.html / order-detail.html
+├── returns.html / review-write.html
+│
+├── profile.html / address-book.html / wishlist.html
+├── notification-center.html / chat.html
+│
+├── flash-sale.html / live-shopping.html / brand-day.html
+├── coupon-hub.html / loyalty-catalog.html / gift-card.html
+├── subscription.html / referral.html / b2b-portal.html
+│
+├── <span class="dir">── SELLER CENTER ──</span>
+├── seller-portal.html / seller-products.html
+├── seller-orders.html / seller-reviews.html / seller-coupons.html
+├── seller-ads.html / seller-analytics.html / seller-finance.html
+├── seller-live.html / seller-onboarding.html / onboarding.html
+│
+├── <span class="dir">── ADMIN PANEL ──</span>
+├── admin-dashboard.html / admin-users.html / admin-sellers.html
+├── admin-orders.html / admin-products.html / admin-coupons.html
+├── admin-payouts.html / flash-sale-admin.html
+├── analytics-report.html / campaign-calendar.html
+│
+├── help-center.html / sitemap.html / storefront.html
+├── api-docs.html / microservices-arch.html
+└── README.md / DEPLOY.html (คู่มือ)
+  </div>
+
+  <table class="tbl">
+    <thead><tr><th>ไฟล์สำคัญ</th><th>หน้าที่</th><th>ต้องทำ</th></tr></thead>
+    <tbody>
+      <tr><td><code>setup.html</code></td><td>ตั้งค่า Supabase ครั้งแรก</td><td class="tbl-red">ทำก่อนทุกอย่าง</td></tr>
+      <tr><td><code>supabase-setup.sql</code></td><td>สร้าง Database tables + RLS</td><td class="tbl-red">Run ใน Supabase SQL Editor</td></tr>
+      <tr><td><code>admin-cms.html</code></td><td>CMS จัดการสินค้า/Approve/Users</td><td class="tbl-green">พร้อมใช้หลัง Setup</td></tr>
+      <tr><td><code>storefront-live.html</code></td><td>หน้าสินค้า Live จาก Supabase</td><td class="tbl-green">พร้อมใช้หลัง Setup</td></tr>
+      <tr><td><code>index.html</code></td><td>หน้าแรก UI (Static)</td><td class="tbl-green">Upload ได้เลย</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PHASE 1: SUPABASE                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase" id="supabase">
+  <div class="phase-eyebrow">ขั้นตอนที่ 1 — Database (ฟรี · 10 นาที)</div>
+  <h2>ตั้งค่า<strong>Supabase</strong></h2>
+  <p class="phase-sub">Supabase = Database (PostgreSQL) + Auth (Login) + Storage (รูปภาพ) ฟรีทั้งหมด — ไม่ต้องเขียน Backend</p>
+
+  <!-- Step 1.1 -->
+  <div class="step-card">
+    <div class="step-head" onclick="toggleStep(this)">
+      <div class="step-num">1</div>
+      <div class="step-info">
+        <div class="step-title">สมัคร Supabase (ฟรี)</div>
+        <div class="step-meta">
+          <span class="step-tag free">ฟรี 100%</span>
+          <span class="step-tag time">⏱ 3 นาที</span>
+          <span>ใช้ Google account สมัครได้เลย</span>
+        </div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="substeps">
+        <div class="substep">
+          <div class="substep-n">1</div>
+          <div class="substep-body">
+            <div class="substep-title">เปิด supabase.com</div>
+            <div class="substep-desc">ไปที่ <a href="https://supabase.com" target="_blank"><strong>supabase.com</strong></a> → คลิก <strong>"Start your project"</strong> → Sign up ด้วย GitHub หรือ Google (แนะนำ GitHub เพราะใช้ร่วมกันได้)</div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">2</div>
+          <div class="substep-body">
+            <div class="substep-title">สร้าง Organization และ Project</div>
+            <div class="substep-desc">
+              คลิก <strong>"New project"</strong> → กรอก:<br>
+              • <strong>Organization:</strong> ชื่อบริษัท/ทีมของคุณ<br>
+              • <strong>Name:</strong> <code>thailand-market</code><br>
+              • <strong>Database Password:</strong> สร้างรหัสผ่านที่แข็งแกร่ง (จด password ไว้!)<br>
+              • <strong>Region: Southeast Asia (Singapore)</strong> ← สำคัญมาก เพื่อความเร็วในไทย<br>
+              • <strong>Plan: Free</strong><br>
+              → คลิก <strong>"Create new project"</strong> รอ ~2 นาที
+            </div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">3</div>
+          <div class="substep-body">
+            <div class="substep-title">คัดลอก API Keys</div>
+            <div class="substep-desc">
+              ไปที่ <strong>Project Settings</strong> (ไอคอน ⚙️ ซ้ายล่าง) → <strong>API</strong> → คัดลอก 2 ค่านี้:
+            </div>
+            <div class="code-block" id="c-keys"><button class="copy-btn" onclick="cp('c-keys')">Copy</button><span class="cv">Project URL:</span>    https://xxxxxxxxxxxxxxxxxxxx.supabase.co
+<span class="cv">anon public key:</span>  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOi...
+<span class="cm">
+# ⚠️ อย่า copy "service_role" key ใส่ในไฟล์ HTML ที่ user เห็นได้!</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1.2 -->
+  <div class="step-card">
+    <div class="step-head" onclick="toggleStep(this)">
+      <div class="step-num">2</div>
+      <div class="step-info">
+        <div class="step-title">รัน SQL เพื่อสร้าง Database</div>
+        <div class="step-meta">
+          <span class="step-tag req">สำคัญมาก</span>
+          <span class="step-tag time">⏱ 2 นาที</span>
+          <span>ทำครั้งเดียว สร้าง Tables + ข้อมูลเริ่มต้นทั้งหมด</span>
+        </div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="substeps">
+        <div class="substep">
+          <div class="substep-n">1</div>
+          <div class="substep-body">
+            <div class="substep-title">เปิด SQL Editor</div>
+            <div class="substep-desc">ใน Supabase Dashboard → คลิก <strong>"SQL Editor"</strong> (ไอคอน &lt;/&gt; ในแถบซ้าย) → คลิก <strong>"New query"</strong></div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">2</div>
+          <div class="substep-body">
+            <div class="substep-title">Copy SQL แล้ว Paste และ Run</div>
+            <div class="substep-desc">เปิดไฟล์ <strong>supabase-setup.sql</strong> ในโฟลเดอร์ → Select All → Copy → Paste ใน SQL Editor → คลิก <strong>"Run"</strong> (สีเขียว)<br><br>จะสร้าง: ตาราง users, categories, products, Storage bucket, RLS policies + ข้อมูลเริ่มต้น 10 หมวดหมู่</div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">3</div>
+          <div class="substep-body">
+            <div class="substep-title">ตรวจสอบว่า Run สำเร็จ</div>
+            <div class="substep-desc">ไปที่ <strong>Table Editor</strong> → ควรเห็น tables: <code>users</code>, <code>categories</code>, <code>products</code><br>ไปที่ <strong>Storage</strong> → ควรเห็น bucket: <code>product-images</code></div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-warn">
+        <strong>⚠️ ถ้าเห็น Error "already exists"</strong>
+        ไม่เป็นไร — หมายความว่า table มีอยู่แล้ว ผลลัพธ์ยังถูกต้อง ไม่ต้องทำอะไรเพิ่ม
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1.3 -->
+  <div class="step-card">
+    <div class="step-head" onclick="toggleStep(this)">
+      <div class="step-num">3</div>
+      <div class="step-info">
+        <div class="step-title">เปิด Authentication + สร้าง Admin User</div>
+        <div class="step-meta">
+          <span class="step-tag time">⏱ 3 นาที</span>
+          <span>สร้างบัญชี Admin คนแรกสำหรับ Login CMS</span>
+        </div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="substeps">
+        <div class="substep">
+          <div class="substep-n">1</div>
+          <div class="substep-body">
+            <div class="substep-title">เปิด Email Auth</div>
+            <div class="substep-desc">ไปที่ <strong>Authentication</strong> → <strong>Providers</strong> → <strong>Email</strong> → Toggle <strong>Enable</strong> → Save</div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">2</div>
+          <div class="substep-body">
+            <div class="substep-title">สร้าง Admin User คนแรก</div>
+            <div class="substep-desc">ไปที่ <strong>Authentication</strong> → <strong>Users</strong> → <strong>"Invite user"</strong> หรือ <strong>"Add user"</strong><br>→ กรอก Email และ Password ของ Admin<br>→ คลิก <strong>"Create user"</strong></div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">3</div>
+          <div class="substep-body">
+            <div class="substep-title">Set role = admin ใน Database</div>
+            <div class="substep-desc">ไปที่ <strong>SQL Editor</strong> → New query → รัน SQL นี้ (แทนที่ email ด้วยของคุณ):</div>
+            <div class="code-block" id="c-admin"><button class="copy-btn" onclick="cp('c-admin')">Copy</button><span class="cm">-- แทนที่ email และ display_name ด้วยค่าของคุณ</span>
+INSERT INTO users (email, display_name, role, is_active)
+VALUES (<span class="cv">'admin@yoursite.com'</span>, <span class="cv">'Admin'</span>, <span class="cv">'admin'</span>, true)
+ON CONFLICT (email) DO UPDATE SET role = <span class="cv">'admin'</span>;</div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">4</div>
+          <div class="substep-body">
+            <div class="substep-title">(ทางเลือก) เชิญ Seller</div>
+            <div class="substep-desc">Authentication → Users → Invite user → กรอก Email Seller → Role จะเป็น 'seller' โดย Admin กำหนดใน CMS ได้</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 1.4 -->
+  <div class="step-card">
+    <div class="step-head" onclick="toggleStep(this)">
+      <div class="step-num">4</div>
+      <div class="step-info">
+        <div class="step-title">ตั้งค่าเว็บด้วย setup.html</div>
+        <div class="step-meta">
+          <span class="step-tag time">⏱ 1 นาที</span>
+          <span>กรอก URL + Key ครั้งเดียว บันทึกในเบราว์เซอร์</span>
+        </div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="substeps">
+        <div class="substep">
+          <div class="substep-n">1</div>
+          <div class="substep-body">
+            <div class="substep-title">เปิดไฟล์ setup.html</div>
+            <div class="substep-desc">เปิดไฟล์ <strong>setup.html</strong> ในเบราว์เซอร์ (double-click หรือเปิดผ่าน Netlify URL หลัง deploy)</div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">2</div>
+          <div class="substep-body">
+            <div class="substep-title">กรอก Supabase URL และ Anon Key</div>
+            <div class="substep-desc">วาง <strong>Project URL</strong> และ <strong>anon public key</strong> ที่คัดลอกจาก Supabase → คลิก <strong>"บันทึกและเริ่มใช้งาน"</strong></div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">3</div>
+          <div class="substep-body">
+            <div class="substep-title">Login CMS ทดสอบ</div>
+            <div class="substep-desc">จะ redirect ไป <strong>admin-cms.html</strong> → กรอก Email/Password ที่สร้างใน Supabase → Login → ลองเพิ่มสินค้าทดสอบ → เปิด storefront-live.html เพื่อดูสินค้าที่แสดงบนเว็บ</div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-info">
+        <strong>💡 ทำไม URL + Key ถึงปลอดภัย?</strong>
+        Supabase "anon key" เป็น key สาธารณะที่ออกแบบมาให้ใช้ใน frontend ได้ · Row Level Security (RLS) ใน Database ควบคุมว่าใครเห็นและแก้ไขอะไรได้ · ไม่มีใครสามารถลบหรือแก้ข้อมูลคนอื่นได้ผ่าน key นี้
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PHASE 2: DEPLOY                                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase" id="deploy">
+  <div class="phase-eyebrow">ขั้นตอนที่ 2 — Hosting (ฟรี · 5 นาที)</div>
+  <h2>Deploy ขึ้น<strong>อินเทอร์เน็ต</strong></h2>
+  <p class="phase-sub">เลือก 1 platform — ทุก option ฟรี 100% สำหรับ Static HTML</p>
+
+  <div class="platform-grid">
+    <div class="platform-card recommended">
+      <div class="platform-ico">🌐</div>
+      <div class="platform-name">Netlify</div>
+      <div class="platform-price free">ฟรี — CDN ทั่วโลก</div>
+      <div class="platform-desc">วิธีง่ายสุด — Drag & Drop ไฟล์ ได้ URL ภายใน 30 วินาที ไม่ต้องสมัครก่อนก็ได้</div>
+      <a href="https://app.netlify.com/drop" target="_blank" class="platform-btn">เปิด Netlify Drop →</a>
+    </div>
+    <div class="platform-card">
+      <div class="platform-ico">🐙</div>
+      <div class="platform-name">GitHub Pages</div>
+      <div class="platform-price free">ฟรี — Stable URL</div>
+      <div class="platform-desc">เหมาะถ้ามี GitHub account อยู่แล้ว URL คงที่ ใช้ได้ระยะยาว</div>
+      <a href="https://github.com" target="_blank" class="platform-btn">github.com →</a>
+    </div>
+    <div class="platform-card">
+      <div class="platform-ico">▲</div>
+      <div class="platform-name">Vercel</div>
+      <div class="platform-price free">ฟรี / Pro $20/เดือน</div>
+      <div class="platform-desc">เร็วมาก เหมาะ Production จริง มี Analytics ในตัว</div>
+      <a href="https://vercel.com" target="_blank" class="platform-btn">vercel.com →</a>
+    </div>
+    <div class="platform-card">
+      <div class="platform-ico">🔶</div>
+      <div class="platform-name">Cloudflare Pages</div>
+      <div class="platform-price free">ฟรี — CDN ไทยดีมาก</div>
+      <div class="platform-desc">DDoS protection ในตัว CDN Node ในไทย ความเร็วดีที่สุด</div>
+      <a href="https://pages.cloudflare.com" target="_blank" class="platform-btn">cloudflare.com →</a>
+    </div>
+  </div>
+
+  <!-- Netlify Steps -->
+  <div class="step-card">
+    <div class="step-head" onclick="toggleStep(this)">
+      <div class="step-num done">✓</div>
+      <div class="step-info">
+        <div class="step-title">วิธีที่ 1: Netlify Drop (ง่ายสุด · 2 นาที)</div>
+        <div class="step-meta">
+          <span class="step-tag free">ฟรี</span>
+          <span class="step-tag time">⏱ 2 นาที</span>
+          <span class="step-tag req">แนะนำ</span>
+        </div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="substeps">
+        <div class="substep">
+          <div class="substep-n">1</div>
+          <div class="substep-body">
+            <div class="substep-title">Zip ไฟล์ทั้งหมด</div>
+            <div class="substep-desc">
+              <strong>Windows:</strong> เลือกทุกไฟล์ในโฟลเดอร์ → Right-click → "Compress to ZIP file" (หรือ Send to → Compressed folder)<br>
+              <strong>Mac:</strong> เลือกทุกไฟล์ → Right-click → "Compress X items"<br><br>
+              ⚠️ Zip เนื้อหาข้างใน ไม่ใช่โฟลเดอร์ทั้งก้อน — เปิด zip แล้วควรเห็น index.html ทันที ไม่ใช่โฟลเดอร์อีกชั้น
+            </div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">2</div>
+          <div class="substep-body">
+            <div class="substep-title">ไปที่ app.netlify.com/drop</div>
+            <div class="substep-desc">ไม่ต้องสมัครก็ได้ → Drag ZIP ลงในพื้นที่ที่ระบุ → รอ 10–30 วินาที → ได้ URL แบบ <code>random-name-abc123.netlify.app</code></div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">3</div>
+          <div class="substep-body">
+            <div class="substep-title">(ทางเลือก) สมัครเพื่อจัดการได้</div>
+            <div class="substep-desc">Sign up ฟรี → Claim site → ตั้งชื่อ subdomain เป็น <code>thailand-market.netlify.app</code> → หรือเชื่อม Custom domain ของตัวเอง (เช่น <code>myshop.co.th</code>)</div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">4</div>
+          <div class="substep-body">
+            <div class="substep-title">เปิด setup.html บน URL ใหม่</div>
+            <div class="substep-desc">เปิด <code>https://your-site.netlify.app/setup.html</code> → กรอก Supabase URL + Key → บันทึก → เริ่มใช้งานได้เลย!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GitHub Pages Steps -->
+  <div class="step-card">
+    <div class="step-head" onclick="toggleStep(this)">
+      <div class="step-num">2</div>
+      <div class="step-info">
+        <div class="step-title">วิธีที่ 2: GitHub Pages (ถาวร · 5 นาที)</div>
+        <div class="step-meta">
+          <span class="step-tag free">ฟรี</span>
+          <span class="step-tag time">⏱ 5 นาที</span>
+          <span>เหมาะถ้าต้องการ update ไฟล์บ่อย</span>
+        </div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="substeps">
+        <div class="substep">
+          <div class="substep-n">1</div>
+          <div class="substep-body">
+            <div class="substep-title">สมัคร GitHub (ถ้ายังไม่มี)</div>
+            <div class="substep-desc">ไปที่ <a href="https://github.com" target="_blank"><strong>github.com</strong></a> → Sign up → ยืนยัน email → เสร็จ</div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">2</div>
+          <div class="substep-body">
+            <div class="substep-title">สร้าง Repository ใหม่</div>
+            <div class="substep-desc">คลิก <strong>"New"</strong> (สีเขียว) → Repository name: <code>thailand-market</code> → เลือก <strong>Public</strong> → คลิก <strong>"Create repository"</strong></div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">3</div>
+          <div class="substep-body">
+            <div class="substep-title">Upload ไฟล์ทั้งหมด</div>
+            <div class="substep-desc">ใน Repository ที่สร้าง → คลิก <strong>"uploading an existing file"</strong> → Drag ไฟล์ทั้งหมดมาวาง (ทีละ 50 ไฟล์ หรือ drag โฟลเดอร์) → กรอก Commit message: "Initial deploy" → คลิก <strong>"Commit changes"</strong></div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">4</div>
+          <div class="substep-body">
+            <div class="substep-title">เปิด GitHub Pages</div>
+            <div class="substep-desc">Settings → Pages → Source: <strong>Deploy from a branch</strong> → Branch: <strong>main</strong> → Folder: <strong>/ (root)</strong> → Save → รอ 2–3 นาที → URL: <code>https://username.github.io/thailand-market/</code></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Domain -->
+  <div class="step-card">
+    <div class="step-head" onclick="toggleStep(this)">
+      <div class="step-num">3</div>
+      <div class="step-info">
+        <div class="step-title">เชื่อม Custom Domain (ทางเลือก)</div>
+        <div class="step-meta">
+          <span class="step-tag time">⏱ 15 นาที + รอ DNS 24 ชม.</span>
+          <span>เช่น myshop.co.th — ราคา domain ประมาณ ฿500/ปี</span>
+        </div>
+      </div>
+      <div class="step-arrow">›</div>
+    </div>
+    <div class="step-body">
+      <div class="substeps">
+        <div class="substep">
+          <div class="substep-n">1</div>
+          <div class="substep-body">
+            <div class="substep-title">ซื้อ Domain</div>
+            <div class="substep-desc">
+              <strong>ไทย (.co.th / .th):</strong> <a href="https://www.thnic.co.th" target="_blank">thnic.co.th</a> หรือ <a href="https://www.godaddy.com" target="_blank">GoDaddy</a><br>
+              <strong>ทั่วไป (.com / .shop):</strong> <a href="https://www.namecheap.com" target="_blank">Namecheap</a> (ถูกสุด) หรือ <a href="https://domains.google" target="_blank">Google Domains</a><br>
+              ราคา: <code>.com ≈ ฿400/ปี</code> · <code>.co.th ≈ ฿500/ปี</code> · <code>.shop ≈ ฿200–500/ปี</code>
+            </div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">2</div>
+          <div class="substep-body">
+            <div class="substep-title">ตั้งค่า DNS ที่ Registrar</div>
+            <div class="substep-desc">ไปที่ DNS Settings ของผู้ขาย domain → เพิ่ม record:</div>
+            <div class="code-block" id="c-dns"><button class="copy-btn" onclick="cp('c-dns')">Copy</button><span class="cm"># สำหรับ Netlify:</span>
+<span class="ck">Type:</span> <span class="cv">CNAME</span>
+<span class="ck">Name:</span> <span class="cv">www</span>
+<span class="ck">Value:</span> <span class="cv">your-site.netlify.app</span>
+<span class="ck">TTL:</span>  <span class="cv">Auto</span>
+
+<span class="cm"># สำหรับ root domain (@):</span>
+<span class="ck">Type:</span>  <span class="cv">A</span>
+<span class="ck">Name:</span>  <span class="cv">@</span>
+<span class="ck">Value:</span> <span class="cv">75.2.60.5</span>  <span class="cm">(Netlify IP)</span></div>
+          </div>
+        </div>
+        <div class="substep">
+          <div class="substep-n">3</div>
+          <div class="substep-body">
+            <div class="substep-title">เพิ่ม Domain ใน Netlify/Vercel</div>
+            <div class="substep-desc">
+              <strong>Netlify:</strong> Site settings → Domain management → Add custom domain → กรอก domain → Verify<br>
+              <strong>Vercel:</strong> Project → Settings → Domains → Add → กรอก domain<br><br>
+              SSL Certificate (HTTPS) จะสร้างอัตโนมัติ ฟรี ใช้เวลา 5–30 นาที
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-info">
+        <strong>💡 DNS ใช้เวลา propagate 1–48 ชั่วโมง</strong>
+        ปกติ 1–2 ชั่วโมงก็ใช้ได้แล้วในไทย · ระหว่างรอยังเข้าผ่าน URL ของ Netlify/Vercel ได้ปกติ
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- CHECKLIST                                             -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase" id="checklist">
+  <div class="phase-eyebrow">ขั้นตอนที่ 3</div>
+  <h2><strong>Checklist</strong> ก่อนเปิดตัว</h2>
+  <p class="phase-sub">คลิกแต่ละข้อเมื่อทำเสร็จ — บันทึกอัตโนมัติ</p>
+
+  <div class="progress-section">
+    <div class="progress-title">ความคืบหน้า</div>
+    <div class="progress-rows">
+      <div class="progress-row"><div class="progress-lbl">Supabase Setup</div><div class="progress-bar"><div class="progress-fill" id="pb-supa" style="width:0%"></div></div><div class="progress-pct" id="pp-supa">0%</div></div>
+      <div class="progress-row"><div class="progress-lbl">Deploy / Hosting</div><div class="progress-bar"><div class="progress-fill" id="pb-deploy" style="width:0%"></div></div><div class="progress-pct" id="pp-deploy">0%</div></div>
+      <div class="progress-row"><div class="progress-lbl">Content & Launch</div><div class="progress-bar"><div class="progress-fill" id="pb-launch" style="width:0%"></div></div><div class="progress-pct" id="pp-launch">0%</div></div>
+    </div>
+  </div>
+
+  <!-- Supabase checklist -->
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:10px;margin-top:24px">🗄️ Supabase</div>
+  <div class="checklist" data-group="supa">
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">สมัคร Supabase.com <span class="cl-badge cl-badge-red">ต้องทำก่อน</span></div><div class="cl-desc">ฟรี · ใช้ Google/GitHub account ได้เลย</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">สร้าง Project ชื่อ thailand-market Region: Singapore</div><div class="cl-desc">จด Database Password ไว้</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">Run supabase-setup.sql ใน SQL Editor</div><div class="cl-desc">ได้ Tables: users, categories, products + Storage bucket</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">เปิด Email Authentication</div><div class="cl-desc">Authentication → Providers → Email → Enable</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">สร้าง Admin User คนแรก</div><div class="cl-desc">Authentication → Users → Add user → Set role=admin ใน SQL</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">คัดลอก Project URL + Anon Key</div><div class="cl-desc">Project Settings → API → Project URL + anon public key</div></div></div>
+  </div>
+
+  <!-- Deploy checklist -->
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:10px;margin-top:20px">🚀 Deploy</div>
+  <div class="checklist" data-group="deploy">
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">Zip ไฟล์ทั้งหมดในโฟลเดอร์</div><div class="cl-desc">เลือกทุกไฟล์ → Compress · ตรวจสอบว่า index.html อยู่ top-level</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">Upload ไปที่ Netlify Drop / GitHub Pages / Vercel</div><div class="cl-desc">ได้ URL สาธารณะที่เข้าถึงได้จากทุกที่</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">เปิด setup.html ผ่าน URL ใหม่ → กรอก Supabase credentials</div><div class="cl-desc">URL จะเป็น https://your-site.netlify.app/setup.html</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">ทดสอบ Login CMS ผ่าน admin-cms.html</div><div class="cl-desc">Login สำเร็จ → เพิ่มสินค้าทดสอบ → ตรวจสอบที่ storefront-live.html</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">ทดสอบบน Mobile</div><div class="cl-desc">เปิดผ่านมือถือ ตรวจ responsive, ความเร็ว, การ upload รูป</div></div></div>
+  </div>
+
+  <!-- Launch checklist -->
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:10px;margin-top:20px">🎯 ก่อนเปิดตัวจริง</div>
+  <div class="checklist" data-group="launch">
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">เพิ่มสินค้าจริงอย่างน้อย 5–10 รายการ</div><div class="cl-desc">ผ่าน admin-cms.html → เพิ่มสินค้า → Upload รูป → Publish</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">แก้ข้อมูลติดต่อใน help-center.html</div><div class="cl-desc">เบอร์โทร, Email, LINE OA, ที่อยู่จริง</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">ติดตั้ง Google Analytics 4 (ทางเลือก)</div><div class="cl-desc">analytics.google.com → สร้าง Property → ใส่ script ก่อน &lt;/head&gt; ทุกหน้า</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">เชื่อม Custom Domain (ทางเลือก)</div><div class="cl-desc">ซื้อ domain → ตั้งค่า DNS → SSL อัตโนมัติ</div></div></div>
+    <div class="cl-item" onclick="tick(this)"><div class="cl-box"><span class="cl-check">✓</span></div><div class="cl-text"><div class="cl-title">สร้าง favicon.ico</div><div class="cl-desc">canva.com หรือ favicon.io → สร้าง → วางในโฟลเดอร์ → re-deploy</div></div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- NEXT STEPS                                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase" id="next">
+  <div class="phase-eyebrow">ขั้นตอนต่อไป</div>
+  <h2>เพิ่ม<strong>ฟีเจอร์</strong>เพิ่มเติม</h2>
+  <p class="phase-sub">หลังเว็บ Live แล้ว — สิ่งที่ทำได้ต่อไปตามลำดับ</p>
+
+  <table class="tbl">
+    <thead><tr><th>ฟีเจอร์</th><th>วิธี</th><th>ราคา</th><th>เวลา</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Payment รับเงินจริง</strong></td>
+        <td>สมัคร <a href="https://www.omise.co" target="_blank"><strong>Omise</strong></a> (ไทย) หรือ <strong>2C2P</strong> → ใส่ API key</td>
+        <td>2.9% + ฿10/txn</td>
+        <td>1–3 วัน (รอ Verify)</td>
+      </tr>
+      <tr>
+        <td><strong>LINE Login</strong></td>
+        <td>สมัคร LINE Developers → สร้าง Channel → เพิ่ม Supabase OAuth provider</td>
+        <td>ฟรี</td>
+        <td>2 ชั่วโมง</td>
+      </tr>
+      <tr>
+        <td><strong>Email Notification</strong></td>
+        <td>Supabase → เชื่อม <strong>Resend.com</strong> หรือ <strong>SendGrid</strong> → Template อีเมล</td>
+        <td>ฟรี (3,000 emails/เดือน)</td>
+        <td>1 ชั่วโมง</td>
+      </tr>
+      <tr>
+        <td><strong>ค้นหาขั้นสูง</strong></td>
+        <td>Supabase Full-text Search (ไม่ต้องจ่ายเพิ่ม) หรือ <strong>Algolia</strong></td>
+        <td>ฟรี–$100/เดือน</td>
+        <td>3–5 ชั่วโมง</td>
+      </tr>
+      <tr>
+        <td><strong>Push Notifications</strong></td>
+        <td>Supabase Realtime + <strong>OneSignal</strong> (ฟรี)</td>
+        <td>ฟรี</td>
+        <td>4 ชั่วโมง</td>
+      </tr>
+      <tr>
+        <td><strong>Mobile App</strong></td>
+        <td>แปลง HTML → <strong>PWA</strong> (manifest.json + Service Worker) หรือ <strong>Capacitor</strong> สำหรับ App Store</td>
+        <td>ฟรี–$99/ปี (Apple)</td>
+        <td>1–2 สัปดาห์</td>
+      </tr>
+      <tr>
+        <td><strong>Analytics Dashboard</strong></td>
+        <td><strong>Google Analytics 4</strong> ฟรี หรือ <strong>Plausible</strong> (privacy-first ฿350/เดือน)</td>
+        <td>ฟรี</td>
+        <td>30 นาที</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Cost summary -->
+  <div style="border:var(--border-dark);overflow:hidden;margin-top:24px">
+    <div style="background:var(--black);color:var(--white);padding:16px 20px">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px">ค่าใช้จ่ายรายเดือน</div>
+      <div style="font-size:20px;font-weight:600">ฟรีถึง ~฿2,000/เดือน</div>
+    </div>
+    <table class="tbl" style="margin:0">
+      <thead><tr><th>บริการ</th><th>Plan ฟรี</th><th>Plan จ่าย</th><th>จำเป็น?</th></tr></thead>
+      <tbody>
+        <tr><td>Supabase (Database + Auth + Storage)</td><td class="tbl-green">ฟรี 500MB + 1GB storage</td><td>$25/เดือน</td><td class="tbl-red">✅ จำเป็น</td></tr>
+        <tr><td>Netlify / Vercel / GitHub Pages (Hosting)</td><td class="tbl-green">ฟรี 100GB bandwidth</td><td>$20/เดือน</td><td class="tbl-red">✅ จำเป็น</td></tr>
+        <tr><td>Custom Domain (.com / .co.th)</td><td>—</td><td>~฿400–500/ปี</td><td>ทางเลือก</td></tr>
+        <tr><td>Omise Payment Gateway</td><td>ฟรีเปิดบัญชี</td><td>2.9%+฿10/txn</td><td>ถ้ารับเงินจริง</td></tr>
+        <tr><td>Google Analytics</td><td class="tbl-green">ฟรีตลอด</td><td>—</td><td>แนะนำ</td></tr>
+        <tr style="background:var(--g50);font-weight:600"><td>รวม MVP เริ่มต้น</td><td class="tbl-green" colspan="2">฿0/เดือน + ค่า domain ~฿40/เดือน</td><td>🎉</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Quick reference -->
+  <div style="margin-top:32px">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:14px">ลิงก์สำคัญ — Quick Reference</div>
+    <div class="code-block" id="c-links" style="border-left-color:var(--green)"><button class="copy-btn" onclick="cp('c-links')">Copy</button><span class="co">Supabase Dashboard</span>   https://supabase.com/dashboard
+<span class="co">Netlify Drop</span>          https://app.netlify.com/drop
+<span class="co">GitHub</span>               https://github.com
+<span class="co">Vercel</span>               https://vercel.com
+<span class="co">Cloudflare Pages</span>     https://pages.cloudflare.com
+<span class="co">Namecheap (Domain)</span>   https://namecheap.com
+<span class="co">Omise (Payment TH)</span>   https://www.omise.co
+<span class="co">favicon.io</span>           https://favicon.io
+<span class="co">Google Analytics</span>     https://analytics.google.com
+<span class="co">PageSpeed Test</span>       https://pagespeed.web.dev</div>
+  </div>
+</div>
+
+<div style="padding:40px 0"></div>
+</div><!-- /wrap -->
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-logo">Thailand<span class="dot">.</span>Market</div>
+    <div class="footer-links">
+      <a href="index.html" class="footer-link">หน้าแรก</a>
+      <a href="admin-cms.html" class="footer-link">CMS Admin</a>
+      <a href="storefront-live.html" class="footer-link">Storefront Live</a>
+      <a href="setup.html" class="footer-link">ตั้งค่า</a>
+      <a href="sitemap.html" class="footer-link">Site Map</a>
+    </div>
+    <div class="footer-copy">© 2026 Thailand Market · คู่มือ Deploy ฉบับสมบูรณ์ · 58 หน้าพร้อมใช้งาน</div>
+  </div>
+</footer>
+
+<div class="tw" id="tw"></div>
+
+<script>
+// ── Toggle Steps ──────────────────────────────────────────
+function toggleStep(head) {
+  const body = head.nextElementSibling;
+  const arrow = head.querySelector('.step-arrow');
+  const isOpen = body.classList.contains('on');
+  body.classList.toggle('on', !isOpen);
+  arrow.classList.toggle('open', !isOpen);
+}
+
+// ── Copy Code ─────────────────────────────────────────────
+function cp(id) {
+  const el = document.getElementById(id);
+  const txt = (el.innerText || el.textContent).replace(/^Copy\n?/, '').trim();
+  navigator.clipboard.writeText(txt).then(() => toast('คัดลอกแล้ว ✓')).catch(() => toast('เลือก text แล้ว copy เอง'));
+}
+
+// ── Checklist ─────────────────────────────────────────────
+document.querySelectorAll('.checklist').forEach(list => {
+  const gid = list.dataset.group;
+  list.querySelectorAll('.cl-item').forEach((item, idx) => {
+    if (localStorage.getItem(`cl-${gid}-${idx}`) === '1') setDone(item, true);
+  });
+  updateProgress(list, gid);
+});
+
+function tick(item) {
+  const list = item.closest('.checklist');
+  const gid = list.dataset.group;
+  const items = Array.from(list.querySelectorAll('.cl-item'));
+  const idx = items.indexOf(item);
+  const done = item.querySelector('.cl-box').classList.contains('done');
+  setDone(item, !done);
+  localStorage.setItem(`cl-${gid}-${idx}`, done ? '0' : '1');
+  updateProgress(list, gid);
+}
+
+function setDone(item, done) {
+  item.querySelector('.cl-box').classList.toggle('done', done);
+}
+
+function updateProgress(list, gid) {
+  const items = list.querySelectorAll('.cl-item');
+  const doneCount = list.querySelectorAll('.cl-box.done').length;
+  const pct = Math.round(doneCount / items.length * 100);
+  const bar = document.getElementById('pb-' + gid);
+  const val = document.getElementById('pp-' + gid);
+  if (bar) bar.style.width = pct + '%';
+  if (val) val.textContent = pct + '%';
+}
+
+// ── Active Nav on Scroll ──────────────────────────────────
+const sections = ['files','supabase','deploy','checklist','next'];
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('on'));
+      const link = document.querySelector(`.nav-link[href="#${e.target.id}"]`);
+      if (link) link.classList.add('on');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(id => { const el = document.getElementById(id); if (el) observer.observe(el); });
+
+// ── Toast ─────────────────────────────────────────────────
+function toast(msg) {
+  const w = document.getElementById('tw');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,544 @@
+<!DOCTYPE html><html lang="th"><head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thailand Market — คืนสินค้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style id="tm-base">
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
+  /* legacy compat */
+  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
+  --bg:#FAFAFA;--white-off:#FAFAFA;
+  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
+  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
+  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
+  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
+  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
+  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
+  --sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
+
+/* ── NAV ── */
+#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
+.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
+.tn-logo .dot{color:var(--red)}
+.tn-links{display:flex;flex:1;overflow:hidden}
+.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
+.tn-link:hover{color:var(--black)}
+.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
+.tn-search{position:relative;margin-left:auto}
+.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
+.tn-search input:focus{border-color:var(--black)}
+.tn-search input::placeholder{color:var(--g400)}
+.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
+.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
+.tn-btn:hover{color:var(--black)}
+.tn-btn.sell{color:var(--red)}
+.tn-ico{font-size:15px;position:relative;line-height:1}
+.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+.tn-cats{border-top:var(--border)}
+.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
+.tn-cats-inner::-webkit-scrollbar{display:none}
+.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
+.tn-cat:hover{color:var(--black)}
+.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
+
+/* ── GLOBAL BUTTONS ── */
+.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
+.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
+.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
+.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
+.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
+
+/* old btn-primary / btn-secondary overrides */
+.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-primary:hover{background:var(--g800)!important}
+.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
+
+/* legacy btn-cart / btn-buy → new style */
+.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
+.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-buy:hover{background:var(--g800)!important}
+.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
+.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
+
+/* ── CARDS ── */
+.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
+.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
+
+/* ── SECTION ── */
+.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
+.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
+.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
+.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
+.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
+
+/* ── PRODUCT CARDS ── */
+.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
+.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
+.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
+.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
+.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
+.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
+.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
+.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
+.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
+.badge-hot{background:var(--black)!important;color:var(--white)!important}
+
+/* ── PRICE BOX ── */
+.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
+.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
+.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
+.flash-tag{background:var(--red)!important;border-radius:0!important}
+
+/* ── NAV OLD → NEW ── */
+.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
+.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
+.nav-search input{border:var(--border)!important;border-radius:0!important}
+.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
+.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
+.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
+.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
+.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
+.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
+.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
+
+/* ── FORMS ── */
+.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
+.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
+.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
+
+/* ── STATUS / BADGE ── */
+.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
+.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
+.status-badge,.badge{border-radius:0!important}
+
+/* ── TABLES ── */
+table{border-collapse:collapse}
+thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
+tbody td{border-bottom:var(--border)!important}
+tbody tr:hover td{background:var(--g50)!important}
+
+/* ── MODALS ── */
+.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
+.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
+.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
+
+/* ── SIDEBAR (seller) ── */
+.sidebar,.sb{background:var(--black)!important}
+.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
+.sni-badge{background:var(--red)!important}
+.sb-logo-mark{background:var(--red)!important}
+.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
+
+/* ── COLORS: strip all gradients/rounded corners ── */
+[style*="background:linear-gradient"]{background:var(--g50)!important}
+[style*="border-radius"]{border-radius:0!important}
+
+/* ── TOAST ── */
+.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
+@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── FOOTER ── */
+#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
+#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
+#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-logo .dot{color:var(--red)}
+#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
+#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
+#tm-footer .tf-link:hover{color:var(--white)}
+#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
+  .tn-links{display:none}
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
+</style>
+<style id="page-css">
+
+:root{--primary:#0A0A0A;--accent:#E63329;--teal:#404040;--bg:#FFFFFF;--white:#fff;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;--gn:#16A34A;--r8:8px;--r12:12px;--r16:16px}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);font-size:14px}
+.nav{background:var(--primary);padding:11px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'DM Sans',sans-serif;font-weight:900;font-size:20px;color:#fff}.nav-logo span{color:var(--accent)}
+.page{max-width:960px;margin:24px auto;padding:0 16px}
+.pg-title{font-family:'DM Sans',sans-serif;font-weight:800;font-size:22px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.pg-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
+.stepper{display:flex;align-items:center;gap:0;margin-bottom:28px;background:#fff;border:1px solid var(--g200);border-radius:4px;padding:20px 24px}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;transition:all 0.2s}
+.sc-done{background:var(--gn);color:#fff}
+.sc-active{background:var(--accent);color:#fff;box-shadow:0 0 0 4px rgba(230,57,70,0.15)}
+.sc-wait{background:var(--g100);color:var(--g400)}
+.step-label{font-size:11px;text-align:center;line-height:1.3}
+.sl-active{font-weight:600;color:var(--g900)}.sl-done{color:var(--gn)}.sl-wait{color:var(--g400)}
+.step-line{flex:1;height:2px;background:var(--g200);margin:0 6px;margin-bottom:16px}
+.sl-done-line{background:var(--gn)}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:16px}
+.card{background:#fff;border:1px solid var(--g200);border-radius:4px;padding:20px;margin-bottom:14px}
+.c-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.order-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--g100)}
+.order-item:last-child{border-bottom:none}
+.oi-img{width:64px;height:64px;background:var(--g100);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.oi-body{flex:1}
+.oi-name{font-size:13px;font-weight:600;margin-bottom:2px;color:var(--g900)}
+.oi-var{font-size:11px;color:var(--g400);margin-bottom:6px}
+.oi-price{font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;color:var(--accent)}
+.qty-chk{display:flex;align-items:center;gap:8px;margin-top:6px}
+.qty-chk input{accent-color:var(--accent)}
+.qty-chk label{font-size:12px;color:var(--g700)}
+.form-group{margin-bottom:14px}
+.fg-label{font-size:12px;font-weight:600;color:var(--g700);margin-bottom:6px;display:block}
+.fg-label span{color:var(--accent)}
+select,textarea,input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--g200);border-radius:2px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;background:#fff;transition:border 0.15s}
+select:focus,textarea:focus,input:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+.photo-upload{border:2px dashed var(--g200);border-radius:4px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s}
+.photo-upload:hover{border-color:var(--accent);background:#FFF5F5}
+.pu-ico{font-size:28px;margin-bottom:6px}
+.pu-text{font-size:12px;color:var(--g400)}
+.pu-limit{font-size:10px;color:var(--g400);margin-top:4px}
+.info-box{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:4px;padding:14px;margin-bottom:14px}
+.ib-title{font-size:12px;font-weight:700;color:#1D4ED8;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.ib-body{font-size:12px;color:#1E40AF;line-height:1.7}
+.refund-summary{background:#F0FFF4;border:1px solid #BBF7D0;border-radius:4px;padding:18px;margin-bottom:14px}
+.rs-title{font-size:12px;font-weight:700;color:var(--gn);margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.rs-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.rs-row.total{font-weight:700;font-size:15px;border-top:1px solid #BBF7D0;margin-top:6px;padding-top:8px}
+.method-opts{display:flex;flex-direction:column;gap:8px}
+.mo{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--g200);border-radius:4px;cursor:pointer;transition:all 0.15s}
+.mo:hover{border-color:var(--black)}
+.mo.selected{border-color:var(--black);background:#F0FDFA}
+.mo-ico{font-size:20px;flex-shrink:0}
+.mo-name{font-size:13px;font-weight:600;color:var(--g900)}
+.mo-detail{font-size:11px;color:var(--g400)}
+.mo-days{font-size:11px;font-weight:600;color:var(--black);margin-left:auto}
+.submit-btn{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-bottom:8px}
+.submit-btn:hover{background:#B5261F;transform:scale(1.01)}
+.cancel-btn{width:100%;padding:11px;background:#fff;color:var(--g500);border:1px solid var(--g200);border-radius:4px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer}
+.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999}
+.toast{background:var(--primary);color:#fff;padding:11px 16px;border-radius:4px;font-size:13px;animation:tIn 0.3s ease}
+@keyframes tIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+</style>
+<style id="tm-responsive">
+/* ── Mobile fixes ── */
+@media(max-width:768px){
+  .tn-links{display:none!important}
+  .tn-srch{display:none!important}
+  /* hamburger hint */
+  .tn-top{padding:0 16px}
+  .tn-logo{margin-right:auto}
+  /* sidebar pages on mobile */
+  .app{flex-direction:column}
+  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
+  .sb-logo,.sb-user{flex-basis:100%}
+  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
+  .sb-lbl{display:none}
+  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
+  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
+  .sb-foot{display:none}
+  .main{margin-left:0!important}
+  /* layout grids */
+  .layout{grid-template-columns:1fr!important}
+  .form-row{grid-template-columns:1fr!important}
+  /* tables */
+  table{font-size:12px}
+  td,th{padding:8px 10px!important}
+  /* stat grids */
+  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  [style*="grid-template-columns:repeat(3"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* hero */
+  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
+  .hero-right{display:none}
+  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
+  /* product grids */
+  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* footer */
+  #tm-footer .tf-grid{grid-template-columns:1fr!important}
+  /* wrap padding */
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:36px!important}
+  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
+  .hero-stat-row{grid-template-columns:1fr 1fr}
+}
+/* ── Print friendly ── */
+@media print{
+  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
+  body{font-size:12px}
+}
+/* ── Focus / accessibility ── */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid #0A0A0A;outline-offset:2px
+}
+/* ── Smooth image loading ── */
+img{max-width:100%;height:auto}
+/* ── Selection color ── */
+::selection{background:#0A0A0A;color:#fff}
+</style>
+</head><body>
+<nav id="tm-nav">
+  <div class="tn-top">
+    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="tn-links">
+      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
+      <a href="live-shopping.html" class="tn-link">Live</a>
+      <a href="brand-day.html" class="tn-link">Brand Day</a>
+      <a href="coupon-hub.html" class="tn-link">Coupon</a>
+      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
+      <a href="subscription.html" class="tn-link">TM Plus</a>
+      <a href="b2b-portal.html" class="tn-link">B2B</a>
+      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
+    </div>
+    <div class="tn-search">
+      <input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'">
+    </div>
+    <div class="tn-acts">
+      <button class="tn-btn" onclick="location.href='wishlist.html'"><span class="tn-ico">♡</span>Saved</button>
+      <button class="tn-btn" onclick="location.href='notification-center.html'"><span class="tn-ico">🔔</span>Alerts</button>
+      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
+      <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
+      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
+    </div>
+  </div>
+  <div class="tn-cats">
+    <div class="tn-cats-inner">
+      <a href="category.html" class="tn-cat">🏠 Home</a>
+      <a href="category.html" class="tn-cat">👗 Fashion</a>
+      <a href="category.html" class="tn-cat">💄 Beauty</a>
+      <a href="category.html" class="tn-cat">🛒 FMCG</a>
+      <a href="category.html" class="tn-cat">💻 Tech</a>
+      <a href="category.html" class="tn-cat">🚗 Auto</a>
+      <a href="category.html" class="tn-cat">🐾 Pets</a>
+      <a href="category.html" class="tn-cat">📚 Education</a>
+    </div>
+  </div>
+</nav>
+
+
+
+
+
+
+
+
+
+
+<div class="page">
+  <div class="pg-title">↩️ ขอคืนสินค้า / เงิน</div>
+  <div class="pg-sub">ออเดอร์ #ZM-2604-002847 · รับสินค้าเมื่อ 20 เมษายน 2026 · เหลือเวลาคืน 10 วัน</div>
+  <div class="stepper">
+    <div class="step"><div class="step-circle sc-done">✓</div><div class="step-label sl-done">เลือกสินค้า</div></div>
+    <div class="step-line sl-done-line"></div>
+    <div class="step"><div class="step-circle sc-active">2</div><div class="step-label sl-active">ระบุเหตุผล</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-circle sc-wait">3</div><div class="step-label sl-wait">เลือกวิธีคืนเงิน</div></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-circle sc-wait">4</div><div class="step-label sl-wait">ยืนยัน</div></div>
+  </div>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="c-title">📦 สินค้าที่ต้องการคืน</div>
+        <div class="order-item">
+          <div class="oi-img">📺</div>
+          <div class="oi-body">
+            <div class="oi-name">Samsung 55" QLED 4K Smart TV Q80D</div>
+            <div class="oi-var">สี: Titan Black · x1 ชิ้น</div>
+            <div class="oi-price">฿14,900</div>
+            <div class="qty-chk"><input type="checkbox" id="item1" checked><label for="item1">คืนสินค้านี้ (1 ชิ้น)</label></div>
+          </div>
+        </div>
+        <div class="order-item">
+          <div class="oi-img">🔊</div>
+          <div class="oi-body">
+            <div class="oi-name">Soundbar HW-B550 2.1ch 410W</div>
+            <div class="oi-var">สี: Black · x1 ชิ้น</div>
+            <div class="oi-price">฿4,990</div>
+            <div class="qty-chk"><input type="checkbox" id="item2"><label for="item2">คืนสินค้านี้ด้วย</label></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="c-title">📝 เหตุผลการคืนสินค้า</div>
+        <div class="form-group">
+          <label class="fg-label">เหตุผล <span>*</span></label>
+          <select id="reason-sel" onchange="updateReason()">
+            <option value="">-- เลือกเหตุผล --</option>
+            <option value="defect">สินค้ามีตำหนิ / เสียหาย</option>
+            <option value="wrong">ได้รับสินค้าผิด รุ่น/สี</option>
+            <option value="notmatch">สินค้าไม่ตรงตามที่โฆษณา</option>
+            <option value="missing">สินค้าขาดชิ้นส่วน / อุปกรณ์</option>
+            <option value="changed">เปลี่ยนใจ ไม่ต้องการสินค้า</option>
+            <option value="late">สินค้ามาช้าเกินไป</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="fg-label">รายละเอียดเพิ่มเติม</label>
+          <textarea placeholder="อธิบายปัญหาที่พบ เพื่อให้เราช่วยได้เร็วขึ้น..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="fg-label">แนบรูปภาพ (ถ้ามี)</label>
+          <div class="photo-upload" onclick="toast('📷 เปิดกล้อง/อัพโหลดรูป')">
+            <div class="pu-ico">📷</div>
+            <div class="pu-text">คลิกเพื่ออัพโหลดรูปสินค้า</div>
+            <div class="pu-limit">สูงสุด 5 รูป · JPG, PNG · ไม่เกิน 10MB</div>
+          </div>
+        </div>
+        <div class="info-box" id="reason-info" style="display:none">
+          <div class="ib-title">ℹ️ ข้อมูลสำคัญ</div>
+          <div class="ib-body" id="reason-text"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="c-title">💳 วิธีรับเงินคืน</div>
+        <div class="method-opts">
+          <div class="mo selected" onclick="selMethod(this)"><div class="mo-ico">💳</div><div><div class="mo-name">คืนเข้าบัตรเครดิต/เดบิต</div><div class="mo-detail">KBank Mastercard ****4521</div></div><div class="mo-days">5-7 วันทำการ</div></div>
+          <div class="mo" onclick="selMethod(this)"><div class="mo-ico">🏦</div><div><div class="mo-name">โอนเข้าบัญชีธนาคาร</div><div class="mo-detail">กรุณาระบุข้อมูลบัญชี</div></div><div class="mo-days">1-3 วันทำการ</div></div>
+          <div class="mo" onclick="selMethod(this)"><div class="mo-ico">⭐</div><div><div class="mo-name">คืนเป็น ThaiPoints</div><div class="mo-detail">รับโบนัส +5% (฿15,645 = 15,645 แต้ม)</div></div><div class="mo-days">ทันที</div></div>
+          <div class="mo" onclick="selMethod(this)"><div class="mo-ico">🎟️</div><div><div class="mo-name">คืนเป็น Voucher Thailand Market</div><div class="mo-detail">ใช้ได้ทุกสินค้า ไม่มีวันหมดอายุ</div></div><div class="mo-days">ทันที</div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="refund-summary">
+        <div class="rs-title">✅ สรุปยอดคืนเงิน</div>
+        <div class="rs-row"><span>ราคาสินค้า</span><span>฿14,900</span></div>
+        <div class="rs-row"><span>ค่าจัดส่ง (รับคืน)</span><span style="color:var(--gn)">ฟรี</span></div>
+        <div class="rs-row"><span>ค่าธรรมเนียมการคืน</span><span style="color:var(--gn)">ฟรี</span></div>
+        <div class="rs-row total"><span>ยอดคืนเงินทั้งหมด</span><span style="color:var(--gn)">฿14,900</span></div>
+      </div>
+      <div class="card">
+        <div class="c-title">📋 ขั้นตอนการคืนสินค้า</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">1</div><div style="font-size:12px;color:var(--g700)"><strong>ส่งคำขอ</strong> — ระบบตรวจสอบอัตโนมัติ ใช้เวลา 1-2 ชั่วโมง</div></div>
+          <div style="display:flex;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--g200);color:var(--g500);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">2</div><div style="font-size:12px;color:var(--g700)"><strong>แพ็คสินค้า</strong> — แพ็คให้ครบ บรรจุภัณฑ์เดิม อุปกรณ์ครบ</div></div>
+          <div style="display:flex;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--g200);color:var(--g500);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">3</div><div style="font-size:12px;color:var(--g700)"><strong>นำส่ง</strong> — Kerry Express รับถึงบ้าน (ฟรี) หรือนำส่งเอง</div></div>
+          <div style="display:flex;gap:10px"><div style="width:24px;height:24px;border-radius:50%;background:var(--g200);color:var(--g500);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">4</div><div style="font-size:12px;color:var(--g700)"><strong>รับเงินคืน</strong> — ภายใน 5-7 วันทำการหลังตรวจสอบสินค้า</div></div>
+        </div>
+      </div>
+      <button class="submit-btn" onclick="submitReturn()">✅ ยืนยันการขอคืนสินค้า</button>
+      <button class="cancel-btn" onclick="window.location.href='tracking.html'">ยกเลิก กลับหน้าออเดอร์</button>
+    </div>
+  </div>
+</div>
+<div class="toast-wrap" id="tw"></div>
+<script>
+const REASON_INFO={
+  defect:'สินค้ามีตำหนิ/เสียหาย: กรุณาถ่ายรูปตำหนิให้ชัดเจน ร้านค้าจะรับผิดชอบค่าจัดส่งทั้งหมด และตรวจสอบภายใน 24 ชั่วโมง',
+  wrong:'ได้รับสินค้าผิด: กรุณาถ่ายรูปสินค้าที่ได้รับ ไม่ต้องเปิดบรรจุภัณฑ์ ร้านค้าจะส่งสินค้าที่ถูกต้องให้ภายใน 3 วัน',
+  notmatch:'สินค้าไม่ตรงโฆษณา: แนบรูปเปรียบเทียบกับรูปในหน้าสินค้า ทีมจะตรวจสอบและดำเนินการภายใน 2 วัน',
+  missing:'สินค้าขาดชิ้นส่วน: ระบุรายการที่ขาดให้ชัดเจน ร้านค้าอาจส่งชิ้นส่วนที่ขาดมาให้แทนการคืนสินค้าทั้งชุด',
+  changed:'เปลี่ยนใจ: สินค้าต้องอยู่ในสภาพเดิม ยังไม่เปิดใช้งาน มีบรรจุภัณฑ์ครบ ค่าจัดส่งคืนผู้ซื้อรับผิดชอบ',
+  late:'ล่าช้า: หากสินค้าเลย SLA จัดส่ง จะได้รับชดเชย 1% ของมูลค่าสินค้า หรือเลือกคืนเงินเต็มจำนวน'
+};
+function updateReason(){const v=document.getElementById('reason-sel').value;const info=document.getElementById('reason-info');const text=document.getElementById('reason-text');if(v&&REASON_INFO[v]){info.style.display='block';text.textContent=REASON_INFO[v];}else{info.style.display='none';}}
+function selMethod(el){document.querySelectorAll('.mo').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');toast('💳 เลือก: '+el.querySelector('.mo-name').textContent);}
+function submitReturn(){
+  const reason=document.getElementById('reason-sel').value;
+  if(!reason){toast('⚠️ กรุณาเลือกเหตุผลการคืนสินค้า');return;}
+  toast('✅ ส่งคำขอคืนสินค้าแล้ว! รหัส RMA-2026-00284 · รอ Kerry รับสินค้าภายใน 24 ชม.');
+  setTimeout(()=>{toast('📲 ส่ง SMS แจ้งเตือนแล้ว: 08X-XXXX-XXXX');},1200);
+}
+function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3500);}
+</script>
+
+
+
+
+<div class="tm-toast-wrap" id="tmToastWrap"></div>
+<script>
+function tmToast(msg){
+  var w=document.getElementById('tmToastWrap');
+  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
+  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
+  w.appendChild(t);setTimeout(function(){t.remove()},2600);
+}
+</script>
+<footer id="tm-footer">
+  <div class="tf-inner">
+    <div class="tf-grid">
+      <div>
+        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
+        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
+      </div>
+      <div>
+        <div class="tf-title">ช้อปปิ้ง</div>
+        <a href="index.html" class="tf-link">หน้าแรก</a>
+        <a href="category.html" class="tf-link">หมวดหมู่</a>
+        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
+        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
+        <a href="brand-day.html" class="tf-link">Brand Day</a>
+        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
+      </div>
+      <div>
+        <div class="tf-title">บัญชีของฉัน</div>
+        <a href="profile.html" class="tf-link">โปรไฟล์</a>
+        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
+        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
+        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
+        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
+        <a href="returns.html" class="tf-link">คืนสินค้า</a>
+      </div>
+      <div>
+        <div class="tf-title">ผู้ขาย</div>
+        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
+        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
+        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
+        <a href="seller-analytics.html" class="tf-link">Analytics</a>
+        <a href="b2b-portal.html" class="tf-link">B2B</a>
+        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
+      </div>
+      <div>
+        <div class="tf-title">ช่วยเหลือ</div>
+        <a href="help-center.html" class="tf-link">Help Center</a>
+        <a href="chat.html" class="tf-link">แชทกับเรา</a>
+        <a href="subscription.html" class="tf-link">TM Plus</a>
+        <a href="gift-card.html" class="tf-link">Gift Card</a>
+        <a href="sitemap.html" class="tf-link">Site Map</a>
+        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
+      </div>
+    </div>
+    <div class="tf-bottom">
+      <span>© 2026 Thailand Market · All rights reserved</span>
+      <span>TH · EN · 🔒 SSL · PCI DSS</span>
+    </div>
+  </div>
+</footer>
+<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
+<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+</body></html>

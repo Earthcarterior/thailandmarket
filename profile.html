@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thailand Market — โปรไฟล์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style id="tm-base">
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
+  /* legacy compat */
+  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
+  --bg:#FAFAFA;--white-off:#FAFAFA;
+  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
+  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
+  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
+  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
+  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
+  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
+  --sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
+
+/* ── NAV ── */
+#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
+.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
+.tn-logo .dot{color:var(--red)}
+.tn-links{display:flex;flex:1;overflow:hidden}
+.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
+.tn-link:hover{color:var(--black)}
+.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
+.tn-search{position:relative;margin-left:auto}
+.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
+.tn-search input:focus{border-color:var(--black)}
+.tn-search input::placeholder{color:var(--g400)}
+.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
+.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
+.tn-btn:hover{color:var(--black)}
+.tn-btn.sell{color:var(--red)}
+.tn-ico{font-size:15px;position:relative;line-height:1}
+.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+.tn-cats{border-top:var(--border)}
+.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
+.tn-cats-inner::-webkit-scrollbar{display:none}
+.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
+.tn-cat:hover{color:var(--black)}
+.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
+
+/* ── GLOBAL BUTTONS ── */
+.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
+.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
+.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
+.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
+.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
+
+/* old btn-primary / btn-secondary overrides */
+.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-primary:hover{background:var(--g800)!important}
+.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
+
+/* legacy btn-cart / btn-buy → new style */
+.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
+.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-buy:hover{background:var(--g800)!important}
+.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
+.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
+
+/* ── CARDS ── */
+.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
+.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
+
+/* ── SECTION ── */
+.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
+.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
+.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
+.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
+.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
+
+/* ── PRODUCT CARDS ── */
+.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
+.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
+.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
+.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
+.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
+.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
+.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
+.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
+.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
+.badge-hot{background:var(--black)!important;color:var(--white)!important}
+
+/* ── PRICE BOX ── */
+.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
+.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
+.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
+.flash-tag{background:var(--red)!important;border-radius:0!important}
+
+/* ── NAV OLD → NEW ── */
+.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
+.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
+.nav-search input{border:var(--border)!important;border-radius:0!important}
+.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
+.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
+.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
+.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
+.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
+.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
+.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
+
+/* ── FORMS ── */
+.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
+.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
+.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
+
+/* ── STATUS / BADGE ── */
+.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
+.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
+.status-badge,.badge{border-radius:0!important}
+
+/* ── TABLES ── */
+table{border-collapse:collapse}
+thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
+tbody td{border-bottom:var(--border)!important}
+tbody tr:hover td{background:var(--g50)!important}
+
+/* ── MODALS ── */
+.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
+.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
+.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
+
+/* ── SIDEBAR (seller) ── */
+.sidebar,.sb{background:var(--black)!important}
+.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
+.sni-badge{background:var(--red)!important}
+.sb-logo-mark{background:var(--red)!important}
+.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
+
+/* ── COLORS: strip all gradients/rounded corners ── */
+[style*="background:linear-gradient"]{background:var(--g50)!important}
+[style*="border-radius"]{border-radius:0!important}
+
+/* ── TOAST ── */
+.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
+@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── FOOTER ── */
+#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
+#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
+#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-logo .dot{color:var(--red)}
+#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
+#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
+#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
+#tm-footer .tf-link:hover{color:var(--white)}
+#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
+  .tn-links{display:none}
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
+</style>
+<style id="page-css">
+
+:root{--primary:#0A0A0A;--accent:#E63329;--teal:#404040;--gold:#F2F2F2;--bg:#FFFFFF;--white:#fff;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;--gn:#16A34A;--r8:8px;--r12:12px;--r16:16px;--r24:24px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);font-size:14px}
+.nav{background:var(--primary)}
+.nav-inner{display:flex;align-items:center;gap:14px;padding:12px 24px;max-width:1280px;margin:0 auto}
+.nav-logo{font-family:'DM Sans',sans-serif;font-weight:900;font-size:21px;color:#fff}
+.nav-logo span{color:var(--accent)}
+.nav-acts{display:flex;align-items:center;gap:4px;margin-left:auto}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 9px;cursor:pointer;border-radius:2px;color:rgba(255,255,255,0.7);font-size:10px;border:none;background:none;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.nav-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.nav-btn-ico{font-size:17px;position:relative}
+.cart-badge{position:absolute;top:-4px;right:-6px;background:var(--accent);color:#fff;font-size:9px;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+/* PROFILE HEADER */
+.profile-header{background:linear-gradient(135deg,var(--primary) 0%,#1A1A1A 60%,#1A3A3A 100%);padding:32px 0}
+.ph-inner{max-width:1280px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:20px}
+.ph-av{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#D4D4D4);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;flex-shrink:0;border:3px solid rgba(255,255,255,0.2);position:relative;cursor:pointer}
+.ph-cam{position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;border:2px solid var(--primary)}
+.ph-info{flex:1}
+.ph-name{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:2px}
+.ph-email{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px}
+.ph-level{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:4px 12px}
+.ph-level-name{font-size:12px;font-weight:700;color:var(--gold)}
+.ph-stats{display:flex;gap:24px;margin-left:auto}
+.ph-stat{text-align:center}
+.ph-stat-val{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:800;color:#fff;display:block}
+.ph-stat-lbl{font-size:11px;color:rgba(255,255,255,0.45)}
+
+/* LAYOUT */
+.page{max-width:1280px;margin:0 auto;padding:20px 16px 48px;display:grid;grid-template-columns:240px 1fr;gap:20px}
+
+/* SIDEBAR */
+.sidebar{}
+.sb-card{background:#fff;border:1px solid var(--g200);border-radius:4px;overflow:hidden;margin-bottom:12px}
+.sb-nav-item{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;color:var(--g700);font-size:13px;transition:all 0.15s;border-left:3px solid transparent}
+.sb-nav-item:hover{background:var(--g100)}
+.sb-nav-item.active{background:#FFF5F5;color:var(--accent);font-weight:600;border-left-color:var(--accent)}
+.sb-nav-ico{font-size:15px;width:18px;text-align:center}
+.sb-nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px}
+.sb-logout{padding:12px 16px;cursor:pointer;color:#EF4444;font-size:13px;display:flex;align-items:center;gap:8px;border-top:1px solid var(--g200)}
+.sb-logout:hover{background:#FEF2F2}
+
+/* MAIN CONTENT */
+.main-area{}
+.card{background:#fff;border:1px solid var(--g200);border-radius:4px;padding:18px 20px;margin-bottom:14px}
+.card-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;color:var(--g900);margin-bottom:14px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.card-title-left{display:flex;align-items:center;gap:8px}
+.page-view{display:none}.page-view.active{display:block}
+
+/* LOYALTY */
+.loyalty-card{background:linear-gradient(135deg,#0A0A0A,#1A1A1A);border-radius:4px;padding:20px 22px;margin-bottom:14px;position:relative;overflow:hidden}
+.lc-bg{position:absolute;inset:0;pointer-events:none}
+.lc-circle{position:absolute;border-radius:50%;background:rgba(255,255,255,0.04)}
+.lc-level{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.lc-badge{background:var(--gold);color:#8B4513;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:800;padding:4px 12px;border-radius:20px}
+.lc-tag{font-size:11px;color:rgba(255,255,255,0.5)}
+.lc-points{font-family:'DM Sans',sans-serif;font-size:40px;font-weight:900;color:#fff;margin-bottom:4px}
+.lc-pts-lbl{font-size:13px;color:rgba(255,255,255,0.5)}
+.lc-progress{margin-top:14px}
+.lc-progress-lbl{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px}
+.lc-bar{background:rgba(255,255,255,0.1);border-radius:4px;height:6px}
+.lc-bar-fill{height:6px;background:linear-gradient(90deg,var(--gold),var(--accent2));border-radius:4px}
+.lc-perks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.lc-perk{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:8px;text-align:center}
+.lc-perk-ico{font-size:16px;margin-bottom:3px}
+.lc-perk-lbl{font-size:9px;color:rgba(255,255,255,0.5);line-height:1.3}
+.points-hist{display:flex;flex-direction:column;gap:0}
+.pt-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--g100)}
+.pt-item:last-child{border-bottom:none}
+.pt-ico{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.pt-info{flex:1}
+.pt-title{font-size:12.5px;font-weight:500;color:var(--g900)}
+.pt-date{font-size:11px;color:var(--g400)}
+.pt-pts{font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px}
+.pts-pos{color:var(--gn)}.pts-neg{color:var(--accent)}
+
+/* ORDERS */
+.order-item{border:1px solid var(--g200);border-radius:4px;padding:14px 16px;margin-bottom:10px}
+.order-item:last-child{margin-bottom:0}
+.oi-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.oi-code{font-size:12px;font-weight:700;color:var(--primary)}
+.oi-date{font-size:11px;color:var(--g400);margin-left:4px}
+.oi-status{margin-left:auto}
+.pill{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:3px 8px;border-radius:20px}
+.pill::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0.65}
+.p-gn{background:#DCFCE7;color:#15803D}.p-bl{background:#EFF6FF;color:#1D4ED8}
+.p-am{background:#FEF3C7;color:#B45309}.p-rd{background:#FEE2E2;color:#B91C1C}
+.oi-products{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.oi-prod{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--g700)}
+.oi-prod-img{width:36px;height:36px;background:var(--g100);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.oi-foot{display:flex;align-items:center;justify-content:space-between}
+.oi-total{font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;color:var(--accent)}
+.oi-btns{display:flex;gap:6px}
+.btn-sm{padding:6px 12px;border-radius:2px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;display:inline-flex;align-items:center;gap:4px}
+.btn-primary-sm{background:var(--accent);color:#fff;border:none}
+.btn-primary-sm:hover{background:#B5261F}
+.btn-outline-sm{background:#fff;color:var(--g700);border:1px solid var(--g200)}
+.btn-outline-sm:hover{background:var(--g100)}
+
+/* WISHLIST */
+.wish-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.wish-card{background:#fff;border:1px solid var(--g200);border-radius:4px;overflow:hidden;cursor:pointer;transition:all 0.2s}
+.wish-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);transform:translateY(-2px)}
+.wish-img{height:100px;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative}
+.wish-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;background:rgba(255,255,255,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;border:none;transition:background 0.15s}
+.wish-remove:hover{background:#FEE2E2}
+.wish-info{padding:8px 10px 10px}
+.wish-name{font-size:11.5px;font-weight:600;color:var(--g900);margin-bottom:4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wish-price{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--accent)}
+
+/* COUPONS */
+.coup-grid{display:flex;flex-direction:column;gap:10px}
+.coup-item{border:1.5px dashed var(--g200);border-radius:4px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:all 0.2s}
+.coup-item.active{border-color:var(--black)}
+.coup-item.expired{opacity:0.5}
+.coup-ico{width:46px;height:46px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.coup-info{flex:1}
+.coup-title{font-size:13px;font-weight:600;color:var(--g900);margin-bottom:2px}
+.coup-desc{font-size:11px;color:var(--g500)}
+.coup-exp{font-size:10px;margin-top:4px}
+
+/* PROFILE FORM */
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:12px;color:var(--g700);font-weight:600;margin-bottom:5px}
+.fi{width:100%;padding:10px 12px;border:1.5px solid var(--g200);border-radius:2px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--g900);outline:none;transition:border-color 0.2s}
+.fi:focus{border-color:var(--accent)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-save{padding:11px 28px;background:var(--accent);color:#fff;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-save:hover{background:#B5261F;transform:translateY(-1px)}
+
+/* NOTIF TOGGLE */
+.notif-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--g100)}
+.notif-row:last-child{border-bottom:none}
+.notif-lbl{font-size:13px;font-weight:500}
+.notif-sub{font-size:11px;color:var(--g400);margin-top:1px}
+.toggle{width:40px;height:22px;border-radius:11px;border:none;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0}
+.toggle.on{background:var(--black)}
+.toggle.off{background:var(--g200)}
+.toggle-ball{position:absolute;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left 0.2s}
+.toggle.on .toggle-ball{left:21px}
+.toggle.off .toggle-ball{left:3px}
+
+.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999}
+.toast{background:var(--primary);color:#fff;padding:11px 16px;border-radius:4px;font-size:13px;animation:tIn 0.3s ease;display:flex;align-items:center;gap:8px}
+@keyframes tIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+</style>
+<style id="tm-responsive">
+/* ── Mobile fixes ── */
+@media(max-width:768px){
+  .tn-links{display:none!important}
+  .tn-srch{display:none!important}
+  /* hamburger hint */
+  .tn-top{padding:0 16px}
+  .tn-logo{margin-right:auto}
+  /* sidebar pages on mobile */
+  .app{flex-direction:column}
+  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
+  .sb-logo,.sb-user{flex-basis:100%}
+  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
+  .sb-lbl{display:none}
+  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
+  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
+  .sb-foot{display:none}
+  .main{margin-left:0!important}
+  /* layout grids */
+  .layout{grid-template-columns:1fr!important}
+  .form-row{grid-template-columns:1fr!important}
+  /* tables */
+  table{font-size:12px}
+  td,th{padding:8px 10px!important}
+  /* stat grids */
+  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  [style*="grid-template-columns:repeat(3"]{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* hero */
+  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
+  .hero-right{display:none}
+  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
+  /* product grids */
+  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
+    grid-template-columns:repeat(2,1fr)!important
+  }
+  /* footer */
+  #tm-footer .tf-grid{grid-template-columns:1fr!important}
+  /* wrap padding */
+  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:36px!important}
+  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
+  .hero-stat-row{grid-template-columns:1fr 1fr}
+}
+/* ── Print friendly ── */
+@media print{
+  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
+  body{font-size:12px}
+}
+/* ── Focus / accessibility ── */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid #0A0A0A;outline-offset:2px
+}
+/* ── Smooth image loading ── */
+img{max-width:100%;height:auto}
+/* ── Selection color ── */
+::selection{background:#0A0A0A;color:#fff}
+</style>
+</head>
+<body>
+<nav id="tm-nav">
+  <div class="tn-top">
+    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="tn-links">
+      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
+      <a href="live-shopping.html" class="tn-link">Live</a>
+      <a href="brand-day.html" class="tn-link">Brand Day</a>
+      <a href="coupon-hub.html" class="tn-link">Coupon</a>
+      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
+      <a href="subscription.html" class="tn-link">TM Plus</a>
+      <a href="b2b-portal.html" class="tn-link">B2B</a>
+      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
+    </div>
+    <div class="tn-search">
+      <input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'">
+    </div>
+    <div class="tn-acts">
+      <button class="tn-btn" onclick="location.href='address-book.html'"><span class="tn-ico">♡</span>Saved</button>
+      <button class="tn-btn" onclick="location.href='notification-center.html'"><span class="tn-ico">🔔</span>Alerts</button>
+      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
+      <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
+      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
+    </div>
+  </div>
+  <div class="tn-cats">
+    <div class="tn-cats-inner">
+      <a href="category.html" class="tn-cat">🏠 Home</a>
+      <a href="category.html" class="tn-cat">👗 Fashion</a>
+      <a href="category.html" class="tn-cat">💄 Beauty</a>
+      <a href="category.html" class="tn-cat">🛒 FMCG</a>
+      <a href="category.html" class="tn-cat">💻 Tech</a>
+      <a href="category.html" class="tn-cat">🚗 Auto</a>
+      <a href="category.html" class="tn-cat">🐾 Pets</a>
+      <a href="category.html" class="tn-cat">📚 Education</a>
+    </div>
+  </div>
+</nav>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- PROFILE HEADER -->
+<div class="profile-header">
+  <div class="ph-inner">
+    <div class="ph-av" onclick="toast('📸 เปลี่ยนรูปโปรไฟล์')">
+      สจ
+      <div class="ph-cam">📷</div>
+    </div>
+    <div class="ph-info">
+      <div class="ph-name">สมชาย ใจดี</div>
+      <div class="ph-email">somchai.jaidee@email.com · สมาชิกตั้งแต่ ม.ค. 2567</div>
+      <div class="ph-level">
+        <span style="font-size:14px">🥇</span>
+        <span class="ph-level-name">Gold Member</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.4)">อีก 3,751 แต้ม → Platinum</span>
+      </div>
+    </div>
+    <div class="ph-stats">
+      <div class="ph-stat"><span class="ph-stat-val">48</span><div class="ph-stat-lbl">ออเดอร์</div></div>
+      <div class="ph-stat"><span class="ph-stat-val">6,249</span><div class="ph-stat-lbl">แต้มสะสม</div></div>
+      <div class="ph-stat"><span class="ph-stat-val">12</span><div class="ph-stat-lbl">Wishlist</div></div>
+      <div class="ph-stat"><span class="ph-stat-val">4.9⭐</span><div class="ph-stat-lbl">คะแนน</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-card">
+      <div class="sb-nav-item active" onclick="gotoPage('loyalty',this)"><span class="sb-nav-ico">⭐</span>Loyalty & แต้มสะสม</div>
+      <div class="sb-nav-item" onclick="gotoPage('orders',this)"><span class="sb-nav-ico">📦</span>ออเดอร์ของฉัน<span class="sb-nav-badge">48</span></div>
+      <div class="sb-nav-item" onclick="gotoPage('wishlist',this)"><span class="sb-nav-ico">❤️</span>Wishlist<span class="sb-nav-badge">12</span></div>
+      <div class="sb-nav-item" onclick="gotoPage('coupons',this)"><span class="sb-nav-ico">🎟️</span>คูปองของฉัน<span class="sb-nav-badge">5</span></div>
+      <div class="sb-nav-item" onclick="gotoPage('addresses',this)"><span class="sb-nav-ico">📍</span>ที่อยู่จัดส่ง</div>
+      <div class="sb-nav-item" onclick="gotoPage('profile',this)"><span class="sb-nav-ico">👤</span>ข้อมูลส่วนตัว</div>
+      <div class="sb-nav-item" onclick="gotoPage('notifications',this)"><span class="sb-nav-ico">🔔</span>การแจ้งเตือน</div>
+      <div class="sb-logout" onclick="window.location.href='login.html'">🚪 ออกจากระบบ</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-area">
+
+    <!-- LOYALTY -->
+    <div class="page-view active" id="pv-loyalty">
+      <div class="loyalty-card">
+        <div class="lc-bg">
+          <div class="lc-circle" style="width:300px;height:300px;top:-80px;right:-60px"></div>
+          <div class="lc-circle" style="width:150px;height:150px;bottom:-30px;left:30%"></div>
+        </div>
+        <div class="lc-level">
+          <span class="lc-badge">🥇 Gold Member</span>
+          <span class="lc-tag">สมาชิก 2 ปี 3 เดือน</span>
+        </div>
+        <div class="lc-points">6,249</div>
+        <div class="lc-pts-lbl">ThaiPoints · มูลค่าประมาณ ฿624</div>
+        <div class="lc-progress">
+          <div class="lc-progress-lbl">
+            <span>Gold</span>
+            <span>อีก 3,751 แต้ม → Platinum</span>
+          </div>
+          <div class="lc-bar"><div class="lc-bar-fill" style="width:62%"></div></div>
+        </div>
+        <div class="lc-perks">
+          <div class="lc-perk"><div class="lc-perk-ico">🚚</div><div class="lc-perk-lbl">ส่งฟรีทุกออเดอร์</div></div>
+          <div class="lc-perk"><div class="lc-perk-ico">⚡</div><div class="lc-perk-lbl">Early Flash Sale</div></div>
+          <div class="lc-perk"><div class="lc-perk-ico">🎁</div><div class="lc-perk-lbl">Birthday 3x Points</div></div>
+          <div class="lc-perk"><div class="lc-perk-ico">💳</div><div class="lc-perk-lbl">ผ่อน 0% ทุกแบรนด์</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-left">🎁 แลกแต้มเป็นส่วนลด</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+          <div style="border:1.5px solid var(--g200);border-radius:4px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--g200)'" onclick="toast('💰 แลก 1,000 แต้ม = ฿100 ส่วนลด')">
+            <div style="font-size:22px;margin-bottom:6px">💰</div>
+            <div style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;color:var(--accent)">฿100</div>
+            <div style="font-size:11px;color:var(--g400)">1,000 แต้ม</div>
+          </div>
+          <div style="border:1.5px solid var(--g200);border-radius:4px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--g200)'" onclick="toast('💰 แลก 3,000 แต้ม = ฿350 ส่วนลด')">
+            <div style="font-size:22px;margin-bottom:6px">🎫</div>
+            <div style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;color:var(--accent)">฿350</div>
+            <div style="font-size:11px;color:var(--g400)">3,000 แต้ม</div>
+          </div>
+          <div style="border:1.5px solid var(--g200);border-radius:4px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--g200)'" onclick="toast('💰 แลก 5,000 แต้ม = ฿650 ส่วนลด')">
+            <div style="font-size:22px;margin-bottom:6px">🎟️</div>
+            <div style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;color:var(--accent)">฿650</div>
+            <div style="font-size:11px;color:var(--g400)">5,000 แต้ม</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">📋 ประวัติแต้ม</div></div>
+        <div class="points-hist" id="points-hist"></div>
+      </div>
+
+      <!-- LEVEL TIERS -->
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">🏆 ระดับสมาชิก</div></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <div style="border:1px solid var(--g200);border-radius:4px;padding:12px;text-align:center">
+            <div style="font-size:20px;margin-bottom:4px">🥈</div>
+            <div style="font-size:11px;font-weight:700;color:var(--g500)">Silver</div>
+            <div style="font-size:10px;color:var(--g400);margin-top:3px">0 – 5,000 แต้ม</div>
+          </div>
+          <div style="border:2px solid var(--gold);border-radius:4px;padding:12px;text-align:center;background:#FFFBEB">
+            <div style="font-size:20px;margin-bottom:4px">🥇</div>
+            <div style="font-size:11px;font-weight:700;color:#B45309">Gold ← คุณอยู่นี่</div>
+            <div style="font-size:10px;color:var(--g400);margin-top:3px">5,001 – 10,000</div>
+          </div>
+          <div style="border:1px solid var(--g200);border-radius:4px;padding:12px;text-align:center">
+            <div style="font-size:20px;margin-bottom:4px">💎</div>
+            <div style="font-size:11px;font-weight:700;color:var(--g500)">Platinum</div>
+            <div style="font-size:10px;color:var(--g400);margin-top:3px">10,001 – 50,000</div>
+          </div>
+          <div style="border:1px solid var(--g200);border-radius:4px;padding:12px;text-align:center">
+            <div style="font-size:20px;margin-bottom:4px">👑</div>
+            <div style="font-size:11px;font-weight:700;color:var(--g500)">Diamond</div>
+            <div style="font-size:10px;color:var(--g400);margin-top:3px">50,001+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="page-view" id="pv-orders">
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">📦 ออเดอร์ทั้งหมด</div><button class="btn-outline-sm btn-sm" onclick="toast('🔍 ค้นหาออเดอร์')">🔍 ค้นหา</button></div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <button style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:20px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">ทั้งหมด</button>
+          <button style="padding:6px 14px;background:#fff;color:var(--g500);border:1px solid var(--g200);border-radius:20px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="toast('📦 กำลังจัดส่ง')">กำลังจัดส่ง</button>
+          <button style="padding:6px 14px;background:#fff;color:var(--g500);border:1px solid var(--g200);border-radius:20px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="toast('✅ สำเร็จ')">สำเร็จ</button>
+          <button style="padding:6px 14px;background:#fff;color:var(--g500);border:1px solid var(--g200);border-radius:20px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="toast('↩️ คืนสินค้า')">คืนสินค้า</button>
+        </div>
+        <div id="orders-list"></div>
+      </div>
+    </div>
+
+    <!-- WISHLIST -->
+    <div class="page-view" id="pv-wishlist">
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">❤️ Wishlist (12 รายการ)</div></div>
+        <div class="wish-grid" id="wish-grid"></div>
+      </div>
+    </div>
+
+    <!-- COUPONS -->
+    <div class="page-view" id="pv-coupons">
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">🎟️ คูปองของฉัน</div></div>
+        <div class="coup-grid" id="coup-grid"></div>
+      </div>
+    </div>
+
+    <!-- ADDRESSES -->
+    <div class="page-view" id="pv-addresses">
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">📍 ที่อยู่จัดส่ง</div><button class="btn-primary-sm btn-sm" onclick="toast('➕ เพิ่มที่อยู่ใหม่')">+ เพิ่ม</button></div>
+        <div id="addr-list"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page-view" id="pv-profile">
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">👤 ข้อมูลส่วนตัว</div></div>
+        <div class="fg-row">
+          <div class="fg"><label class="fl">ชื่อ</label><input class="fi" value="สมชาย"></div>
+          <div class="fg"><label class="fl">นามสกุล</label><input class="fi" value="ใจดี"></div>
+        </div>
+        <div class="fg"><label class="fl">อีเมล</label><input class="fi" type="email" value="somchai.jaidee@email.com"></div>
+        <div class="fg"><label class="fl">เบอร์โทรศัพท์</label><input class="fi" type="tel" value="081-234-5678"></div>
+        <div class="fg-row">
+          <div class="fg"><label class="fl">วันเกิด</label><input class="fi" type="date" value="1990-05-15"></div>
+          <div class="fg"><label class="fl">เพศ</label><select class="fi"><option>ชาย</option><option>หญิง</option><option>ไม่ระบุ</option></select></div>
+        </div>
+        <button class="btn-save" onclick="toast('✅ บันทึกข้อมูลแล้ว!')">💾 บันทึกการเปลี่ยนแปลง</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">🔐 เปลี่ยนรหัสผ่าน</div></div>
+        <div class="fg"><label class="fl">รหัสผ่านปัจจุบัน</label><input class="fi" type="password" placeholder="••••••••"></div>
+        <div class="fg"><label class="fl">รหัสผ่านใหม่</label><input class="fi" type="password" placeholder="••••••••"></div>
+        <div class="fg"><label class="fl">ยืนยันรหัสผ่านใหม่</label><input class="fi" type="password" placeholder="••••••••"></div>
+        <button class="btn-save" onclick="toast('🔐 เปลี่ยนรหัสผ่านแล้ว!')">เปลี่ยนรหัสผ่าน</button>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="page-view" id="pv-notifications">
+      <div class="card">
+        <div class="card-title"><div class="card-title-left">🔔 ตั้งค่าการแจ้งเตือน</div></div>
+        <div id="notif-list"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-wrap" id="tw"></div>
+
+<script>
+const POINTS_HIST=[
+  {ico:'📦',bg:'#EEF2FF',title:'ออเดอร์ #ZM-48271',date:'28 เม.ย. 69',pts:'+1,429',pos:true},
+  {ico:'⭐',bg:'#FEF3C7',title:'รีวิวสินค้า + รูปภาพ',date:'20 เม.ย. 69',pts:'+50',pos:true},
+  {ico:'🎁',bg:'#DCFCE7',title:'Birthday Bonus',date:'15 เม.ย. 69',pts:'+500',pos:true},
+  {ico:'💰',bg:'#FEE2E2',title:'แลกส่วนลด ฿100',date:'10 เม.ย. 69',pts:'-1,000',pos:false},
+  {ico:'📦',bg:'#EEF2FF',title:'ออเดอร์ #ZM-44820',date:'5 เม.ย. 69',pts:'+890',pos:true},
+];
+const ORDERS=[
+  {code:'#ZM-48271',date:'28 เม.ย. 69',prods:[{ico:'📺',name:'ทีวี Samsung 55"'},{ico:'🔊',name:'Soundbar Samsung'}],total:'฿14,290',status:'กำลังจัดส่ง',sc:'p-bl'},
+  {code:'#ZM-44820',date:'5 เม.ย. 69',prods:[{ico:'👗',name:'เสื้อยืด Oversize x3'},{ico:'👟',name:'Nike Air Max 270'}],total:'฿4,287',status:'สำเร็จ',sc:'p-gn'},
+  {code:'#ZM-38421',date:'20 มี.ค. 69',prods:[{ico:'💄',name:'Serum Vitamin C'}],total:'฿349',status:'สำเร็จ',sc:'p-gn'},
+  {code:'#ZM-29840',date:'1 มี.ค. 69',prods:[{ico:'🔧',name:'สว่าน Bosch 18V'}],total:'฿3,290',status:'สำเร็จ',sc:'p-gn'},
+];
+const WISHES=[
+  {ico:'📱',name:'iPhone 16 Pro 256GB',price:'฿42,900',bg:'#EEF2FF'},
+  {ico:'🎮',name:'PS5 Slim + 2 เกม',price:'฿18,900',bg:'#F0F0FF'},
+  {ico:'❄️',name:'แอร์ Daikin 12000BTU',price:'฿14,900',bg:'#EEF9FF'},
+  {ico:'🛋️',name:'โซฟา Nordic L-shape',price:'฿8,900',bg:'#F5F0FF'},
+  {ico:'👜',name:'กระเป๋า Coach Signature',price:'฿4,500',bg:'#FFF5F8'},
+  {ico:'🐕',name:'ที่นอนสุนัข Memory Foam',price:'฿1,290',bg:'#FFF0E6'},
+];
+const COUPS=[
+  {ico:'🚚',bg:'#E6F4FF',title:'ส่งฟรีทุกออเดอร์',desc:'ไม่มีขั้นต่ำ · Kerry, Flash, SCG',exp:'30 เม.ย. 69',active:true},
+  {ico:'💰',bg:'#FFF0E6',title:'ลด ฿100 เมื่อซื้อครบ ฿500',desc:'ทุกหมวดหมู่ · จำกัด 1 ท่าน/วัน',exp:'1 พ.ค. 69',active:true},
+  {ico:'⚡',bg:'#FFF5F5',title:'Flash Sale Extra 10%',desc:'ใช้กับสินค้า Flash Sale เท่านั้น',exp:'28 เม.ย. 69',active:true},
+  {ico:'🎁',bg:'#F0FFF4',title:'ลด ฿500 เมื่อซื้อครบ ฿3,000',desc:'สมาชิก Gold ขึ้นไป',exp:'31 พ.ค. 69',active:true},
+  {ico:'📅',bg:'#F3F4F6',title:'ส่วนลด Birthday 20%',desc:'ใช้ได้เฉพาะเดือนเกิด',exp:'หมดอายุ 31 ม.ค.',active:false},
+];
+const ADDRS=[
+  {name:'สมชาย ใจดี',tel:'081-234-5678',addr:'123/45 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพ 10110',tag:'บ้าน',def:true},
+  {name:'สมชาย ใจดี',tel:'081-234-5678',addr:'456/78 ถ.พระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพ 10310',tag:'ที่ทำงาน',def:false},
+];
+const NOTIFS=[
+  {ico:'📦',title:'แจ้งเตือนออเดอร์',sub:'ยืนยัน, จัดส่ง, สำเร็จ',on:true},
+  {ico:'⚡',title:'Flash Sale',sub:'แจ้งเตือน 30 นาทีก่อนเริ่ม',on:true},
+  {ico:'💰',title:'โปรโมชัน & คูปอง',sub:'ส่วนลดพิเศษและคูปองใหม่',on:true},
+  {ico:'⭐',title:'Loyalty & แต้ม',sub:'สะสมแต้มและระดับสมาชิก',on:true},
+  {ico:'💬',title:'ข้อความจากร้านค้า',sub:'ตอบกลับคำถามและรีวิว',on:false},
+  {ico:'📰',title:'Newsletter',sub:'ข่าวสารและ content',on:false},
+];
+
+document.getElementById('points-hist').innerHTML=POINTS_HIST.map(p=>`<div class="pt-item">
+  <div class="pt-ico" style="background:${p.bg}">${p.ico}</div>
+  <div class="pt-info"><div class="pt-title">${p.title}</div><div class="pt-date">${p.date}</div></div>
+  <div class="pt-pts ${p.pos?'pts-pos':'pts-neg'}">${p.pts}</div>
+</div>`).join('');
+
+document.getElementById('orders-list').innerHTML=ORDERS.map(o=>`<div class="order-item">
+  <div class="oi-head">
+    <div class="oi-code">${o.code}</div>
+    <span class="oi-date">· ${o.date}</span>
+    <span class="oi-status"><span class="pill ${o.sc}">${o.status}</span></span>
+  </div>
+  <div class="oi-products">${o.prods.map(p=>`<div class="oi-prod"><div class="oi-prod-img">${p.ico}</div>${p.name}</div>`).join('')}</div>
+  <div class="oi-foot">
+    <div class="oi-total">${o.total}</div>
+    <div class="oi-btns">
+      ${o.status==='กำลังจัดส่ง'?`<button class="btn-sm btn-outline-sm" onclick="window.location.href='order-history.html'">📍 ติดตาม</button>`:''}
+      ${o.status==='สำเร็จ'?`<button class="btn-sm btn-outline-sm" onclick="toast('⭐ เปิดรีวิว')">⭐ รีวิว</button><button class="btn-sm btn-outline-sm" onclick="toast('🔄 สั่งซ้ำ')">🔄 สั่งซ้ำ</button>`:''}
+      <button class="btn-sm btn-primary-sm" onclick="toast('📋 ดูออเดอร์')">ดูรายละเอียด</button>
+    </div>
+  </div>
+</div>`).join('');
+
+document.getElementById('wish-grid').innerHTML=WISHES.map((w,i)=>`<div class="wish-card" onclick="toast('🛒 ${w.name}')">
+  <div class="wish-img" style="background:${w.bg}">${w.ico}
+    <button class="wish-remove" onclick="event.stopPropagation();toast('💔 ลบออกจาก Wishlist')">✕</button>
+  </div>
+  <div class="wish-info">
+    <div class="wish-name">${w.name}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between"><div class="wish-price">${w.price}</div><button class="btn-sm btn-primary-sm" onclick="event.stopPropagation();toast('🛒 เพิ่มลงตะกร้า')">+ตะกร้า</button></div>
+  </div>
+</div>`).join('');
+
+document.getElementById('coup-grid').innerHTML=COUPS.map(c=>`<div class="coup-item ${c.active?'active':'expired'}">
+  <div class="coup-ico" style="background:${c.bg}">${c.ico}</div>
+  <div class="coup-info">
+    <div class="coup-title">${c.title}</div>
+    <div class="coup-desc">${c.desc}</div>
+    <div class="coup-exp" style="color:${c.active?'var(--gn)':'var(--g400)'}">
+      ${c.active?'✅ ใช้ได้ถึง '+c.exp:'⏰ '+c.exp}</div>
+  </div>
+  ${c.active?`<button class="btn-sm btn-primary-sm" onclick="toast('🎟️ ใช้คูปอง ${c.title}')">ใช้เลย</button>`:'<span style="font-size:11px;color:var(--g400)">หมดอายุ</span>'}
+</div>`).join('');
+
+document.getElementById('addr-list').innerHTML=ADDRS.map((a,i)=>`<div style="border:1.5px solid ${a.def?'var(--accent)':'var(--g200)'};border-radius:4px;padding:14px 16px;margin-bottom:10px;background:${a.def?'#FFF5F5':'#fff'}">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+    <span style="font-size:13px;font-weight:600">${a.name}</span>
+    <span style="font-size:11px;color:var(--g400)">· ${a.tel}</span>
+    ${a.def?'<span style="font-size:10px;background:#FEE2E2;color:var(--accent);padding:2px 7px;border-radius:4px;font-weight:600">ค่าเริ่มต้น</span>':''}
+    <div style="margin-left:auto;display:flex;gap:6px">
+      <button class="btn-sm btn-outline-sm" onclick="toast('✏️ แก้ไขที่อยู่')">แก้ไข</button>
+      ${!a.def?`<button class="btn-sm btn-outline-sm" onclick="toast('🗑️ ลบที่อยู่')">ลบ</button>`:''}
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--g500)">${a.addr}</div>
+  <div style="margin-top:6px"><span style="font-size:10px;background:#EFF6FF;color:#1D4ED8;padding:2px 7px;border-radius:4px;font-weight:600">${a.tag}</span></div>
+</div>`).join('');
+
+let toggleStates=NOTIFS.map(n=>n.on);
+function renderNotifs(){
+  document.getElementById('notif-list').innerHTML=NOTIFS.map((n,i)=>`<div class="notif-row">
+    <div><div class="notif-lbl">${n.ico} ${n.title}</div><div class="notif-sub">${n.sub}</div></div>
+    <button class="toggle ${toggleStates[i]?'on':'off'}" onclick="toggleN(${i})"><div class="toggle-ball"></div></button>
+  </div>`).join('');
+}
+function toggleN(i){toggleStates[i]=!toggleStates[i];renderNotifs();toast(toggleStates[i]?'🔔 เปิดการแจ้งเตือน':'🔕 ปิดการแจ้งเตือน');}
+
+function gotoPage(id,el){
+  document.querySelectorAll('.page-view').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('pv-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  if(id==='notifications')renderNotifs();
+}
+
+function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
+renderNotifs();
+</script>
+
+
+
+
+
+<div class="tm-toast-wrap" id="tmToastWrap"></div>
+<script>
+function tmToast(msg){
+  var w=document.getElementById('tmToastWrap');
+  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
+  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
+  w.appendChild(t);setTimeout(function(){t.remove()},2600);
+}
+</script>
+<footer id="tm-footer">
+  <div class="tf-inner">
+    <div class="tf-grid">
+      <div>
+        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
+        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
+      </div>
+      <div>
+        <div class="tf-title">ช้อปปิ้ง</div>
+        <a href="index.html" class="tf-link">หน้าแรก</a>
+        <a href="category.html" class="tf-link">หมวดหมู่</a>
+        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
+        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
+        <a href="brand-day.html" class="tf-link">Brand Day</a>
+        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
+      </div>
+      <div>
+        <div class="tf-title">บัญชีของฉัน</div>
+        <a href="profile.html" class="tf-link">โปรไฟล์</a>
+        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
+        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
+        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
+        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
+        <a href="returns.html" class="tf-link">คืนสินค้า</a>
+      </div>
+      <div>
+        <div class="tf-title">ผู้ขาย</div>
+        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
+        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
+        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
+        <a href="seller-analytics.html" class="tf-link">Analytics</a>
+        <a href="b2b-portal.html" class="tf-link">B2B</a>
+        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
+      </div>
+      <div>
+        <div class="tf-title">ช่วยเหลือ</div>
+        <a href="help-center.html" class="tf-link">Help Center</a>
+        <a href="chat.html" class="tf-link">แชทกับเรา</a>
+        <a href="subscription.html" class="tf-link">TM Plus</a>
+        <a href="gift-card.html" class="tf-link">Gift Card</a>
+        <a href="sitemap.html" class="tf-link">Site Map</a>
+        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
+      </div>
+    </div>
+    <div class="tf-bottom">
+      <span>© 2026 Thailand Market · All rights reserved</span>
+      <span>TH · EN · 🔒 SSL · PCI DSS</span>
+    </div>
+  </div>
+</footer>
+<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
+<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+</body>
+</html>
