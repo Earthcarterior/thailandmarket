@@ -27,6 +27,11 @@ h1{font-size:22px;font-weight:300;letter-spacing:-.01em}h1 strong{font-weight:70
 .alert{padding:12px 16px;border-left:3px solid var(--green);background:#F0FDF4;font-size:13px;margin-top:16px;display:none}
 .alert-err{border-left-color:var(--red);background:#FFF5F5}
 </style>
+<script>
+// Auto-configure with hardcoded values
+localStorage.setItem('tm_sb_url', 'https://qmgyimsptzewwyafvjzk.supabase.co');
+localStorage.setItem('tm_sb_key', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
+</script>
 </head>
 <body>
 <div class="box">
@@ -41,8 +46,8 @@ h1{font-size:22px;font-weight:300;letter-spacing:-.01em}h1 strong{font-weight:70
     <div class="step"><div class="step-n">3</div><div class="step-body">ไปที่ <strong>SQL Editor</strong> → วางและรัน SQL จากไฟล์ <code>supabase-setup.sql</code></div></div>
     <div class="step"><div class="step-n">4</div><div class="step-body">ไปที่ <strong>Authentication → Users</strong> → Add user → สร้าง Admin account แรก</div></div>
 
-    <div class="fg"><label class="lbl">Supabase URL</label><input class="inp" type="url" id="url" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off"></div>
-    <div class="fg"><label class="lbl">Supabase Anon Key</label><input class="inp" type="text" id="key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off"></div>
+    <div class="fg"><label class="lbl">Supabase URL</label><input class="inp" type="url" id="url" placeholder="https://xxxxxxxxxxxx.supabase.co" value="https://qmgyimsptzewwyafvjzk.supabase.co" autocomplete="off"></div>
+    <div class="fg"><label class="lbl">Supabase Anon Key</label><input class="inp" type="text" id="key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0" autocomplete="off"></div>
 
     <button class="btn" onclick="save()">บันทึกและเริ่มใช้งาน →</button>
 

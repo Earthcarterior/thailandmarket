@@ -531,13 +531,7 @@ let currentPage = 1;
 const PAGE_SIZE = 20;
 
 function initSupabase() {
-  const url = localStorage.getItem('tm_sb_url');
-  const key = localStorage.getItem('tm_sb_key');
-  if (!url || !key) {
-    location.href = 'setup.html';
-    return false;
-  }
-  sb = supabase.createClient(url, key);
+  sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
   return true;
 }
 

@@ -300,17 +300,7 @@ let qty = 1;
 let searchTimer = null;
 
 function initSB() {
-  const url = localStorage.getItem('tm_sb_url');
-  const key = localStorage.getItem('tm_sb_key');
-  if (!url || !key) {
-    document.getElementById('no-config').style.display = 'flex';
-    document.getElementById('nav').style.display = 'none';
-    document.getElementById('hero').style.display = 'none';
-    document.getElementById('main-layout').style.display = 'none';
-    document.querySelector('footer').style.display = 'none';
-    return false;
-  }
-  sb = supabase.createClient(url, key);
+  sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
   return true;
 }
 
