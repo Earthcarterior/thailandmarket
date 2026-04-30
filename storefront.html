@@ -627,20 +627,21 @@ async function loadCats() {
     } else {
       const colors = ['#7C3AED','#DB2777','#E8541A','#D97706','#2563EB','#374151','#16A34A','#0891B2','#DC2626','#059669','#92400E','#1D4ED8'];
       grid.innerHTML = parents.map((c, i) => `
-        <div class="cat-tile" onclick="filterCat('${c.id}',this)">
+        <a class="cat-tile" href="storefront-live.html?cat=${c.id}" style="text-decoration:none;color:inherit;display:block">
           <div class="cat-tile-bar" style="background:${colors[i%colors.length]}"></div>
           <span class="cat-ico">${c.icon || '📦'}</span>
           <div class="cat-name">${c.name_th}</div>
           <div class="cat-count">${c.product_count || 0} รายการ</div>
-        </div>`).join('');
+        </a>`).join('');
     }
   }
 
   // Catbar — marquee loop
   const track = document.getElementById('catbar-track');
   if (track && parents.length) {
-    const makeItems = () => `<button class="catbar-item on" onclick="filterCat('all',this)" style="border-bottom:2px solid var(--red);color:var(--black)">ทั้งหมด</button>` +
-      parents.map(c => `<button class="catbar-item" onclick="filterCat('${c.id}',this)">${c.icon||''} ${c.name_th}</button>`).join('');
+    const makeItems = () =>
+      `<a class="catbar-item on" href="storefront-live.html" style="border-bottom:2px solid var(--red);color:var(--black);text-decoration:none">ทั้งหมด</a>` +
+      parents.map(c => `<a class="catbar-item" href="storefront-live.html?cat=${c.id}" style="text-decoration:none">${c.icon||''} ${c.name_th}</a>`).join('');
     // Duplicate for seamless loop
     track.innerHTML = makeItems() + makeItems();
 
@@ -649,44 +650,24 @@ async function loadCats() {
     if (ddGrid) {
       const colors = ['#7C3AED','#DB2777','#E8541A','#D97706','#2563EB','#374151','#16A34A','#0891B2','#DC2626','#059669','#92400E','#1D4ED8'];
       ddGrid.innerHTML = parents.map((c,i) => `
-        <div onclick="filterCat('${c.id}',this);closeAllCats()" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:var(--border);cursor:pointer;transition:all .15s;border-left:3px solid ${colors[i%colors.length]}" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background='var(--white)'">
+        <a href="storefront-live.html?cat=${c.id}" onclick="closeAllCats()" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:var(--border);cursor:pointer;transition:all .15s;border-left:3px solid ${colors[i%colors.length]}" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background='var(--white)'">
           <span style="font-size:18px">${c.icon||'📦'}</span>
           <div>
             <div style="font-size:12px;font-weight:500">${c.name_th}</div>
             <div style="font-family:var(--mono);font-size:9px;color:var(--g400)">${c.product_count||0} รายการ</div>
           </div>
-        </div>`).join('');
+        </a>`).join('');
     }
   }
 }
 
 function filterCat(catId, el) {
-  currentFilter = catId;
-  document.querySelectorAll('.catbar-item,.cat-tile').forEach(e => {
-    e.classList.remove('on');
-    e.style.borderBottomColor = 'transparent';
-    e.style.color = '';
-  });
-  // highlight all matching buttons (duplicated in marquee)
-  document.querySelectorAll('.catbar-item').forEach(b => {
-    const isMatch = catId === 'all'
-      ? b.textContent.trim() === 'ทั้งหมด'
-      : b.onclick?.toString().includes(catId);
-    if (isMatch) {
-      b.classList.add('on');
-      b.style.borderBottomColor = 'var(--red)';
-      b.style.color = 'var(--black)';
-    }
-  });
-
-  // Adjust marquee speed by item count
-  const t = document.getElementById('catbar-track');
-  if (t) {
-    const dur = Math.max(20, (parents.length + 1) * 2.5);
-    t.style.animationDuration = dur + 's';
+  // Navigate to storefront-live with category filter
+  if (catId && catId !== 'all') {
+    location.href = 'storefront-live.html?cat=' + catId;
+  } else {
+    location.href = 'storefront-live.html';
   }
-  if (el?.closest('.cat-tile')) el.classList.add('on');
-  renderProducts();
 }
 
 function showAllCats() {
