@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thailand Market — ช้อปครบ จบในที่เดียว</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#1A1A2E;--accent:#E63946;--accent2:#F4A261;
+  --teal:#2EC4B6;--gold:#FFD166;
+  --bg:#F8F7F4;--white:#FFFFFF;
+  --gray50:#F9F9F9;--gray100:#F0F0EF;--gray200:#E2E2E0;
+  --gray400:#9A9A95;--gray600:#5A5A55;--gray900:#1A1A18;
+  --r8:8px;--r12:12px;--r16:16px;--r24:24px;
+  --shadow:0 2px 8px rgba(0,0,0,0.08);--shadow-md:0 4px 16px rgba(0,0,0,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--gray900);font-size:14px;line-height:1.5}
+a{text-decoration:none;color:inherit}
+img{display:block}
+
+/* NAV */
+.nav{background:var(--primary);position:sticky;top:0;z-index:100}
+.nav-top{display:flex;align-items:center;gap:16px;padding:12px 24px;max-width:1280px;margin:0 auto}
+.nav-logo{font-family:'Prompt',sans-serif;font-weight:900;font-size:22px;color:#fff;letter-spacing:-0.5px}
+.nav-logo span{color:var(--accent)}
+.nav-search{flex:1;max-width:540px;position:relative}
+.nav-search input{width:100%;padding:10px 16px 10px 44px;border:none;border-radius:var(--r8);font-size:14px;font-family:'Sarabun',sans-serif;background:#fff;outline:none}
+.nav-search-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--gray400)}
+.nav-search button{position:absolute;right:0;top:0;bottom:0;background:var(--accent);color:#fff;border:none;padding:0 16px;border-radius:0 var(--r8) var(--r8) 0;font-size:13px;font-family:'Sarabun',sans-serif;font-weight:600;cursor:pointer}
+.nav-actions{display:flex;align-items:center;gap:4px;margin-left:auto}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;cursor:pointer;border-radius:var(--r8);transition:background 0.15s;color:rgba(255,255,255,0.75);font-size:10px;border:none;background:none;font-family:'Sarabun',sans-serif}
+.nav-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.nav-btn-ico{font-size:18px;position:relative}
+.cart-badge{position:absolute;top:-4px;right:-6px;background:var(--accent);color:#fff;font-size:9px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.nav-cats{background:rgba(0,0,0,0.2);border-top:1px solid rgba(255,255,255,0.08)}
+.nav-cats-inner{display:flex;align-items:center;gap:0;max-width:1280px;margin:0 auto;overflow-x:auto;scrollbar-width:none}
+.nav-cats-inner::-webkit-scrollbar{display:none}
+.ncat{display:flex;align-items:center;gap:6px;padding:9px 14px;color:rgba(255,255,255,0.65);font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all 0.15s;border-bottom:2px solid transparent}
+.ncat:hover{color:#fff;background:rgba(255,255,255,0.06)}
+.ncat.active{color:#fff;border-bottom-color:var(--accent)}
+.ncat-ico{font-size:14px}
+
+/* HERO */
+.hero{max-width:1280px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:1fr 320px;gap:12px}
+.hero-main{background:linear-gradient(135deg,var(--primary) 0%,#2D2D52 60%,#3D1A47 100%);border-radius:var(--r16);padding:36px 40px;position:relative;overflow:hidden;min-height:240px;display:flex;flex-direction:column;justify-content:flex-end}
+.hero-bg-circles{position:absolute;inset:0;pointer-events:none}
+.hero-circle{position:absolute;border-radius:50%;opacity:0.07}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:12px;width:fit-content}
+.hero-title{font-family:'Prompt',sans-serif;font-size:32px;font-weight:800;color:#fff;line-height:1.15;margin-bottom:10px}
+.hero-title span{color:var(--gold)}
+.hero-sub{color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:20px}
+.hero-actions{display:flex;gap:10px}
+.btn-primary{background:var(--accent);color:#fff;border:none;padding:11px 24px;border-radius:var(--r8);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary:hover{background:#C0313C;transform:translateY(-1px)}
+.btn-outline-w{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,0.3);padding:11px 20px;border-radius:var(--r8);font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;transition:all 0.2s}
+.btn-outline-w:hover{background:rgba(255,255,255,0.1)}
+.hero-side{display:flex;flex-direction:column;gap:10px}
+.hero-side-card{border-radius:var(--r12);padding:18px 20px;flex:1;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;cursor:pointer;transition:transform 0.2s}
+.hero-side-card:hover{transform:scale(1.02)}
+
+/* FLASH SALE */
+.section{max-width:1280px;margin:0 auto 24px;padding:0 16px}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sec-title{font-family:'Prompt',sans-serif;font-weight:700;font-size:18px;color:var(--gray900);display:flex;align-items:center;gap:10px}
+.sec-link{font-size:13px;color:var(--accent);font-weight:600;cursor:pointer}
+.sec-link:hover{opacity:0.8}
+.flash-header{display:flex;align-items:center;gap:12px}
+.flash-tag{background:var(--accent);color:#fff;font-family:'Prompt',sans-serif;font-size:13px;font-weight:700;padding:4px 12px;border-radius:6px;display:flex;align-items:center;gap:5px}
+.countdown{display:flex;align-items:center;gap:4px}
+.cd-box{background:var(--gray900);color:#fff;font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.cd-sep{font-size:16px;font-weight:700;color:var(--gray900)}
+.flash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+
+/* PRODUCT CARD */
+.prod-card{background:#fff;border-radius:var(--r12);overflow:hidden;cursor:pointer;transition:all 0.2s;border:1px solid var(--gray200)}
+.prod-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:transparent}
+.prod-img{height:140px;display:flex;align-items:center;justify-content:center;font-size:52px;position:relative}
+.prod-badge-wrap{position:absolute;top:8px;left:8px;display:flex;flex-direction:column;gap:4px}
+.prod-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;width:fit-content}
+.badge-sale{background:var(--accent);color:#fff}
+.badge-new{background:var(--teal);color:#fff}
+.badge-hot{background:var(--accent2);color:#fff}
+.badge-free{background:var(--gold);color:#8B4513}
+.prod-wishlist{position:absolute;top:8px;right:8px;width:28px;height:28px;background:rgba(255,255,255,0.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:all 0.2s;border:none}
+.prod-wishlist:hover{background:#fff;transform:scale(1.1)}
+.prod-info{padding:10px 12px 12px}
+.prod-name{font-size:12.5px;color:var(--gray900);line-height:1.4;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prod-rating{display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.stars{color:#FBBF24;font-size:11px}
+.rating-cnt{font-size:10px;color:var(--gray400)}
+.prod-price-row{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
+.prod-price{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--accent)}
+.prod-old{font-size:11px;color:var(--gray400);text-decoration:line-through}
+.prod-discount{font-size:10px;font-weight:700;color:var(--accent);background:#FEE2E2;padding:1px 5px;border-radius:3px}
+.prod-flash-bar{height:4px;background:var(--gray200);border-radius:2px;margin-bottom:8px}
+.prod-flash-fill{height:4px;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px}
+.prod-flash-txt{font-size:10px;color:var(--gray400);margin-bottom:8px}
+.btn-cart{width:100%;padding:7px;background:var(--primary);color:#fff;border:none;border-radius:var(--r8);font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:background 0.2s}
+.btn-cart:hover{background:var(--accent)}
+
+/* CATEGORY GRID */
+.cat-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:10px}
+.cat-item{background:#fff;border-radius:var(--r12);padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.2s;border:1px solid var(--gray200)}
+.cat-item:hover{border-color:var(--accent);box-shadow:var(--shadow);transform:translateY(-2px)}
+.cat-item-ico{font-size:28px;margin-bottom:8px}
+.cat-item-name{font-size:11.5px;font-weight:600;color:var(--gray900)}
+.cat-item-cnt{font-size:10px;color:var(--gray400);margin-top:2px}
+.cat-item-bar{width:24px;height:3px;border-radius:2px;margin:8px auto 0}
+
+/* BRANDS */
+.brand-grid{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.brand-grid::-webkit-scrollbar{display:none}
+.brand-card{background:#fff;border:1px solid var(--gray200);border-radius:var(--r12);padding:14px 20px;display:flex;align-items:center;justify-content:center;min-width:120px;cursor:pointer;transition:all 0.15s;flex-shrink:0}
+.brand-card:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.brand-name{font-family:'Prompt',sans-serif;font-size:14px;font-weight:700;color:var(--gray600)}
+
+/* PRODUCT GRID (regular) */
+.prod-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+
+/* PROMO BANNERS */
+.promo-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px}
+.promo-card{border-radius:var(--r16);padding:22px;cursor:pointer;position:relative;overflow:hidden;transition:transform 0.2s}
+.promo-card:hover{transform:scale(1.02)}
+.promo-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;opacity:0.8}
+.promo-title{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700;line-height:1.2;margin-bottom:4px}
+.promo-sub{font-size:12px;opacity:0.7}
+.promo-btn{margin-top:14px;display:inline-block;background:rgba(0,0,0,0.2);color:inherit;padding:6px 14px;border-radius:var(--r8);font-size:12px;font-weight:600}
+
+/* TRUST BAR */
+.trust-bar{background:var(--primary);padding:16px 24px;margin-bottom:0}
+.trust-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.trust-item{display:flex;align-items:center;gap:12px;padding:0 24px;border-right:1px solid rgba(255,255,255,0.1)}
+.trust-item:first-child{padding-left:0}
+.trust-item:last-child{border-right:none}
+.trust-ico{font-size:24px;flex-shrink:0}
+.trust-text .tt{font-size:13px;font-weight:600;color:#fff}
+.trust-text .ts{font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px}
+
+/* FOOTER */
+.footer{background:var(--gray900);color:rgba(255,255,255,0.7);padding:40px 24px 20px}
+.footer-inner{max-width:1280px;margin:0 auto}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:32px}
+.footer-brand .logo{font-family:'Prompt',sans-serif;font-weight:900;font-size:24px;color:#fff;margin-bottom:12px}
+.footer-brand .logo span{color:var(--accent)}
+.footer-brand p{font-size:13px;line-height:1.7;max-width:260px}
+.footer-col-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:12px}
+.footer-link{display:block;font-size:12px;margin-bottom:7px;cursor:pointer;transition:color 0.15s}
+.footer-link:hover{color:#fff}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-size:11px}
+.pay-badges{display:flex;gap:8px}
+.pay-badge{background:rgba(255,255,255,0.1);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8)}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:999}
+.toast{background:var(--gray900);color:#fff;padding:12px 18px;border-radius:var(--r12);font-size:13px;display:flex;align-items:center;gap:10px;animation:toastIn 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+@keyframes toastIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* COUPON MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:var(--r24);padding:28px;width:500px;max-height:85vh;overflow-y:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-family:'Prompt',sans-serif;font-size:18px;font-weight:700}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray400);padding:4px}
+.coupon-grid{display:flex;flex-direction:column;gap:10px}
+.coupon-item{border:1.5px dashed var(--gray200);border-radius:var(--r12);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all 0.2s}
+.coupon-item:hover{border-color:var(--accent);background:#FFF5F5}
+.coupon-item.collected{border-color:var(--teal);background:#F0FDF4}
+.coupon-left{width:56px;height:56px;border-radius:var(--r8);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.coupon-info{flex:1}
+.coupon-title{font-size:14px;font-weight:600;color:var(--gray900);margin-bottom:2px}
+.coupon-desc{font-size:11px;color:var(--gray400);line-height:1.5}
+.coupon-btn{font-size:12px;font-weight:700;padding:6px 14px;border-radius:var(--r8);border:none;cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif}
+.coupon-btn-collect{background:var(--accent);color:#fff}
+.coupon-btn-done{background:var(--gray100);color:var(--gray400)}
+</style>
+
+<style id="tm-nav-style">
+#tm-topnav{position:fixed;top:0;left:0;right:0;z-index:9999;background:#1A1A2E;font-family:'Sarabun',sans-serif;box-shadow:0 2px 12px rgba(0,0,0,0.3)}
+#tm-topnav .tm-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:0;padding:0 16px;height:46px}
+#tm-topnav .tm-logo{font-family:'Prompt',sans-serif;font-weight:900;font-size:18px;color:#fff;text-decoration:none;margin-right:16px;white-space:nowrap;flex-shrink:0}
+#tm-topnav .tm-logo span{color:#E63946}
+#tm-topnav .tm-groups{display:flex;gap:0;flex:1;overflow:hidden}
+#tm-topnav .tm-group{position:relative}
+#tm-topnav .tm-group-btn{background:none;border:none;color:rgba(255,255,255,0.7);font-size:12px;font-family:'Sarabun',sans-serif;font-weight:600;padding:0 12px;height:46px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all 0.15s}
+#tm-topnav .tm-group-btn:hover,#tm-topnav .tm-group.open .tm-group-btn{background:rgba(255,255,255,0.1);color:#fff}
+#tm-topnav .tm-group-btn::after{content:'▾';font-size:9px;opacity:0.6}
+#tm-topnav .tm-dropdown{display:none;position:absolute;top:46px;left:0;background:#fff;border-radius:0 0 12px 12px;box-shadow:0 8px 32px rgba(0,0,0,0.18);min-width:200px;padding:6px 0;z-index:10000}
+#tm-topnav .tm-group.open .tm-dropdown{display:block}
+#tm-topnav .tm-dropdown a{display:flex;align-items:center;gap:8px;padding:9px 16px;font-size:12.5px;color:#374151;text-decoration:none;transition:background 0.12s;white-space:nowrap}
+#tm-topnav .tm-dropdown a:hover{background:#FFF5F5;color:#E63946}
+#tm-topnav .tm-dropdown .tm-divider{height:1px;background:#F3F4F6;margin:4px 0}
+#tm-topnav .tm-right{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+#tm-topnav .tm-right a{color:rgba(255,255,255,0.7);font-size:11.5px;text-decoration:none;padding:5px 10px;border-radius:6px;transition:all 0.15s;display:flex;align-items:center;gap:4px;white-space:nowrap;font-family:'Sarabun',sans-serif;font-weight:600}
+#tm-topnav .tm-right a:hover{background:rgba(255,255,255,0.1);color:#fff}
+#tm-topnav .tm-right .tm-btn-red{background:#E63946;color:#fff;border-radius:8px;padding:5px 12px}
+#tm-topnav .tm-right .tm-btn-red:hover{background:#C0313C}
+body{padding-top:46px!important}
+</style>
+</head>
+<body>
+<div id="tm-topnav">
+  <div class="tm-inner">
+    <a href="index.html" class="tm-logo">Thailand <span>Market</span></a>
+    <div class="tm-groups">
+
+      <div class="tm-group" onclick="tmToggle(this)">
+        <button class="tm-group-btn">🛍️ ช้อปปิ้ง</button>
+        <div class="tm-dropdown">
+          <a href="index.html">🏠 หน้าแรก</a>
+          <a href="category.html">📂 หมวดหมู่สินค้า</a>
+          <a href="search.html">🔍 ค้นหาสินค้า</a>
+          <a href="product.html">📺 หน้าสินค้าเดี่ยว</a>
+          <a href="compare.html">⚖️ เปรียบเทียบสินค้า</a>
+          <div class="tm-divider"></div>
+          <a href="flash-sale.html">⚡ Flash Sale</a>
+          <a href="live-shopping.html">🔴 Live Shopping</a>
+          <a href="brand-day.html">🎯 Brand Day</a>
+        </div>
+      </div>
+
+      <div class="tm-group" onclick="tmToggle(this)">
+        <button class="tm-group-btn">💳 ออเดอร์</button>
+        <div class="tm-dropdown">
+          <a href="checkout.html">🛒 ตะกร้า & ชำระเงิน</a>
+          <a href="payment-result.html">💳 ผลการชำระเงิน</a>
+          <a href="tracking.html">🚚 ติดตามพัสดุ</a>
+          <a href="returns.html">↩️ คืนสินค้า / เงิน</a>
+          <a href="review-write.html">⭐ เขียนรีวิว</a>
+        </div>
+      </div>
+
+      <div class="tm-group" onclick="tmToggle(this)">
+        <button class="tm-group-btn">👤 บัญชี</button>
+        <div class="tm-dropdown">
+          <a href="profile.html">👤 โปรไฟล์ & Loyalty</a>
+          <a href="notification-center.html">🔔 การแจ้งเตือน</a>
+          <a href="chat.html">💬 แชทกับร้านค้า</a>
+          <a href="subscription.html">⭐ Thailand Market Plus</a>
+          <a href="referral.html">🎁 แนะนำเพื่อน</a>
+          <div class="tm-divider"></div>
+          <a href="help-center.html">❓ Help Center</a>
+          <a href="login.html">🔐 เข้าสู่ระบบ</a>
+        </div>
+      </div>
+
+      <div class="tm-group" onclick="tmToggle(this)">
+        <button class="tm-group-btn">🏪 ร้านค้า</button>
+        <div class="tm-dropdown">
+          <a href="seller-portal.html">🏪 Seller Portal</a>
+          <a href="seller-analytics.html">📈 Analytics</a>
+          <a href="seller-finance.html">💰 การเงินร้านค้า</a>
+          <a href="onboarding.html">🚀 สมัครเป็นผู้ขาย</a>
+          <a href="seller-onboarding.html">📋 Seller Onboarding</a>
+        </div>
+      </div>
+
+      <div class="tm-group" onclick="tmToggle(this)">
+        <button class="tm-group-btn">⚙️ Admin & Tech</button>
+        <div class="tm-dropdown">
+          <a href="admin-dashboard.html">⚙️ Admin Dashboard</a>
+          <a href="flash-sale-admin.html">⚡ Flash Sale Admin</a>
+          <a href="analytics-report.html">📊 Analytics Report</a>
+          <a href="campaign-calendar.html">📅 Campaign Calendar</a>
+          <div class="tm-divider"></div>
+          <a href="api-docs.html">📡 API Documentation</a>
+          <a href="database-schema.sql">🗄️ Database Schema</a>
+          <a href="microservices-arch.html">🏗️ System Architecture</a>
+        </div>
+      </div>
+
+    </div>
+    <div class="tm-right">
+      <a href="sitemap.html">🗺️ Sitemap</a>
+      <a href="login.html" class="tm-btn-red">เข้าสู่ระบบ</a>
+    </div>
+  </div>
+</div>
+<script>
+function tmToggle(el){
+  var wasOpen=el.classList.contains('open');
+  document.querySelectorAll('#tm-topnav .tm-group').forEach(function(g){g.classList.remove('open');});
+  if(!wasOpen)el.classList.add('open');
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#tm-topnav')){
+    document.querySelectorAll('#tm-topnav .tm-group').forEach(function(g){g.classList.remove('open');});
+  }
+});
+</script>
+
+<nav class="tm-global-nav" style="background:#1A1A2E;font-family:'Sarabun',sans-serif;position:sticky;top:0;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.25)">
+  <div style="max-width:1280px;margin:0 auto;padding:0 16px">
+    <!-- TOP ROW -->
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+      <a href="index.html" style="font-family:'Prompt',sans-serif;font-weight:900;font-size:20px;color:#fff;text-decoration:none;white-space:nowrap;flex-shrink:0">Thailand <span style="color:#E63946">Market</span></a>
+      <div style="flex:1;position:relative;max-width:560px">
+        <input id="tm-search" placeholder="🔍 ค้นหาสินค้า..." style="width:100%;padding:8px 12px 8px 14px;border:none;border-radius:8px;font-size:13px;font-family:'Sarabun',sans-serif;outline:none;background:#fff" onkeydown="if(event.key==='Enter'){window.location.href='search.html'}">
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0">
+        <a href="flash-sale.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;color:rgba(255,255,255,0.8);text-decoration:none;font-size:10px;border-radius:6px;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'"><span style="font-size:15px">⚡</span>Flash Sale</a>
+        <a href="referral.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;color:rgba(255,255,255,0.8);text-decoration:none;font-size:10px;border-radius:6px;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'"><span style="font-size:15px">🎁</span>แนะนำเพื่อน</a>
+        <a href="chat.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;color:rgba(255,255,255,0.8);text-decoration:none;font-size:10px;border-radius:6px;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'"><span style="font-size:15px">💬</span>แชท</a>
+        <a href="notification-center.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;color:rgba(255,255,255,0.8);text-decoration:none;font-size:10px;border-radius:6px;position:relative;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'"><span style="font-size:15px;position:relative">🔔<span style="position:absolute;top:-4px;right:-4px;background:#E63946;color:#fff;font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700">3</span></span>แจ้งเตือน</a>
+        <a href="checkout.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;color:rgba(255,255,255,0.8);text-decoration:none;font-size:10px;border-radius:6px;position:relative;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'"><span style="font-size:15px;position:relative">🛒<span style="position:absolute;top:-4px;right:-4px;background:#E63946;color:#fff;font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700">3</span></span>ตะกร้า</a>
+        <a href="profile.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;color:rgba(255,255,255,0.8);text-decoration:none;font-size:10px;border-radius:6px;transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'"><span style="font-size:15px">👤</span>โปรไฟล์</a>
+        <a href="seller-portal.html" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;background:rgba(230,57,70,0.15);border:1px solid rgba(230,57,70,0.4);color:#E63946;text-decoration:none;font-size:10px;border-radius:6px;font-weight:700;transition:background 0.15s" onmouseover="this.style.background='rgba(230,57,70,0.25)'" onmouseout="this.style.background='rgba(230,57,70,0.15)'"><span style="font-size:15px">🏪</span>ขายของ</a>
+      </div>
+    </div>
+    <!-- BOTTOM ROW: CATEGORIES -->
+    <div style="display:flex;align-items:center;gap:2px;padding:6px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+      <a href="category.html" style="display:flex;align-items:center;gap:5px;padding:4px 10px;color:rgba(255,255,255,0.75);text-decoration:none;font-size:11.5px;border-radius:6px;white-space:nowrap;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">🏠 Home &amp; เฟอร์นิเจอร์</a>
+      <a href="category.html" style="display:flex;align-items:center;gap:5px;padding:4px 10px;color:rgba(255,255,255,0.75);text-decoration:none;font-size:11.5px;border-radius:6px;white-space:nowrap;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">👗 แฟชั่น</a>
+      <a href="category.html" style="display:flex;align-items:center;gap:5px;padding:4px 10px;color:rgba(255,255,255,0.75);text-decoration:none;font-size:11.5px;border-radius:6px;white-space:nowrap;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">💄 Beauty &amp; Health</a>
+      <a href="category.html" style="display:flex;align-items:center;gap:5px;padding:4px 10px;color:rgba(255,255,255,0.75);text-decoration:none;font-size:11.5px;border-radius:6px;white-space:nowrap;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">🛒 FMCG &amp; อาหาร</a>
+      <a href="category.html" style="display:flex;align-items:center;gap:5px;padding:4px 10px;color:rgba(255,255,255,0.75);text-decoration:none;font-size:11.5px;border-radius:6px;white-space:nowrap;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">💻 Tech &amp; Gadgets</a>
+      <a href="category.html" style="display:flex;align-items:center;gap:5px;padding:4px 10px;color:rgba(255,255,255,0.75);text-decoration:none;font-size:11.5px;border-radius:6px;white-space:nowrap;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">🚗 ยานยนต์</a>
+      <a href="category.html" style="display:flex;align-items:center;gap:5px;padding:4px 10px;color:rgba(255,255,255,0.75);text-decoration:none;font-size:11.5px;border-radius:6px;white-space:nowrap;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">🐾 สัตว์เลี้ยง</a>
+      <a href="category.html" style="display:flex;align-items:center;gap:5px;padding:4px 10px;color:rgba(255,255,255,0.75);text-decoration:none;font-size:11.5px;border-radius:6px;white-space:nowrap;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,255,255,0.75)'">📚 การศึกษา</a>
+      <div style="margin-left:auto;flex-shrink:0;display:flex;gap:4px">
+        <a href="subscription.html" style="display:flex;align-items:center;gap:4px;padding:4px 10px;background:linear-gradient(90deg,#FFD166,#F4A261);color:#8B4513;text-decoration:none;font-size:11px;border-radius:6px;font-weight:700;white-space:nowrap">⭐ TM Plus</a>
+        <a href="live-shopping.html" style="display:flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(230,57,70,0.8);color:#fff;text-decoration:none;font-size:11px;border-radius:6px;font-weight:700;white-space:nowrap;animation:pulse 2s infinite">🔴 Live</a>
+        <a href="sitemap.html" style="display:flex;align-items:center;gap:4px;padding:4px 10px;color:rgba(255,255,255,0.5);text-decoration:none;font-size:11px;border-radius:6px;white-space:nowrap" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">🗺️ ทุกหน้า</a>
+      </div>
+    </div>
+  </div>
+  <style>.tm-global-nav a{transition:all 0.15s}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}</style>
+</nav>
+
+<!-- NAV -->
+
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-main">
+    <div class="hero-bg-circles">
+      <div class="hero-circle" style="width:300px;height:300px;background:#fff;top:-80px;right:-60px"></div>
+      <div class="hero-circle" style="width:180px;height:180px;background:var(--accent);bottom:-40px;left:40%"></div>
+      <div class="hero-circle" style="width:100px;height:100px;background:var(--gold);top:40px;left:55%"></div>
+    </div>
+    <div class="hero-badge">🔥 MEGA SALE วันนี้เท่านั้น!</div>
+    <div class="hero-title">ช้อปครบ<br><span>ทุกหมวดหมู่</span><br>จบในที่เดียว</div>
+    <div class="hero-sub">สินค้ากว่า 500,000 รายการ จาก 50,000+ ร้านค้า ส่งฟรีทั่วไทย</div>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="toast('🛒 ช้อปเลย!')">ช้อปเลย →</button>
+      <button class="btn-outline-w" onclick="window.location.href='seller-portal.html'">สมัครเป็นผู้ขาย</button>
+    </div>
+  </div>
+  <div class="hero-side">
+    <div class="hero-side-card" style="background:#FFF0E6;color:#8B3A0F" onclick="toast('💳 ผ่อน 0% 12 เดือน!')">
+      <div style="font-size:10px;font-weight:700;opacity:0.7;margin-bottom:4px;text-transform:uppercase">ผ่อนสบาย</div>
+      <div style="font-family:'Prompt',sans-serif;font-size:17px;font-weight:700;line-height:1.2">ผ่อน 0%<br>สูงสุด 12 เดือน</div>
+      <div style="font-size:26px;margin-top:8px">💳</div>
+    </div>
+    <div class="hero-side-card" style="background:#E6F4FF;color:#0C3B6B" onclick="toast('🚚 ส่งฟรีทุกวัน!')">
+      <div style="font-size:10px;font-weight:700;opacity:0.7;margin-bottom:4px;text-transform:uppercase">จัดส่ง</div>
+      <div style="font-family:'Prompt',sans-serif;font-size:17px;font-weight:700;line-height:1.2">ส่งฟรี<br>เมื่อซื้อ ฿199+</div>
+      <div style="font-size:26px;margin-top:8px">🚚</div>
+    </div>
+    <div class="hero-side-card" style="background:#E6FFF5;color:#064E3B" onclick="openCoupons()">
+      <div style="font-size:10px;font-weight:700;opacity:0.7;margin-bottom:4px;text-transform:uppercase">คูปองวันนี้</div>
+      <div style="font-family:'Prompt',sans-serif;font-size:17px;font-weight:700;line-height:1.2">รับคูปอง<br>ลดสูงสุด ฿500</div>
+      <div style="font-size:26px;margin-top:8px">🎟️</div>
+    </div>
+  </div>
+</div>
+
+<!-- TRUST BAR -->
+<div class="trust-bar" style="margin-bottom:0">
+  <div class="trust-inner">
+    <div class="trust-item"><div class="trust-ico">🚚</div><div class="trust-text"><div class="tt">ส่งฟรีทั่วไทย</div><div class="ts">ซื้อครบ ฿199 ขึ้นไป</div></div></div>
+    <div class="trust-item"><div class="trust-ico">🛡️</div><div class="trust-text"><div class="tt">ซื้อง่าย คืนสบาย</div><div class="ts">คืนสินค้าได้ 30 วัน</div></div></div>
+    <div class="trust-item"><div class="trust-ico">💳</div><div class="trust-text"><div class="tt">ผ่อน 0% สูงสุด 12 เดือน</div><div class="ts">ทุกธนาคารชั้นนำ</div></div></div>
+    <div class="trust-item"><div class="trust-ico">⭐</div><div class="trust-text"><div class="tt">50,000+ ร้านค้าพาร์ตเนอร์</div><div class="ts">ยืนยันแล้วทุกร้าน</div></div></div>
+  </div>
+</div>
+
+<!-- CATEGORIES -->
+<div class="section" style="margin-top:24px">
+  <div class="sec-header">
+    <div class="sec-title">🗂️ ช้อปตามหมวดหมู่</div>
+    <span class="sec-link">ดูทั้งหมด →</span>
+  </div>
+  <div class="cat-grid" id="cat-grid"></div>
+</div>
+
+<!-- FLASH SALE -->
+<div class="section">
+  <div class="sec-header">
+    <div class="flash-header">
+      <div class="flash-tag">⚡ FLASH SALE</div>
+      <div class="countdown">
+        <div class="cd-box" id="cd-h">02</div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box" id="cd-m">34</div>
+        <div class="cd-sep">:</div>
+        <div class="cd-box" id="cd-s">15</div>
+      </div>
+      <span style="font-size:12px;color:var(--gray400)">เหลืออีก</span>
+    </div>
+    <span class="sec-link">ดูทั้งหมด →</span>
+  </div>
+  <div class="flash-grid" id="flash-grid"></div>
+</div>
+
+<!-- PROMO BANNERS -->
+<div class="section">
+  <div class="promo-row">
+    <div class="promo-card" style="background:linear-gradient(135deg,#1A1A2E,#3D1A47);color:#fff" onclick="toast('👗 ช้อปแฟชั่น!')">
+      <div class="promo-label">แฟชั่น & ไลฟ์สไตล์</div>
+      <div class="promo-title">New Collection<br>Spring 2026</div>
+      <div class="promo-sub">ลดสูงสุด 60%</div>
+      <div class="promo-btn">ช้อปเลย →</div>
+    </div>
+    <div class="promo-card" style="background:linear-gradient(135deg,#E63946,#F4A261);color:#fff" onclick="toast('🔥 Flash Deal!')">
+      <div class="promo-label">⚡ Limited Time</div>
+      <div class="promo-title">Super Brand<br>Day Sale</div>
+      <div class="promo-sub">วันนี้วันเดียว</div>
+      <div class="promo-btn">รับดีล →</div>
+    </div>
+    <div class="promo-card" style="background:linear-gradient(135deg,#2EC4B6,#1A5276);color:#fff" onclick="toast('🏠 Home & Living!')">
+      <div class="promo-label">บ้านและสวน</div>
+      <div class="promo-title">Home Makeover<br>Season</div>
+      <div class="promo-sub">พร้อมบริการติดตั้ง</div>
+      <div class="promo-btn">ดูสินค้า →</div>
+    </div>
+  </div>
+</div>
+
+<!-- RECOMMENDED PRODUCTS -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-title">⭐ สินค้าแนะนำสำหรับคุณ</div>
+    <span class="sec-link">ดูทั้งหมด →</span>
+  </div>
+  <div class="prod-grid" id="rec-grid"></div>
+</div>
+
+<!-- BRANDS -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-title">🏆 แบรนด์ชั้นนำ</div>
+    <span class="sec-link">ดูทั้งหมด →</span>
+  </div>
+  <div class="brand-grid" id="brand-grid"></div>
+</div>
+
+<!-- MORE PRODUCTS -->
+<div class="section">
+  <div class="sec-header">
+    <div class="sec-title">🔥 ขายดีประจำสัปดาห์</div>
+    <span class="sec-link">ดูทั้งหมด →</span>
+  </div>
+  <div class="prod-grid" id="bestseller-grid"></div>
+</div>
+
+<!-- FOOTER -->
+
+
+<!-- COUPON MODAL -->
+<div class="modal-overlay" id="coupon-modal" onclick="if(event.target===this)closeCoupons()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">🎟️ คูปองของคุณ</div>
+      <button class="modal-close" onclick="closeCoupons()">✕</button>
+    </div>
+    <div class="coupon-grid" id="coupon-grid"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+const CATS=[
+  {icon:'🏠',name:'Home & Furniture',cnt:'12,480',color:'#7F77DD'},
+  {icon:'👗',name:'แฟชั่น',cnt:'52,300',color:'#D4537E'},
+  {icon:'💄',name:'Beauty & Health',cnt:'21,400',color:'#E63946'},
+  {icon:'🛒',name:'FMCG & อาหาร',cnt:'34,200',color:'#F4A261'},
+  {icon:'💻',name:'Tech & Gadgets',cnt:'15,600',color:'#378ADD'},
+  {icon:'🚗',name:'ยานยนต์',cnt:'8,900',color:'#888780'},
+  {icon:'🐾',name:'สัตว์เลี้ยง',cnt:'10,200',color:'#2EC4B6'},
+  {icon:'📚',name:'การศึกษา',cnt:'5,400',color:'#639922'},
+];
+const FLASH_PRODS=[
+  {icon:'📺',name:'ทีวี Samsung 55" 4K QLED',price:12900,old:22900,disc:44,stock:18,bg:'#EEF2FF'},
+  {icon:'👗',name:'เสื้อยืด Oversize Premium Cotton',price:199,old:450,disc:56,stock:42,bg:'#FFF0F3'},
+  {icon:'💄',name:'Serum Vitamin C 30ml Glow',price:349,old:699,disc:50,stock:7,bg:'#FFF5F5'},
+  {icon:'🔧',name:'สว่านไฟฟ้า Bosch 18V Pro',price:3290,old:5500,disc:40,stock:23,bg:'#F0F4FF'},
+  {icon:'🐱',name:'อาหารแมว Royal Canin 2kg',price:485,old:750,disc:35,stock:55,bg:'#F0FFF9'},
+];
+const REC_PRODS=[
+  {icon:'🛋️',name:'โซฟา L-shape Nordic Style',price:8900,old:14000,disc:36,badge:'sale',bg:'#F5F0FF'},
+  {icon:'👟',name:'รองเท้า Nike Air Max 270',price:3290,old:4500,disc:27,badge:'hot',bg:'#FFF0F0'},
+  {icon:'💊',name:'วิตามิน C 1000mg 60 เม็ด',price:199,old:0,disc:0,badge:'new',bg:'#F0FFF5'},
+  {icon:'📱',name:'iPhone 16 Pro 256GB',price:42900,old:44900,disc:4,badge:'',bg:'#F0F4FF'},
+  {icon:'🌿',name:'ต้นไม้ Monstera Deliciosa',price:350,old:500,disc:30,badge:'sale',bg:'#F0FFF0'},
+  {icon:'🎮',name:'PlayStation 5 Slim + 2 เกม',price:18900,old:22900,disc:17,badge:'hot',bg:'#F0F0FF'},
+];
+const BRANDS=['Samsung','LG','Nike','Apple','IKEA','Bosch','Panasonic','Sony','Adidas','Philips'];
+const BEST_PRODS=[
+  {icon:'❄️',name:'แอร์ Daikin Inverter 12000BTU',price:14900,old:18900,disc:21,badge:'hot',bg:'#EEF9FF'},
+  {icon:'👜',name:'กระเป๋า Coach Signature',price:4500,old:8900,disc:49,badge:'sale',bg:'#FFF5F8'},
+  {icon:'🫧',name:'ครีมกันแดด SPF50+ PA++++',price:289,old:450,disc:36,badge:'best',bg:'#FFFFF0'},
+  {icon:'🌡️',name:'เครื่องวัดน้ำตาล Accu-Chek',price:890,old:1200,disc:26,badge:'',bg:'#F5FFF5'},
+  {icon:'🪑',name:'เก้าอี้ Gaming RGB Pro',price:4990,old:7500,disc:33,badge:'sale',bg:'#F8F0FF'},
+  {icon:'🐕',name:'ที่นอนสุนัข Memory Foam L',price:1290,old:1890,disc:32,badge:'new',bg:'#FFF0E6'},
+];
+const COUPONS=[
+  {icon:'🚚',bg:'#E6F4FF',title:'ส่งฟรีทุกออเดอร์',desc:'ไม่มีขั้นต่ำ · หมดอายุ 30 เม.ย.',collected:false},
+  {icon:'💰',bg:'#FFF0E6',title:'ลด ฿100 เมื่อซื้อครบ ฿500',desc:'ทุกหมวดหมู่ · จำกัด 1 ท่าน/วัน',collected:false},
+  {icon:'⚡',bg:'#FFF5F5',title:'Flash Sale Extra 10%',desc:'ใช้กับสินค้า Flash Sale เท่านั้น',collected:true},
+  {icon:'🎁',bg:'#F0FFF4',title:'ลด ฿500 เมื่อซื้อครบ ฿3,000',desc:'สำหรับสมาชิก Gold ขึ้นไป',collected:false},
+  {icon:'💳',bg:'#EEF2FF',title:'ผ่อน 0% 12 เดือน ไม่มีขั้นต่ำ',desc:'บัตร KBank, SCB, Krungthai',collected:false},
+];
+
+function buildNav(){
+  const el=document.getElementById('nav-cats-inner');
+  el.innerHTML=`<div class="ncat active" onclick="selCat(this,'ทั้งหมด')"><span class="ncat-ico">🏪</span>ทั้งหมด</div>`+
+  CATS.map(c=>`<div class="ncat" onclick="selCat(this,'${c.name}')"><span class="ncat-ico">${c.icon}</span>${c.name}</div>`).join('');
+}
+function selCat(el,name){
+  document.querySelectorAll('.ncat').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  toast(`🗂️ กำลังแสดงสินค้าหมวด: ${name}`);
+}
+function buildCats(){
+  document.getElementById('cat-grid').innerHTML=CATS.map(c=>`<div class="cat-item" onclick="toast('🗂️ ${c.name}')">
+    <div class="cat-item-ico">${c.icon}</div>
+    <div class="cat-item-name">${c.name}</div>
+    <div class="cat-item-cnt">${c.cnt} รายการ</div>
+    <div class="cat-item-bar" style="background:${c.color}"></div>
+  </div>`).join('');
+}
+function buildFlash(){
+  document.getElementById('flash-grid').innerHTML=FLASH_PRODS.map(p=>`<div class="prod-card" onclick="window.location.href='product.html'">
+    <div class="prod-img" style="background:${p.bg}">${p.icon}
+      <div class="prod-badge-wrap"><span class="prod-badge badge-sale">-${p.disc}%</span></div>
+      <button class="prod-wishlist">❤️</button>
+    </div>
+    <div class="prod-info">
+      <div class="prod-name">${p.name}</div>
+      <div class="prod-price-row">
+        <div class="prod-price">฿${p.price.toLocaleString()}</div>
+        <div class="prod-old">฿${p.old.toLocaleString()}</div>
+      </div>
+      <div class="prod-flash-bar"><div class="prod-flash-fill" style="width:${Math.round((p.stock/60)*100)}%"></div></div>
+      <div class="prod-flash-txt">เหลือ ${p.stock} ชิ้น</div>
+      <button class="btn-cart">🛒 ซื้อเลย</button>
+    </div>
+  </div>`).join('');
+}
+function buildProdGrid(id,prods){
+  document.getElementById(id).innerHTML=prods.map(p=>{
+    const b=p.badge==='sale'?'badge-sale':p.badge==='new'?'badge-new':p.badge==='hot'?'badge-hot':'badge-free';
+    return `<div class="prod-card" onclick="window.location.href='product.html'">
+      <div class="prod-img" style="background:${p.bg}">${p.icon}
+        ${p.badge?`<div class="prod-badge-wrap"><span class="prod-badge ${b}">${p.badge==='sale'?'-'+p.disc+'%':p.badge.toUpperCase()}</span></div>`:''}
+        <button class="prod-wishlist">❤️</button>
+      </div>
+      <div class="prod-info">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-rating"><div class="stars">★★★★${p.disc>30?'★':'☆'}</div><div class="rating-cnt">(${Math.floor(Math.random()*500+50)})</div></div>
+        <div class="prod-price-row">
+          <div class="prod-price">฿${p.price.toLocaleString()}</div>
+          ${p.old?`<div class="prod-old">฿${p.old.toLocaleString()}</div>`:''}
+          ${p.disc?`<div class="prod-discount">-${p.disc}%</div>`:''}
+        </div>
+        <button class="btn-cart">เพิ่มลงตะกร้า</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function buildBrands(){
+  document.getElementById('brand-grid').innerHTML=BRANDS.map(b=>`<div class="brand-card" onclick="toast('🏆 ${b} Brand Day!')">`+
+    `<div class="brand-name">${b}</div></div>`).join('');
+}
+function buildCoupons(){
+  document.getElementById('coupon-grid').innerHTML=COUPONS.map((c,i)=>`<div class="coupon-item ${c.collected?'collected':''}" id="coup-${i}">
+    <div class="coupon-left" style="background:${c.bg}">${c.icon}</div>
+    <div class="coupon-info">
+      <div class="coupon-title">${c.title}</div>
+      <div class="coupon-desc">${c.desc}</div>
+    </div>
+    <button class="coupon-btn ${c.collected?'coupon-btn-done':'coupon-btn-collect'}" onclick="collectCoupon(${i},event)">${c.collected?'เก็บแล้ว':'เก็บคูปอง'}</button>
+  </div>`).join('');
+}
+function collectCoupon(i,e){
+  e.stopPropagation();
+  COUPONS[i].collected=true;
+  buildCoupons();
+  toast('✅ เก็บคูปองสำเร็จ!');
+}
+function openCoupons(){document.getElementById('coupon-modal').classList.add('open');buildCoupons();}
+function closeCoupons(){document.getElementById('coupon-modal').classList.remove('open');}
+function doSearch(){const v=document.getElementById('search-inp').value;if(v)toast(`🔍 ค้นหา: "${v}"`);}
+document.getElementById('search-inp').addEventListener('keypress',e=>{if(e.key==='Enter')doSearch();});
+
+let sec=2*3600+34*60+15;
+function tick(){
+  sec--;if(sec<0)sec=3600;
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  document.getElementById('cd-h').textContent=String(h).padStart(2,'0');
+  document.getElementById('cd-m').textContent=String(m).padStart(2,'0');
+  document.getElementById('cd-s').textContent=String(s).padStart(2,'0');
+}
+setInterval(tick,1000);
+
+function toast(msg){
+  const w=document.getElementById('toast-wrap');
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  w.appendChild(t);setTimeout(()=>t.remove(),2800);
+}
+
+buildNav();buildCats();buildFlash();
+buildProdGrid('rec-grid',REC_PRODS);
+buildProdGrid('bestseller-grid',BEST_PRODS);
+buildBrands();
+</script>
+
+<footer style="background:#1A1A2E;color:rgba(255,255,255,0.6);font-family:'Sarabun',sans-serif;margin-top:48px;padding:32px 16px 20px">
+  <div style="max-width:1280px;margin:0 auto">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:24px;margin-bottom:24px">
+      <div>
+        <div style="font-family:'Prompt',sans-serif;font-size:18px;font-weight:900;color:#fff;margin-bottom:10px">Thailand <span style="color:#E63946">Market</span></div>
+        <div style="font-size:11px;line-height:1.7;margin-bottom:10px">General Marketplace ไทย ครบทุกหมวด ส่งทั่วประเทศ</div>
+        <div style="display:flex;gap:8px">
+          <a href="subscription.html" style="padding:5px 10px;background:#E63946;color:#fff;border-radius:6px;font-size:10px;font-weight:700;text-decoration:none">⭐ TM Plus</a>
+          <a href="referral.html" style="padding:5px 10px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border-radius:6px;font-size:10px;text-decoration:none">🎁 แนะนำเพื่อน</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:10px">🛍️ สำหรับลูกค้า</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:11.5px">
+          <a href="index.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">หน้าแรก</a>
+          <a href="category.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">หมวดหมู่สินค้า</a>
+          <a href="flash-sale.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Flash Sale</a>
+          <a href="live-shopping.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Live Shopping</a>
+          <a href="compare.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">เปรียบเทียบสินค้า</a>
+          <a href="search.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">ค้นหาสินค้า</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:10px">📦 ออเดอร์ & บัญชี</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:11.5px">
+          <a href="profile.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">โปรไฟล์ & Loyalty</a>
+          <a href="checkout.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">ตะกร้าสินค้า</a>
+          <a href="tracking.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">ติดตามพัสดุ</a>
+          <a href="returns.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">คืนสินค้า / เงิน</a>
+          <a href="chat.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">แชทกับร้านค้า</a>
+          <a href="notification-center.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">การแจ้งเตือน</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:10px">🏪 สำหรับผู้ขาย</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:11.5px">
+          <a href="seller-portal.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Seller Portal</a>
+          <a href="onboarding.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">สมัครเป็นผู้ขาย</a>
+          <a href="seller-analytics.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Seller Analytics</a>
+          <a href="seller-finance.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">การเงินร้านค้า</a>
+          <a href="flash-sale.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Flash Sale Hub</a>
+          <a href="brand-day.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Brand Day</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:10px">ℹ️ เกี่ยวกับเรา</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:11.5px">
+          <a href="help-center.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Help Center</a>
+          <a href="subscription.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">TM Plus Membership</a>
+          <a href="campaign-calendar.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Campaign Calendar</a>
+          <a href="admin-dashboard.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Admin Dashboard</a>
+          <a href="api-docs.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">API Documentation</a>
+          <a href="sitemap.html" style="color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">แผนผังเว็บไซต์</a>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="font-size:11px">© 2026 Thailand Market · All rights reserved</div>
+      <div style="display:flex;gap:12px;font-size:11px">
+        <a href="login.html" style="color:rgba(255,255,255,0.45);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.45)'">เข้าสู่ระบบ</a>
+        <a href="login.html" style="color:rgba(255,255,255,0.45);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.45)'">สมัครสมาชิก</a>
+        <a href="sitemap.html" style="color:rgba(255,255,255,0.45);text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.45)'">🗺️ Site Map</a>
+      </div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
