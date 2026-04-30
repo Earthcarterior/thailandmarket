@@ -8,8 +8,9 @@
 <meta property="og:description" content="General Marketplace ไทย ครบทุกหมวดหมู่ ส่งฟรีทั่วประเทศ เปิดร้านฟรี">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.thailandmarket.com">
+<link rel="canonical" href="https://www.thailandmarket.com/">
 <meta name="theme-color" content="#0A0A0A">
-<title>Thailand Market — ช้อปปิ้งออนไลน์ครบทุกหมวด</title>
+<title>Thailand Market — ช้อปปิ้งออนไลน์ครบทุกหมวด | thailandmarket.com</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -67,11 +68,22 @@ input,select{font-family:var(--font)}
 .nav-btn-ico{font-size:16px;line-height:1}
 .nav-badge{position:absolute;top:4px;right:8px;background:var(--red);color:var(--white);font-size:8px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
 /* Category bar */
-.catbar{border-top:var(--border);overflow:hidden}
-.catbar-inner{max-width:var(--max);margin:0 auto;padding:0 24px;display:flex;overflow-x:auto;scrollbar-width:none}
+.catbar{border-top:var(--border);overflow:hidden;position:relative}
+/* ── scroll fade edges ── */
+.catbar::before,.catbar::after{content:'';position:absolute;top:0;bottom:0;width:40px;z-index:2;pointer-events:none}
+.catbar::before{left:0;background:linear-gradient(to right,var(--white),transparent)}
+.catbar::after{right:80px;background:linear-gradient(to left,var(--white),transparent)}
+.catbar-inner{max-width:100%;padding:0 24px;display:flex;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
 .catbar-inner::-webkit-scrollbar{display:none}
-.catbar-item{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);padding:8px 16px;white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;flex-shrink:0;background:none;border-left:none;border-right:none;border-top:none}
+.catbar-item{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);padding:8px 14px;white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;flex-shrink:0;background:none;border-left:none;border-right:none;border-top:none}
 .catbar-item:hover{color:var(--black)}.catbar-item.on{color:var(--black);border-bottom-color:var(--red)}
+/* ── marquee loop container ── */
+.catbar-track{display:flex;gap:0;animation:catscroll 30s linear infinite}
+.catbar-track:hover{animation-play-state:paused}
+@keyframes catscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+/* ── see all button ── */
+.catbar-seeall{position:absolute;right:0;top:0;bottom:0;display:flex;align-items:center;padding:0 16px;background:var(--white);border-left:var(--border);z-index:3;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);white-space:nowrap;transition:all .15s}
+.catbar-seeall:hover{color:var(--black);background:var(--g50)}
 
 /* ── FLASH SALE ── */
 .flash{background:var(--black);color:var(--white);padding:20px 0}
@@ -243,6 +255,34 @@ footer{background:var(--black);padding:40px 24px 28px;margin-top:16px}
 /* ── SORT SELECT ── */
 .sort-sel{padding:7px 10px;border:var(--border);font-size:12px;font-family:var(--mono);background:var(--white);outline:none;cursor:pointer;letter-spacing:.03em}
 
+
+/* ── STATS BAR ── */
+.stats-bar{border-bottom:var(--border);background:var(--white)}
+.stats-bar-inner{max-width:var(--max);margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr)}
+.stat-item{padding:20px 24px;border-right:var(--border);display:flex;flex-direction:column;gap:6px}
+.stat-item:last-child{border-right:none}
+.stat-num{font-family:var(--mono);font-size:28px;font-weight:500;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.stat-num .star{color:var(--black);font-size:22px}
+.stat-lbl{font-size:12px;color:var(--g500);letter-spacing:.02em}
+
+/* ── TRUST BAR ── */
+.trust-bar{border-bottom:var(--border);background:var(--white)}
+.trust-bar-inner{max-width:var(--max);margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr)}
+.trust-item{padding:18px 24px;border-right:var(--border);display:flex;align-items:center;gap:14px}
+.trust-item:last-child{border-right:none}
+.trust-ico{font-size:28px;flex-shrink:0}
+.trust-text{}
+.trust-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.trust-sub{font-size:11px;color:var(--g500);line-height:1.5}
+
+@media(max-width:768px){
+  .stats-bar-inner{grid-template-columns:1fr 1fr}
+  .trust-bar-inner{grid-template-columns:1fr 1fr}
+  .stat-item,.trust-item{padding:14px 16px}
+}
+@media(max-width:480px){
+  .stats-bar-inner,.trust-bar-inner{grid-template-columns:1fr 1fr}
+}
 /* ── RESPONSIVE ── */
 @media(max-width:1024px){.cats-grid{grid-template-columns:repeat(4,1fr)}.brands-grid{grid-template-columns:repeat(4,1fr)}.brands-grid .brand-card:nth-child(4){border-right:none}.products-grid{grid-template-columns:repeat(4,1fr)}.cat-prods{grid-template-columns:repeat(4,1fr)}.tf-grid{grid-template-columns:1fr 1fr 1fr;gap:24px}}
 @media(max-width:768px){.flash-grid{grid-template-columns:repeat(3,1fr)!important}.cats-grid{grid-template-columns:repeat(4,1fr)}.banners{grid-template-columns:1fr}.products-grid{grid-template-columns:repeat(2,1fr)}.cat-prods{grid-template-columns:repeat(2,1fr)}.brands-grid{grid-template-columns:repeat(4,1fr)}.tf-grid{grid-template-columns:1fr 1fr}.nav-links{display:none}.catbar-item{font-size:9px;padding:7px 10px}}
@@ -258,8 +298,9 @@ footer{background:var(--black);padding:40px 24px 28px;margin-top:16px}
   <span><span class="ann-dot">·</span> รับคูปองใหม่ทุกวัน</span>
 </div>
 
+
 <!-- ── NAVIGATION ── -->
-<nav class="nav">
+<nav class="nav" style="position:relative">
   <div class="nav-top">
     <a href="index.html" class="nav-logo">Thailand<span class="dot">.</span>Market</a>
     <div class="nav-links" id="nav-links">
@@ -285,10 +326,17 @@ footer{background:var(--black);padding:40px 24px 28px;margin-top:16px}
       <button class="nav-btn sell" onclick="location.href='seller-portal.html'"><span class="nav-btn-ico">🏪</span>Sell</button>
     </div>
   </div>
-  <div class="catbar">
-    <div class="catbar-inner" id="catbar">
-      <button class="catbar-item on" onclick="filterCat('all',this)">ทั้งหมด</button>
+  <div class="catbar" id="catbar-wrap">
+    <div class="catbar-inner" id="catbar-scroll">
+      <div class="catbar-track" id="catbar-track">
+        <!-- filled by JS -->
+      </div>
     </div>
+    <button class="catbar-seeall" onclick="showAllCats()">ดูทั้งหมด ▸</button>
+  </div>
+  <!-- cats dropdown (hidden by default) -->
+  <div id="cats-dropdown" style="display:none;position:absolute;left:0;right:0;background:var(--white);border-bottom:var(--border);z-index:998;padding:16px 24px;box-shadow:0 8px 24px rgba(0,0,0,.08)">
+    <div id="cats-dropdown-grid" style="max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px"></div>
   </div>
 </nav>
 
@@ -374,6 +422,63 @@ footer{background:var(--black);padding:40px 24px 28px;margin-top:16px}
 
 </main>
 
+
+
+<!-- ── STATS BAR ── -->
+<div class="stats-bar" id="stats-bar" style="border-top:var(--border)">
+  <div class="stats-bar-inner" id="stats-bar-inner">
+    <div class="stat-item">
+      <div class="stat-num" id="stat-products">500K+</div>
+      <div class="stat-lbl" id="stat-products-lbl">รายการสินค้า</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat-sellers">50K+</div>
+      <div class="stat-lbl" id="stat-sellers-lbl">ร้านค้า</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat-customers">2.4M</div>
+      <div class="stat-lbl" id="stat-customers-lbl">ลูกค้า</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat-rating">4.9 <span class="star">★</span></div>
+      <div class="stat-lbl" id="stat-rating-lbl">คะแนนเฉลี่ย</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TRUST BAR ── -->
+<div class="trust-bar" id="trust-bar">
+  <div class="trust-bar-inner">
+    <div class="trust-item">
+      <div class="trust-ico">🚚</div>
+      <div class="trust-text">
+        <div class="trust-title" id="trust-1-title">ส่งฟรีทั่วไทย</div>
+        <div class="trust-sub" id="trust-1-sub">ไม่มีขั้นต่ำสำหรับสมาชิก Plus</div>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-ico">🔒</div>
+      <div class="trust-text">
+        <div class="trust-title" id="trust-2-title">ชำระเงินปลอดภัย</div>
+        <div class="trust-sub" id="trust-2-sub">SSL · PCI DSS · Omise · 2C2P</div>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-ico">↩️</div>
+      <div class="trust-text">
+        <div class="trust-title" id="trust-3-title">คืนง่าย ใน 15 วัน</div>
+        <div class="trust-sub" id="trust-3-sub">ไม่ชอบคืนได้ ไม่มีค่าถาม</div>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-ico">💬</div>
+      <div class="trust-text">
+        <div class="trust-title" id="trust-4-title">ซัพพอร์ต 24/7</div>
+        <div class="trust-sub" id="trust-4-sub">Chat · โทร · LINE OA</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ── VIEW ALL STRIP ── -->
 <div style="border-top:var(--border);border-bottom:var(--border);padding:20px 0;margin-bottom:0;background:var(--g50)">
@@ -531,19 +636,72 @@ async function loadCats() {
     }
   }
 
-  // Catbar
-  const catbar = document.getElementById('catbar');
-  if (catbar && parents.length) {
-    catbar.innerHTML = `<button class="catbar-item on" onclick="filterCat('all',this)">ทั้งหมด</button>` +
+  // Catbar — marquee loop
+  const track = document.getElementById('catbar-track');
+  if (track && parents.length) {
+    const makeItems = () => `<button class="catbar-item on" onclick="filterCat('all',this)" style="border-bottom:2px solid var(--red);color:var(--black)">ทั้งหมด</button>` +
       parents.map(c => `<button class="catbar-item" onclick="filterCat('${c.id}',this)">${c.icon||''} ${c.name_th}</button>`).join('');
+    // Duplicate for seamless loop
+    track.innerHTML = makeItems() + makeItems();
+
+    // Cats dropdown grid
+    const ddGrid = document.getElementById('cats-dropdown-grid');
+    if (ddGrid) {
+      const colors = ['#7C3AED','#DB2777','#E8541A','#D97706','#2563EB','#374151','#16A34A','#0891B2','#DC2626','#059669','#92400E','#1D4ED8'];
+      ddGrid.innerHTML = parents.map((c,i) => `
+        <div onclick="filterCat('${c.id}',this);closeAllCats()" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:var(--border);cursor:pointer;transition:all .15s;border-left:3px solid ${colors[i%colors.length]}" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background='var(--white)'">
+          <span style="font-size:18px">${c.icon||'📦'}</span>
+          <div>
+            <div style="font-size:12px;font-weight:500">${c.name_th}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--g400)">${c.product_count||0} รายการ</div>
+          </div>
+        </div>`).join('');
+    }
   }
 }
 
 function filterCat(catId, el) {
   currentFilter = catId;
-  document.querySelectorAll('.catbar-item,.cat-tile').forEach(e => e.classList.remove('on'));
-  el?.classList.add('on');
+  document.querySelectorAll('.catbar-item,.cat-tile').forEach(e => {
+    e.classList.remove('on');
+    e.style.borderBottomColor = 'transparent';
+    e.style.color = '';
+  });
+  // highlight all matching buttons (duplicated in marquee)
+  document.querySelectorAll('.catbar-item').forEach(b => {
+    const isMatch = catId === 'all'
+      ? b.textContent.trim() === 'ทั้งหมด'
+      : b.onclick?.toString().includes(catId);
+    if (isMatch) {
+      b.classList.add('on');
+      b.style.borderBottomColor = 'var(--red)';
+      b.style.color = 'var(--black)';
+    }
+  });
+
+  // Adjust marquee speed by item count
+  const t = document.getElementById('catbar-track');
+  if (t) {
+    const dur = Math.max(20, (parents.length + 1) * 2.5);
+    t.style.animationDuration = dur + 's';
+  }
+  if (el?.closest('.cat-tile')) el.classList.add('on');
   renderProducts();
+}
+
+function showAllCats() {
+  const dd = document.getElementById('cats-dropdown');
+  if (!dd) return;
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  document.querySelector('.catbar-seeall').textContent = isOpen ? 'ดูทั้งหมด ▸' : 'ปิด ✕';
+}
+
+function closeAllCats() {
+  const dd = document.getElementById('cats-dropdown');
+  if (dd) dd.style.display = 'none';
+  const btn = document.querySelector('.catbar-seeall');
+  if (btn) btn.textContent = 'ดูทั้งหมด ▸';
 }
 
 // ── Banners ────────────────────────────────────────────────
@@ -908,9 +1066,30 @@ async function toggleWishlist(productId, el) {
 }
 
 // ── Init ───────────────────────────────────────────────────
+
+// ── Load Stats + Trust from Supabase (site_settings) ────────────
+async function loadSiteSettings() {
+  try {
+    const { data } = await sb.from('site_settings').select('key,value').in('key', [
+      'stat_products','stat_sellers','stat_customers','stat_rating',
+      'stat_products_lbl','stat_sellers_lbl','stat_customers_lbl','stat_rating_lbl',
+      'trust_1_title','trust_1_sub','trust_2_title','trust_2_sub',
+      'trust_3_title','trust_3_sub','trust_4_title','trust_4_sub',
+      'trust_1_ico','trust_2_ico','trust_3_ico','trust_4_ico'
+    ]);
+    if (!data?.length) return; // use defaults if no settings
+    data.forEach(row => {
+      const el = document.getElementById(row.key.replace(/_/g,'-'));
+      if (el) el.textContent = row.value;
+    });
+  } catch(e) {
+    // silently use default values — site_settings table optional
+  }
+}
 async function init() {
   updateCartUI();
   startTimer();
+  loadSiteSettings();
   // โหลดทุกส่วนพร้อมกัน
   await Promise.all([
     loadCats(),
