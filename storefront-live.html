@@ -349,6 +349,50 @@ footer{background:var(--black);padding:32px 24px;margin-top:60px;border-top:var(
 .rating-pill-lbl{font-size:12px;color:var(--g500);transition:color .12s}
 
 >
+
+/* ── Account Nav Button & Dropdown ── */
+.nav-btn.account-btn{position:relative}
+.account-dropdown{
+  position:absolute;top:calc(100% + 4px);right:0;
+  background:var(--white);border:1px solid var(--black);
+  min-width:200px;z-index:9999;
+  display:none;flex-direction:column;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+}
+.account-dropdown.open{display:flex}
+.account-dropdown-header{
+  padding:14px 16px;border-bottom:1px solid var(--g200);
+  background:var(--g50);
+}
+.account-dropdown-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px}
+.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
+.account-dropdown-role{
+  display:inline-block;margin-top:5px;
+  padding:2px 8px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.06em;text-transform:uppercase;
+  background:var(--black);color:var(--white);
+}
+.account-dropdown-role.admin{background:var(--red)}
+.account-dropdown-role.seller{background:#2563EB}
+.dropdown-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 16px;font-size:13px;color:var(--g600);
+  cursor:pointer;transition:all .12s;text-decoration:none;border:none;
+  background:none;font-family:var(--font);width:100%;text-align:left;
+}
+.dropdown-item:hover{background:var(--g50);color:var(--black)}
+.dropdown-item.logout{color:var(--red);border-top:1px solid var(--g200)}
+.dropdown-item.logout:hover{background:#FFF5F5}
+.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
+/* Nav account avatar */
+.nav-avatar{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--black);color:var(--white);
+  font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+
 </style>
 </head>
 <body>
@@ -371,8 +415,27 @@ footer{background:var(--black);padding:32px 24px;margin-top:60px;border-top:var(
       <span class="nav-search-ico">🔍</span>
       <input type="text" class="nav-search-inp" id="search-inp" placeholder="ค้นหาสินค้า บริการ..." oninput="onSearch()">
     </div>
-    <div class="nav-actions">
-      <a href="admin-cms.html" class="nav-btn">⚙️ CMS</a>
+    <div class="nav-actions" style="display:flex;align-items:center;gap:8px">
+      <!-- Account Button + Dropdown -->
+      <div style="position:relative">
+        <button class="nav-btn account-btn" id="account-nav-btn" style="display:flex;align-items:center;gap:6px">
+          <span id="account-ico">👤</span>
+          <span id="account-lbl" style="font-size:11px">Account</span>
+        </button>
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-dropdown-header">
+            <div class="account-dropdown-name" id="dd-name">กำลังโหลด...</div>
+            <div class="account-dropdown-email" id="dd-email"></div>
+            <span class="account-dropdown-role" id="dd-role">Member</span>
+          </div>
+          <a href="profile.html" class="dropdown-item"><span class="dropdown-item-ico">👤</span>โปรไฟล์</a>
+          <a href="order-history.html" class="dropdown-item"><span class="dropdown-item-ico">📦</span>คำสั่งซื้อ</a>
+          <a href="wishlist.html" class="dropdown-item"><span class="dropdown-item-ico">❤️</span>รายการโปรด</a>
+          <a href="seller-portal.html" class="dropdown-item" id="dd-seller" style="display:none"><span class="dropdown-item-ico">🏪</span>Seller Portal</a>
+          <a href="admin-cms.html" class="dropdown-item" id="dd-admin" style="display:none"><span class="dropdown-item-ico">⚙️</span>Admin CMS</a>
+          <button class="dropdown-item logout" id="dd-logout"><span class="dropdown-item-ico">🚪</span>ออกจากระบบ</button>
+        </div>
+      </div>
       <button class="nav-btn red" onclick="showCart()" id="cart-btn">🛒 ตะกร้า <span id="cart-count">0</span></button>
     </div>
   </div>
@@ -1106,6 +1169,94 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadProds();
   updateActiveTags();
 });
+</script>
+
+<script>
+// ── Account Session & Dropdown ────────────────────────────────
+(async function initAccountNav() {
+  const sbClient = window._sb || (window.supabase
+    ? supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0')
+    : null);
+  if (!sbClient) return;
+
+  const btn   = document.getElementById('account-nav-btn');
+  const drop  = document.getElementById('account-dropdown');
+  if (!btn || !drop) return;
+
+  // ── ดึง session ──
+  const { data: { session } } = await sbClient.auth.getSession();
+
+  if (!session) {
+    // ยังไม่ login — แสดงปุ่มปกติ ไปหน้า login
+    btn.onclick = () => location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search);
+    return;
+  }
+
+  // Login แล้ว — โหลดข้อมูล user
+  const email = session.user.email;
+  const localName = localStorage.getItem('tm_user_name');
+  const localRole = localStorage.getItem('tm_user_role') || 'buyer';
+
+  let displayName = localName || email.split('@')[0];
+  let role = localRole;
+
+  // ดึงจาก DB (ถ้ายังไม่มีใน local)
+  try {
+    const { data: u } = await sbClient.from('users').select('display_name,role').eq('email', email).maybeSingle();
+    if (u) {
+      displayName = u.display_name || displayName;
+      role = u.role || role;
+      localStorage.setItem('tm_user_name', displayName);
+      localStorage.setItem('tm_user_role', role);
+    }
+  } catch(e) {}
+
+  // ── อัปเดต UI ──
+  const ico  = btn.querySelector('.nav-btn-ico');
+  const lbl  = btn.querySelector('.nav-btn-lbl');
+  if (ico) ico.innerHTML = `<div class="nav-avatar">${displayName.charAt(0).toUpperCase()}</div>`;
+  if (lbl) lbl.textContent = displayName.split(' ')[0]; // ชื่อแรก
+
+  // ── Dropdown header ──
+  const dName  = document.getElementById('dd-name');
+  const dEmail = document.getElementById('dd-email');
+  const dRole  = document.getElementById('dd-role');
+  if (dName)  dName.textContent  = displayName;
+  if (dEmail) dEmail.textContent = email;
+  if (dRole) {
+    dRole.textContent = role === 'admin' ? 'Admin' : role === 'seller' ? 'Seller' : 'Member';
+    dRole.className   = 'account-dropdown-role ' + role;
+  }
+
+  // ── Admin/Seller เมนูพิเศษ ──
+  const adminMenu = document.getElementById('dd-admin');
+  const sellerMenu = document.getElementById('dd-seller');
+  if (adminMenu)  adminMenu.style.display = role === 'admin' ? 'flex' : 'none';
+  if (sellerMenu) sellerMenu.style.display = (role === 'seller' || role === 'admin') ? 'flex' : 'none';
+
+  // ── Toggle dropdown ──
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    drop.classList.toggle('open');
+  };
+  document.addEventListener('click', (e) => {
+    if (!btn.contains(e.target)) drop.classList.remove('open');
+  });
+
+  // ── Logout ──
+  const logoutBtn = document.getElementById('dd-logout');
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      await sbClient.auth.signOut();
+      localStorage.removeItem('tm_user_role');
+      localStorage.removeItem('tm_user_name');
+      localStorage.removeItem('tm_user_email');
+      localStorage.removeItem('tm_user_id');
+      localStorage.removeItem('tm_cart');
+      location.href = 'index.html';
+    };
+  }
+})();
 </script>
 </body>
 </html
