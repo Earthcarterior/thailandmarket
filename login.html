@@ -187,7 +187,15 @@ tbody tr:hover td{background:var(--g50)!important}
 
 :root{--primary:#0A0A0A;--accent:#E63329;--accent2:#D4D4D4;--teal:#404040;--gold:#F2F2F2;--bg:#FFFFFF;--white:#fff;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;--r8:8px;--r12:12px;--r16:16px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;display:flex;align-items:stretch}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;display:flex;align-items:stretch;margin:0;padding:0}
+/* ── fix nav overlap ── */
+#tm-nav{display:none!important}
+.tn-top{display:none!important}
+/* ── login wrapper ── */
+.login-wrap{display:flex;width:100%;min-height:100vh}
+.left{width:460px;min-width:380px;flex-shrink:0}
+.right{flex:1;min-width:320px}
+@media(max-width:800px){.login-wrap{flex-direction:column}.left{display:none!important}.right{padding:28px 20px;width:100%}}
 .left{width:48%;background:var(--primary);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:44px 52px}
 .bg-shape{position:absolute;inset:0;pointer-events:none}
 .bs{position:absolute;border-radius:50%}
@@ -321,6 +329,12 @@ img{max-width:100%;height:auto}
 /* ── Selection color ── */
 ::selection{background:#0A0A0A;color:#fff}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+window.TM_SB_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
+window.TM_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
+window._sb = supabase.createClient(window.TM_SB_URL, window.TM_SB_KEY);
+</script>
 </head>
 <body>
 <nav id="tm-nav">
@@ -369,7 +383,7 @@ img{max-width:100%;height:auto}
 
 
 
-<div class="left">
+<div class="login-wrap"><div class="left">
   <div class="bg-shape">
     <div class="bs" style="width:500px;height:500px;background:rgba(230,57,70,0.06);top:-150px;right:-150px"></div>
     <div class="bs" style="width:300px;height:300px;background:rgba(46,196,182,0.06);bottom:50px;left:-80px"></div>
@@ -420,7 +434,7 @@ img{max-width:100%;height:auto}
       </div>
       <div class="remember-row">
         <label class="chk-wrap"><input type="checkbox" id="remember"> จดจำฉันไว้</label>
-        <span class="forgot"><a href="forgot-password.html" style="color:var(--black)">ลืมรหัสผ่าน</a>?</span>
+        <span class="forgot" onclick="doForgotPassword()"><a href="forgot-password.html" style="color:var(--black)">ลืมรหัสผ่าน</a>?</span>
       </div>
       <button class="btn-main" onclick="doLogin()">🔐 เข้าสู่ระบบ</button>
       <div class="divider"><div class="div-line"></div><div class="div-txt">หรือ</div><div class="div-line"></div></div>
@@ -463,68 +477,228 @@ img{max-width:100%;height:auto}
 </div>
 <div class="toast-wrap" id="tw"></div>
 <script>
-let curRole='buyer';
-function switchTab(t){
-  const isL=t==='login';
-  document.getElementById('tab-login').classList.toggle('active',isL);
-  document.getElementById('tab-register').classList.toggle('active',!isL);
-  document.getElementById('frm-login').style.display=isL?'block':'none';
-  document.getElementById('frm-register').style.display=isL?'none':'block';
+// ── Supabase client ────────────────────────────────────────
+const sb = window._sb;
+let curRole = 'buyer';
+
+// ── Tab switch ─────────────────────────────────────────────
+function switchTab(t) {
+  const isL = t === 'login';
+  document.getElementById('tab-login').classList.toggle('active', isL);
+  document.getElementById('tab-register').classList.toggle('active', !isL);
+  document.getElementById('frm-login').style.display = isL ? 'block' : 'none';
+  document.getElementById('frm-register').style.display = isL ? 'none' : 'block';
   document.getElementById('success-bar').classList.remove('show');
 }
-function selRole(r){
-  curRole=r;
-  document.getElementById('role-buyer').classList.toggle('sel',r==='buyer');
-  document.getElementById('role-seller').classList.toggle('sel',r==='seller');
-  document.getElementById('seller-fields').style.display=r==='seller'?'block':'none';
+
+function selRole(r) {
+  curRole = r;
+  document.getElementById('role-buyer').classList.toggle('sel', r === 'buyer');
+  document.getElementById('role-seller').classList.toggle('sel', r === 'seller');
+  const sf = document.getElementById('seller-fields');
+  if (sf) sf.style.display = r === 'seller' ? 'block' : 'none';
 }
-function togglePw(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁️':'🙈';}
-function clearE(id){document.getElementById(id).classList.remove('err');const e=document.getElementById('e-'+id);if(e)e.style.display='none';}
-function showE(id){document.getElementById(id).classList.add('err');const e=document.getElementById('e-'+id);if(e)e.style.display='block';return false;}
-function checkStr(pw){
-  const s=[document.getElementById('s1'),document.getElementById('s2'),document.getElementById('s3'),document.getElementById('s4')];
-  const t=document.getElementById('str-txt');
-  let sc=0;if(pw.length>=8)sc++;if(/[A-Z]/.test(pw))sc++;if(/[0-9]/.test(pw))sc++;if(/[^A-Za-z0-9]/.test(pw))sc++;
-  const cls=['#E63329','#D4D4D4','#2563EB','#16A34A'];const lbl=['อ่อนมาก','ปานกลาง','ดี','แข็งแกร่ง'];
-  s.forEach((seg,i)=>seg.style.background=i<sc?cls[sc-1]:'var(--g200)');
-  if(sc>0){t.textContent='ความปลอดภัย: '+lbl[sc-1];t.style.color=cls[sc-1];}
+
+function togglePw(id, btn) {
+  const i = document.getElementById(id);
+  i.type = i.type === 'password' ? 'text' : 'password';
+  btn.textContent = i.type === 'password' ? '👁️' : '🙈';
 }
-function doLogin(){
-  let ok=true;
-  if(!document.getElementById('l-email').value.trim())ok=showE('l-email');
-  if(!document.getElementById('l-pass').value)ok=showE('l-pass');
-  if(!ok)return;
-  toast('🔐 กำลังเข้าสู่ระบบ...');
-  setTimeout(()=>{toast('✅ เข้าสู่ระบบสำเร็จ!');setTimeout(()=>window.location.href='index.html',800);},1200);
+
+function clearE(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('err');
+  const e = document.getElementById('e-' + id);
+  if (e) e.style.display = 'none';
 }
-function doRegister(){
-  let ok=true;
-  if(!document.getElementById('r-fname').value.trim())ok=showE('r-fname');
-  if(!document.getElementById('r-lname').value.trim())ok=showE('r-lname');
-  const em=document.getElementById('r-email').value;
-  if(!em||!/\S+@\S+\.\S+/.test(em))ok=showE('r-email');
-  if(!document.getElementById('r-tel').value.trim())ok=showE('r-tel');
-  if(document.getElementById('r-pass').value.length<8)ok=showE('r-pass');
-  if(document.getElementById('r-pass').value!==document.getElementById('r-pass2').value)ok=showE('r-pass2');
-  if(!document.getElementById('agree').checked){toast('⚠️ กรุณายอมรับข้อกำหนด');ok=false;}
-  if(!ok)return;
-  toast('✨ กำลังสร้างบัญชี...');
-  setTimeout(()=>{
+
+function showE(id, msg) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('err');
+  const e = document.getElementById('e-' + id);
+  if (e) { e.textContent = msg || e.textContent; e.style.display = 'block'; }
+  return false;
+}
+
+function checkStr(pw) {
+  const s = [
+    document.getElementById('s1'), document.getElementById('s2'),
+    document.getElementById('s3'), document.getElementById('s4')
+  ];
+  const t = document.getElementById('str-txt');
+  if (!s[0]) return;
+  let sc = 0;
+  if (pw.length >= 8) sc++;
+  if (/[A-Z]/.test(pw)) sc++;
+  if (/[0-9]/.test(pw)) sc++;
+  if (/[^A-Za-z0-9]/.test(pw)) sc++;
+  const cls = ['#E63329','#D4D4D4','#2563EB','#16A34A'];
+  const lbl = ['อ่อนมาก','ปานกลาง','ดี','แข็งแกร่ง'];
+  s.forEach((seg, i) => { if (seg) seg.style.background = i < sc ? cls[sc - 1] : 'var(--g200)'; });
+  if (t && sc > 0) { t.textContent = 'ความปลอดภัย: ' + lbl[sc - 1]; t.style.color = cls[sc - 1]; }
+}
+
+// ── LOGIN (Supabase Auth) ──────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  let ok = true;
+  if (!email) ok = showE('l-email', 'กรุณากรอก Email');
+  if (!pass)  ok = showE('l-pass', 'กรุณากรอกรหัสผ่าน');
+  if (!ok) return;
+
+  const btn = document.querySelector('#frm-login .btn-main');
+  btn.textContent = '🔐 กำลังเข้าสู่ระบบ...';
+  btn.disabled = true;
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+
+    // บันทึก session
+    localStorage.setItem('tm_user_email', email);
+    localStorage.setItem('tm_user_id', data.user.id);
+
+    // ดึง role จาก users table
+    const { data: userRow } = await sb.from('users').select('role,display_name').eq('email', email).maybeSingle();
+    const role = userRow?.role || 'buyer';
+    const name = userRow?.display_name || email.split('@')[0];
+    localStorage.setItem('tm_user_role', role);
+    localStorage.setItem('tm_user_name', name);
+
+    toast('✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ' + name);
+
+    // Redirect ตาม role
+    setTimeout(() => {
+      if (role === 'admin') location.href = 'admin-cms.html';
+      else if (role === 'seller') location.href = 'seller-portal.html';
+      else {
+        const redirect = new URLSearchParams(location.search).get('from') || 'index.html';
+        location.href = redirect;
+      }
+    }, 900);
+
+  } catch (err) {
+    const msg = err.message;
+    if (msg.includes('Invalid login') || msg.includes('invalid_credentials')) {
+      showE('l-pass', 'Email หรือรหัสผ่านไม่ถูกต้อง');
+    } else if (msg.includes('Email not confirmed')) {
+      toast('📧 กรุณายืนยัน Email ก่อนเข้าสู่ระบบ');
+    } else {
+      toast('❌ ' + msg);
+    }
+    btn.textContent = 'เข้าสู่ระบบ';
+    btn.disabled = false;
+  }
+}
+
+// ── REGISTER (Supabase Auth) ───────────────────────────────
+async function doRegister() {
+  const fname = document.getElementById('r-fname').value.trim();
+  const lname = document.getElementById('r-lname').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const tel   = document.getElementById('r-tel')?.value?.trim() || '';
+  const pass  = document.getElementById('r-pass').value;
+  const pass2 = document.getElementById('r-pass2').value;
+  const agree = document.getElementById('agree')?.checked;
+
+  let ok = true;
+  if (!fname) ok = showE('r-fname', 'กรุณากรอกชื่อ');
+  if (!lname) ok = showE('r-lname', 'กรุณากรอกนามสกุล');
+  if (!email || !/\S+@\S+\.\S+/.test(email)) ok = showE('r-email', 'Email ไม่ถูกต้อง');
+  if (pass.length < 8) ok = showE('r-pass', 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+  if (pass !== pass2)  ok = showE('r-pass2', 'รหัสผ่านไม่ตรงกัน');
+  if (!agree) { toast('⚠️ กรุณายอมรับข้อกำหนดการใช้งาน'); ok = false; }
+  if (!ok) return;
+
+  const btn = document.querySelector('#frm-register .btn-main');
+  btn.textContent = '✨ กำลังสร้างบัญชี...';
+  btn.disabled = true;
+
+  try {
+    const displayName = `${fname} ${lname}`;
+
+    // สมัครสมาชิกผ่าน Supabase Auth
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { display_name: displayName, role: curRole } }
+    });
+    if (error) throw error;
+
+    // บันทึกลง users table
+    await sb.from('users').upsert({
+      email,
+      display_name: displayName,
+      role: curRole,
+      is_active: true,
+    }, { onConflict: 'email' });
+
+    // แสดง success
     switchTab('login');
-    const bar=document.getElementById('success-bar');
-    document.getElementById('success-msg').textContent=`สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ คุณ${document.getElementById('r-fname').value} 🎉`;
-    bar.classList.add('show');
-    toast('✅ สมัครสมาชิกสำเร็จแล้ว!');
-  },1200);
+    const bar = document.getElementById('success-bar');
+    const msg = document.getElementById('success-msg');
+    if (bar && msg) {
+      msg.textContent = `สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ คุณ${fname} 🎉 กรุณาตรวจสอบ Email เพื่อยืนยันบัญชี`;
+      bar.classList.add('show');
+    }
+    toast('✅ สมัครสมาชิกสำเร็จ! กรุณายืนยัน Email');
+
+  } catch (err) {
+    const msg = err.message;
+    if (msg.includes('already registered') || msg.includes('already been registered')) {
+      showE('r-email', 'Email นี้มีบัญชีอยู่แล้ว');
+    } else if (msg.includes('Password should be')) {
+      showE('r-pass', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+    } else {
+      toast('❌ ' + msg);
+    }
+    btn.textContent = 'สมัครสมาชิก';
+    btn.disabled = false;
+  }
 }
-function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast-item';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
+
+// ── FORGOT PASSWORD ────────────────────────────────────────
+async function doForgotPassword() {
+  const email = document.getElementById('l-email').value.trim();
+  if (!email) { showE('l-email', 'กรุณากรอก Email ก่อน'); return; }
+  try {
+    await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: location.origin + '/login.html'
+    });
+    toast('📧 ส่ง Email รีเซ็ตรหัสผ่านแล้ว กรุณาตรวจสอบ inbox');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ── Auto-redirect ถ้า login อยู่แล้ว ──────────────────────
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    const role = localStorage.getItem('tm_user_role') || 'buyer';
+    const redirect = new URLSearchParams(location.search).get('from') || 'index.html';
+    if (role === 'admin') location.href = 'admin-cms.html';
+    else location.href = redirect;
+  }
+}
+checkSession();
+
+// ── Toast ──────────────────────────────────────────────────
+function toast(msg) {
+  const w = document.getElementById('tw') || document.getElementById('tmToastWrap');
+  if (!w) return;
+  const t = document.createElement('div');
+  t.className = 'toast-item';
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
 </script>
 
 
 
 
 
-<div class="tm-toast-wrap" id="tmToastWrap"></div>
+<div class="tm-toast-wrap" id="tmToastWrap"></div></div>
 <script>
 function tmToast(msg){
   var w=document.getElementById('tmToastWrap');

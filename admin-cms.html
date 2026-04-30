@@ -242,6 +242,8 @@ tbody tr:last-child td{border-bottom:none}
       <div class="tb-actions">
         <button class="btn btn-k btn-sm" onclick="showPanel('products');setTimeout(openProductModal,100)">➕ เพิ่มสินค้า</button>
         <a href="storefront-live.html" target="_blank" class="btn btn-o btn-sm">🌐 ดูหน้าเว็บ</a>
+      <div class="sb-section" style="margin-top:8px">ตั้งค่า</div>
+      <div class="sni" onclick="showPanel('settings')" id="nav-settings"><span class="sni-ico">⚙️</span>Stats &amp; Trust Bar</div>
       </div>
     </div>
 
@@ -339,6 +341,95 @@ tbody tr:last-child td{border-bottom:none}
           <thead><tr><th>ไอคอน</th><th>ชื่อ (ไทย)</th><th>ชื่อ (Eng)</th><th>Slug</th><th>จำนวนสินค้า</th><th>สถานะ</th><th></th></tr></thead>
           <tbody id="cats-tbody"><tr><td colspan="7"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr></tbody>
         </table>
+      </div>
+    </div>
+
+
+    <!-- ── SETTINGS: Stats + Trust ── -->
+    <div id="panel-settings" class="panel" style="padding:24px;display:none">
+
+      <div class="alert alert-ok" style="margin-bottom:20px">
+        <strong>💡 วิธีใช้</strong>
+        แก้ข้อความแล้วกด <strong>บันทึก</strong> — จะบันทึกลง Supabase และแสดงบนหน้าเว็บทันที
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="form-section">
+        <div class="form-section-head"><div class="form-section-title">📊 Stats Bar (ตัวเลขสถิติ)</div></div>
+        <div class="form-section-body">
+          <div class="form-grid">
+            <div class="fg"><label class="lbl">ตัวเลขที่ 1 (สินค้า)</label><input class="inp" type="text" id="set-stat-products" value="500K+"></div>
+            <div class="fg"><label class="lbl">คำอธิบาย</label><input class="inp" type="text" id="set-stat-products-lbl" value="รายการสินค้า"></div>
+          </div>
+          <div class="form-grid" style="margin-top:12px">
+            <div class="fg"><label class="lbl">ตัวเลขที่ 2 (ร้านค้า)</label><input class="inp" type="text" id="set-stat-sellers" value="50K+"></div>
+            <div class="fg"><label class="lbl">คำอธิบาย</label><input class="inp" type="text" id="set-stat-sellers-lbl" value="ร้านค้า"></div>
+          </div>
+          <div class="form-grid" style="margin-top:12px">
+            <div class="fg"><label class="lbl">ตัวเลขที่ 3 (ลูกค้า)</label><input class="inp" type="text" id="set-stat-customers" value="2.4M"></div>
+            <div class="fg"><label class="lbl">คำอธิบาย</label><input class="inp" type="text" id="set-stat-customers-lbl" value="ลูกค้า"></div>
+          </div>
+          <div class="form-grid" style="margin-top:12px">
+            <div class="fg"><label class="lbl">ตัวเลขที่ 4 (Rating)</label><input class="inp" type="text" id="set-stat-rating" value="4.9 ★"></div>
+            <div class="fg"><label class="lbl">คำอธิบาย</label><input class="inp" type="text" id="set-stat-rating-lbl" value="คะแนนเฉลี่ย"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trust Bar -->
+      <div class="form-section" style="margin-top:16px">
+        <div class="form-section-head"><div class="form-section-title">🛡️ Trust Bar (จุดเด่น 4 ข้อ)</div></div>
+        <div class="form-section-body">
+          <div id="trust-fields">
+            <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:12px;align-items:end;margin-bottom:12px">
+              <div class="fg"><label class="lbl">Icon</label><input class="inp" type="text" id="set-trust-1-ico" value="🚚" style="font-size:20px;text-align:center"></div>
+              <div class="fg"><label class="lbl">หัวข้อ</label><input class="inp" type="text" id="set-trust-1-title" value="ส่งฟรีทั่วไทย"></div>
+              <div class="fg"><label class="lbl">คำอธิบาย</label><input class="inp" type="text" id="set-trust-1-sub" value="ไม่มีขั้นต่ำสำหรับสมาชิก Plus"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:12px;align-items:end;margin-bottom:12px">
+              <div class="fg"><label class="lbl">Icon</label><input class="inp" type="text" id="set-trust-2-ico" value="🔒" style="font-size:20px;text-align:center"></div>
+              <div class="fg"><label class="lbl">หัวข้อ</label><input class="inp" type="text" id="set-trust-2-title" value="ชำระเงินปลอดภัย"></div>
+              <div class="fg"><label class="lbl">คำอธิบาย</label><input class="inp" type="text" id="set-trust-2-sub" value="SSL · PCI DSS · Omise · 2C2P"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:12px;align-items:end;margin-bottom:12px">
+              <div class="fg"><label class="lbl">Icon</label><input class="inp" type="text" id="set-trust-3-ico" value="↩️" style="font-size:20px;text-align:center"></div>
+              <div class="fg"><label class="lbl">หัวข้อ</label><input class="inp" type="text" id="set-trust-3-title" value="คืนง่าย ใน 15 วัน"></div>
+              <div class="fg"><label class="lbl">คำอธิบาย</label><input class="inp" type="text" id="set-trust-3-sub" value="ไม่ชอบคืนได้ ไม่มีค่าถาม"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:12px;align-items:end">
+              <div class="fg"><label class="lbl">Icon</label><input class="inp" type="text" id="set-trust-4-ico" value="💬" style="font-size:20px;text-align:center"></div>
+              <div class="fg"><label class="lbl">หัวข้อ</label><input class="inp" type="text" id="set-trust-4-title" value="ซัพพอร์ต 24/7"></div>
+              <div class="fg"><label class="lbl">คำอธิบาย</label><input class="inp" type="text" id="set-trust-4-sub" value="Chat · โทร · LINE OA"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Save button -->
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+        <button class="btn btn-ghost btn-sm" onclick="loadSettings()">🔄 โหลดจาก DB</button>
+        <button class="btn btn-k btn-sm" onclick="saveSettings()" id="save-settings-btn">💾 บันทึกการเปลี่ยนแปลง</button>
+      </div>
+
+      <!-- Preview -->
+      <div style="margin-top:24px">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:14px">Preview</div>
+        <div id="settings-preview" style="border:var(--border);overflow:hidden">
+          <!-- Stats preview -->
+          <div style="border-bottom:var(--border);display:grid;grid-template-columns:repeat(4,1fr)">
+            <div id="prev-stat-1" style="padding:16px 20px;border-right:var(--border)"><div style="font-family:var(--mono);font-size:22px;font-weight:500">500K+</div><div style="font-size:11px;color:var(--g500);margin-top:4px">รายการสินค้า</div></div>
+            <div id="prev-stat-2" style="padding:16px 20px;border-right:var(--border)"><div style="font-family:var(--mono);font-size:22px;font-weight:500">50K+</div><div style="font-size:11px;color:var(--g500);margin-top:4px">ร้านค้า</div></div>
+            <div id="prev-stat-3" style="padding:16px 20px;border-right:var(--border)"><div style="font-family:var(--mono);font-size:22px;font-weight:500">2.4M</div><div style="font-size:11px;color:var(--g500);margin-top:4px">ลูกค้า</div></div>
+            <div id="prev-stat-4" style="padding:16px 20px"><div style="font-family:var(--mono);font-size:22px;font-weight:500">4.9 ★</div><div style="font-size:11px;color:var(--g500);margin-top:4px">คะแนนเฉลี่ย</div></div>
+          </div>
+          <!-- Trust preview -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+            <div id="prev-trust-1" style="padding:14px 16px;border-right:var(--border);display:flex;align-items:center;gap:10px"><span style="font-size:22px">🚚</span><div><div style="font-size:12px;font-weight:600">ส่งฟรีทั่วไทย</div><div style="font-size:10px;color:var(--g500)">ไม่มีขั้นต่ำ Plus</div></div></div>
+            <div id="prev-trust-2" style="padding:14px 16px;border-right:var(--border);display:flex;align-items:center;gap:10px"><span style="font-size:22px">🔒</span><div><div style="font-size:12px;font-weight:600">ชำระเงินปลอดภัย</div><div style="font-size:10px;color:var(--g500)">SSL · PCI DSS</div></div></div>
+            <div id="prev-trust-3" style="padding:14px 16px;border-right:var(--border);display:flex;align-items:center;gap:10px"><span style="font-size:22px">↩️</span><div><div style="font-size:12px;font-weight:600">คืนง่าย 15 วัน</div><div style="font-size:10px;color:var(--g500)">ไม่มีค่าใช้จ่าย</div></div></div>
+            <div id="prev-trust-4" style="padding:14px 16px;display:flex;align-items:center;gap:10px"><span style="font-size:22px">💬</span><div><div style="font-size:12px;font-weight:600">ซัพพอร์ต 24/7</div><div style="font-size:10px;color:var(--g500)">Chat · โทร · LINE</div></div></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -663,6 +754,7 @@ function showPanel(name) {
   if (name === 'approve') loadPending();
   if (name === 'users') loadUsers();
   if (name === 'categories') loadCategories();
+  if (name === 'settings') loadSettings();
   if (name === 'dashboard') loadDashboard();
 }
 
@@ -1328,6 +1420,79 @@ function toast(msg, type='info') {
   container.appendChild(el);
   setTimeout(() => el.remove(), type==='success'?3000:4000);
 }
+
+
+// ── Site Settings (Stats + Trust) ─────────────────────────────
+async function loadSettings() {
+  try {
+    const { data } = await sb.from('site_settings').select('key,value');
+    if (!data?.length) return;
+    data.forEach(row => {
+      const el = document.getElementById('set-' + row.key.replace(/_/g,'-'));
+      if (el) el.value = row.value;
+    });
+    updateSettingsPreview();
+    toast('โหลดข้อมูลสำเร็จ ✅', 'success');
+  } catch(e) { toast('ยังไม่มี site_settings table — Run SQL ก่อน', 'warning'); }
+}
+
+async function saveSettings() {
+  const btn = document.getElementById('save-settings-btn');
+  btn.textContent = '⏳ กำลังบันทึก...'; btn.disabled = true;
+  try {
+    const keys = [
+      'stat_products','stat_sellers','stat_customers','stat_rating',
+      'stat_products_lbl','stat_sellers_lbl','stat_customers_lbl','stat_rating_lbl',
+      'trust_1_title','trust_1_sub','trust_1_ico',
+      'trust_2_title','trust_2_sub','trust_2_ico',
+      'trust_3_title','trust_3_sub','trust_3_ico',
+      'trust_4_title','trust_4_sub','trust_4_ico'
+    ];
+    const upserts = keys.map(k => {
+      const el = document.getElementById('set-' + k.replace(/_/g,'-'));
+      return { key: k, value: el?.value || '' };
+    });
+    const { error } = await sb.from('site_settings').upsert(upserts, { onConflict: 'key' });
+    if (error) throw error;
+    updateSettingsPreview();
+    toast('✅ บันทึกสำเร็จ — แสดงบนหน้าเว็บทันที!', 'success');
+  } catch(e) {
+    toast('บันทึกไม่สำเร็จ: ' + e.message + ' — Run site_settings SQL ก่อน', 'error');
+  } finally {
+    btn.textContent = '💾 บันทึกการเปลี่ยนแปลง'; btn.disabled = false;
+  }
+}
+
+function updateSettingsPreview() {
+  // Update stats preview
+  const sp = [
+    {id:'prev-stat-1', num:'set-stat-products', lbl:'set-stat-products-lbl'},
+    {id:'prev-stat-2', num:'set-stat-sellers', lbl:'set-stat-sellers-lbl'},
+    {id:'prev-stat-3', num:'set-stat-customers', lbl:'set-stat-customers-lbl'},
+    {id:'prev-stat-4', num:'set-stat-rating', lbl:'set-stat-rating-lbl'},
+  ];
+  sp.forEach(s => {
+    const el = document.getElementById(s.id);
+    if (!el) return;
+    const num = document.getElementById(s.num)?.value || '';
+    const lbl = document.getElementById(s.lbl)?.value || '';
+    el.innerHTML = `<div style="font-family:var(--mono);font-size:22px;font-weight:500">${num}</div><div style="font-size:11px;color:var(--g500);margin-top:4px">${lbl}</div>`;
+  });
+  // Update trust preview
+  for (let i=1;i<=4;i++) {
+    const el = document.getElementById('prev-trust-'+i);
+    if (!el) continue;
+    const ico = document.getElementById('set-trust-'+i+'-ico')?.value || '';
+    const title = document.getElementById('set-trust-'+i+'-title')?.value || '';
+    const sub = document.getElementById('set-trust-'+i+'-sub')?.value || '';
+    el.innerHTML = `<span style="font-size:22px">${ico}</span><div><div style="font-size:12px;font-weight:600">${title}</div><div style="font-size:10px;color:var(--g500)">${sub}</div></div>`;
+  }
+}
+
+// Live preview on input
+document.addEventListener('input', e => {
+  if (e.target.id?.startsWith('set-')) updateSettingsPreview();
+});
 
 // ── Auto-restore session ──────────────────────────────────
 async function checkSession() {
