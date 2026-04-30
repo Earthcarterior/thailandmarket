@@ -236,6 +236,32 @@ input,select{font-family:var(--font)}
   .ph-inner{flex-direction:column;text-align:center}
   .ph-level{margin:0 auto}
 }
+
+/* ── Address Form & Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--white);width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-header{padding:16px 20px;border-bottom:var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:600}
+.modal-close-btn{width:28px;height:28px;border:none;background:var(--g100);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.modal-close-btn:hover{background:var(--g200)}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:var(--border);display:flex;gap:10px;justify-content:flex-end}
+/* Address card */
+.addr-card{border:1.5px solid var(--g200);padding:16px;margin-bottom:10px;position:relative;transition:border-color .15s}
+.addr-card:last-child{margin-bottom:0}
+.addr-card.default{border-color:var(--black);background:var(--g50)}
+.addr-card-head{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+.addr-name{font-size:14px;font-weight:600}
+.addr-phone{font-size:12px;color:var(--g500);margin-left:8px}
+.addr-tag{font-size:10px;padding:2px 8px;background:var(--black);color:var(--white);font-family:var(--mono);letter-spacing:.04em;margin-left:4px}
+.addr-tag.default-tag{background:var(--red)}
+.addr-body{font-size:13px;color:var(--g600);line-height:1.6;margin-bottom:10px}
+.addr-actions{display:flex;gap:8px}
+.addr-empty{text-align:center;padding:48px 20px;color:var(--g400)}
+.addr-empty-ico{font-size:48px;margin-bottom:12px}
+.addr-empty-title{font-size:15px;font-weight:500;color:var(--g600);margin-bottom:6px}
+.addr-empty-sub{font-size:13px;margin-bottom:20px}
+
 </style>
 </head>
 <body>
@@ -426,10 +452,83 @@ input,select{font-family:var(--font)}
       <div class="card">
         <div class="card-title">
           <div class="card-title-left">📍 ที่อยู่จัดส่ง</div>
-          <button class="btn-primary-sm btn-sm" onclick="toast('➕ เพิ่มที่อยู่ใหม่')">+ เพิ่ม</button>
+          <button class="btn-sm btn-primary-sm" onclick="openAddrModal()">+ เพิ่มที่อยู่</button>
         </div>
-        <div id="addr-list"><div style="text-align:center;padding:32px;color:var(--g400)">กำลังโหลด...</div></div>
+        <div id="addr-list">
+          <div class="addr-empty">
+            <div class="addr-empty-ico">📍</div>
+            <div class="addr-empty-title">ยังไม่มีที่อยู่จัดส่ง</div>
+            <div class="addr-empty-sub">เพิ่มที่อยู่จัดส่งเพื่อให้การสั่งซื้อสะดวกขึ้น</div>
+            <button class="btn-sm btn-primary-sm" onclick="openAddrModal()">+ เพิ่มที่อยู่แรก</button>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <!-- ADDRESS MODAL -->
+    <div class="modal-overlay" id="addr-modal" style="display:none" onclick="if(event.target===this)closeAddrModal()">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title" id="addr-modal-title">เพิ่มที่อยู่จัดส่ง</div>
+          <button class="modal-close-btn" onclick="closeAddrModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="addr-edit-id" value="">
+          <div class="fg-row">
+            <div class="fg">
+              <label class="fl">ชื่อ-นามสกุล *</label>
+              <input class="fi" id="addr-name" placeholder="ชื่อ-นามสกุล ผู้รับ">
+            </div>
+            <div class="fg">
+              <label class="fl">เบอร์โทรศัพท์ *</label>
+              <input class="fi" id="addr-phone" type="tel" placeholder="08X-XXX-XXXX">
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">ที่อยู่ (บ้านเลขที่ ถนน ซอย) *</label>
+            <input class="fi" id="addr-line1" placeholder="123/45 ถ.สุขุมวิท ซ.10">
+          </div>
+          <div class="fg-row">
+            <div class="fg">
+              <label class="fl">ตำบล/แขวง *</label>
+              <input class="fi" id="addr-subdistrict" placeholder="คลองเตย">
+            </div>
+            <div class="fg">
+              <label class="fl">อำเภอ/เขต *</label>
+              <input class="fi" id="addr-district" placeholder="คลองเตย">
+            </div>
+          </div>
+          <div class="fg-row">
+            <div class="fg">
+              <label class="fl">จังหวัด *</label>
+              <input class="fi" id="addr-province" placeholder="กรุงเทพมหานคร">
+            </div>
+            <div class="fg">
+              <label class="fl">รหัสไปรษณีย์ *</label>
+              <input class="fi" id="addr-postcode" placeholder="10110" maxlength="5">
+            </div>
+          </div>
+          <div class="fg-row">
+            <div class="fg">
+              <label class="fl">ป้ายกำกับ</label>
+              <select class="fi" id="addr-tag">
+                <option value="บ้าน">🏠 บ้าน</option>
+                <option value="ที่ทำงาน">🏢 ที่ทำงาน</option>
+                <option value="อื่นๆ">📍 อื่นๆ</option>
+              </select>
+            </div>
+            <div class="fg" style="display:flex;align-items:center;gap:10px;padding-top:22px">
+              <input type="checkbox" id="addr-default" style="width:16px;height:16px;cursor:pointer;accent-color:var(--black)">
+              <label for="addr-default" style="font-size:13px;cursor:pointer">ตั้งเป็นที่อยู่หลัก</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-sm btn-outline-sm" onclick="closeAddrModal()">ยกเลิก</button>
+          <button class="btn-sm btn-primary-sm" id="addr-save-btn" onclick="saveAddress()">💾 บันทึกที่อยู่</button>
+        </div>
+      </div>
+    </div>
     </div>
 
 <!-- PROFILE FORM -->
@@ -540,11 +639,26 @@ async function loadProfile() {
     }, { onConflict:'email' }).select().maybeSingle();
     console.log('Created user row for:', email);
   }
-  const name  = user?.display_name || email.split('@')[0];
-  const pts   = user?.loyalty_pts  || 0;
-  const role  = user?.role         || 'buyer';
-  const phone = user?.phone        || '';
-  const uid   = user?.id;
+  
+  // Auto-create user row ถ้าไม่มีใน DB
+  let userRow = /** @type {any} */ (user);
+  if(!userRow) {
+    console.log('Creating user row for:', email);
+    const upsertResult = await sb.from('users').upsert({
+      email,
+      display_name: email.split('@')[0],
+      role: 'buyer',
+      is_active: true,
+      loyalty_pts: 0
+    }, { onConflict: 'email' }).select().maybeSingle();
+    userRow = upsertResult.data;
+  }
+  const finalUser = userRow || user;
+  const name = finalUser?.display_name || email.split('@')[0];
+  const pts = finalUser?.loyalty_pts  || 0;
+  const role = finalUser?.role         || 'buyer';
+  const phone = finalUser?.phone        || '';
+  const uid = finalUser?.id;
   const tier  = getTier(pts);
   const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
 
@@ -603,6 +717,8 @@ async function loadProfile() {
     }).join('');
   }
 
+  currentUserId = uid; // เก็บไว้ใช้กับ addresses
+
   // ── Stats (parallel) ──
   let orderCount=0,wishCount=0;
   if(uid) {
@@ -619,7 +735,7 @@ async function loadProfile() {
   setEl('sb-wish-count',wishCount);
 
   // ── Load sections ──
-  await Promise.all([loadOrders(uid),loadWishlist(uid),loadCoupons()]);
+  await Promise.all([loadOrders(uid),loadWishlist(uid),loadCoupons(),loadAddresses(uid)]);
 
   // ── Form pre-fill ──
   const parts=name.split(' ');
@@ -906,6 +1022,206 @@ function emptyState(ico,title,linkText,href) {
   </div>`;
 }
 
+
+// ════════════════════════════════════════════════════════
+//  ADDRESS FUNCTIONS
+// ════════════════════════════════════════════════════════
+let currentUserId = null;
+let editingAddrId = null;
+
+// ── Load Addresses ───────────────────────────────────────
+async function loadAddresses(uid) {
+  const el = document.getElementById('addr-list');
+  if (!el || !uid) {
+    if (el) el.innerHTML = addrEmpty();
+    return;
+  }
+  try {
+    const { data: addrs, error } = await sb.from('addresses')
+      .select('*')
+      .eq('user_id', uid)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (error.message.includes('does not exist')) {
+        // table ยังไม่มี → แสดง empty state
+        el.innerHTML = addrEmpty();
+      } else {
+        el.innerHTML = `<div style="color:var(--red);padding:16px;font-size:13px">❌ ${error.message}</div>`;
+      }
+      return;
+    }
+    renderAddresses(addrs || []);
+  } catch(e) {
+    el.innerHTML = addrEmpty();
+  }
+}
+
+function addrEmpty() {
+  return `<div class="addr-empty">
+    <div class="addr-empty-ico">📍</div>
+    <div class="addr-empty-title">ยังไม่มีที่อยู่จัดส่ง</div>
+    <div class="addr-empty-sub">เพิ่มที่อยู่จัดส่งเพื่อให้การสั่งซื้อสะดวกขึ้น</div>
+    <button class="btn-sm btn-primary-sm" onclick="openAddrModal()">+ เพิ่มที่อยู่แรก</button>
+  </div>`;
+}
+
+function renderAddresses(addrs) {
+  const el = document.getElementById('addr-list');
+  if (!el) return;
+  if (!addrs.length) { el.innerHTML = addrEmpty(); return; }
+  el.innerHTML = addrs.map(a => `
+    <div class="addr-card ${a.is_default ? 'default' : ''}">
+      <div class="addr-card-head">
+        <div>
+          <span class="addr-name">${a.name || ''}</span>
+          <span class="addr-phone">${a.phone || ''}</span>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:4px;align-items:center">
+          ${a.tag ? `<span class="addr-tag">${a.tag}</span>` : ''}
+          ${a.is_default ? '<span class="addr-tag default-tag">ค่าเริ่มต้น</span>' : ''}
+        </div>
+      </div>
+      <div class="addr-body">
+        ${[a.line1, a.subdistrict, a.district, a.province, a.postcode].filter(Boolean).join(' ')}
+      </div>
+      <div class="addr-actions">
+        <button class="btn-sm btn-outline-sm" onclick="openAddrModal('${a.id}')">✏️ แก้ไข</button>
+        ${!a.is_default ? `<button class="btn-sm btn-outline-sm" onclick="setDefaultAddr('${a.id}')">⭐ ตั้งเป็นหลัก</button>` : ''}
+        <button class="btn-sm" style="background:none;border:1px solid var(--g200);color:var(--red);cursor:pointer;padding:6px 14px;font-size:11px;font-weight:500" onclick="deleteAddr('${a.id}')">🗑️ ลบ</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── Open/Close Modal ─────────────────────────────────────
+function openAddrModal(addrId) {
+  editingAddrId = addrId || null;
+  const modal = document.getElementById('addr-modal');
+  const title = document.getElementById('addr-modal-title');
+  if (!modal) return;
+
+  // Clear form
+  ['addr-name','addr-phone','addr-line1','addr-subdistrict','addr-district','addr-province','addr-postcode'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('addr-default').checked = false;
+  document.getElementById('addr-tag').value = 'บ้าน';
+  document.getElementById('addr-edit-id').value = '';
+
+  if (addrId) {
+    // Load existing address
+    title.textContent = 'แก้ไขที่อยู่จัดส่ง';
+    sb.from('addresses').select('*').eq('id', addrId).maybeSingle().then(({ data }) => {
+      if (!data) return;
+      document.getElementById('addr-name').value        = data.name || '';
+      document.getElementById('addr-phone').value       = data.phone || '';
+      document.getElementById('addr-line1').value       = data.line1 || '';
+      document.getElementById('addr-subdistrict').value = data.subdistrict || '';
+      document.getElementById('addr-district').value    = data.district || '';
+      document.getElementById('addr-province').value    = data.province || '';
+      document.getElementById('addr-postcode').value    = data.postcode || '';
+      document.getElementById('addr-tag').value         = data.tag || 'บ้าน';
+      document.getElementById('addr-default').checked   = data.is_default || false;
+      document.getElementById('addr-edit-id').value     = addrId;
+    });
+  } else {
+    title.textContent = 'เพิ่มที่อยู่จัดส่ง';
+  }
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAddrModal() {
+  const modal = document.getElementById('addr-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+  editingAddrId = null;
+}
+
+// ── Save Address ─────────────────────────────────────────
+async function saveAddress() {
+  const name        = document.getElementById('addr-name')?.value?.trim();
+  const phone       = document.getElementById('addr-phone')?.value?.trim();
+  const line1       = document.getElementById('addr-line1')?.value?.trim();
+  const subdistrict = document.getElementById('addr-subdistrict')?.value?.trim();
+  const district    = document.getElementById('addr-district')?.value?.trim();
+  const province    = document.getElementById('addr-province')?.value?.trim();
+  const postcode    = document.getElementById('addr-postcode')?.value?.trim();
+  const tag         = document.getElementById('addr-tag')?.value || 'บ้าน';
+  const isDefault   = document.getElementById('addr-default')?.checked || false;
+
+  // Validate
+  if (!name)  { toast('⚠️ กรุณากรอกชื่อผู้รับ'); document.getElementById('addr-name').focus(); return; }
+  if (!phone) { toast('⚠️ กรุณากรอกเบอร์โทรศัพท์'); document.getElementById('addr-phone').focus(); return; }
+  if (!line1) { toast('⚠️ กรุณากรอกที่อยู่'); document.getElementById('addr-line1').focus(); return; }
+  if (!province) { toast('⚠️ กรุณากรอกจังหวัด'); document.getElementById('addr-province').focus(); return; }
+  if (!postcode || postcode.length < 5) { toast('⚠️ รหัสไปรษณีย์ไม่ถูกต้อง'); document.getElementById('addr-postcode').focus(); return; }
+
+  const btn = document.getElementById('addr-save-btn');
+  if (btn) { btn.textContent = '⏳ กำลังบันทึก...'; btn.disabled = true; }
+
+  try {
+    const addrData = {
+      user_id: currentUserId,
+      name, phone, line1, subdistrict, district, province, postcode, tag,
+      is_default: isDefault,
+      updated_at: new Date().toISOString()
+    };
+
+    // ถ้า set เป็น default → เอา default ออกจากอันอื่นก่อน
+    if (isDefault && currentUserId) {
+      await sb.from('addresses').update({ is_default: false }).eq('user_id', currentUserId);
+    }
+
+    let error;
+    const editId = document.getElementById('addr-edit-id')?.value;
+    if (editId) {
+      // Update
+      const res = await sb.from('addresses').update(addrData).eq('id', editId);
+      error = res.error;
+    } else {
+      // Insert
+      addrData.created_at = new Date().toISOString();
+      const res = await sb.from('addresses').insert(addrData);
+      error = res.error;
+    }
+
+    if (error) throw error;
+
+    closeAddrModal();
+    await loadAddresses(currentUserId);
+    toast('✅ บันทึกที่อยู่สำเร็จ!', 'ok');
+  } catch(e) {
+    toast('❌ บันทึกไม่สำเร็จ: ' + e.message);
+    if (btn) { btn.textContent = '💾 บันทึกที่อยู่'; btn.disabled = false; }
+  }
+}
+
+// ── Set Default ───────────────────────────────────────────
+async function setDefaultAddr(addrId) {
+  if (!currentUserId) return;
+  try {
+    await sb.from('addresses').update({ is_default: false }).eq('user_id', currentUserId);
+    await sb.from('addresses').update({ is_default: true }).eq('id', addrId);
+    await loadAddresses(currentUserId);
+    toast('✅ ตั้งเป็นที่อยู่หลักแล้ว', 'ok');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+// ── Delete Address ────────────────────────────────────────
+async function deleteAddr(addrId) {
+  if (!confirm('ต้องการลบที่อยู่นี้ใช่ไหม?')) return;
+  try {
+    const { error } = await sb.from('addresses').delete().eq('id', addrId);
+    if (error) throw error;
+    await loadAddresses(currentUserId);
+    toast('🗑️ ลบที่อยู่แล้ว');
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
 // ── INIT ──────────────────────────────────────────────────
 (async()=>{
   renderNotifs();
@@ -917,419 +1233,6 @@ function emptyState(ico,title,linkText,href) {
     location.href='login.html?from=profile.html';
 });
 </script>
-<script>
-// ══════════════════════════════════════════════════════════
-//  Thailand Market — Profile Page (Complete Working Version)
-//  Supabase: https://qmgyimsptzewwyafvjzk.supabase.co
-// ══════════════════════════════════════════════════════════
-const sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
-let allCats = [];
 
-// ── Helpers ───────────────────────────────────────────────
-function setEl(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
-function setVal(id, val) { const e = document.getElementById(id); if (e) e.value = val || ''; }
-function getVal(id) { return document.getElementById(id)?.value?.trim() || ''; }
-
-function toast(msg, type) {
-  const w = document.getElementById('tw');
-  if (!w) return;
-  const t = document.createElement('div');
-  t.className = 'toast' + (type === 'ok' ? ' ok' : '');
-  t.textContent = msg;
-  w.appendChild(t);
-  setTimeout(() => t.remove(), 3500);
-}
-
-// ── Page navigation ───────────────────────────────────────
-function showView(id, el) {
-  document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
-  const view = document.getElementById('pv-' + id);
-  if (view) view.classList.add('active');
-  document.querySelectorAll('.sb-nav-item').forEach(s => s.classList.remove('active'));
-  el?.classList.add('active');
-}
-function gotoPage(id, el) { showView(id, el); }
-
-// ── Logout ────────────────────────────────────────────────
-async function doLogout() {
-  await sb.auth.signOut();
-  ['tm_user_role','tm_user_name','tm_user_email','tm_user_id','tm_cart'].forEach(k => localStorage.removeItem(k));
-  location.href = 'index.html';
-}
-
-// ── Tier ──────────────────────────────────────────────────
-function getTier(pts) {
-  if (pts >= 10000) return { name:'Platinum', ico:'💎', color:'#7C3AED', next:null, nextPts:0 };
-  if (pts >= 6000)  return { name:'Gold',     ico:'🥇', color:'#D97706', next:'Platinum', nextPts:10000 };
-  if (pts >= 2000)  return { name:'Silver',   ico:'🥈', color:'#6B7280', next:'Gold',     nextPts:6000 };
-  return               { name:'Bronze',    ico:'🥉', color:'#92400E', next:'Silver',   nextPts:2000 };
-}
-
-// ── Categories (catbar marquee) ───────────────────────────
-async function loadCats() {
-  try {
-    const { data } = await sb.from('categories').select('*').eq('is_active', true).order('sort_order');
-    allCats = data || [];
-    const parents = allCats.filter(c => !c.parent_id);
-    const track = document.getElementById('catbar-track');
-    const ddGrid = document.getElementById('cats-dropdown-grid');
-    const colors = ['#7C3AED','#DB2777','#E8541A','#D97706','#2563EB','#374151','#16A34A','#0891B2','#DC2626','#059669','#92400E','#1D4ED8'];
-    if (track && parents.length) {
-      const makeItems = () =>
-        `<a class="catbar-item" href="storefront-live.html" style="text-decoration:none">ทั้งหมด</a>` +
-        parents.map(c => `<a class="catbar-item" href="storefront-live.html?cat=${c.id}" style="text-decoration:none">${c.icon||''} ${c.name_th}</a>`).join('');
-      track.innerHTML = makeItems() + makeItems();
-      const dur = Math.max(20, (parents.length + 1) * 2.5);
-      track.style.animationDuration = dur + 's';
-    }
-    if (ddGrid && parents.length) {
-      ddGrid.innerHTML = parents.map((c, i) => `
-        <a href="storefront-live.html?cat=${c.id}" onclick="closeAllCats()" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid #E5E5E5;text-decoration:none;color:inherit;transition:all .15s;border-left:3px solid ${colors[i%colors.length]}" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
-          <span style="font-size:18px">${c.icon||'📦'}</span>
-          <div>
-            <div style="font-size:12px;font-weight:500">${c.name_th}</div>
-            <div style="font-family:var(--mono);font-size:9px;color:#A3A3A3">${c.product_count||0} รายการ</div>
-          </div>
-        </a>`).join('');
-    }
-  } catch(e) { console.error('loadCats:', e); }
-}
-
-function showAllCats() {
-  const dd = document.getElementById('cats-dropdown');
-  if (!dd) return;
-  const isOpen = dd.style.display !== 'none';
-  dd.style.display = isOpen ? 'none' : 'block';
-  const btn = document.querySelector('.catbar-seeall');
-  if (btn) btn.textContent = isOpen ? 'ดูทั้งหมด ▸' : 'ปิด ✕';
-}
-function closeAllCats() {
-  const dd = document.getElementById('cats-dropdown');
-  if (dd) dd.style.display = 'none';
-  const btn = document.querySelector('.catbar-seeall');
-  if (btn) btn.textContent = 'ดูทั้งหมด ▸';
-}
-
-// ── Account Nav Dropdown ──────────────────────────────────
-async function initAccountNav(session, user, name, role) {
-  const btn  = document.getElementById('account-nav-btn');
-  const drop = document.getElementById('account-dropdown');
-  if (!btn || !drop) return;
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
-  const ico = btn.querySelector('.nav-btn-ico');
-  const lbl = btn.querySelector('.nav-btn-lbl');
-  if (ico) ico.innerHTML = `<div style="width:24px;height:24px;border-radius:50%;background:#0A0A0A;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center">${initials}</div>`;
-  if (lbl) lbl.textContent = name.split(' ')[0] || name;
-  setEl('dd-name', name);
-  setEl('dd-email', session.user.email);
-  const ddRole = document.getElementById('dd-role');
-  if (ddRole) { ddRole.textContent = role==='admin'?'Admin':role==='seller'?'Seller':'Member'; ddRole.className='account-dropdown-role '+role; }
-  document.getElementById('dd-admin')?.style.setProperty('display', role==='admin'?'flex':'none');
-  document.getElementById('dd-seller')?.style.setProperty('display', (role==='seller'||role==='admin')?'flex':'none');
-  btn.onclick = e => { e.stopPropagation(); drop.classList.toggle('open'); };
-  document.addEventListener('click', () => drop.classList.remove('open'));
-  document.getElementById('dd-logout')?.addEventListener('click', doLogout);
-}
-
-// ── Load Profile ──────────────────────────────────────────
-async function loadProfile() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { location.href = 'login.html?from=profile.html'; return; }
-
-  const email = session.user.email;
-  const createdAt = new Date(session.user.created_at);
-  const sinceText = 'สมาชิกตั้งแต่ ' + createdAt.toLocaleDateString('th-TH',{month:'short',year:'numeric'});
-
-  const { data: user } = await sb.from('users')
-    .select('id,display_name,role,loyalty_pts,phone,birthday,gender,avatar_url')
-    .eq('email', email).maybeSingle();
-
-  const name  = user?.display_name || email.split('@')[0];
-  const pts   = user?.loyalty_pts  || 0;
-  const role  = user?.role         || 'buyer';
-  const uid   = user?.id;
-  const tier  = getTier(pts);
-
-  // Hero
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
-  setEl('ph-avatar-txt', initials);
-  setEl('ph-name', name);
-  const emailEl = document.getElementById('ph-email');
-  if (emailEl) emailEl.textContent = email + ' · ' + sinceText;
-  setEl('ph-tier-ico', tier.ico);
-  setEl('ph-level-name', tier.ico + ' ' + tier.name + ' Member');
-  setEl('lc-badge-text', tier.ico + ' ' + tier.name + ' Member');
-  setEl('lc-since', sinceText);
-  setEl('lc-points-val', pts.toLocaleString());
-  setEl('lc-tier-current', tier.name);
-  setEl('lc-pts-lbl', `ThaiPoints · มูลค่าประมาณ ฿${Math.floor(pts/10).toLocaleString()}`);
-  if (tier.next) {
-    const remain = Math.max(0, tier.nextPts - pts);
-    const pct = Math.min(100, Math.round((pts/tier.nextPts)*100));
-    setEl('ph-tier-next', `อีก ${remain.toLocaleString()} แต้ม → ${tier.next}`);
-    setEl('lc-next-label', `อีก ${remain.toLocaleString()} แต้ม → ${tier.next}`);
-    const bar = document.getElementById('lc-bar-fill');
-    if (bar) { bar.style.width=pct+'%'; bar.style.background=tier.color; }
-  } else {
-    setEl('ph-tier-next', '🎉 ระดับสูงสุดแล้ว!');
-    setEl('lc-next-label', '🎉 ระดับสูงสุดแล้ว!');
-    const bar = document.getElementById('lc-bar-fill');
-    if (bar) { bar.style.width='100%'; bar.style.background=tier.color; }
-  }
-  if (role !== 'buyer') {
-    const nameEl = document.getElementById('ph-name');
-    if (nameEl && !nameEl.querySelector('.role-badge')) {
-      const rb = Object.assign(document.createElement('span'), {className:'role-badge',textContent:role.toUpperCase()});
-      rb.style.cssText=`font-size:10px;padding:2px 8px;margin-left:8px;background:${role==='admin'?'#E63329':'#2563EB'};color:#fff;font-family:var(--mono);letter-spacing:.06em;vertical-align:middle`;
-      nameEl.appendChild(rb);
-    }
-  }
-
-  // Stats
-  let orderCount=0, wishCount=0;
-  if (uid) {
-    const [o,w] = await Promise.all([
-      sb.from('orders').select('id',{count:'exact',head:true}).eq('user_id',uid),
-      sb.from('wishlist').select('id',{count:'exact',head:true}).eq('user_id',uid),
-    ]);
-    orderCount = o.count||0; wishCount = w.count||0;
-  }
-  setEl('stat-orders', orderCount);
-  setEl('stat-pts', pts.toLocaleString());
-  setEl('stat-wish', wishCount);
-  setEl('sb-orders-count', orderCount);
-  setEl('sb-wish-count', wishCount);
-
-  // Load sections
-  await Promise.all([
-    loadOrders(uid),
-    loadWishlist(uid),
-    loadCoupons(),
-    loadAddresses(),
-  ]);
-
-  // Form
-  const nameParts = name.split(' ');
-  setVal('fi-firstname', nameParts[0]||name);
-  setVal('fi-lastname', nameParts.slice(1).join(' '));
-  setVal('fi-email', email);
-  setVal('fi-phone', user?.phone||'');
-  setVal('fi-birthday', user?.birthday||'');
-  const g = document.getElementById('fi-gender');
-  if (g && user?.gender) g.value = user.gender;
-
-  // Account nav
-  await initAccountNav(session, user, name, role);
-}
-
-// ── Orders ────────────────────────────────────────────────
-async function loadOrders(uid) {
-  const el = document.getElementById('orders-list');
-  if (!el) return;
-  if (!uid) { el.innerHTML = emptyState('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','storefront-live.html'); return; }
-  const { data: orders } = await sb.from('orders').select('*').eq('user_id',uid).order('created_at',{ascending:false}).limit(5);
-  if (!orders?.length) { el.innerHTML = emptyState('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','storefront-live.html'); return; }
-  const stMap={pending:'รอยืนยัน',confirmed:'ยืนยัน',processing:'กำลังเตรียม',shipped:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า'};
-  const scMap={pending:'pill-warn',confirmed:'pill-info',processing:'pill-info',shipped:'pill-ok',delivered:'pill-ok',cancelled:'pill-gray',returned:'pill-gray'};
-  el.innerHTML = orders.map(o=>`
-    <div class="order-item">
-      <div class="oi-head">
-        <div class="oi-code">${o.order_number||o.id.slice(0,8).toUpperCase()}</div>
-        <span class="oi-date">· ${new Date(o.created_at).toLocaleDateString('th-TH')}</span>
-        <span class="oi-status"><span class="pill ${scMap[o.status]||'pill-gray'}">${stMap[o.status]||o.status}</span></span>
-      </div>
-      <div class="oi-foot">
-        <div class="oi-total">฿${Number(o.total_amount).toLocaleString()}</div>
-        <div class="oi-btns">
-          ${o.status==='shipped'?`<button class="btn-sm btn-outline-sm" onclick="location.href='tracking.html'">📍 ติดตาม</button>`:''}
-          ${o.status==='delivered'?`<button class="btn-sm btn-outline-sm" onclick="location.href='review-write.html'">⭐ รีวิว</button>`:''}
-          <button class="btn-sm btn-primary-sm" onclick="location.href='order-history.html'">ดูรายละเอียด</button>
-        </div>
-      </div>
-    </div>`).join('');
-}
-
-// ── Wishlist ──────────────────────────────────────────────
-async function loadWishlist(uid) {
-  const el = document.getElementById('wish-grid');
-  if (!el) return;
-  if (!uid) { el.innerHTML = emptyState('❤️','ยังไม่มีรายการโปรด','เลือกสินค้าเลย','storefront-live.html'); return; }
-  const { data:wishes } = await sb.from('wishlist').select('id,products(id,name_th,price,thumbnail,images)').eq('user_id',uid).limit(8);
-  const count = wishes?.length||0;
-  setEl('wish-count-title', count); setEl('stat-wish', count); setEl('sb-wish-count', count);
-  if (!count) { el.innerHTML = emptyState('❤️','ยังไม่มีรายการโปรด','เลือกสินค้าเลย','storefront-live.html'); return; }
-  el.innerHTML = wishes.map(w=>{
-    const p=w.products; if(!p) return '';
-    const thumb=p.thumbnail||p.images?.[0];
-    return `<div class="wish-card" onclick="location.href='product.html?id=${p.id}'">
-      <div class="wish-img">${thumb?`<img src="${thumb}" style="width:100%;height:100%;object-fit:cover" loading="lazy">`:'<span style="font-size:40px">📦</span>'}
-        <button class="wish-remove" onclick="event.stopPropagation();removeWish('${w.id}',this)">✕</button>
-      </div>
-      <div class="wish-info">
-        <div class="wish-name">${p.name_th}</div>
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div class="wish-price">฿${Number(p.price).toLocaleString()}</div>
-          <button class="btn-sm btn-primary-sm" onclick="event.stopPropagation();quickCart('${p.id}','${(p.name_th||'').replace(/'/g,\"\\'\")}',${p.price},'${thumb||''}')">+ ตะกร้า</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function removeWish(id, btn) {
-  const { error } = await sb.from('wishlist').delete().eq('id',id);
-  if (error) { toast('❌ ลบไม่สำเร็จ'); return; }
-  btn.closest('.wish-card')?.remove();
-  const cur = parseInt(document.getElementById('wish-count-title')?.textContent||'0') - 1;
-  const n = Math.max(0,cur);
-  setEl('wish-count-title',n); setEl('stat-wish',n); setEl('sb-wish-count',n);
-  toast('💔 ลบออกจาก Wishlist แล้ว');
-}
-
-function quickCart(id,name,price,img) {
-  let cart=JSON.parse(localStorage.getItem('tm_cart')||'[]');
-  const ex=cart.find(i=>i.id===id);
-  if(ex) ex.qty=(ex.qty||1)+1; else cart.push({id,name,price:Number(price),qty:1,img:img||''});
-  localStorage.setItem('tm_cart',JSON.stringify(cart));
-  toast('🛒 เพิ่มลงตะกร้าแล้ว','ok');
-}
-
-// ── Coupons ───────────────────────────────────────────────
-async function loadCoupons() {
-  const el = document.getElementById('coup-grid');
-  if (!el) return;
-  const { data:coupons } = await sb.from('coupons').select('*').eq('is_active',true)
-    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).limit(5);
-  setEl('sb-coupon-count', coupons?.length||0);
-  if (!coupons?.length) { el.innerHTML = emptyState('🎟️','ยังไม่มีคูปอง','ดูโปรโมชัน','coupon-hub.html'); return; }
-  const bgs=['#E6F4FF','#FFF0E6','#FFF5F5','#F0FFF4','#F3F4F6'];
-  const icos={free_ship:'🚚',fixed:'💰',percent:'⚡'};
-  el.innerHTML = coupons.map((c,i)=>`
-    <div class="coup-item active">
-      <div class="coup-ico" style="background:${bgs[i%bgs.length]}">${icos[c.type]||'🎟️'}</div>
-      <div class="coup-info">
-        <div class="coup-title">${c.title}</div>
-        <div class="coup-desc">${c.type==='free_ship'?'ส่งฟรี':c.type==='fixed'?`ลด ฿${c.value}`:`ลด ${c.value}%`}${c.min_purchase>0?` · ขั้นต่ำ ฿${Number(c.min_purchase).toLocaleString()}`:''} · <strong>${c.code}</strong></div>
-        <div class="coup-exp" style="color:#16A34A">✅ ใช้ได้ถึง ${c.expires_at?new Date(c.expires_at).toLocaleDateString('th-TH'):'ไม่มีวันหมดอายุ'}</div>
-      </div>
-      <button class="btn-sm btn-primary-sm" onclick="navigator.clipboard?.writeText('${c.code}');toast('🎟️ คัดลอก ${c.code}')">ใช้เลย</button>
-    </div>`).join('');
-}
-
-// ── Addresses ─────────────────────────────────────────────
-async function loadAddresses() {
-  const el = document.getElementById('addr-list');
-  if (!el) return;
-  el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--g400)">
-    <div style="font-size:36px;margin-bottom:10px">📍</div>
-    <div style="font-size:14px;font-weight:500;margin-bottom:6px">ยังไม่มีที่อยู่จัดส่ง</div>
-    <button class="btn-primary-sm btn-sm" onclick="toast('➕ เปิดฟอร์มเพิ่มที่อยู่')">+ เพิ่มที่อยู่แรก</button>
-  </div>`;
-}
-
-// ── Save Profile ──────────────────────────────────────────
-async function saveProfile() {
-  const { data:{ session } } = await sb.auth.getSession();
-  if (!session) { location.href='login.html'; return; }
-  const firstname = getVal('fi-firstname');
-  const lastname  = getVal('fi-lastname');
-  const phone     = getVal('fi-phone');
-  const birthday  = getVal('fi-birthday');
-  const gender    = document.getElementById('fi-gender')?.value||'';
-  if (!firstname) { toast('⚠️ กรุณากรอกชื่อ'); return; }
-  const displayName = lastname ? firstname+' '+lastname : firstname;
-  const btn = document.getElementById('btn-save-profile');
-  if (btn) { btn.textContent='⏳ กำลังบันทึก...'; btn.disabled=true; }
-  const { error } = await sb.from('users').update({
-    display_name:displayName, phone, birthday:birthday||null, gender:gender||null,
-    updated_at:new Date().toISOString()
-  }).eq('email',session.user.email);
-  if (btn) { btn.textContent='💾 บันทึกการเปลี่ยนแปลง'; btn.disabled=false; }
-  if (error) { toast('❌ '+error.message); return; }
-  localStorage.setItem('tm_user_name',displayName);
-  setEl('ph-name',displayName);
-  setEl('ph-avatar-txt',displayName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2));
-  toast('✅ บันทึกข้อมูลสำเร็จ!','ok');
-}
-
-// ── Change Password ───────────────────────────────────────
-async function changePassword() {
-  const cur=getVal('fi-cur-pass'), newP=getVal('fi-new-pass'), newP2=getVal('fi-new-pass2');
-  if (!cur) { toast('⚠️ กรุณากรอกรหัสผ่านปัจจุบัน'); return; }
-  if (newP.length<8) { toast('⚠️ รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร'); return; }
-  if (newP!==newP2) { toast('⚠️ รหัสผ่านใหม่ไม่ตรงกัน'); return; }
-  const btn=document.getElementById('btn-change-pw');
-  if (btn) { btn.textContent='⏳ กำลังเปลี่ยน...'; btn.disabled=true; }
-  const { data:{ session } } = await sb.auth.getSession();
-  const { error:signInErr } = await sb.auth.signInWithPassword({email:session?.user?.email,password:cur});
-  if (signInErr) {
-    if (btn) { btn.textContent='เปลี่ยนรหัสผ่าน'; btn.disabled=false; }
-    toast('❌ รหัสผ่านปัจจุบันไม่ถูกต้อง'); return;
-  }
-  const { error } = await sb.auth.updateUser({password:newP});
-  if (btn) { btn.textContent='เปลี่ยนรหัสผ่าน'; btn.disabled=false; }
-  if (error) { toast('❌ '+error.message); return; }
-  ['fi-cur-pass','fi-new-pass','fi-new-pass2'].forEach(id=>setVal(id,''));
-  toast('✅ เปลี่ยนรหัสผ่านสำเร็จ!','ok');
-}
-
-// ── Notifications ─────────────────────────────────────────
-const notifStates = {order:true,flash:true,promo:true,pts:true,chat:false,news:false};
-function renderNotifs() {
-  const NOTIFS=[
-    {id:'order',ico:'📦',title:'แจ้งเตือนออเดอร์',sub:'ยืนยัน จัดส่ง สำเร็จ'},
-    {id:'flash',ico:'⚡',title:'Flash Sale',sub:'แจ้งเตือน 30 นาทีก่อนเริ่ม'},
-    {id:'promo',ico:'💰',title:'โปรโมชัน & คูปอง',sub:'ส่วนลดพิเศษและคูปองใหม่'},
-    {id:'pts', ico:'⭐',title:'Loyalty & แต้ม',sub:'สะสมแต้มและระดับสมาชิก'},
-    {id:'chat',ico:'💬',title:'ข้อความจากร้านค้า',sub:'ตอบกลับคำถามและรีวิว'},
-    {id:'news',ico:'📰',title:'Newsletter',sub:'ข่าวสารและ content'},
-  ];
-  const el=document.getElementById('notif-list'); if(!el) return;
-  el.innerHTML=NOTIFS.map(n=>`
-    <div class="notif-row">
-      <div><div class="notif-lbl">${n.ico} ${n.title}</div><div class="notif-sub">${n.sub}</div></div>
-      <button class="toggle ${notifStates[n.id]?'on':'off'}" onclick="toggleN('${n.id}',this)"><div class="toggle-ball"></div></button>
-    </div>`).join('');
-}
-function toggleN(id,btn) {
-  notifStates[id]=!notifStates[id];
-  btn.className='toggle '+(notifStates[id]?'on':'off');
-  btn.innerHTML='<div class="toggle-ball"></div>';
-  toast(notifStates[id]?'🔔 เปิดการแจ้งเตือน':'🔕 ปิดการแจ้งเตือน');
-}
-
-// ── Points history ────────────────────────────────────────
-function renderPointsHist() {
-  const el=document.getElementById('points-hist'); if(!el) return;
-  const HIST=[
-    {ico:'🛒',title:'กำลังคำนวณ...',date:'',pts:'',pos:true,bg:'#F0FFF4'},
-  ];
-  el.innerHTML=`<div style="text-align:center;padding:24px;color:var(--g400)">
-    <div style="font-size:13px">ประวัติแต้มจะแสดงเมื่อมีรายการ</div>
-  </div>`;
-}
-
-// ── Empty state ───────────────────────────────────────────
-function emptyState(ico,title,linkText,href) {
-  return `<div style="text-align:center;padding:40px;color:#A3A3A3">
-    <div style="font-size:40px;margin-bottom:10px">${ico}</div>
-    <div style="font-size:14px;font-weight:500;color:#525252;margin-bottom:6px">${title}</div>
-    <a href="${href}" style="color:#E63329;font-size:13px">${linkText} →</a>
-  </div>`;
-}
-
-// ── Init ──────────────────────────────────────────────────
-(async () => {
-  try {
-    renderNotifs();
-    renderPointsHist();
-    await Promise.all([loadCats(), loadProfile()]);
-  } catch(err) {
-    console.error('Profile error:', err);
-    if (err.message?.includes('JWT') || err.message?.includes('session') || err.message?.includes('auth'))
-      location.href = 'login.html?from=profile.html';
-  }
-})();
-</script>
 </body>
 </html>
