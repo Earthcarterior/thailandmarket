@@ -489,16 +489,25 @@ tbody tr:last-child td{border-bottom:none}
 
 <!-- CAT MODAL -->
 <div class="modal-backdrop" id="cat-modal">
-<div class="modal-card" style="max-width:480px">
+<div class="modal-card" style="max-width:520px">
   <div class="modal-head"><div class="modal-title" id="cat-modal-title">➕ เพิ่มหมวดหมู่</div><button class="modal-close" onclick="closeCatModal()">✕</button></div>
   <div class="modal-body">
-    <div class="form-grid" style="margin-bottom:16px">
-      <div><label class="lbl">ชื่อ (ไทย) *</label><input class="inp" type="text" id="cat-name-th" placeholder="เช่น Home & Furniture"></div>
-      <div><label class="lbl">ชื่อ (English)</label><input class="inp" type="text" id="cat-name-en" placeholder="e.g. Home & Furniture"></div>
+    <!-- หมวดหมู่แม่ -->
+    <div style="margin-bottom:16px">
+      <label class="lbl">หมวดหมู่แม่ <span style="color:var(--g400);font-size:9px">(เว้นว่างถ้าเป็นหมวดหลัก)</span></label>
+      <select class="sel" id="cat-parent-id">
+        <option value="">— เป็นหมวดหลัก (ไม่มีแม่) —</option>
+      </select>
     </div>
+    <!-- ชื่อ -->
+    <div class="form-grid" style="margin-bottom:16px">
+      <div><label class="lbl">ชื่อ (ไทย) *</label><input class="inp" type="text" id="cat-name-th" placeholder="เช่น โทรศัพท์มือถือ" oninput="autoSlug()"></div>
+      <div><label class="lbl">ชื่อ (English)</label><input class="inp" type="text" id="cat-name-en" placeholder="e.g. Mobiles"></div>
+    </div>
+    <!-- Slug + Icon -->
     <div class="form-grid" style="margin-bottom:0">
-      <div><label class="lbl">Slug *</label><input class="inp" type="text" id="cat-slug" placeholder="home-furniture"></div>
-      <div><label class="lbl">ไอคอน (Emoji)</label><input class="inp" type="text" id="cat-icon" placeholder="🏠" maxlength="4"></div>
+      <div><label class="lbl">Slug *</label><input class="inp" type="text" id="cat-slug" placeholder="mobiles"></div>
+      <div><label class="lbl">ไอคอน (Emoji)</label><input class="inp" type="text" id="cat-icon" placeholder="📱" maxlength="4"></div>
     </div>
   </div>
   <div class="modal-foot">
@@ -992,13 +1001,52 @@ async function loadCategories() {
   try {
     const { data } = await sb.from('categories').select('*').eq('is_active', true).order('sort_order');
     allCategories = data || [];
-    
+
+    // แยกหมวดหลักและหมวดย่อย
+    const parents = allCategories.filter(c => !c.parent_id);
+    const children = allCategories.filter(c => c.parent_id);
+
+    // สร้าง grouped options: หมวดหลัก + หมวดย่อยแบบ indent
+    function buildGroupedOpts(includeParents = false) {
+      let opts = '';
+      for (const p of parents) {
+        if (includeParents) {
+          // หมวดหลัก — disabled เป็น group label
+          opts += `<optgroup label="${p.icon||''} ${p.name_th}">`;
+        } else {
+          opts += `<optgroup label="${p.icon||''} ${p.name_th}">`;
+        }
+        const subs = children.filter(c => c.parent_id === p.id);
+        if (subs.length) {
+          for (const s of subs) {
+            opts += `<option value="${s.id}">${s.icon||'·'} ${s.name_th}</option>`;
+          }
+        } else {
+          // ถ้าไม่มีหมวดย่อย ให้เลือกหมวดหลักได้เลย
+          opts += `<option value="${p.id}">${p.icon||''} ${p.name_th}</option>`;
+        }
+        opts += '</optgroup>';
+      }
+      return opts;
+    }
+
     // Fill selects
     const catSel = document.getElementById('f-category');
     const filterSel = document.getElementById('prod-cat-filter');
-    const opts = allCategories.map(c => `<option value="${c.id}">${c.icon||''} ${c.name_th}</option>`).join('');
-    catSel.innerHTML = '<option value="">— เลือกหมวดหมู่ —</option>' + opts;
-    if (filterSel) filterSel.innerHTML = '<option value="">ทุกหมวด</option>' + opts;
+    const groupedOpts = buildGroupedOpts();
+    catSel.innerHTML = '<option value="">— เลือกหมวดหมู่ —</option>' + groupedOpts;
+    if (filterSel) {
+      // Filter: เพิ่มหมวดหลักด้วยเพื่อ filter ทั้งหมวด
+      let filterOpts = '';
+      for (const p of parents) {
+        filterOpts += `<option value="${p.id}">${p.icon||''} ${p.name_th} (ทั้งหมวด)</option>`;
+        const subs = children.filter(c => c.parent_id === p.id);
+        for (const s of subs) {
+          filterOpts += `<option value="${s.id}">&nbsp;&nbsp;${s.icon||'·'} ${s.name_th}</option>`;
+        }
+      }
+      filterSel.innerHTML = '<option value="">ทุกหมวด</option>' + filterOpts;
+    }
 
     // Table
     const tbody = document.getElementById('cats-tbody');
@@ -1007,15 +1055,41 @@ async function loadCategories() {
       tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-ico">📂</div><div class="empty-txt">ยังไม่มีหมวดหมู่</div><div class="empty-sub">เพิ่มหมวดหมู่แรกได้เลย</div></div></td></tr>';
       return;
     }
-    tbody.innerHTML = allCategories.map(c => `<tr>
-      <td style="font-size:24px;text-align:center">${c.icon||'—'}</td>
-      <td style="font-weight:500">${c.name_th}</td>
-      <td style="color:var(--g500);font-size:12px">${c.name_en||'—'}</td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--g400)">${c.slug}</td>
-      <td style="font-family:var(--mono);font-size:13px">${c.product_count||0}</td>
-      <td><span class="pill ${c.is_active?'pill-ok':'pill-gray'}">${c.is_active?'Active':'ปิด'}</span></td>
-      <td><button class="btn btn-o btn-xs" onclick="editCat('${c.id}')">✏️</button></td>
-    </tr>`).join('');
+    // จัดกลุ่มหมวดหลัก + ย่อย
+    const tParents = allCategories.filter(c => !c.parent_id);
+    const tChildren = allCategories.filter(c => c.parent_id);
+    let rows = '';
+    for (const p of tParents) {
+      const subs = tChildren.filter(c => c.parent_id === p.id);
+      // แถวหมวดหลัก
+      rows += `<tr style="background:var(--g50)">
+        <td style="font-size:22px;text-align:center">${p.icon||'—'}</td>
+        <td style="font-weight:700;font-size:14px">${p.name_th}
+          <span style="font-family:var(--mono);font-size:9px;background:var(--black);color:var(--white);padding:2px 7px;margin-left:6px;letter-spacing:.04em">หมวดหลัก</span>
+        </td>
+        <td style="color:var(--g500);font-size:12px">${p.name_en||'—'}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--g400)">${p.slug}</td>
+        <td style="font-family:var(--mono);font-size:13px">${p.product_count||0}</td>
+        <td><span class="pill ${p.is_active?'pill-ok':'pill-gray'}">${p.is_active?'Active':'ปิด'}</span></td>
+        <td>
+          <button class="btn btn-o btn-xs" onclick="editCat('${p.id}')">✏️</button>
+          <button class="btn btn-xs" style="background:var(--black);color:var(--white);border:none;margin-left:4px" onclick="openCatModal({parent_id:'${p.id}'})">+ ย่อย</button>
+        </td>
+      </tr>`;
+      // แถวหมวดย่อย
+      for (const s of subs) {
+        rows += `<tr>
+          <td style="font-size:18px;text-align:center;padding-left:24px">${s.icon||'·'}</td>
+          <td style="font-size:13px;padding-left:32px;color:var(--g600)">└ ${s.name_th}</td>
+          <td style="color:var(--g500);font-size:12px">${s.name_en||'—'}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--g400)">${s.slug}</td>
+          <td style="font-family:var(--mono);font-size:13px">${s.product_count||0}</td>
+          <td><span class="pill ${s.is_active?'pill-ok':'pill-gray'}">${s.is_active?'Active':'ปิด'}</span></td>
+          <td><button class="btn btn-o btn-xs" onclick="editCat('${s.id}')">✏️</button></td>
+        </tr>`;
+      }
+    }
+    tbody.innerHTML = rows;
   } catch(e) { console.error('loadCategories:', e); }
 }
 
@@ -1026,8 +1100,32 @@ function openCatModal(data) {
   document.getElementById('cat-name-en').value = data?.name_en || '';
   document.getElementById('cat-slug').value = data?.slug || '';
   document.getElementById('cat-icon').value = data?.icon || '';
+
+  // เติม dropdown หมวดหลัก (เฉพาะ parent categories)
+  const parentSel = document.getElementById('cat-parent-id');
+  const parentCats = allCategories.filter(c => !c.parent_id);
+  parentSel.innerHTML = '<option value="">— เป็นหมวดหลัก (ไม่มีแม่) —</option>' +
+    parentCats.map(p => `<option value="${p.id}">${p.icon||''} ${p.name_th}</option>`).join('');
+  parentSel.value = data?.parent_id || '';
+
   document.getElementById('cat-modal').classList.add('on');
 }
+
+function autoSlug() {
+  const name = document.getElementById('cat-name-en').value ||
+               document.getElementById('cat-name-th').value;
+  if (!document.getElementById('cat-slug').dataset.manual) {
+    const slug = name.toLowerCase()
+      .replace(/[^a-zA-Z0-9฀-๿\s-]/g,'')
+      .trim().replace(/\s+/g,'-');
+    document.getElementById('cat-slug').value = slug;
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('cat-slug')?.addEventListener('input', function() {
+    this.dataset.manual = '1';
+  });
+});
 function closeCatModal() { document.getElementById('cat-modal').classList.remove('on'); editingCatId = null; }
 
 async function editCat(id) {
@@ -1040,7 +1138,15 @@ async function saveCategory() {
   const slug = document.getElementById('cat-slug').value.trim();
   if (!nameTh || !slug) { toast('กรุณากรอกชื่อและ Slug', 'error'); return; }
 
-  const payload = { name_th:nameTh, name_en:document.getElementById('cat-name-en').value.trim()||null, slug, icon:document.getElementById('cat-icon').value.trim()||null, is_active:true };
+  const parentId = document.getElementById('cat-parent-id').value || null;
+  const payload = {
+    name_th: nameTh,
+    name_en: document.getElementById('cat-name-en').value.trim() || null,
+    slug,
+    icon: document.getElementById('cat-icon').value.trim() || null,
+    parent_id: parentId,
+    is_active: true
+  };
   let err;
   if (editingCatId) {
     ({ error:err } = await sb.from('categories').update(payload).eq('id', editingCatId));

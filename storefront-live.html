@@ -309,16 +309,37 @@ async function loadCats() {
     const { data } = await sb.from('categories').select('*').eq('is_active', true).order('sort_order');
     allCats = data || [];
 
+    // แยกหมวดหลักและหมวดย่อย
+    const parents = allCats.filter(c => !c.parent_id);
+    const children = allCats.filter(c => c.parent_id);
+
+    // ── แถบ category bar (หมวดหลักเท่านั้น) ──
     const bar = document.getElementById('cat-bar');
-    const sidebar = document.getElementById('cat-list-sidebar');
     bar.innerHTML = `<button class="cat-item on" onclick="filterCat(this,'')">ทั้งหมด</button>` +
-      allCats.map(c => `<button class="cat-item" onclick="filterCat(this,'${c.id}')">${c.icon||''} ${c.name_th}</button>`).join('');
-    sidebar.innerHTML = allCats.map(c =>
-      `<div class="cat-filter-item${currentCat===c.id?' on':''}" onclick="filterCatSide('${c.id}')">
-        <span>${c.icon||''} ${c.name_th}</span>
-        <span class="cat-filter-count">${c.product_count||0}</span>
-      </div>`
-    ).join('');
+      parents.map(p => `<button class="cat-item" onclick="filterCat(this,'${p.id}')">${p.icon||''} ${p.name_th}</button>`).join('');
+
+    // ── Sidebar: หมวดหลัก + หมวดย่อย ──
+    const sidebar = document.getElementById('cat-list-sidebar');
+    let sidebarHTML = '';
+    for (const p of parents) {
+      const subs = children.filter(c => c.parent_id === p.id);
+      const isActiveParent = currentCat === p.id || subs.some(s => s.id === currentCat);
+      sidebarHTML += `
+        <div class="cat-filter-item${isActiveParent?' on':''}" onclick="filterCatSide('${p.id}')"
+          style="font-weight:500;cursor:pointer">
+          <span>${p.icon||''} ${p.name_th}</span>
+          <span class="cat-filter-count">${p.product_count||0}</span>
+        </div>`;
+      if (subs.length > 0) {
+        sidebarHTML += subs.map(s => `
+          <div class="cat-filter-item${currentCat===s.id?' on':''}" onclick="filterCatSide('${s.id}')"
+            style="padding-left:22px;font-size:12px;cursor:pointer">
+            <span>${s.icon||'·'} ${s.name_th}</span>
+            <span class="cat-filter-count">${s.product_count||0}</span>
+          </div>`).join('');
+      }
+    }
+    sidebar.innerHTML = sidebarHTML;
   } catch(e) { console.error(e); }
 }
 
@@ -345,7 +366,17 @@ async function loadProds() {
       .order(sortCol, { ascending: sortDir==='asc' })
       .range((currentPage-1)*PAGE, currentPage*PAGE-1);
 
-    if (currentCat) q = q.eq('category_id', currentCat);
+    if (currentCat) {
+      // ถ้าเลือกหมวดหลัก → ดึงสินค้าจากหมวดย่อยด้วย
+      const parentCat = allCats.find(c => c.id === currentCat && !c.parent_id);
+      if (parentCat) {
+        const childIds = allCats.filter(c => c.parent_id === currentCat).map(c => c.id);
+        const allIds = [currentCat, ...childIds];
+        q = q.in('category_id', allIds);
+      } else {
+        q = q.eq('category_id', currentCat);
+      }
+    }
     if (search) q = q.ilike('name_th', `%${search}%`);
     if (minP !== null) q = q.gte('price', minP);
     if (maxP !== null) q = q.lte('price', maxP);
@@ -519,10 +550,8 @@ function filterCat(el, catId) {
 
 function filterCatSide(catId) {
   currentCat = catId; currentPage = 1;
-  document.querySelectorAll('.cat-filter-item').forEach(el => {
-    el.classList.toggle('on', el.onclick?.toString().includes(catId));
-  });
   loadProds();
+  loadCats(); // refresh sidebar highlight
 }
 
 function clearPriceFilter() { document.getElementById('min-price').value=''; document.getElementById('max-price').value=''; loadProds(); }
