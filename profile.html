@@ -395,6 +395,12 @@ img{max-width:100%;height:auto}
 /* ── Selection color ── */
 ::selection{background:#0A0A0A;color:#fff}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
+window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
+window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
+</script>
 </head>
 <body>
 <nav id="tm-nav">
@@ -450,12 +456,12 @@ img{max-width:100%;height:auto}
 <div class="profile-header">
   <div class="ph-inner">
     <div class="ph-av" onclick="toast('📸 เปลี่ยนรูปโปรไฟล์')">
-      สจ
+      <span id="ph-avatar-txt">?</span>
       <div class="ph-cam">📷</div>
     </div>
     <div class="ph-info">
-      <div class="ph-name">สมชาย ใจดี</div>
-      <div class="ph-email">somchai.jaidee@email.com · สมาชิกตั้งแต่ ม.ค. 2567</div>
+      <div class="ph-name" id="ph-name">กำลังโหลด...</div>
+      <div class="ph-email" id="ph-email"></div>
       <div class="ph-level">
         <span style="font-size:14px">🥇</span>
         <span class="ph-level-name">Gold Member</span>
@@ -463,10 +469,10 @@ img{max-width:100%;height:auto}
       </div>
     </div>
     <div class="ph-stats">
-      <div class="ph-stat"><span class="ph-stat-val">48</span><div class="ph-stat-lbl">ออเดอร์</div></div>
-      <div class="ph-stat"><span class="ph-stat-val">6,249</span><div class="ph-stat-lbl">แต้มสะสม</div></div>
-      <div class="ph-stat"><span class="ph-stat-val">12</span><div class="ph-stat-lbl">Wishlist</div></div>
-      <div class="ph-stat"><span class="ph-stat-val">4.9⭐</span><div class="ph-stat-lbl">คะแนน</div></div>
+      <div class="ph-stat"><span class="ph-stat-val" id="stat-orders">—</span><div class="ph-stat-lbl">ออเดอร์</div></div>
+      <div class="ph-stat"><span class="ph-stat-val" id="stat-pts">—</span><div class="ph-stat-lbl">แต้มสะสม</div></div>
+      <div class="ph-stat"><span class="ph-stat-val" id="stat-wish">—</span><div class="ph-stat-lbl">Wishlist</div></div>
+      <div class="ph-stat"><span class="ph-stat-val" id="stat-rating">4.9⭐</span><div class="ph-stat-lbl">คะแนน</div></div>
     </div>
   </div>
 </div>
@@ -483,7 +489,7 @@ img{max-width:100%;height:auto}
       <div class="sb-nav-item" onclick="gotoPage('addresses',this)"><span class="sb-nav-ico">📍</span>ที่อยู่จัดส่ง</div>
       <div class="sb-nav-item" onclick="gotoPage('profile',this)"><span class="sb-nav-ico">👤</span>ข้อมูลส่วนตัว</div>
       <div class="sb-nav-item" onclick="gotoPage('notifications',this)"><span class="sb-nav-ico">🔔</span>การแจ้งเตือน</div>
-      <div class="sb-logout" onclick="window.location.href='login.html'">🚪 ออกจากระบบ</div>
+      <div class="sb-logout" id="profile-logout" onclick="doLogout()" style="cursor:pointer">🚪 ออกจากระบบ</div>
     </div>
   </div>
 
@@ -498,17 +504,17 @@ img{max-width:100%;height:auto}
           <div class="lc-circle" style="width:150px;height:150px;bottom:-30px;left:30%"></div>
         </div>
         <div class="lc-level">
-          <span class="lc-badge">🥇 Gold Member</span>
-          <span class="lc-tag">สมาชิก 2 ปี 3 เดือน</span>
+          <span class="lc-badge" id="lc-badge-text">🥉 Bronze Member</span>
+          <span class="lc-tag" id="lc-since">กำลังโหลด...</span>
         </div>
-        <div class="lc-points">6,249</div>
-        <div class="lc-pts-lbl">ThaiPoints · มูลค่าประมาณ ฿624</div>
+        <div class="lc-points" id="lc-points-val">—</div>
+        <div class="lc-pts-lbl" id="lc-pts-lbl">ThaiPoints</div>
         <div class="lc-progress">
           <div class="lc-progress-lbl">
-            <span>Gold</span>
-            <span>อีก 3,751 แต้ม → Platinum</span>
+            <span id="lc-tier-current">Bronze</span>
+            <span id="lc-next-label">อีก 2,000 แต้ม → Silver</span>
           </div>
-          <div class="lc-bar"><div class="lc-bar-fill" style="width:62%"></div></div>
+          <div class="lc-bar"><div class="lc-bar-fill" id="lc-bar-fill" style="width:0%"></div></div>
         </div>
         <div class="lc-perks">
           <div class="lc-perk"><div class="lc-perk-ico">🚚</div><div class="lc-perk-lbl">ส่งฟรีทุกออเดอร์</div></div>
@@ -617,11 +623,11 @@ img{max-width:100%;height:auto}
       <div class="card">
         <div class="card-title"><div class="card-title-left">👤 ข้อมูลส่วนตัว</div></div>
         <div class="fg-row">
-          <div class="fg"><label class="fl">ชื่อ</label><input class="fi" value="สมชาย"></div>
+          <div class="fg"><label class="fl">ชื่อ</label><input class="fi" id="fi-firstname" value=""></div>
           <div class="fg"><label class="fl">นามสกุล</label><input class="fi" value="ใจดี"></div>
         </div>
-        <div class="fg"><label class="fl">อีเมล</label><input class="fi" type="email" value="somchai.jaidee@email.com"></div>
-        <div class="fg"><label class="fl">เบอร์โทรศัพท์</label><input class="fi" type="tel" value="081-234-5678"></div>
+        <div class="fg"><label class="fl">อีเมล</label><input class="fi" type="email" id="fi-email" value="" readonly style="background:var(--g50)"></div>
+        <div class="fg"><label class="fl">เบอร์โทรศัพท์</label><input id="fi-phone" class="fi" type="tel" id="fi-phone" value=""></div>
         <div class="fg-row">
           <div class="fg"><label class="fl">วันเกิด</label><input class="fi" type="date" value="1990-05-15"></div>
           <div class="fg"><label class="fl">เพศ</label><select class="fi"><option>ชาย</option><option>หญิง</option><option>ไม่ระบุ</option></select></div>
@@ -836,5 +842,313 @@ function tmToast(msg){
 </footer>
 <div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
 <script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  Profile Page — Live from Supabase
+// ══════════════════════════════════════════════════════════
+const sb = window._sb;
+
+// ── Helper ────────────────────────────────────────────────
+function toast(msg) {
+  const w = document.getElementById('toast-wrap') || document.querySelector('.toast-wrap');
+  if (!w) return;
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+function setEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+// ── Tier logic ────────────────────────────────────────────
+function getTier(pts) {
+  if (pts >= 10000) return { name:'Platinum', ico:'💎', color:'#7C3AED', next:null, nextPts:0 };
+  if (pts >= 6000)  return { name:'Gold',     ico:'🥇', color:'#D97706', next:'Platinum', nextPts:10000 };
+  if (pts >= 2000)  return { name:'Silver',   ico:'🥈', color:'#6B7280', next:'Gold',     nextPts:6000 };
+  return               { name:'Bronze',    ico:'🥉', color:'#92400E', next:'Silver',   nextPts:2000 };
+}
+
+// ── Load Profile ───────────────────────────────────────────
+async function doLogout() {
+  if (!confirm("ออกจากระบบใช่หรือไม่?")) return;
+  await sb.auth.signOut();
+  ["tm_user_role","tm_user_name","tm_user_email","tm_user_id","tm_cart"].forEach(k=>localStorage.removeItem(k));
+  location.href = "index.html";
+}
+
+async function loadProfile() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    location.href = 'login.html?from=profile.html';
+    return;
+  }
+
+  const email = session.user.email;
+  const createdAt = new Date(session.user.created_at);
+  const sinceText = 'สมาชิกตั้งแต่ ' + createdAt.toLocaleDateString('th-TH', { month:'short', year:'numeric' });
+
+  // ── ดึง users table ──
+  const { data: user, error } = await sb.from('users')
+    .select('id,display_name,role,loyalty_pts,phone,avatar_url')
+    .eq('email', email)
+    .maybeSingle();
+
+  const name  = user?.display_name || email.split('@')[0];
+  const pts   = user?.loyalty_pts  || 0;
+  const role  = user?.role         || 'buyer';
+  const phone = user?.phone        || '';
+  const uid   = user?.id;
+
+  // ── Hero ──
+  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  const avatarEl = document.getElementById('ph-avatar-txt');
+  if (avatarEl) avatarEl.textContent = initials;
+
+  setEl('ph-name', name);
+
+  const emailEl = document.getElementById('ph-email');
+  if (emailEl) emailEl.textContent = email + ' · ' + sinceText;
+
+  // ── Tier ──
+  const tier = getTier(pts);
+  const tierBadge = document.getElementById('lc-badge-text');
+  if (tierBadge) tierBadge.textContent = tier.ico + ' ' + tier.name + ' Member';
+  const levelName = document.querySelector('.ph-level-name');
+  if (levelName) levelName.textContent = tier.ico + ' ' + tier.name + ' Member';
+
+  // ── Loyalty progress ──
+  setEl('lc-points-val', pts.toLocaleString());
+  setEl('lc-tier-current', tier.name);
+  setEl('lc-since', sinceText);
+  const worth = Math.floor(pts / 10);
+  setEl('lc-pts-lbl', `ThaiPoints · มูลค่าประมาณ ฿${worth.toLocaleString()}`);
+  if (tier.next) {
+    const remain = Math.max(0, tier.nextPts - pts);
+    const pct = Math.min(100, Math.round((pts / tier.nextPts) * 100));
+    setEl('lc-next-label', `อีก ${remain.toLocaleString()} แต้ม → ${tier.next}`);
+    const barEl = document.getElementById('lc-bar-fill');
+    if (barEl) { barEl.style.width = pct + '%'; barEl.style.background = tier.color; }
+  } else {
+    setEl('lc-next-label', '🎉 ระดับสูงสุดแล้ว!');
+    const barEl = document.getElementById('lc-bar-fill');
+    if (barEl) { barEl.style.width = '100%'; barEl.style.background = tier.color; }
+  }
+
+  // ── Role badge ──
+  if (role !== 'buyer') {
+    const nameEl = document.getElementById('ph-name');
+    if (nameEl && !nameEl.querySelector('.role-badge')) {
+      const rb = document.createElement('span');
+      rb.className = 'role-badge';
+      rb.textContent = role.toUpperCase();
+      rb.style.cssText = `font-size:10px;padding:2px 8px;margin-left:8px;background:${role==='admin'?'#E63329':'#2563EB'};color:#fff;font-family:var(--mono);letter-spacing:.06em;vertical-align:middle`;
+      nameEl.appendChild(rb);
+    }
+  }
+
+  // ── Stats (orders + wishlist) ──
+  let orderCount = 0, wishCount = 0;
+  if (uid) {
+    const [ordRes, wishRes] = await Promise.all([
+      sb.from('orders').select('id', { count:'exact', head:true }).eq('user_id', uid),
+      sb.from('wishlist').select('id', { count:'exact', head:true }).eq('user_id', uid),
+    ]);
+    orderCount = ordRes.count || 0;
+    wishCount  = wishRes.count || 0;
+  }
+  setEl('stat-orders', orderCount.toLocaleString());
+  setEl('stat-pts',    pts.toLocaleString());
+  setEl('stat-wish',   wishCount.toLocaleString());
+
+  // ── Orders list ──
+  if (uid) {
+    const { data: orders } = await sb.from('orders')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    renderOrders(orders || []);
+  } else {
+    renderOrders([]);
+  }
+
+  // ── Wishlist ──
+  if (uid) {
+    const { data: wishes } = await sb.from('wishlist')
+      .select('id, products(id,name_th,price,thumbnail,images)')
+      .eq('user_id', uid)
+      .limit(8);
+    renderWishlist(wishes || []);
+  } else {
+    renderWishlist([]);
+  }
+
+  // ── Coupons ──
+  const now = new Date().toISOString();
+  const { data: coupons } = await sb.from('coupons')
+    .select('*')
+    .eq('is_active', true)
+    .or(`expires_at.is.null,expires_at.gt.${now}`)
+    .limit(5);
+  renderCoupons(coupons || []);
+
+  // ── Form pre-fill ──
+  const nameParts = name.split(' ');
+  setVal('fi-firstname', nameParts[0] || name);
+  setVal('fi-email', email);
+  const phoneEl = document.getElementById('fi-phone');
+  if (phoneEl) phoneEl.value = phone;
+
+  // ── Logout ──
+  const logoutBtn = document.getElementById('profile-logout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await sb.auth.signOut();
+      ['tm_user_role','tm_user_name','tm_user_email','tm_user_id','tm_cart'].forEach(k => localStorage.removeItem(k));
+      location.href = 'index.html';
+    });
+  }
+}}
+
+// ── Render Orders ──────────────────────────────────────────
+function renderOrders(orders) {
+  const el = document.getElementById('orders-list');
+  if (!el) return;
+  if (!orders.length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--g400)">
+      <div style="font-size:40px;margin-bottom:12px">📦</div>
+      <div style="font-size:14px;font-weight:500;margin-bottom:6px">ยังไม่มีคำสั่งซื้อ</div>
+      <a href="storefront-live.html" style="color:var(--red);font-size:13px">เริ่มช้อปเลย →</a>
+    </div>`;
+    return;
+  }
+  const statusMap = {
+    pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว',
+    processing:'กำลังเตรียม', shipped:'กำลังจัดส่ง',
+    delivered:'สำเร็จ', cancelled:'ยกเลิก', returned:'คืนสินค้า'
+  };
+  const scMap = {
+    pending:'pill-warn', confirmed:'pill-info', processing:'pill-info',
+    shipped:'pill-ok', delivered:'pill-ok', cancelled:'pill-gray', returned:'pill-gray'
+  };
+  el.innerHTML = orders.map(o => `
+    <div class="order-item">
+      <div class="oi-head">
+        <div class="oi-code">${o.order_number || o.id.slice(0,8).toUpperCase()}</div>
+        <span class="oi-date">· ${new Date(o.created_at).toLocaleDateString('th-TH')}</span>
+        <span class="oi-status"><span class="pill ${scMap[o.status]||'pill-gray'}">${statusMap[o.status]||o.status}</span></span>
+      </div>
+      <div class="oi-foot">
+        <div class="oi-total">฿${Number(o.total_amount).toLocaleString()}</div>
+        <div class="oi-btns">
+          ${o.status==='shipped'?`<button class="btn-sm btn-outline-sm" onclick="location.href='tracking.html'">📍 ติดตาม</button>`:''}
+          ${o.status==='delivered'?`<button class="btn-sm btn-outline-sm" onclick="location.href='review-write.html'">⭐ รีวิว</button>`:''}
+          <button class="btn-sm btn-primary-sm" onclick="location.href='order-history.html'">ดูรายละเอียด</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Render Wishlist ────────────────────────────────────────
+function renderWishlist(wishes) {
+  const el = document.getElementById('wish-grid');
+  if (!el) return;
+  if (!wishes.length) {
+    el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--g400)">
+      <div style="font-size:40px;margin-bottom:12px">❤️</div>
+      <div style="font-size:14px;font-weight:500;margin-bottom:6px">ยังไม่มีรายการโปรด</div>
+      <a href="storefront-live.html" style="color:var(--red);font-size:13px">เลือกสินค้าเลย →</a>
+    </div>`;
+    return;
+  }
+  el.innerHTML = wishes.map(w => {
+    const p = w.products;
+    if (!p) return '';
+    const thumb = p.thumbnail || p.images?.[0];
+    return `<div class="wish-card" onclick="location.href='product.html?id=${p.id}'">
+      <div class="wish-img" style="background:var(--g50)">
+        ${thumb ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:40px">📦</span>'}
+        <button class="wish-remove" onclick="event.stopPropagation();removeWish('${w.id}',this)">✕</button>
+      </div>
+      <div class="wish-info">
+        <div class="wish-name">${p.name_th}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="wish-price">฿${Number(p.price).toLocaleString()}</div>
+          <button class="btn-sm btn-primary-sm" onclick="event.stopPropagation();toast('🛒 เพิ่มลงตะกร้า')">+ตะกร้า</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function removeWish(wishId, btn) {
+  await sb.from('wishlist').delete().eq('id', wishId);
+  btn.closest('.wish-card')?.remove();
+  toast('💔 ลบออกจาก Wishlist แล้ว');
+}
+
+// ── Render Coupons ─────────────────────────────────────────
+function renderCoupons(coupons) {
+  const el = document.getElementById('coup-grid');
+  if (!el) return;
+  if (!coupons.length) {
+    el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--g400)">
+      <div style="font-size:36px;margin-bottom:10px">🎟️</div>
+      <div>ยังไม่มีคูปอง</div>
+    </div>`;
+    return;
+  }
+  const bgs = ['#E6F4FF','#FFF0E6','#FFF5F5','#F0FFF4','#F3F4F6'];
+  const icos = { free_ship:'🚚', fixed:'💰', percent:'⚡' };
+  el.innerHTML = coupons.map((c, i) => `
+    <div class="coup-item active">
+      <div class="coup-ico" style="background:${bgs[i%bgs.length]}">${icos[c.type]||'🎟️'}</div>
+      <div class="coup-info">
+        <div class="coup-title">${c.title}</div>
+        <div class="coup-desc">${c.type==='free_ship'?'ส่งฟรี':c.type==='fixed'?`ลด ฿${c.value}`:`ลด ${c.value}%`}${c.min_purchase>0?` · ขั้นต่ำ ฿${c.min_purchase}`:''}</div>
+        <div class="coup-exp" style="color:var(--gn)">✅ ใช้ได้ถึง ${c.expires_at?new Date(c.expires_at).toLocaleDateString('th-TH'):'ไม่มีวันหมดอายุ'}</div>
+      </div>
+      <button class="btn-sm btn-primary-sm" onclick="navigator.clipboard?.writeText('${c.code}');toast('🎟️ คัดลอก ${c.code} แล้ว!')">ใช้เลย</button>
+    </div>`).join('');
+}
+
+// ── Save Profile ───────────────────────────────────────────
+async function saveProfile() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  const firstname = document.getElementById('fi-firstname')?.value?.trim();
+  const phone = document.getElementById('fi-phone')?.value?.trim();
+  if (!firstname) { toast('⚠️ กรุณากรอกชื่อ'); return; }
+
+  const { error } = await sb.from('users').update({
+    display_name: firstname,
+    phone: phone,
+    updated_at: new Date().toISOString(),
+  }).eq('email', session.user.email);
+
+  if (error) { toast('❌ บันทึกไม่สำเร็จ: ' + error.message); return; }
+  localStorage.setItem('tm_user_name', firstname);
+  setEl('ph-name', firstname);
+  toast('✅ บันทึกข้อมูลสำเร็จ!');
+}
+
+// ── Init ───────────────────────────────────────────────────
+loadProfile().catch(err => {
+  console.error('Profile load error:', err);
+  location.href = 'login.html?from=profile.html';
+});
+</script>
+
 </body>
 </html>
