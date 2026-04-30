@@ -202,7 +202,7 @@ tbody tr:hover td{background:var(--g50)!important}
 @keyframes catscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .catbar-seeall{position:absolute;right:0;top:0;bottom:0;display:flex;align-items:center;padding:0 16px;background:var(--white);border-left:var(--border);z-index:3;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);white-space:nowrap;transition:all .15s}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-.nav-links{display:none}
+.nav-links-hidden{display:none}
 .catbar-item{font-size:9px;padding:7px 10px}
 .nav-search{max-width:200px}
 .account-dropdown{
@@ -392,8 +392,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);fon
 <style id="tm-responsive">
 /* ── Mobile fixes ── */
 @media(max-width:768px){
-  .tn-links{display:none!important}
-  .tn-srch{display:none!important}
+  
+  
   /* hamburger hint */
   .tn-top{padding:0 16px}
   .tn-logo{margin-right:auto}
@@ -440,7 +440,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);fon
 }
 /* ── Print friendly ── */
 @media print{
-  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
+  /* nav-hide rule removed */
   body{font-size:12px}
 }
 /* ── Focus / accessibility ── */
@@ -451,6 +451,11 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 img{max-width:100%;height:auto}
 /* ── Selection color ── */
 ::selection{background:#0A0A0A;color:#fff}
+
+/* ── Profile page: force show nav elements ── */
+
+100%{transform:translateX(-50%)}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -458,6 +463,58 @@ window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
 window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
 window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
 </script>
+<style id="nav-catbar-clean">
+/* ════════ NAV + CATBAR (Clean Override) ════════ */
+:root{--black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;--g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--green:#16A34A;--amber:#D97706;--font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;--border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;--max:1280px}
+/* Announcement */
+.ann{background:var(--black);color:var(--white);text-align:center;padding:8px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:flex!important;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
+.ann-dot{color:var(--red);font-size:16px;line-height:0}
+/* Nav */
+.nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:999}
+.nav-top{max-width:var(--max);margin:0 auto;padding:0 24px;height:56px;display:flex!important;align-items:center;gap:16px}
+.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);flex-shrink:0;margin-right:8px;text-decoration:none}
+.nav-logo .dot{color:var(--red)}
+.nav-links{display:flex!important;gap:0;align-items:center;overflow-x:auto;scrollbar-width:none;flex:1}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-link{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:0 14px;height:56px;display:flex!important;align-items:center;white-space:nowrap;transition:color .15s;border-bottom:2px solid transparent;text-decoration:none}
+.nav-link:hover{color:var(--black)}.nav-link.hot{color:var(--red)}
+.nav-search{display:flex;align-items:center;border:var(--border);background:var(--g50);flex:1;max-width:360px;margin:0 8px}
+.nav-search input{flex:1;padding:8px 14px;border:none;background:none;font-size:13px;outline:none;font-family:var(--font)}
+.nav-search button{padding:8px 14px;background:var(--black);color:var(--white);border:none;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;cursor:pointer}
+.nav-acts{display:flex;gap:0;flex-shrink:0}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);border:none;background:none;transition:color .15s;position:relative;white-space:nowrap;cursor:pointer;font-family:var(--font)}
+.nav-btn:hover{color:var(--black)}.nav-btn.sell{color:var(--red)}
+.nav-btn-ico{font-size:16px;line-height:1}
+.nav-badge{position:absolute;top:4px;right:8px;background:var(--red);color:var(--white);font-size:8px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+/* Catbar */
+.catbar{border-top:var(--border);overflow:hidden;position:relative;display:block!important}
+.catbar::before{content:'';position:absolute;top:0;bottom:0;width:40px;z-index:2;pointer-events:none;left:0;background:linear-gradient(to right,var(--white),transparent)}
+.catbar::after{content:'';position:absolute;top:0;bottom:0;width:40px;z-index:2;pointer-events:none;right:80px;background:linear-gradient(to left,var(--white),transparent)}
+.catbar-inner{max-width:100%;padding:0 24px;display:flex!important;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+.catbar-inner::-webkit-scrollbar{display:none}
+.catbar-item{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);padding:8px 14px;white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;flex-shrink:0;background:none;border-left:none;border-right:none;border-top:none;text-decoration:none;display:inline-flex;align-items:center}
+.catbar-item:hover{color:var(--black)}.catbar-item.on{color:var(--black);border-bottom-color:var(--red)}
+.catbar-track{display:flex;gap:0;animation:catscroll 30s linear infinite}
+.catbar-track:hover{animation-play-state:paused}
+@keyframes catscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.catbar-seeall{position:absolute;right:0;top:0;bottom:0;display:flex!important;align-items:center;padding:0 16px;background:var(--white);border-left:var(--border);z-index:3;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);white-space:nowrap;transition:all .15s;border-top:none;border-right:none;border-bottom:none}
+.catbar-seeall:hover{color:var(--black);background:var(--g50)}
+/* Account dropdown */
+.account-dropdown{position:absolute;top:calc(100% + 4px);right:0;background:var(--white);border:1px solid var(--black);min-width:200px;z-index:9999;display:none;flex-direction:column;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.account-dropdown.open{display:flex!important}
+.account-dropdown-header{padding:14px 16px;border-bottom:1px solid var(--g200);background:var(--g50)}
+.account-dropdown-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px}
+.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
+.account-dropdown-role{display:inline-block;margin-top:5px;padding:2px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:var(--black);color:var(--white)}
+.account-dropdown-role.admin{background:var(--red)}.account-dropdown-role.seller{background:#2563EB}
+.dropdown-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:var(--g600);cursor:pointer;transition:all .12s;text-decoration:none;border:none;background:none;font-family:var(--font);width:100%;text-align:left}
+.dropdown-item:hover{background:var(--g50);color:var(--black)}
+.dropdown-item.logout{color:var(--red);border-top:1px solid var(--g200)}.dropdown-item.logout:hover{background:#FFF5F5}
+.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
+.nav-avatar{width:24px;height:24px;border-radius:50%;background:var(--black);color:var(--white);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+/* Cats dropdown */
+#cats-dropdown{display:none;position:absolute;left:0;right:0;background:var(--white);border-bottom:var(--border);z-index:998;padding:16px 24px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+</style>
 </head>
 <body>
 <!-- ── ANNOUNCEMENT ── -->
@@ -585,9 +642,9 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
   <div class="sidebar">
     <div class="sb-card">
       <div class="sb-nav-item active" onclick="gotoPage('loyalty',this)"><span class="sb-nav-ico">⭐</span>Loyalty & แต้มสะสม</div>
-      <div class="sb-nav-item" onclick="gotoPage('orders',this)"><span class="sb-nav-ico">📦</span>ออเดอร์ของฉัน<span class="sb-nav-badge">48</span></div>
-      <div class="sb-nav-item" onclick="gotoPage('wishlist',this)"><span class="sb-nav-ico">❤️</span>Wishlist<span class="sb-nav-badge">12</span></div>
-      <div class="sb-nav-item" onclick="gotoPage('coupons',this)"><span class="sb-nav-ico">🎟️</span>คูปองของฉัน<span class="sb-nav-badge">5</span></div>
+      <div class="sb-nav-item" onclick="gotoPage('orders',this)"><span class="sb-nav-ico">📦</span>ออเดอร์ของฉัน<span class="sb-nav-badge" id="sb-orders-count">—</span></div>
+      <div class="sb-nav-item" onclick="gotoPage('wishlist',this)"><span class="sb-nav-ico">❤️</span>Wishlist<span class="sb-nav-badge" id="sb-wish-count">—</span></div>
+      <div class="sb-nav-item" onclick="gotoPage('coupons',this)"><span class="sb-nav-ico">🎟️</span>คูปองของฉัน<span class="sb-nav-badge" id="sb-coupon-count">—</span></div>
       <div class="sb-nav-item" onclick="gotoPage('addresses',this)"><span class="sb-nav-ico">📍</span>ที่อยู่จัดส่ง</div>
       <div class="sb-nav-item" onclick="gotoPage('profile',this)"><span class="sb-nav-ico">👤</span>ข้อมูลส่วนตัว</div>
       <div class="sb-nav-item" onclick="gotoPage('notifications',this)"><span class="sb-nav-ico">🔔</span>การแจ้งเตือน</div>
@@ -762,6 +819,7 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
 // ══════════════════════════════════════════════════════════
 //  Thailand Market — Profile Page (Supabase Live)
 // ══════════════════════════════════════════════════════════
+let allCats = [];
 const sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
 
 // ── Helpers ───────────────────────────────────────────────
@@ -789,6 +847,37 @@ function getTier(pts) {
 }
 
 // ── Tab navigation ────────────────────────────────────────
+
+
+async function doLogout() {
+  await sb.auth.signOut();
+  ['tm_user_role','tm_user_name','tm_user_email','tm_user_id','tm_cart'].forEach(k => localStorage.removeItem(k));
+  location.href = 'index.html';
+}
+
+function filterCat(catId, el) {
+  // Navigate to storefront-live with category filter
+  if (catId && catId !== 'all') {
+    location.href = 'storefront-live.html?cat=' + catId;
+  } else {
+    location.href = 'storefront-live.html';
+  }
+}
+
+// ── Page Navigation ──────────────────────────────────────
+// gotoPage = showView alias (sidebar uses gotoPage)
+function gotoPage(id, el) {
+  showView(id, el);
+}
+
+// Also handle direct page-view switch
+function switchPage(id) {
+  document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+  const view = document.getElementById('pv-' + id);
+  if (view) view.classList.add('active');
+  document.querySelectorAll('.sb-nav-item').forEach(s => s.classList.remove('active'));
+}
+
 function showView(id, el) {
   document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.sidebar-item, .sni').forEach(s => s.classList.remove('active', 'on'));
@@ -886,6 +975,9 @@ async function loadProfile() {
   setEl('stat-orders', orderCount.toLocaleString());
   setEl('stat-pts',    pts.toLocaleString());
   setEl('stat-wish',   wishCount.toLocaleString());
+  // Sidebar badges
+  setEl('sb-orders-count', orderCount);
+  setEl('sb-wish-count',   wishCount);
 
   // ── Load sections ──
   await Promise.all([
@@ -1024,6 +1116,7 @@ async function loadCoupons() {
 
   if (!coupons?.length) { el.innerHTML = emptyState('🎟️','ยังไม่มีคูปอง','ดูโปรโมชัน','coupon-hub.html'); return; }
 
+  setEl('sb-coupon-count', coupons?.length || 0);
   const bgs  = ['#E6F4FF','#FFF0E6','#FFF5F5','#F0FFF4','#F3F4F6'];
   const icos = {free_ship:'🚚',fixed:'💰',percent:'⚡'};
   el.innerHTML = coupons.map((c,i) => `
@@ -1199,6 +1292,9 @@ async function loadCats() {
       parents.map(c => `<a class="catbar-item" href="storefront-live.html?cat=${c.id}" style="text-decoration:none">${c.icon||''} ${c.name_th}</a>`).join('');
     // Duplicate for seamless loop
     track.innerHTML = makeItems() + makeItems();
+    // ปรับ animation speed ตามจำนวนหมวด
+    const dur = Math.max(20, (parents.length + 1) * 2.5);
+    track.style.animationDuration = dur + 's';
 
     // Cats dropdown grid
     const ddGrid = document.getElementById('cats-dropdown-grid');
