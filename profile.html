@@ -98,9 +98,33 @@ input,select{font-family:var(--font)}
 .ph-stat-lbl{font-size:11px;color:rgba(255,255,255,.4);margin-top:3px}
 
 /* ── LAYOUT ── */
-.page{max-width:var(--max);margin:0 auto;padding:24px;display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start;width:100%}
+.page{
+  max-width:var(--max);
+  margin:0 auto;
+  padding:24px;
+  display:grid;
+  grid-template-columns:260px 1fr;
+  grid-template-rows:auto;
+  gap:24px;
+  align-items:start;
+  width:100%;
+  box-sizing:border-box;
+}
+.page > aside { grid-column:1; grid-row:1; }
+.page > .content { grid-column:2; grid-row:1; min-width:0; }
 /* SIDEBAR */
-.sidebar{border:var(--border);background:var(--white);position:sticky;top:72px;min-width:0;width:260px;max-width:260px;align-self:start}
+.sidebar{
+  border:var(--border);
+  background:var(--white);
+  position:sticky;
+  top:72px;
+  width:260px;
+  min-width:260px;
+  max-width:260px;
+  align-self:start;
+  flex-shrink:0;
+  overflow:hidden;
+}
 .sb-user{padding:16px;border-bottom:var(--border);display:flex;align-items:center;gap:12px}
 .sb-av{width:42px;height:42px;border-radius:50%;background:var(--black);color:var(--white);font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sb-name{font-size:13px;font-weight:600}
@@ -116,7 +140,14 @@ input,select{font-family:var(--font)}
 .sb-nav-item.logout-item:hover{background:#FFF5F5}
 
 /* ── CONTENT ── */
-.content{display:flex;flex-direction:column;gap:20px;min-width:0;overflow:hidden;width:100%}
+.content{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  min-width:0;
+  width:100%;
+  overflow:hidden;
+}
 .page-view{display:none}
 .page-view.active{display:flex;flex-direction:column;gap:20px}
 /* Cards */
@@ -223,8 +254,8 @@ input,select{font-family:var(--font)}
 @keyframes tIn{from{transform:translateX(8px);opacity:0}to{transform:translateX(0);opacity:1}}
 
 /* ── RESPONSIVE ── */
-@media(max-width:768px){
-  .page{grid-template-columns:1fr}
+@media(max-width:900px){
+  .page{grid-template-columns:1fr!important}
   .ph-stats{display:none}
   .wish-grid{grid-template-columns:repeat(2,1fr)}
   .lc-perks{grid-template-columns:repeat(2,1fr)}
@@ -264,15 +295,27 @@ input,select{font-family:var(--font)}
 
 
 /* ── Layout Overflow Fix ── */
-.page { overflow: hidden; }
-.sidebar { overflow: hidden; flex-shrink: 0; }
-.content { overflow: hidden; min-width: 0; }
-.card { overflow: hidden; }
-.page-view { overflow: hidden; }
+
+
+
+
+
 .fg { width: 100%; box-sizing: border-box; }
 .fg-row { width: 100%; box-sizing: border-box; }
 select.fi { box-sizing: border-box; }
 
+
+/* ════ LAYOUT FIX — force grid containment ════ */
+.page > aside.sidebar { grid-column: 1; }
+.page > .content      { grid-column: 2; min-width: 0; }
+.card, .page-view      { width: 100%; box-sizing: border-box; }
+.fg-row, .fg           { width: 100%; box-sizing: border-box; }
+input.fi, select.fi, textarea.fi { width: 100%; box-sizing: border-box; max-width: 100%; }
+@media(max-width:900px){
+  .page{ grid-template-columns: 1fr !important; }
+  .sidebar{ position: relative !important; top: 0 !important; width: 100% !important; max-width: 100% !important; }
+  .content{ grid-column: 1 !important; }
+}
 </style>
 </head>
 <body>
