@@ -29,6 +29,11 @@ DROP TABLE IF EXISTS admin_notifications CASCADE;
 DROP TABLE IF EXISTS site_settings     CASCADE;
 DROP TABLE IF EXISTS users             CASCADE;
 
+
+-- ── Patch existing users table (safe to run even if already applied) ──
+ALTER TABLE users ADD COLUMN IF NOT EXISTS birthday DATE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS gender   TEXT CHECK (gender IN ('male','female','other') OR gender IS NULL);
+
 -- ════════════════════════════════════════════════════════════════
 -- STEP 3: CREATE TABLES
 -- ════════════════════════════════════════════════════════════════
@@ -40,6 +45,8 @@ CREATE TABLE users (
   display_name TEXT NOT NULL DEFAULT 'ผู้ใช้',
   avatar_url   TEXT,
   phone        TEXT,
+  birthday     DATE,
+  gender       TEXT CHECK (gender IN ('male','female','other') OR gender IS NULL),
   role         TEXT NOT NULL DEFAULT 'buyer' CHECK (role IN ('buyer','seller','admin')),
   seller_id    UUID,
   is_active    BOOLEAN NOT NULL DEFAULT true,

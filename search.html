@@ -182,6 +182,86 @@ tbody tr:hover td{background:var(--g50)!important}
   .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
 }
 @media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
+.ann{background:var(--black);color:var(--white);text-align:center;padding:8px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
+.ann-dot{color:var(--red);font-size:16px;line-height:0}
+.nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:999}
+.nav-top{max-width:var(--max);margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;gap:16px}
+.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);flex-shrink:0;margin-right:8px}
+.nav-logo .dot{color:var(--red)}
+.nav-links{display:flex;gap:0;align-items:center;overflow-x:auto;scrollbar-width:none;flex:1}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-link{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:0 14px;height:56px;display:flex;align-items:center;white-space:nowrap;transition:color .15s;border-bottom:2px solid transparent}
+.nav-link:hover{color:var(--black)}
+.nav-link.hot{color:var(--red)}
+.nav-search{display:flex;align-items:center;border:var(--border);background:var(--g50);flex:1;max-width:360px;margin:0 8px}
+.nav-search input{flex:1;padding:8px 14px;border:none;background:none;font-size:13px;outline:none}
+.nav-search button{padding:8px 14px;background:var(--black);color:var(--white);border:none;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;transition:background .15s}
+.nav-search button:hover{background:var(--g800)}
+.nav-acts{display:flex;gap:0;flex-shrink:0}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);border:none;background:none;transition:color .15s;position:relative;white-space:nowrap}
+.nav-btn:hover{color:var(--black)}
+.nav-btn.sell{color:var(--red)}
+.nav-btn-ico{font-size:16px;line-height:1}
+.nav-badge{position:absolute;top:4px;right:8px;background:var(--red);color:var(--white);font-size:8px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+.nav-links{display:none}
+.nav-search{max-width:200px}
+.nav-btn.account-btn{position:relative}
+.account-dropdown{
+  position:absolute;top:calc(100% + 4px);right:0;
+  background:var(--white);border:1px solid var(--black);
+  min-width:200px;z-index:9999;
+  display:none;flex-direction:column;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+}
+.account-dropdown.open{display:flex}
+.account-dropdown-header{
+  padding:14px 16px;border-bottom:1px solid var(--g200);
+  background:var(--g50);
+}
+.account-dropdown-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px}
+.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
+.account-dropdown-role{
+  display:inline-block;margin-top:5px;
+  padding:2px 8px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.06em;text-transform:uppercase;
+  background:var(--black);color:var(--white);
+}
+.account-dropdown-role.admin{background:var(--red)}
+.account-dropdown-role.seller{background:#2563EB}
+.dropdown-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 16px;font-size:13px;color:var(--g600);
+  cursor:pointer;transition:all .12s;text-decoration:none;border:none;
+  background:none;font-family:var(--font);width:100%;text-align:left;
+}
+.dropdown-item:hover{background:var(--g50);color:var(--black)}
+.dropdown-item.logout{color:var(--red);border-top:1px solid var(--g200)}
+.dropdown-item.logout:hover{background:#FFF5F5}
+.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
+.nav-avatar{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--black);color:var(--white);
+  font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.account-dropdown{position:absolute;top:calc(100%+4px);right:0;background:#fff;border:1px solid var(--black);min-width:200px;z-index:9999;display:none;flex-direction:column;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.account-dropdown.open{display:flex}
+.account-dropdown-header{padding:14px 16px;border-bottom:var(--border);background:var(--g50)}
+.account-dropdown-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400)}
+.account-dropdown-role{display:inline-block;margin-top:5px;padding:2px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:var(--black);color:#fff}
+.account-dropdown-role.admin{background:var(--red)}.account-dropdown-role.seller{background:#2563EB}
+.dropdown-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:var(--g600);cursor:pointer;transition:all .12s;text-decoration:none;border:none;background:none;font-family:var(--font);width:100%;text-align:left}
+.dropdown-item:hover{background:var(--g50);color:var(--black)}
+.dropdown-item.logout{color:var(--red);border-top:var(--border)}.dropdown-item.logout:hover{background:#FFF5F5}
+.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
+@keyframes tIn{from{transform:translateX(8px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:var(--black);color:#fff;padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:240px;border-left:3px solid var(--red);animation:tIn .2s ease;pointer-events:all}
+.toast.ok{border-left-color:#16A34A}
+
 </style>
 <style id="page-css">
 
@@ -353,43 +433,75 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
 </script>
 </head>
 <body>
-<nav id="tm-nav">
-  <div class="tn-top">
-    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
-    <div class="tn-links">
-      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
-      <a href="live-shopping.html" class="tn-link">Live</a>
-      <a href="brand-day.html" class="tn-link">Brand Day</a>
-      <a href="coupon-hub.html" class="tn-link">Coupon</a>
-      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
-      <a href="subscription.html" class="tn-link">TM Plus</a>
-      <a href="b2b-portal.html" class="tn-link">B2B</a>
-      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
+<!-- ── ANNOUNCEMENT ── -->
+<div class="ann">
+  <span><span class="ann-dot">·</span> ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500</span>
+  <span><span class="ann-dot">·</span> Flash Sale ทุกวัน 10:00 / 14:00 / 20:00</span>
+  <span><span class="ann-dot">·</span> รับคูปองใหม่ทุกวัน</span>
+</div>
+
+
+<!-- ── NAVIGATION ── -->
+<nav class="nav" style="position:relative">
+  <div class="nav-top">
+    <a href="index.html" class="nav-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="nav-links" id="nav-links">
+      <a href="flash-sale.html" class="nav-link hot">⚡ Flash Sale</a>
+      <a href="live-shopping.html" class="nav-link">🔴 Live</a>
+      <a href="brand-day.html" class="nav-link">Brand Day</a>
+      <a href="coupon-hub.html" class="nav-link">Coupon</a>
+      <a href="loyalty-catalog.html" class="nav-link">Loyalty</a>
+      <a href="subscription.html" class="nav-link">TM Plus</a>
+      <a href="b2b-portal.html" class="nav-link">B2B</a>
     </div>
-    <div class="tn-search">
-      <input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'">
+    <div class="nav-search">
+      <input type="text" id="search-inp" placeholder="ค้นหาสินค้า แบรนด์ หรือร้านค้า..." onkeydown="if(event.key==='Enter')doSearch()">
+      <button onclick="doSearch()">ค้นหา</button>
     </div>
-    <div class="tn-acts">
-      <button class="tn-btn" onclick="location.href='wishlist.html'"><span class="tn-ico">♡</span>Saved</button>
-      <button class="tn-btn" onclick="location.href='notification-center.html'"><span class="tn-ico">🔔</span>Alerts</button>
-      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
-      <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
-      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
+    <div class="nav-acts">
+      <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
+      <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
+      <button class="nav-btn" onclick="location.href='checkout.html'" style="position:relative">
+        <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
+      </button>
+      <div style="position:relative">
+      <button class="nav-btn account-btn" id="account-nav-btn" style="flex-direction:column;gap:2px;padding:6px 12px">
+        <span class="nav-btn-ico" id="account-ico">👤</span>
+        <span class="nav-btn-lbl" style="font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500)">Account</span>
+      </button>
+      <!-- Dropdown -->
+      <div class="account-dropdown" id="account-dropdown">
+        <div class="account-dropdown-header">
+          <div class="account-dropdown-name" id="dd-name">กำลังโหลด...</div>
+          <div class="account-dropdown-email" id="dd-email"></div>
+          <span class="account-dropdown-role" id="dd-role">Member</span>
+        </div>
+        <a href="profile.html" class="dropdown-item">
+          <span class="dropdown-item-ico">👤</span>โปรไฟล์ของฉัน
+        </a>
+        <a href="order-history.html" class="dropdown-item">
+          <span class="dropdown-item-ico">📦</span>คำสั่งซื้อ
+        </a>
+        <a href="wishlist.html" class="dropdown-item">
+          <span class="dropdown-item-ico">❤️</span>รายการโปรด
+        </a>
+        <a href="coupon-hub.html" class="dropdown-item">
+          <span class="dropdown-item-ico">🎟️</span>คูปองของฉัน
+        </a>
+        <a href="seller-portal.html" class="dropdown-item" id="dd-seller" style="display:none">
+          <span class="dropdown-item-ico">🏪</span>Seller Portal
+        </a>
+        <a href="admin-cms.html" class="dropdown-item" id="dd-admin" style="display:none;background:var(--g50)">
+          <span class="dropdown-item-ico">⚙️</span>Admin CMS
+        </a>
+        <button class="dropdown-item logout" id="dd-logout">
+          <span class="dropdown-item-ico">🚪</span>ออกจากระบบ
+        </button>
+      </div>
     </div>
-  </div>
-  <div class="tn-cats">
-    <div class="tn-cats-inner">
-      <a href="category.html" class="tn-cat">🏠 Home</a>
-      <a href="category.html" class="tn-cat">👗 Fashion</a>
-      <a href="category.html" class="tn-cat">💄 Beauty</a>
-      <a href="category.html" class="tn-cat">🛒 FMCG</a>
-      <a href="category.html" class="tn-cat">💻 Tech</a>
-      <a href="category.html" class="tn-cat">🚗 Auto</a>
-      <a href="category.html" class="tn-cat">🐾 Pets</a>
-      <a href="category.html" class="tn-cat">📚 Education</a>
+      <button class="nav-btn sell" onclick="location.href='seller-portal.html'"><span class="nav-btn-ico">🏪</span>Sell</button>
     </div>
-  </div>
-</nav>
+  </div></nav>
 
 
 
