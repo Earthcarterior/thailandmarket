@@ -187,6 +187,34 @@ body{font-family:var(--font);background:#F5F5F5;color:var(--black);font-size:14p
 .dropdown-item.logout{color:var(--red);border-top:var(--border)}
 .dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
 
+
+/* ── Avatar Upload ── */
+.ph-av { cursor:pointer; position:relative; }
+.ph-av img.av-photo {
+  width:100%; height:100%;
+  object-fit:cover;
+  position:absolute; inset:0;
+}
+.ph-av-overlay {
+  position:absolute; inset:0;
+  background:rgba(0,0,0,.45);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  opacity:0; transition:opacity .2s;
+  font-size:11px; color:#fff;
+  gap:4px; font-family:var(--mono);
+  letter-spacing:.04em; text-transform:uppercase;
+}
+.ph-av:hover .ph-av-overlay { opacity:1; }
+.av-uploading { opacity:.5; pointer-events:none; }
+/* Sidebar avatar with photo */
+.sb-av { position:relative; overflow:hidden; }
+.sb-av img.av-photo-sm {
+  width:100%; height:100%;
+  object-fit:cover;
+  position:absolute; inset:0;
+}
+
 </style>
 </head>
 <body>
@@ -250,7 +278,14 @@ body{font-family:var(--font);background:#F5F5F5;color:var(--black);font-size:14p
 
 <div class="ph">
   <div class="ph-inner">
-    <div class="ph-av" onclick="toast('เปลี่ยนรูปโปรไฟล์ (เร็วๆ นี้)')"><span id="ph-avatar-txt">?</span><div class="ph-av-cam">📷</div></div>
+    <div class="ph-av" id="ph-av" onclick="triggerAvatarUpload()" title="เปลี่ยนรูปโปรไฟล์">
+      <span id="ph-avatar-txt">?</span>
+      <div class="ph-av-overlay">
+        <span style="font-size:18px">📷</span>
+        <span>เปลี่ยนรูป</span>
+      </div>
+      <input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadAvatar(this)">
+    </div>
     <div>
       <div class="ph-name-row">
         <div class="ph-name" id="ph-name">กำลังโหลด...</div>
@@ -508,10 +543,17 @@ async function loadProfile() {
   const uid   = user?.id;
   const tier  = getTier(pts);
   const ini   = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+  const avatarUrl = user?.avatar_url || null;
   currentUserId = uid;
 
   // Hero
   setEl('ph-avatar-txt', ini);
+  // แสดงรูป avatar ถ้ามี
+  if (avatarUrl) {
+    setAvatarUI(avatarUrl);
+  } else {
+    setAvatarUI(null); // แสดง initials
+  }
   setEl('ph-name', name);
   document.getElementById('ph-email').textContent = email+' · '+sinceText;
   setEl('ph-tier-ico', tier.ico);
@@ -900,6 +942,117 @@ function emptyHtml(ico,title,linkText,href) {
     <div style="font-size:14px;font-weight:600;color:var(--g600);margin-bottom:8px">${title}</div>
     <a href="${href}" style="color:var(--red);font-size:13px">${linkText} →</a>
   </div>`;
+}
+
+
+// ════════════════════════════════════════════════════════
+//  AVATAR UPLOAD
+// ════════════════════════════════════════════════════════
+function triggerAvatarUpload() {
+  document.getElementById('avatar-file-input')?.click();
+}
+
+async function uploadAvatar(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+
+  // ตรวจขนาด (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    toast('❌ รูปภาพต้องมีขนาดไม่เกิน 5MB');
+    input.value = '';
+    return;
+  }
+
+  const {data:{session}} = await sb.auth.getSession();
+  if (!session) { toast('❌ กรุณาเข้าสู่ระบบก่อน'); return; }
+
+  const userId = currentUserId;
+  if (!userId) { toast('❌ ไม่พบข้อมูลผู้ใช้'); return; }
+
+  // แสดง preview ทันที (ก่อน upload เสร็จ)
+  const reader = new FileReader();
+  reader.onload = e => setAvatarUI(e.target.result);
+  reader.readAsDataURL(file);
+
+  // Loading state
+  const avEl = document.getElementById('ph-av');
+  if (avEl) avEl.classList.add('av-uploading');
+  toast('⏳ กำลังอัปโหลดรูป...');
+
+  try {
+    // Upload ไป Supabase Storage
+    const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+    const fileName = `avatars/${userId}.${ext}`;
+
+    const { error: upErr } = await sb.storage
+      .from('profile-images')
+      .upload(fileName, file, {
+        upsert: true,
+        contentType: file.type,
+      });
+
+    if (upErr) throw upErr;
+
+    // ดึง public URL
+    const { data: urlData } = sb.storage
+      .from('profile-images')
+      .getPublicUrl(fileName);
+
+    const avatarUrl = urlData.publicUrl + '?t=' + Date.now(); // cache busting
+
+    // บันทึกลง users table
+    const { error: dbErr } = await sb.from('users')
+      .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+
+    if (dbErr) throw dbErr;
+
+    // อัปเดต UI
+    setAvatarUI(avatarUrl);
+    toast('✅ เปลี่ยนรูปโปรไฟล์สำเร็จ!', 'ok');
+
+  } catch(e) {
+    toast('❌ อัปโหลดไม่สำเร็จ: ' + e.message);
+    console.error('Avatar upload error:', e);
+  } finally {
+    if (avEl) avEl.classList.remove('av-uploading');
+    input.value = '';
+  }
+}
+
+function setAvatarUI(url) {
+  // Hero avatar
+  const avEl = document.getElementById('ph-av');
+  const txtEl = document.getElementById('ph-avatar-txt');
+  if (avEl) {
+    // ลบรูปเก่าถ้ามี
+    avEl.querySelectorAll('img.av-photo').forEach(i => i.remove());
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.className = 'av-photo';
+      img.alt = 'profile';
+      img.onerror = () => img.remove(); // ถ้าโหลดไม่ได้ให้ใช้ initials แทน
+      avEl.insertBefore(img, avEl.firstChild);
+      if (txtEl) txtEl.style.display = 'none';
+    } else {
+      if (txtEl) txtEl.style.display = '';
+    }
+  }
+
+  // Sidebar avatar
+  const sbAv = document.getElementById('sb-avatar');
+  if (sbAv) {
+    sbAv.querySelectorAll('img.av-photo-sm').forEach(i => i.remove());
+    if (url) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.className = 'av-photo-sm';
+      img.alt = 'profile';
+      img.onerror = () => img.remove();
+      sbAv.insertBefore(img, sbAv.firstChild);
+    }
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────
