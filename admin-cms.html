@@ -279,6 +279,42 @@ nav, .nav {
   height: auto !important; flex-shrink: 0 !important;
 }
 
+
+/* ── Admin CMS Sidebar ── */
+.app { display: flex !important; flex-direction: row !important; min-height: calc(100vh - 93px); }
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: #0A0A0A;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 93px);
+  position: sticky;
+  top: 93px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); }
+.sb-logo { padding: 16px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; gap: 10px; }
+.sb-logo-icon { font-size: 24px; }
+.sb-logo-name { font-size: 13px; font-weight: 700; color: #fff; }
+.sb-logo-sub { font-size: 9px; color: rgba(255,255,255,.4); letter-spacing: 1px; text-transform: uppercase; }
+.sb-user { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; gap: 10px; }
+.sb-av { width: 32px; height: 32px; border-radius: 50%; background: #E63329; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 13px; flex-shrink: 0; }
+.sb-username { font-size: 13px; font-weight: 600; color: #fff; }
+.sb-role { font-size: 10px; color: rgba(255,255,255,.4); }
+.sb-nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+.sb-section-lbl { font-size: 9px; color: rgba(255,255,255,.28); letter-spacing: 1.4px; text-transform: uppercase; padding: 12px 16px 4px; font-family: monospace; }
+.sni { display: flex; align-items: center; gap: 9px; padding: 9px 16px; cursor: pointer; color: rgba(255,255,255,.55); font-size: 12.5px; transition: all .15s; border-left: 3px solid transparent; white-space: nowrap; }
+.sni:hover { color: #fff; background: rgba(255,255,255,.05); }
+.sni.on { background: rgba(230,51,41,.15); border-left-color: #E63329; color: #fff; font-weight: 500; }
+.sni-ico { font-size: 14px; width: 18px; text-align: center; }
+.sb-foot { padding: 10px 16px; border-top: 1px solid rgba(255,255,255,.07); display: flex; flex-direction: column; gap: 6px; }
+.sb-action { background: none; border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.5); padding: 7px 12px; cursor: pointer; font-size: 11px; text-align: left; transition: all .15s; width: 100%; }
+.sb-action:hover { border-color: rgba(255,255,255,.4); color: #fff; }
+.main { flex: 1; min-width: 0; height: calc(100vh - 93px); overflow-y: auto; }
+
 </style>
 <style>
 /* ── Admin CMS Layout Fix ── */
@@ -392,12 +428,86 @@ nav { display: block !important; height: auto !important; }
 <div id="app" class="app">
 
   <!-- SIDEBAR -->
-  
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">⚙️</div>
+      <div>
+        <div class="sb-logo-name">Thailand Market</div>
+        <div class="sb-logo-sub">ADMIN CMS</div>
+      </div>
+    </div>
+
+    <div class="sb-user" id="sb-user-info">
+      <div class="sb-av" id="sb-av">A</div>
+      <div style="min-width:0">
+        <div class="sb-username" id="sb-username">
+          <span id="sb-name">Admin</span>
+        </div>
+        <div class="sb-role">
+          <span id="sb-email" style="display:none"></span>
+          <span id="sb-role-label">Administrator</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-section-lbl">ภาพรวม</div>
+      <div class="sni on" id="nav-dashboard" onclick="showPanel('dashboard')">
+        <span class="sni-ico">📊</span> Dashboard
+      </div>
+
+      <div class="sb-section-lbl">จัดการสินค้า</div>
+      <div class="sni" id="nav-products" onclick="showPanel('products')">
+        <span class="sni-ico">📦</span> สินค้าทั้งหมด
+      </div>
+      <div class="sni" id="nav-categories" onclick="showPanel('categories')">
+        <span class="sni-ico">🗂️</span> หมวดหมู่
+      </div>
+      <div class="sni" id="nav-brands" onclick="showPanel('brands')">
+        <span class="sni-ico">🏷️</span> แบรนด์
+      </div>
+      <div class="sni" id="nav-flash" onclick="showPanel('flash')">
+        <span class="sni-ico">⚡</span> Flash Sale
+      </div>
+      <div class="sni" id="nav-banners" onclick="showPanel('banners')">
+        <span class="sni-ico">🖼️</span> Banners
+      </div>
+
+      <div class="sb-section-lbl">จัดการร้านค้า</div>
+      <div class="sni" id="nav-sellers" onclick="showPanel('sellers')">
+        <span class="sni-ico">🏪</span> ร้านค้า
+      </div>
+      <div class="sni" id="nav-approve" onclick="showPanel('approve')">
+        <span class="sni-ico">✅</span> อนุมัติร้าน
+      </div>
+
+      <div class="sb-section-lbl">ออเดอร์ & ผู้ใช้</div>
+      <div class="sni" id="nav-orders" onclick="showPanel('orders')">
+        <span class="sni-ico">🛒</span> ออเดอร์
+      </div>
+      <div class="sni" id="nav-users" onclick="showPanel('users')">
+        <span class="sni-ico">👥</span> ผู้ใช้
+      </div>
+      <div class="sni" id="nav-reviews" onclick="showPanel('reviews')">
+        <span class="sni-ico">⭐</span> รีวิว
+      </div>
+
+      <div class="sb-section-lbl">การตลาด</div>
+      <div class="sni" id="nav-coupons" onclick="showPanel('coupons')">
+        <span class="sni-ico">🎟️</span> คูปอง
+      </div>
+
+      <div class="sb-section-lbl">ระบบ</div>
+      <div class="sni" id="nav-settings" onclick="showPanel('settings')">
+        <span class="sni-ico">⚙️</span> ตั้งค่าเว็บ
+      </div>
+    </nav>
+
     <div class="sb-foot">
       <button class="sb-action" onclick="doLogout()">🚪 ออกจากระบบ</button>
       <button class="sb-action" onclick="location.href='setup.html'">⚙️ ตั้งค่า</button>
     </div>
-  </nav>
+  </div>
 
   <!-- MAIN -->
   <div class="main">
@@ -866,30 +976,43 @@ function showLoginErr(msg) {
 }
 
 function showApp(user, role) {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
+  // ── ซ่อน login, แสดง app ────────────────────────────────
+  const loginEl = document.getElementById('login-screen');
+  const appEl   = document.getElementById('app');
+  if (loginEl) loginEl.style.display = 'none';
+  if (appEl)   { appEl.style.display = 'flex'; appEl.style.visibility = 'visible'; }
 
-  // Set user info
-  const initials = (user.email || '?')[0].toUpperCase();
-  document.getElementById('sb-av').textContent = initials;
-  document.getElementById('sb-name').textContent = user.email?.split('@')[0] || '—';
-  document.getElementById('sb-email').textContent = user.email || '';
-  document.getElementById('sb-role-label').textContent = role === 'admin' ? 'Admin Panel' : 'Seller Center';
+  // ── ตั้งข้อมูล user ────────────────────────────────────────
+  const name     = user.email?.split('@')[0] || 'Admin';
+  const initials = name[0].toUpperCase();
+  const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
 
-  // Show/hide admin-only sections
-  const adminOnly = document.querySelectorAll('.admin-only');
-  adminOnly.forEach(el => el.style.display = role === 'admin' ? 'flex' : 'none');
-  document.getElementById('nav-approve').style.display = role === 'admin' ? 'flex' : 'none';
-  document.getElementById('nav-users').style.display = role === 'admin' ? 'flex' : 'none';
-  document.getElementById('nav-categories').style.display = role === 'admin' ? 'flex' : 'none';
+  setEl('sb-av',         initials);
+  setEl('sb-name',       name);
+  setEl('sb-email',      user.email || '');
+  setEl('sb-username',   name);
+  setEl('sb-role-label', role === 'admin' ? '⚙️ Admin Panel' : '🏪 Seller Center');
+  setEl('sb-role',       role === 'admin' ? 'Administrator' : 'Seller');
 
-  // Seller: only submit for review
+  // ── แสดง/ซ่อน admin sections ──────────────────────────────
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = role === 'admin' ? '' : 'none';
+  });
+  ['nav-approve','nav-users','nav-categories','nav-brands',
+   'nav-reviews','nav-coupons','nav-banners'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = role === 'admin' ? 'flex' : 'none';
+  });
+
+  // ── seller mode ────────────────────────────────────────────
   if (role === 'seller') {
-    document.getElementById('f-publish-status').innerHTML = 
-      '<option value="pending_review">⏳ ส่งให้ Admin อนุมัติ</option><option value="draft">📝 Draft</option>';
-    document.getElementById('status-hint').textContent = 'Admin จะตรวจสอบและอนุมัติภายใน 24 ชม.';
+    const statusEl = document.getElementById('f-publish-status');
+    if (statusEl) statusEl.innerHTML = '<option value="pending_review">⏳ ส่งให้ Admin อนุมัติ</option><option value="draft">📝 Draft</option>';
+    const hintEl = document.getElementById('status-hint');
+    if (hintEl) hintEl.textContent = 'Admin จะตรวจสอบและอนุมัติภายใน 24 ชม.';
   }
 
+  // ── โหลดข้อมูล Dashboard ──────────────────────────────────
   loadDashboard();
   loadCategories();
 }
@@ -928,43 +1051,70 @@ function showPanel(name) {
 // ── Dashboard ─────────────────────────────────────────────
 async function loadDashboard() {
   try {
-    const [total, active, pending, cats] = await Promise.all([
-      sb.from('products').select('id', {count:'exact',head:true}),
-      sb.from('products').select('id', {count:'exact',head:true}).eq('status','active'),
-      sb.from('products').select('id', {count:'exact',head:true}).eq('status','pending_review'),
-      sb.from('categories').select('id', {count:'exact',head:true}).eq('is_active',true),
+    // โหลดข้อมูลพร้อมกัน
+    const [total, active, pending, cats, orders, sellers] = await Promise.all([
+      sb.from('products').select('id', {count:'exact', head:true}),
+      sb.from('products').select('id', {count:'exact', head:true}).eq('status','active'),
+      sb.from('products').select('id', {count:'exact', head:true}).eq('status','pending_review'),
+      sb.from('categories').select('id', {count:'exact', head:true}).eq('is_active',true),
+      sb.from('orders').select('id', {count:'exact', head:true}),
+      sb.from('sellers').select('id', {count:'exact', head:true}).eq('status','active'),
     ]);
-    document.getElementById('dash-total').textContent = total.count ?? 0;
-    document.getElementById('dash-active').textContent = active.count ?? 0;
-    document.getElementById('dash-pending').textContent = pending.count ?? 0;
-    document.getElementById('dash-cats').textContent = cats.count ?? 0;
-    document.getElementById('badge-products').textContent = total.count ?? 0;
-    document.getElementById('badge-approve').textContent = pending.count ?? 0;
 
-    // Recent products
-    const { data: recent } = await sb.from('products')
-      .select('id, name_th, price, status, thumbnail, created_at')
-      .order('created_at', { ascending: false }).limit(5);
-    
-    const recentEl = document.getElementById('dash-recent');
-    if (!recent?.length) { recentEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--g400);font-size:13px">ยังไม่มีสินค้า — เพิ่มสินค้าแรกได้เลย</div>'; return; }
-    
-    recentEl.innerHTML = recent.map(p => {
-      const sc = {active:'pill-ok',pending_review:'pill-warn',draft:'pill-gray',rejected:'pill-red'}[p.status]||'pill-gray';
-      const sl = {active:'✓ Active',pending_review:'⏳ รออนุมัติ',draft:'📝 Draft',rejected:'✕ ปฏิเสธ'}[p.status]||p.status;
-      return `<div style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:var(--border)" onclick="showPanel('products')" style="cursor:pointer">
-        <div style="width:44px;height:44px;border:var(--border);background:var(--g50);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px">
-          ${p.thumbnail ? `<img src="${p.thumbnail}" style="width:100%;height:100%;object-fit:cover">` : '📦'}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name_th}</div>
-          <div style="font-family:var(--mono);font-size:11px;color:var(--g400)">${new Date(p.created_at).toLocaleString('th-TH',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-        </div>
-        <div style="font-family:var(--mono);font-size:14px;font-weight:500;flex-shrink:0">฿${Number(p.price).toLocaleString()}</div>
-        <span class="pill ${sc}">${sl}</span>
-      </div>`;
-    }).join('');
-  } catch(e) { console.error('loadDashboard:', e); }
+    const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+    // KPI cards — ใช้ทั้ง 2 id format เพื่อ compatibility
+    setTxt('dash-total',      (total.count  || 0).toLocaleString());
+    setTxt('stat-products',   (total.count  || 0).toLocaleString());
+    setTxt('dash-active',     (active.count || 0).toLocaleString());
+    setTxt('stat-active',     (active.count || 0).toLocaleString());
+    setTxt('dash-pending',    (pending.count|| 0).toLocaleString());
+    setTxt('stat-pending',    (pending.count|| 0).toLocaleString());
+    setTxt('dash-cats',       (cats.count   || 0).toLocaleString());
+    setTxt('stat-categories', (cats.count   || 0).toLocaleString());
+    setTxt('dash-orders',     (orders.count || 0).toLocaleString());
+    setTxt('stat-orders',     (orders.count || 0).toLocaleString());
+    setTxt('stat-sellers',    (sellers.count|| 0).toLocaleString());
+
+    // Latest products (uses id="dash-recent")
+    const { data: latestProds } = await sb.from('products')
+      .select('id,name_th,price,status,created_at,thumbnail')
+      .order('created_at', {ascending:false}).limit(10);
+
+    // ใช้ทั้ง dash-recent และ dash-latest-prods
+    const prodContainer = document.getElementById('dash-recent') || document.getElementById('dash-latest-prods');
+    if (prodContainer) {
+      const stColor = {active:'#16A34A', pending_review:'#D97706', draft:'#737373', inactive:'#737373'};
+      const stLabel = {active:'เปิดขาย', pending_review:'รออนุมัติ', draft:'แบบร่าง', inactive:'ปิด'};
+      if (latestProds?.length) {
+        prodContainer.innerHTML = latestProds.map(p => {
+          const color = stColor[p.status] || '#737373';
+          const thumb = p.thumbnail;
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #F2F2F2;cursor:pointer" onclick="showPanel('products')">
+            <div style="width:40px;height:40px;background:#F2F2F2;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;overflow:hidden">
+              ${thumb ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.parentElement.innerHTML='📦'">` : '📦'}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name_th}</div>
+              <div style="font-size:11px;color:#888;font-family:monospace;margin-top:2px">฿${Number(p.price||0).toLocaleString()}</div>
+            </div>
+            <span style="font-size:10px;background:${color}20;color:${color};padding:3px 10px;white-space:nowrap;font-family:monospace">${stLabel[p.status]||p.status}</span>
+          </div>`;
+        }).join('');
+      } else {
+        prodContainer.innerHTML = `<div style="text-align:center;padding:32px;color:#888;font-size:13px">
+          <div style="font-size:32px;margin-bottom:8px">📦</div>
+          <div>ยังไม่มีสินค้าในระบบ</div>
+          <button onclick="showPanel('products');setTimeout(openProductModal,100)" style="margin-top:12px;background:#E63329;color:#fff;border:none;padding:8px 20px;cursor:pointer;font-size:12px">+ เพิ่มสินค้าแรก</button>
+        </div>`;
+      }
+    }
+
+  } catch(e) {
+    console.error('loadDashboard error:', e);
+    const el = document.getElementById('dash-latest-prods');
+    if (el) el.innerHTML = '<div style="color:#E63329;font-size:12px;padding:12px">⚠️ โหลดข้อมูลไม่สำเร็จ: ' + e.message + '</div>';
+  }
 }
 
 // ── Products CRUD ─────────────────────────────────────────
