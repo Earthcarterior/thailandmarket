@@ -643,8 +643,8 @@ nav, .nav {
     <div class="ph">📦 สินค้าทั้งหมด</div>
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
       <button class="btn-p" onclick="goto('add-product',null)">➕ เพิ่มสินค้าใหม่</button>
-      <button class="btn-o">📥 นำเข้า CSV</button>
-      <button class="btn-o">📤 ส่งออก</button>
+      <button class="btn-o" onclick="toast('📥 Import CSV — กรุณาใช้ Export ก่อนเป็น template','info')">📥 นำเข้า CSV</button>
+      <button class="btn-o" onclick="exportCSV()">📤 Export CSV</button>
       <div style="margin-left:auto;display:flex;gap:8px">
         <select id="prod-cat-filter" class="fi" style="width:auto;padding:6px 10px;font-size:11px" onchange="filterProdCat(this.value)">
           <option value="">ทุกหมวดหมู่</option>
@@ -806,7 +806,9 @@ nav, .nav {
       </button>
       <div id="ap-result" style="display:flex;align-items:center;gap:8px;font-size:13px;margin-left:8px"></div>
     </div>
-<div class="page" id="page-categories">
+</div>
+
+  <div class="page" id="page-categories">
     <div class="ph">🗂️ หมวดหมู่สินค้า</div>
     <div class="ps">หมวดหมู่จาก Thailand Market — คลิกเพื่อดูสินค้าในหมวดนั้น</div>
 
@@ -854,7 +856,7 @@ nav, .nav {
 <div class="page" id="page-orders">
     <div class="ph">🛒 จัดการออเดอร์</div>
     <div style="display:flex;gap:10px;margin-bottom:14px">
-      <button class="btn-o">📥 Export CSV</button>
+      <button class="btn-o" onclick="exportOrdersCSV()">📥 Export CSV</button>
       <div style="margin-left:auto"><select class="fi" style="width:auto;padding:7px 10px;font-size:11px"><option>ทุกสถานะ</option><option>รอดำเนินการ</option><option>จัดส่งแล้ว</option><option>สำเร็จ</option></select></div>
     </div>
     <div class="itab-row">
@@ -983,7 +985,7 @@ nav, .nav {
   <div class="page" id="page-messages"><div class="ph">💬 ข้อความจากลูกค้า</div><div class="card"><p style="color:var(--g400);padding:20px;text-align:center;font-size:13px">กำลังพัฒนา — Live Chat</p></div></div>
   <div class="page" id="page-settings"><div class="ph">⚙️ ตั้งค่า</div><div class="card"><p style="color:var(--g400);padding:20px;text-align:center;font-size:13px">กำลังพัฒนา</p></div></div>
 
-  </div>
+  
 </div>
 </div>
 
@@ -1095,6 +1097,9 @@ window.goto = function (view, el) {
     reviews:       () => renderReviewsLive(),
     finance:       () => renderFinanceLive(),
     flash:         () => renderFlashLive(),
+    inventory:     () => renderInventoryLive(),
+    analytics:     () => renderAnalyticsLive(),
+    settings:      () => renderSettingsLive(),
   };
   if (loaders[view]) setTimeout(loaders[view], 80);
 };
@@ -2115,6 +2120,208 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load Supabase data
   setTimeout(() => loadSellerData(), 300);
 });
+
+
+// ── Export / Import Functions ──────────────────────────────────────
+function exportCSV() {
+  if (!_sellerProds.length) { toast('ไม่มีสินค้าที่จะ Export','error'); return; }
+  const headers = ['ชื่อสินค้า','ราคา','สต็อก','ขายแล้ว','หมวดหมู่','สถานะ','SKU'];
+  const rows = _sellerProds.map(p => [
+    '"'+p.name_th.replace(/"/g,'""')+'"',
+    p.price, p.stock_quantity, p.sold_count||0,
+    '"'+(p.categories?.name_th||'')+'"',
+    p.status, '"'+(p.sku||'')+'"'
+  ]);
+  const csv = [headers, ...rows].map(r=>r.join(',')).join(String.fromCharCode(10));
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'products_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  toast('✅ Export CSV สำเร็จ ('+_sellerProds.length+' รายการ)', 'ok');
+}
+
+function exportOrdersCSV() {
+  if (!_sellerOrders.length) { toast('ไม่มีออเดอร์ที่จะ Export','error'); return; }
+  const headers = ['รหัสออเดอร์','ชื่อลูกค้า','ยอดรวม','สถานะ','วันที่'];
+  const rows = _sellerOrders.map(o => [
+    '"'+(o.order_number||o.id.slice(0,8))+'"',
+    '"'+(o.shipping_name||'').replace(/"/g,'""')+'"',
+    o.total_amount||0, o.status,
+    new Date(o.created_at).toLocaleDateString('th-TH')
+  ]);
+  const csv = [headers, ...rows].map(r=>r.join(',')).join(String.fromCharCode(10));
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'orders_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  toast('✅ Export CSV สำเร็จ ('+_sellerOrders.length+' รายการ)', 'ok');
+}
+
+function downloadReport() {
+  const s = _sellerStats;
+  const lines = [
+    'รายงานร้านค้า Thailand Market',
+    'วันที่: ' + new Date().toLocaleDateString('th-TH'),
+    '',
+    '== ยอดขาย ==',
+    'รายได้เดือนนี้: ฿' + (s.monthRevenue||0).toLocaleString(),
+    'รายได้ทั้งหมด: ฿' + (s.totalRevenue||0).toLocaleString(),
+    'ออเดอร์ทั้งหมด: ' + (s.totalOrders||0),
+    '',
+    '== สินค้า ==',
+    'สินค้าทั้งหมด: ' + (s.totalProducts||0),
+    'เปิดขาย: ' + (s.activeProducts||0),
+    'สต็อกต่ำ: ' + (s.lowStock||0),
+    '',
+    '== รีวิว ==',
+    'คะแนนเฉลี่ย: ' + (s.avgRating||'—'),
+    'รีวิวทั้งหมด: ' + (s.totalReviews||0),
+  ];
+  const blob = new Blob([lines.join('\n')], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'report_' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
+  toast('✅ ดาวน์โหลดรายงานแล้ว', 'ok');
+}
+
+async function doLogout() {
+  if (!confirm('ออกจากระบบ?')) return;
+  await _sb.auth.signOut();
+  location.href = 'login.html';
+}
+
+// ── Inventory / Stock management ───────────────────────────────────
+function renderInventoryLive() {
+  const page = document.getElementById('page-inventory');
+  if (!page) return;
+  const lowStock = _sellerProds.filter(p => (p.stock_quantity||0) <= 10 && p.status==='active');
+  const outOfStock = _sellerProds.filter(p => (p.stock_quantity||0) <= 0);
+  const content = page.querySelector('.page-content, .inv-content') || page;
+  content.innerHTML = `
+    <div style="padding:24px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">
+        <div style="background:#FEF3C7;border:1px solid #F59E0B;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#D97706">${lowStock.length}</div>
+          <div style="font-size:12px;color:#92400E">⚠️ สต็อกใกล้หมด (≤10)</div>
+        </div>
+        <div style="background:#FEE2E2;border:1px solid #F87171;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#E63329">${outOfStock.length}</div>
+          <div style="font-size:12px;color:#991B1B">❌ หมดสต็อก</div>
+        </div>
+        <div style="background:#DCFCE7;border:1px solid #86EFAC;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:#16A34A">${(_sellerStats.totalProducts||0) - outOfStock.length}</div>
+          <div style="font-size:12px;color:#166534">✅ มีสินค้า</div>
+        </div>
+      </div>
+      ${lowStock.length ? `
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">สินค้าสต็อกใกล้หมด</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#F9FAFB;border-bottom:2px solid #E5E5E5">
+          <th style="padding:10px;text-align:left;font-size:12px">สินค้า</th>
+          <th style="padding:10px;text-align:right;font-size:12px">สต็อก</th>
+          <th style="padding:10px;text-align:center;font-size:12px">จัดการ</th>
+        </tr></thead>
+        <tbody>${lowStock.map(p=>`
+          <tr style="border-bottom:1px solid #F2F2F2">
+            <td style="padding:10px;font-size:12px">${p.name_th}</td>
+            <td style="padding:10px;text-align:right;font-family:monospace;font-weight:600;color:${(p.stock_quantity||0)<=0?'#E63329':'#D97706'}">${p.stock_quantity||0}</td>
+            <td style="padding:10px;text-align:center"><button onclick="openProductEdit('${p.id}')" style="background:#E63329;color:#fff;border:none;padding:4px 12px;font-size:11px;cursor:pointer">เติมสต็อก</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div style="text-align:center;padding:32px;color:#888">✅ สต็อกสินค้าทุกรายการอยู่ในระดับดี</div>'}
+    </div>`;
+}
+
+// ── Settings ────────────────────────────────────────────────────────
+function renderSettingsLive() {
+  const page = document.getElementById('page-settings');
+  if (!page) return;
+  const content = page.querySelector('.page-content') || page;
+  const session_info = _sellerUserId ? `User ID: ${_sellerUserId.slice(0,8)}...` : '—';
+  content.innerHTML = `
+    <div style="padding:24px;max-width:600px">
+      <div style="margin-bottom:24px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0A0A0A">ข้อมูลบัญชี</div>
+        <div style="font-size:12px;color:#888;margin-bottom:4px">${session_info}</div>
+        <button onclick="doLogout()" style="background:#E63329;color:#fff;border:none;padding:8px 20px;cursor:pointer;font-size:13px;margin-top:10px">🚪 ออกจากระบบ</button>
+      </div>
+      <div style="margin-bottom:24px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0A0A0A">Export ข้อมูล</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button onclick="exportCSV()" style="background:#0A0A0A;color:#fff;border:none;padding:8px 16px;cursor:pointer;font-size:13px">📤 Export สินค้า CSV</button>
+          <button onclick="exportOrdersCSV()" style="background:#0A0A0A;color:#fff;border:none;padding:8px 16px;cursor:pointer;font-size:13px">📤 Export ออเดอร์ CSV</button>
+          <button onclick="downloadReport()" style="background:#0A0A0A;color:#fff;border:none;padding:8px 16px;cursor:pointer;font-size:13px">📊 ดาวน์โหลดรายงาน</button>
+        </div>
+      </div>
+      <div style="margin-bottom:24px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0A0A0A">ลิงก์ร้านค้า</div>
+        <a href="storefront-live.html" target="_blank" style="display:inline-block;background:#F2F2F2;padding:8px 16px;font-size:13px;text-decoration:none;color:#0A0A0A">🌐 ดูหน้าร้านค้าบนเว็บ</a>
+      </div>
+    </div>`;
+}
+
+// ── Analytics page ───────────────────────────────────────────────────
+function renderAnalyticsLive() {
+  const page = document.getElementById('page-analytics');
+  if (!page) return;
+  const s = _sellerStats;
+  const content = page.querySelector('.page-content') || page;
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const label = d.toLocaleDateString('th-TH', {month:'short', year:'2-digit'});
+    const rev = _sellerOrders.filter(o => {
+      const od = new Date(o.created_at);
+      return od.getMonth() === d.getMonth() && od.getFullYear() === d.getFullYear() && !['cancelled'].includes(o.status);
+    }).reduce((sum,o) => sum + (o.total_amount||0), 0);
+    months.push({label, rev});
+  }
+  const maxRev = Math.max(...months.map(m=>m.rev), 1);
+  content.innerHTML = `
+    <div style="padding:24px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px">
+        <div style="border:1px solid #E5E5E5;padding:16px;text-align:center">
+          <div style="font-size:11px;color:#888;margin-bottom:4px">รายได้รวม</div>
+          <div style="font-size:20px;font-weight:700;font-family:monospace">฿${(s.totalRevenue||0).toLocaleString()}</div>
+        </div>
+        <div style="border:1px solid #E5E5E5;padding:16px;text-align:center">
+          <div style="font-size:11px;color:#888;margin-bottom:4px">ออเดอร์ทั้งหมด</div>
+          <div style="font-size:20px;font-weight:700;font-family:monospace">${s.totalOrders||0}</div>
+        </div>
+        <div style="border:1px solid #E5E5E5;padding:16px;text-align:center">
+          <div style="font-size:11px;color:#888;margin-bottom:4px">เฉลี่ย/ออเดอร์</div>
+          <div style="font-size:20px;font-weight:700;font-family:monospace">฿${s.totalOrders ? Math.round((s.totalRevenue||0)/(s.totalOrders||1)).toLocaleString() : 0}</div>
+        </div>
+        <div style="border:1px solid #E5E5E5;padding:16px;text-align:center">
+          <div style="font-size:11px;color:#888;margin-bottom:4px">สินค้าขายดีสุด</div>
+          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_sellerProds.sort((a,b)=>(b.sold_count||0)-(a.sold_count||0))[0]?.name_th||'—'}</div>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:14px">ยอดขาย 6 เดือนล่าสุด</div>
+      <div style="display:flex;align-items:flex-end;gap:12px;height:160px;border-bottom:1px solid #E5E5E5;padding-bottom:8px">
+        ${months.map(m=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="font-size:10px;font-family:monospace;color:#888">฿${m.rev>0?Math.round(m.rev/1000)+'K':0}</div>
+            <div style="background:#E63329;width:100%;height:${Math.round((m.rev/maxRev)*120)}px;min-height:${m.rev>0?4:0}px;transition:height .3s"></div>
+            <div style="font-size:11px;color:#888;white-space:nowrap">${m.label}</div>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:24px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px">สินค้าขายดี Top 5</div>
+        ${[..._sellerProds].sort((a,b)=>(b.sold_count||0)-(a.sold_count||0)).slice(0,5).map((p,i)=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F2F2F2">
+            <span style="font-size:16px;font-weight:700;color:#E63329;width:20px">${i+1}</span>
+            ${p.thumbnail?`<img src="${p.thumbnail}" style="width:36px;height:36px;object-fit:cover">`:''} 
+            <div style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name_th}</div>
+            <div style="font-family:monospace;font-size:12px;font-weight:600">${(p.sold_count||0).toLocaleString()} ชิ้น</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
 
 </script>
 
