@@ -1877,36 +1877,53 @@ let _uploadedImages = [];
 async function loadCategoriesForProduct() {
   const container = document.getElementById('cat-chips-ap');
   if (!container) return;
-
+  
+  container.innerHTML = '<div style="color:var(--g400);font-size:12px;padding:8px 0">⏳ กำลังโหลดหมวดหมู่...</div>';
+  
+  // Fallback categories ถ้า Supabase ยังไม่มีข้อมูล
+  const FALLBACK_CATS = [{"id": "00000000-0000-0000-0000-000000000001", "name_th": "อุปกรณ์อิเล็กทรอนิกส์", "icon": "📱"}, {"id": "00000000-0000-0000-0000-000000000002", "name_th": "อุปกรณ์เสริมอิเล็กทรอนิกส์", "icon": "🔌"}, {"id": "00000000-0000-0000-0000-000000000003", "name_th": "ทีวีและเครื่องใช้ไฟฟ้า", "icon": "📺"}, {"id": "00000000-0000-0000-0000-000000000004", "name_th": "สุขภาพและความงาม", "icon": "💄"}, {"id": "00000000-0000-0000-0000-000000000005", "name_th": "แม่และเด็ก / ของเล่น", "icon": "🍼"}, {"id": "00000000-0000-0000-0000-000000000006", "name_th": "ของชำและสัตว์เลี้ยง", "icon": "🛒"}, {"id": "00000000-0000-0000-0000-000000000007", "name_th": "บ้านและไลฟ์สไตล์", "icon": "🏠"}, {"id": "00000000-0000-0000-0000-000000000008", "name_th": "แฟชั่นผู้หญิง", "icon": "👗"}, {"id": "00000000-0000-0000-0000-000000000009", "name_th": "แฟชั่นผู้ชาย", "icon": "👔"}, {"id": "00000000-0000-0000-0000-000000000010", "name_th": "แฟชั่นเด็ก", "icon": "👧"}, {"id": "00000000-0000-0000-0000-000000000011", "name_th": "กีฬาและการเดินทาง", "icon": "🏋️"}, {"id": "00000000-0000-0000-0000-000000000012", "name_th": "ยานยนต์", "icon": "🚗"}];
+  
   try {
-    // ดึง parent categories เท่านั้น (ไม่ใช่ sub-categories)
-    const { data: cats, error } = await _sbSeller
+    const sb = window._sb || _sbSeller;
+    const { data: cats, error } = await sb
       .from('categories')
-      .select('id, name_th, name_en, icon, sort_order, parent_id')
+      .select('id, name_th, icon, parent_id, sort_order')
       .eq('is_active', true)
       .is('parent_id', null)
       .order('sort_order');
-
-    if (error) throw error;
-    _dbCats = cats || [];
-
-    // render chips
-    container.innerHTML = _dbCats.map((c, i) => `
-      <div class="cat-chip ${i === 0 ? 'active-chip' : ''}"
-           onclick="selectCatChipAP(this, '${c.id}')"
-           data-id="${c.id}">
-        <div style="font-size:18px;margin-bottom:4px">${c.icon || '📦'}</div>
-        <div style="font-size:11px">${c.name_th}</div>
-      </div>
-    `).join('');
-
-    // set default
-    if (_dbCats.length > 0) {
-      _selectedCatId = _dbCats[0].id;
-      document.getElementById('ap-cat-id').value = _selectedCatId;
+    
+    // ถ้า error หรือไม่มีข้อมูล → ใช้ fallback
+    _dbCats = (cats && cats.length > 0) ? cats : FALLBACK_CATS;
+    
+    if (error) {
+      console.warn('Categories from DB failed, using fallback:', error.message);
     }
+    
   } catch(e) {
-    container.innerHTML = `<div style="color:var(--red);font-size:12px">❌ โหลดหมวดหมู่ไม่ได้: ${e.message}</div>`;
+    console.warn('Categories fetch error, using fallback:', e.message);
+    _dbCats = FALLBACK_CATS;
+  }
+  
+  // Render chips เสมอ (จาก DB หรือ fallback)
+  container.innerHTML = _dbCats.map((c, i) => {
+    const isFirst = i === 0;
+    const icon = c.icon || '📦';
+    const name = c.name_th || c.name_en || 'หมวดหมู่';
+    const id   = c.id;
+    return '<div class="cat-chip ' + (isFirst ? 'active-chip' : '') + '" ' +
+           'onclick="selectCatChipAP(this, \'' + id + '\')" ' +
+           'data-id="' + id + '" ' +
+           'style="text-align:center;padding:10px 14px;border:var(--border);cursor:pointer;transition:all .15s">' +
+             '<div style="font-size:20px;margin-bottom:4px">' + icon + '</div>' +
+             '<div style="font-size:11px;font-weight:500">' + name + '</div>' +
+           '</div>';
+  }).join('');
+  
+  // Set default selection
+  if (_dbCats.length > 0) {
+    _selectedCatId = _dbCats[0].id;
+    const catIdEl = document.getElementById('ap-cat-id');
+    if (catIdEl) catIdEl.value = _selectedCatId;
   }
 }
 
