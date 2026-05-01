@@ -111,12 +111,7 @@ input,select,textarea{font-family:var(--font)}
 .dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
 
 /* ── SELLER PORTAL LAYOUT ── */
-.seller-wrap{
-  display:flex;
-  height:calc(100vh - var(--nav-h));
-  overflow:hidden;
-  position:relative;
-}
+
 
 /* ── SELLER SIDEBAR ── */
 .sb{
@@ -139,31 +134,10 @@ input,select,textarea{font-family:var(--font)}
 .sb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15)}
 
 /* ── SELLER MAIN ── */
-.main{
-  flex:1;
-  min-width:0;
-  height:calc(100vh - var(--nav-h));
-  overflow-y:auto;
-  overflow-x:hidden;
-  display:flex;
-  flex-direction:column;
-}
+
 
 /* ── TOPBAR ── */
-.topbar{
-  background:var(--white);
-  border-bottom:var(--border);
-  height:52px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 20px;
-  position:sticky;
-  top:0;
-  z-index:50;
-  flex-shrink:0;
-  box-shadow:none;
-}
+
 
 /* ── SELLER CSS ── */
 
@@ -183,10 +157,10 @@ input,select,textarea{font-family:var(--font)}
 
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
-  .seller-wrap{height:auto;flex-direction:column;overflow:visible}
+  
   .sb{width:100%;min-width:0;max-width:100%;height:auto;position:relative;top:0;overflow-x:auto;overflow-y:visible;flex-direction:row;flex-wrap:wrap}
-  .main{height:auto;overflow:visible}
-  .topbar{position:relative;top:0}
+  
+  
   :root{--nav-h:0px}
 }
 
@@ -326,6 +300,83 @@ table tr:hover td{background:var(--g50)}
 .ct{color:var(--g500);font-size:11px}
 .nav-btn-lbl{font-size:9px}
 .tm-toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+
+/* ── MAIN AREA CSS ── */
+
+.content{
+  padding:20px 24px;
+  flex:1;
+  min-width:0;
+}
+
+
+/* ════════════════════════════════════════════════════════
+   SELLER PORTAL — LAYOUT (Clean Override)
+════════════════════════════════════════════════════════ */
+.seller-wrap {
+  display: flex !important;
+  width: 100% !important;
+  min-height: calc(100vh - var(--nav-h)) !important;
+  overflow: hidden !important;
+  background: var(--g50) !important;
+}
+.seller-wrap > .sb {
+  width: var(--sidebar) !important;
+  min-width: var(--sidebar) !important;
+  max-width: var(--sidebar) !important;
+  flex-shrink: 0 !important;
+  background: var(--black) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: calc(100vh - var(--nav-h)) !important;
+  overflow-y: auto !important;
+  position: sticky !important;
+  top: var(--nav-h) !important;
+  align-self: flex-start !important;
+}
+.seller-wrap > .main {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: calc(100vh - var(--nav-h)) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+.topbar {
+  background: var(--white) !important;
+  border-bottom: var(--border) !important;
+  height: 52px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 20px !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  flex-shrink: 0 !important;
+}
+/* Pages */
+.page {
+  display: none !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+.page.active {
+  display: flex !important;
+}
+.content {
+  padding: 20px 24px !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
+}
+/* Responsive */
+@media (max-width: 900px) {
+  .seller-wrap { flex-direction: column !important; height: auto !important; overflow: visible !important; }
+  .seller-wrap > .sb { width: 100% !important; max-width: 100% !important; min-width: 0 !important; height: auto !important; position: relative !important; top: 0 !important; }
+  .seller-wrap > .main { height: auto !important; overflow: visible !important; }
+}
 </style>
 </head>
 <body>
@@ -401,8 +452,6 @@ table tr:hover td{background:var(--g50)}
   </div></nav>
 
 <div class="seller-wrap">
-<!-- ── SELLER PORTAL ── -->
-<div class="seller-wrap">
 <div class="sb">
   <div class="sb-logo">
     <div class="sb-logo-row">
@@ -445,6 +494,7 @@ table tr:hover td{background:var(--g50)}
   </div>
 
 
+</div><!-- /sb -->
 <div class="main">
   <div class="topbar">
     <div class="tb-title" id="tb-title">📊 Dashboard</div>
@@ -898,7 +948,6 @@ function renderAnalytics(){
 
 function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='ti';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
 
-renderDashboard();
 </script>
 
 
@@ -1618,7 +1667,16 @@ function renderProdsLive() {
 // ── INIT ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   fixNavHeight();
-  setTimeout(loadSellerData, 300);
+  
+  // ตั้ง page-dashboard active ทันที
+  const dashPage = document.getElementById('page-dashboard');
+  if (dashPage) dashPage.classList.add('active');
+  
+  // render static dashboard ก่อน (ข้อมูล mock)
+  if (typeof renderDashboard === 'function') renderDashboard();
+  
+  // โหลดข้อมูลจริงจาก Supabase
+  setTimeout(loadSellerData, 500);
 });
 </script>
 </body>
