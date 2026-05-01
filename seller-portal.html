@@ -195,6 +195,10 @@ input,select,textarea{font-family:var(--font)}
 .toast{background:var(--black);color:#fff;padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:240px;border-left:3px solid var(--red);animation:tIn .2s ease;pointer-events:all}
 .toast.ok{border-left-color:var(--green)}
 @keyframes tIn{from{transform:translateX(8px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── SELLER PORTAL PAGES ── */
+.page { display:none; flex-direction:column; flex:1; }
+.page.active { display:flex; }
 </style>
 </head>
 <body>
@@ -271,7 +275,7 @@ input,select,textarea{font-family:var(--font)}
 
 <div class="seller-wrap">
 <!-- ── SELLER PORTAL ── -->
-<div class="seller-layout">
+<div class="seller-wrap">
 <div class="sb">
   <div class="sb-logo">
     <div class="sb-logo-row">
