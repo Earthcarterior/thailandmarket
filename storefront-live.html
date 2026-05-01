@@ -393,6 +393,44 @@ footer{background:var(--black);padding:32px 24px;margin-top:60px;border-top:var(
   flex-shrink:0;
 }
 
+
+/* ── Wishlist Heart Button ── */
+.prod-wish{
+  position:absolute;top:8px;right:8px;
+  width:30px;height:30px;
+  background:rgba(255,255,255,.9);
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:all .2s;
+  z-index:2;
+}
+.prod-wish:hover{background:#fff;transform:scale(1.1)}
+.prod-wish.on{
+  color:var(--red);
+  background:#FFF0F0;
+  font-size:18px;
+}
+.prod-wish.on::after{
+  content:'';
+}
+.prod-wish.loading{opacity:.5;pointer-events:none}
+
+
+/* ── Wish button animation ── */
+.prod-wish {
+  transition: all .2s cubic-bezier(.175,.885,.32,1.275) !important;
+}
+.prod-wish.on {
+  color: #E63329 !important;
+  background: #FFF0F0 !important;
+  animation: wishPop .3s ease;
+}
+@keyframes wishPop {
+  0%   { transform: scale(1) }
+  50%  { transform: scale(1.4) }
+  100% { transform: scale(1) }
+}
+
 </style>
 </head>
 <body>
@@ -1033,7 +1071,7 @@ function renderGrid(data) {
       <div class="prod-img">
         ${thumb?`<img src="${thumb}" alt="" loading="lazy" onerror="this.style.display='none'">`:`<span style="font-size:60px">📦</span>`}
         ${badges.join('')}
-        <div class="prod-wish" onclick="event.stopPropagation();toast('❤️ บันทึกแล้ว',true)">♡</div>
+        <button class="prod-wish" id="wish-${p.id}" onclick="event.stopPropagation();toggleWish('${p.id}',this)" title="บันทึกสินค้า">♡</button>
       </div>
       <div class="prod-info">
         <div class="prod-cat">${p.categories?.name_th||''}</div>
@@ -1059,6 +1097,16 @@ function renderGrid(data) {
       </div>
     </div>`;
   }).join('');
+}
+
+// เรียก refreshWishButtons หลัง render เสร็จ
+function onAfterRender() {
+  if (_wishLoaded) {
+    refreshWishButtons();
+  } else {
+    // ถ้า wish ยังไม่โหลด ให้โหลดใหม่
+    if (_sb) loadUserWishlist();
+  }
 }
 
 function renderList(data) {
@@ -1168,6 +1216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadCats(), loadBrands()]);
   await loadProds();
   updateActiveTags();
+  loadUserWishlist(); // โหลด wishlist ของ user
 });
 </script>
 
@@ -1257,6 +1306,134 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 })();
+
+// ════════════════════════════════════════════════════════
+//  WISHLIST FUNCTIONS — Supabase Real
+// ════════════════════════════════════════════════════════
+// ── Supabase Init (storefront-live) ──────────────────────────
+let _sb;
+if (window._sb) {
+  _sb = window._sb;
+} else if (window.supabase) {
+  _sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
+  window._sb = _sb;
+} else {
+  // fallback: load SDK then init
+  const _sbScript = document.createElement('script');
+  _sbScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+  _sbScript.onload = () => {
+    _sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
+    window._sb = _sb;
+    loadUserWishlist();
+  };
+  document.head.appendChild(_sbScript);
+  _sb = null;
+}
+let _wishSet = new Set(); // Set ของ product_id ที่ user wish ไว้แล้ว
+let _userId = null;
+let _wishLoaded = false;
+
+// ── โหลด wishlist ของ user ปัจจุบัน ─────────────────────
+async function loadUserWishlist() {
+  if (!_sb) return;
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return; // ยังไม่ login — ข้าม
+
+    const email = session.user.email;
+    // ดึง user id
+    const { data: user } = await _sb.from('users').select('id').eq('email', email).maybeSingle();
+    if (!user) return;
+    _userId = user.id;
+
+    // ดึง wishlist ทั้งหมดของ user
+    const { data: wishes } = await _sb.from('wishlist').select('product_id').eq('user_id', _userId);
+    _wishSet = new Set((wishes || []).map(w => w.product_id));
+    _wishLoaded = true;
+
+    // อัปเดต UI ของปุ่มที่แสดงอยู่
+    refreshWishButtons();
+  } catch(e) {
+    console.log('loadUserWishlist error:', e.message);
+  }
+}
+
+// ── อัปเดตสี ❤ บนหน้า ─────────────────────────────────
+function refreshWishButtons() {
+  document.querySelectorAll('.prod-wish[id^="wish-"]').forEach(btn => {
+    const productId = btn.id.replace('wish-', '');
+    if (_wishSet.has(productId)) {
+      btn.textContent = '❤️';
+      btn.classList.add('on');
+      btn.title = 'บันทึกแล้ว';
+    } else {
+      btn.textContent = '♡';
+      btn.classList.remove('on');
+      btn.title = 'บันทึกสินค้า';
+    }
+  });
+}
+
+// ── Toggle Wishlist ──────────────────────────────────────
+async function toggleWish(productId, btn) {
+  if (!_sb) return;
+
+  // ตรวจ login
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    // ยังไม่ login → redirect
+    toast('🔐 กรุณาเข้าสู่ระบบก่อน');
+    setTimeout(() => location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search), 1200);
+    return;
+  }
+
+  // โหลด userId ถ้ายังไม่มี
+  if (!_userId) {
+    const { data: user } = await _sb.from('users').select('id').eq('email', session.user.email).maybeSingle();
+    if (!user) return;
+    _userId = user.id;
+  }
+
+  const isWished = _wishSet.has(productId);
+
+  // Loading state
+  btn.classList.add('loading');
+
+  try {
+    if (isWished) {
+      // ลบออกจาก wishlist
+      await _sb.from('wishlist').delete()
+        .eq('user_id', _userId)
+        .eq('product_id', productId);
+      _wishSet.delete(productId);
+      btn.textContent = '♡';
+      btn.classList.remove('on');
+      btn.title = 'บันทึกสินค้า';
+      btn.style.transform = 'scale(0.8)';
+      setTimeout(()=>btn.style.transform='', 300);
+      toast('💔 ลบออกจาก Wishlist แล้ว');
+    } else {
+      // เพิ่มเข้า wishlist
+      await _sb.from('wishlist').upsert({
+        user_id: _userId,
+        product_id: productId,
+        created_at: new Date().toISOString()
+      }, { onConflict: 'user_id,product_id' });
+      _wishSet.add(productId);
+      btn.textContent = '❤️';
+      btn.classList.add('on');
+      btn.title = 'บันทึกแล้ว';
+      btn.style.transform = 'scale(1.3)';
+      setTimeout(()=>btn.style.transform='', 300);
+      toast('❤️ บันทึกใน Wishlist แล้ว!', true);
+    }
+  } catch(e) {
+    toast('❌ เกิดข้อผิดพลาด: ' + e.message);
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
 </script>
 </body>
 </html
