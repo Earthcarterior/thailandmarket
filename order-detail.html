@@ -188,6 +188,38 @@ tbody tr:hover td{background:var(--g50)}tbody tr:last-child td{border-bottom:non
 .toast{background:var(--black);color:#fff;padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:240px;border-left:3px solid var(--red);animation:tIn .2s ease;pointer-events:all}
 .toast.ok{border-left-color:#16A34A}
 
+
+/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
+.ann {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  flex-direction: row !important;
+}
+nav, .nav {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+body > .ann, body > nav {
+  position: relative !important;
+}
+
+
+/* ── GLOBAL NAV FIX ── */
+body { display: block !important; }
+.ann {
+  width: 100% !important; min-width: 100% !important;
+  height: auto !important; max-height: 60px !important;
+  display: flex !important; flex-direction: row !important;
+  flex-shrink: 0 !important;
+}
+nav, .nav { 
+  width: 100% !important; display: block !important;
+  height: auto !important; flex-shrink: 0 !important;
+}
+
 </style>
 
 <style id="tm-responsive">
@@ -284,7 +316,7 @@ img{max-width:100%;height:auto}
     <div class="nav-acts">
       <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
       <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
-      <button class="nav-btn" onclick="location.href='checkout.html'" style="position:relative">
+      <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
         <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
       </button>
       <div style="position:relative">
@@ -419,6 +451,108 @@ img{max-width:100%;height:auto}
     location.href='index.html';
   });
 })();
+
+
+<script>
+const _sbOD = window._sb || (window._sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'));
+
+const ST_MAP   = {pending:'รอยืนยัน',confirmed:'ยืนยันแล้ว',processing:'กำลังเตรียม',shipped:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก'};
+const ST_COLOR = {pending:'#D97706',confirmed:'#2563EB',processing:'#7C3AED',shipped:'#0891B2',delivered:'#16A34A',cancelled:'#737373'};
+
+async function loadOrderDetail() {
+  const params = new URLSearchParams(location.search);
+  const orderId = params.get('id') || params.get('order');
+  if (!orderId) { showError('ไม่พบ ID ออเดอร์'); return; }
+
+  const { data:{ session } } = await _sbOD.auth.getSession();
+  if (!session) { location.href = 'login.html?from=order-detail.html'; return; }
+
+  const { data: order, error } = await _sbOD
+    .from('orders')
+    .select('*,order_items(*)')
+    .or(`id.eq.${orderId},order_number.eq.${orderId}`)
+    .maybeSingle();
+
+  if (error || !order) { showError('ไม่พบออเดอร์นี้'); return; }
+
+  const main = document.querySelector('main, .main-content, .container, #order-detail, [class*="order-detail"]');
+  if (!main) return;
+
+  const statusColor = ST_COLOR[order.status] || '#737373';
+  const statusText  = ST_MAP[order.status]   || order.status;
+  const items       = order.order_items || [];
+  const total       = Number(order.total_amount);
+
+  main.innerHTML = `
+    <div style="max-width:700px;margin:24px auto;padding:0 16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <a href="order-history.html" style="color:var(--g500,#737373);font-size:13px;text-decoration:none">← ย้อนกลับ</a>
+        <h1 style="font-size:20px;font-weight:700;margin:0">รายละเอียดออเดอร์</h1>
+      </div>
+      
+      <div style="background:#fff;border:1px solid #E5E5E5;margin-bottom:12px;padding:20px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-family:monospace;font-size:13px;color:#737373;margin-bottom:4px">ออเดอร์</div>
+            <div style="font-size:18px;font-weight:700">${order.order_number}</div>
+            <div style="font-size:12px;color:#737373;margin-top:4px">${new Date(order.created_at).toLocaleString('th-TH')}</div>
+          </div>
+          <span style="background:${statusColor}20;color:${statusColor};padding:6px 16px;font-size:12px;font-family:monospace">${statusText}</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #E5E5E5;margin-bottom:12px;padding:20px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:#737373;text-transform:uppercase;letter-spacing:.06em">สินค้าที่สั่ง</div>
+        ${items.map(item => `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F2F2F2">
+            <div style="width:56px;height:56px;background:#F2F2F2;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
+              ${item.thumbnail ? `<img src="${item.thumbnail}" style="width:100%;height:100%;object-fit:cover">` : '📦'}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.name_th}</div>
+              <div style="font-size:12px;color:#737373;margin-top:2px">฿${Number(item.price).toLocaleString()} × ${item.qty||1}</div>
+            </div>
+            <div style="font-family:monospace;font-size:14px;font-weight:600">฿${Number(item.subtotal||item.price*(item.qty||1)).toLocaleString()}</div>
+          </div>
+        `).join('')}
+        <div style="display:flex;justify-content:space-between;padding-top:12px;font-size:15px;font-weight:700">
+          <span>รวมทั้งหมด</span>
+          <span>฿${total.toLocaleString()}</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #E5E5E5;margin-bottom:12px;padding:20px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:#737373;text-transform:uppercase;letter-spacing:.06em">ที่อยู่จัดส่ง</div>
+        <div style="font-size:14px;font-weight:500">${order.shipping_name || '-'}</div>
+        <div style="font-size:13px;color:#737373;margin-top:4px">${order.shipping_phone || ''}</div>
+        <div style="font-size:13px;color:#737373;margin-top:4px">${order.shipping_addr || ''}</div>
+      </div>
+
+      ${order.status === 'shipped' || order.status === 'delivered' ? `
+      <a href="tracking.html?order=${order.order_number}" 
+         style="display:block;text-align:center;padding:14px;background:#0A0A0A;color:#fff;font-weight:600;text-decoration:none;margin-bottom:12px">
+        📍 ติดตามพัสดุ
+      </a>` : ''}
+      ${order.status === 'delivered' ? `
+      <a href="review-write.html?order=${order.id}" 
+         style="display:block;text-align:center;padding:14px;border:1px solid #0A0A0A;color:#0A0A0A;font-weight:600;text-decoration:none">
+        ⭐ เขียนรีวิวสินค้า
+      </a>` : ''}
+    </div>
+  `;
+}
+
+function showError(msg) {
+  const main = document.querySelector('main, .main-content, .container, [class*="order-detail"]');
+  if (main) main.innerHTML = `<div style="text-align:center;padding:60px;color:#737373">
+    <div style="font-size:40px;margin-bottom:12px">📦</div>
+    <div style="font-size:16px;font-weight:500">${msg}</div>
+    <a href="order-history.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#0A0A0A;color:#fff;text-decoration:none">ดูประวัติออเดอร์</a>
+  </div>`;
+}
+
+document.addEventListener('DOMContentLoaded', loadOrderDetail);
+</script>
 
 </body>
 </html>

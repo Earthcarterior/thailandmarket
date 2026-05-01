@@ -445,6 +445,21 @@ table tr:hover td{background:var(--g50)}
 .cat-prod-price { font-family: var(--mono); font-size: 13px; font-weight: 600; }
 .cat-prod-stock { font-size: 11px; color: var(--g400); margin-top: 2px; }
 
+
+/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
+.ann {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  flex-direction: row !important;
+}
+nav, .nav {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
 </style>
 </head>
 <body>
@@ -960,7 +975,7 @@ table tr:hover td{background:var(--g50)}
 
 <div class="toast-wrap" id="tw"></div>
 <script>
-const CATS=[
+var CATS=[
   {icon:'🏠',name:'Home & Furniture',color:'#7F77DD',prods:24,sold:890,revenue:4820000},
   {icon:'👗',name:'แฟชั่น',color:'#D4537E',prods:52,sold:2340,revenue:3200000},
   {icon:'💄',name:'Beauty & Health',color:'#E63329',prods:38,sold:1890,revenue:1850000},
@@ -970,7 +985,7 @@ const CATS=[
   {icon:'🐾',name:'สัตว์เลี้ยง',color:'#404040',prods:18,sold:678,revenue:420000},
   {icon:'📚',name:'การศึกษา',color:'#639922',prods:8,sold:234,revenue:180000},
 ];
-const PRODS=[
+var PRODS=[
   {icon:'📺',name:'ทีวี Samsung 55" 4K QLED',cat:'Tech & Gadgets',price:12900,stock:18,sold:342,status:'วางขาย'},
   {icon:'🛋️',name:'โซฟา L-shape Nordic',cat:'Home & Furniture',price:8900,stock:24,sold:156,status:'วางขาย'},
   {icon:'👗',name:'เสื้อยืด Oversize Premium',cat:'แฟชั่น',price:199,stock:0,sold:890,status:'หมด'},
@@ -980,27 +995,27 @@ const PRODS=[
   {icon:'📱',name:'iPhone 16 Pro 256GB',cat:'Tech & Gadgets',price:42900,stock:5,sold:89,status:'หยุดขาย'},
   {icon:'🌿',name:'ต้นไม้ Monstera',cat:'Home & Furniture',price:350,stock:80,sold:234,status:'วางขาย'},
 ];
-const ORDERS=[
+var ORDERS=[
   {code:'#ZM-48271',icon:'📺',prod:'ทีวี Samsung 55"',cust:'สมชาย ใจดี',amt:'฿12,900',pay:'บัตรเครดิต',status:'รอจัดส่ง',sc:'b-am'},
   {code:'#ZM-48270',icon:'👗',prod:'เสื้อยืด Oversize',cust:'สุภาพร รักงาน',amt:'฿199',pay:'QR PromptPay',status:'สำเร็จ',sc:'b-gn'},
   {code:'#ZM-48269',icon:'💄',prod:'Serum Vitamin C',cust:'นภา สดใส',amt:'฿349',pay:'บัตรเครดิต',status:'จัดส่งแล้ว',sc:'b-bl'},
   {code:'#ZM-48268',icon:'🔧',prod:'สว่าน Bosch 18V',cust:'วิชัย มั่นคง',amt:'฿3,290',pay:'ผ่อน 0%',status:'สำเร็จ',sc:'b-gn'},
   {code:'#ZM-48267',icon:'🐱',prod:'อาหารแมว Royal',cust:'ประยุทธ์ ใจเย็น',amt:'฿485',pay:'QR PromptPay',status:'ยกเลิก',sc:'b-rd'},
 ];
-const REVIEWS=[
+var REVIEWS=[
   {user:'สมหมาย ก.',prod:'โซฟา L-shape',stars:5,text:'สวยมาก ประกอบง่าย ส่งเร็ว แพ็คดีมาก แนะนำมากครับ!',time:'1 ชม.',replied:false},
   {user:'นุช พ.',prod:'Serum Vitamin C',stars:5,text:'ผิวดีขึ้นเห็นได้ชัดหลังใช้ 2 สัปดาห์ ของแท้แน่นอน',time:'3 ชม.',replied:true},
   {user:'อดิศร บ.',prod:'สว่าน Bosch',stars:4,text:'สินค้าดีแต่ส่งช้านิดหน่อย โดยรวมพอใจครับ',time:'1 วัน',replied:false},
   {user:'กนกวรรณ ท.',prod:'อาหารแมว',stars:5,text:'แมวชอบมาก กินหมดเร็วมาก จะสั่งซ้ำแน่นอน',time:'2 วัน',replied:true},
 ];
-const NOTIFS=[
+var NOTIFS=[
   {icon:'📦',bg:'#FFF3EE',title:'ออเดอร์ใหม่ #ZM-48271',desc:'สมชาย ใจดี สั่ง ทีวี Samsung ฿12,900',time:'5 นาที',unread:true},
   {icon:'⭐',bg:'#FEF3C7',title:'รีวิวใหม่',desc:'สมหมาย ก. ให้ 5 ดาว โซฟา L-shape',time:'1 ชม.',unread:true},
   {icon:'💰',bg:'#DCFCE7',title:'โอนเงินเข้าบัญชีแล้ว',desc:'฿200,320 เข้า KBank •••4521',time:'เมื่อวาน',unread:false},
   {icon:'⚠️',bg:'#FEE2E2',title:'สต็อกใกล้หมด',desc:'Serum Vitamin C เหลือ 7 ชิ้น',time:'เมื่อวาน',unread:false},
 ];
 
-const PAGE_TITLES={dashboard:'📊 Dashboard',analytics:'📈 วิเคราะห์ยอดขาย',products:'📦 สินค้าทั้งหมด','add-product':'➕ เพิ่มสินค้าใหม่',categories:'🗂️ หมวดหมู่',inventory:'🏭 จัดการสต็อก',orders:'🛒 ออเดอร์',flash:'⚡ Flash Sale',promotions:'🏷️ โปรโมชัน',shipping:'🚚 การจัดส่ง',finance:'💰 รายได้',reviews:'⭐ รีวิว',customers:'👥 ลูกค้า',messages:'💬 ข้อความ',shop:'🏪 โปรไฟล์ร้าน',notifications:'🔔 การแจ้งเตือน',settings:'⚙️ ตั้งค่า'};
+var PAGE_TITLES={dashboard:'📊 Dashboard',analytics:'📈 วิเคราะห์ยอดขาย',products:'📦 สินค้าทั้งหมด','add-product':'➕ เพิ่มสินค้าใหม่',categories:'🗂️ หมวดหมู่',inventory:'🏭 จัดการสต็อก',orders:'🛒 ออเดอร์',flash:'⚡ Flash Sale',promotions:'🏷️ โปรโมชัน',shipping:'🚚 การจัดส่ง',finance:'💰 รายได้',reviews:'⭐ รีวิว',customers:'👥 ลูกค้า',messages:'💬 ข้อความ',shop:'🏪 โปรไฟล์ร้าน',notifications:'🔔 การแจ้งเตือน',settings:'⚙️ ตั้งค่า'};
 
 function goto(id,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1421,47 +1436,7 @@ window._sb = _sbSeller;
 })();
 
 
-const CATS=[
-  {icon:'🏠',name:'Home & Furniture',color:'#7F77DD',prods:24,sold:890,revenue:4820000},
-  {icon:'👗',name:'แฟชั่น',color:'#D4537E',prods:52,sold:2340,revenue:3200000},
-  {icon:'💄',name:'Beauty & Health',color:'#E63329',prods:38,sold:1890,revenue:1850000},
-  {icon:'🛒',name:'FMCG & อาหาร',color:'#D4D4D4',prods:60,sold:5600,revenue:980000},
-  {icon:'💻',name:'Tech & Gadgets',color:'#378ADD',prods:15,sold:342,revenue:2100000},
-  {icon:'🚗',name:'ยานยนต์',color:'#888780',prods:12,sold:89,revenue:560000},
-  {icon:'🐾',name:'สัตว์เลี้ยง',color:'#404040',prods:18,sold:678,revenue:420000},
-  {icon:'📚',name:'การศึกษา',color:'#639922',prods:8,sold:234,revenue:180000},
-];
-const PRODS=[
-  {icon:'📺',name:'ทีวี Samsung 55" 4K QLED',cat:'Tech & Gadgets',price:12900,stock:18,sold:342,status:'วางขาย'},
-  {icon:'🛋️',name:'โซฟา L-shape Nordic',cat:'Home & Furniture',price:8900,stock:24,sold:156,status:'วางขาย'},
-  {icon:'👗',name:'เสื้อยืด Oversize Premium',cat:'แฟชั่น',price:199,stock:0,sold:890,status:'หมด'},
-  {icon:'💄',name:'Serum Vitamin C 30ml',cat:'Beauty & Health',price:349,stock:7,sold:234,status:'วางขาย'},
-  {icon:'🔧',name:'สว่าน Bosch 18V',cat:'Home & Furniture',price:3290,stock:45,sold:128,status:'วางขาย'},
-  {icon:'🐱',name:'อาหารแมว Royal Canin',cat:'สัตว์เลี้ยง',price:485,stock:55,sold:678,status:'วางขาย'},
-  {icon:'📱',name:'iPhone 16 Pro 256GB',cat:'Tech & Gadgets',price:42900,stock:5,sold:89,status:'หยุดขาย'},
-  {icon:'🌿',name:'ต้นไม้ Monstera',cat:'Home & Furniture',price:350,stock:80,sold:234,status:'วางขาย'},
-];
-const ORDERS=[
-  {code:'#ZM-48271',icon:'📺',prod:'ทีวี Samsung 55"',cust:'สมชาย ใจดี',amt:'฿12,900',pay:'บัตรเครดิต',status:'รอจัดส่ง',sc:'b-am'},
-  {code:'#ZM-48270',icon:'👗',prod:'เสื้อยืด Oversize',cust:'สุภาพร รักงาน',amt:'฿199',pay:'QR PromptPay',status:'สำเร็จ',sc:'b-gn'},
-  {code:'#ZM-48269',icon:'💄',prod:'Serum Vitamin C',cust:'นภา สดใส',amt:'฿349',pay:'บัตรเครดิต',status:'จัดส่งแล้ว',sc:'b-bl'},
-  {code:'#ZM-48268',icon:'🔧',prod:'สว่าน Bosch 18V',cust:'วิชัย มั่นคง',amt:'฿3,290',pay:'ผ่อน 0%',status:'สำเร็จ',sc:'b-gn'},
-  {code:'#ZM-48267',icon:'🐱',prod:'อาหารแมว Royal',cust:'ประยุทธ์ ใจเย็น',amt:'฿485',pay:'QR PromptPay',status:'ยกเลิก',sc:'b-rd'},
-];
-const REVIEWS=[
-  {user:'สมหมาย ก.',prod:'โซฟา L-shape',stars:5,text:'สวยมาก ประกอบง่าย ส่งเร็ว แพ็คดีมาก แนะนำมากครับ!',time:'1 ชม.',replied:false},
-  {user:'นุช พ.',prod:'Serum Vitamin C',stars:5,text:'ผิวดีขึ้นเห็นได้ชัดหลังใช้ 2 สัปดาห์ ของแท้แน่นอน',time:'3 ชม.',replied:true},
-  {user:'อดิศร บ.',prod:'สว่าน Bosch',stars:4,text:'สินค้าดีแต่ส่งช้านิดหน่อย โดยรวมพอใจครับ',time:'1 วัน',replied:false},
-  {user:'กนกวรรณ ท.',prod:'อาหารแมว',stars:5,text:'แมวชอบมาก กินหมดเร็วมาก จะสั่งซ้ำแน่นอน',time:'2 วัน',replied:true},
-];
-const NOTIFS=[
-  {icon:'📦',bg:'#FFF3EE',title:'ออเดอร์ใหม่ #ZM-48271',desc:'สมชาย ใจดี สั่ง ทีวี Samsung ฿12,900',time:'5 นาที',unread:true},
-  {icon:'⭐',bg:'#FEF3C7',title:'รีวิวใหม่',desc:'สมหมาย ก. ให้ 5 ดาว โซฟา L-shape',time:'1 ชม.',unread:true},
-  {icon:'💰',bg:'#DCFCE7',title:'โอนเงินเข้าบัญชีแล้ว',desc:'฿200,320 เข้า KBank •••4521',time:'เมื่อวาน',unread:false},
-  {icon:'⚠️',bg:'#FEE2E2',title:'สต็อกใกล้หมด',desc:'Serum Vitamin C เหลือ 7 ชิ้น',time:'เมื่อวาน',unread:false},
-];
 
-const PAGE_TITLES={dashboard:'📊 Dashboard',analytics:'📈 วิเคราะห์ยอดขาย',products:'📦 สินค้าทั้งหมด','add-product':'➕ เพิ่มสินค้าใหม่',categories:'🗂️ หมวดหมู่',inventory:'🏭 จัดการสต็อก',orders:'🛒 ออเดอร์',flash:'⚡ Flash Sale',promotions:'🏷️ โปรโมชัน',shipping:'🚚 การจัดส่ง',finance:'💰 รายได้',reviews:'⭐ รีวิว',customers:'👥 ลูกค้า',messages:'💬 ข้อความ',shop:'🏪 โปรไฟล์ร้าน',notifications:'🔔 การแจ้งเตือน',settings:'⚙️ ตั้งค่า'};
 
 function goto(id,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1774,21 +1749,68 @@ function updateDashboardStats() {
 
 function renderDashboardLive() {
   const s = _sellerStats;
-  const stColor={pending:'#D97706',confirmed:'#2563EB',processing:'#7C3AED',shipped:'#0891B2',delivered:'#16A34A',cancelled:'#737373'};
-  const stMap={pending:'รอยืนยัน',confirmed:'ยืนยันแล้ว',processing:'กำลังเตรียม',shipped:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก'};
+  const stColor = {
+    pending:'#D97706', confirmed:'#2563EB', processing:'#7C3AED',
+    shipped:'#0891B2', delivered:'#16A34A', cancelled:'#737373', returned:'#737373'
+  };
+  const stMap = {
+    pending:'รอยืนยัน', confirmed:'ยืนยันแล้ว', processing:'กำลังเตรียม',
+    shipped:'กำลังส่ง', delivered:'สำเร็จ', cancelled:'ยกเลิก', returned:'คืนสินค้า'
+  };
+
+  // ── อัปเดต KPI cards ─────────────────────────────────────
+  // ยอดขายเดือนนี้
+  const kpiRevEl = document.querySelector('#page-dashboard .sc-val');
+  if (kpiRevEl && s.monthRevenue !== undefined) {
+    kpiRevEl.textContent = '฿' + (s.monthRevenue||0).toLocaleString();
+  }
   
-  // อัปเดต recent orders
-  const orderTbody = document.querySelector('#view-dashboard table tbody, [id*="dashboard"] table tbody');
+  // อัปเดตทุก sc-val ตาม label
+  document.querySelectorAll('#page-dashboard .sc').forEach(card => {
+    const lbl = card.querySelector('.sc-lbl')?.textContent?.trim() || '';
+    const val = card.querySelector('.sc-val');
+    if (!val) return;
+    if (lbl.includes('ยอดขายเดือน') || lbl.includes('รายได้')) val.textContent = '฿'+(s.monthRevenue||0).toLocaleString();
+    else if (lbl.includes('ออเดอร์รอ') || lbl.includes('pending')) val.textContent = (s.pendingOrders||0).toString();
+    else if (lbl.includes('คะแนน')) val.textContent = s.avgRating||'5.0';
+    else if (lbl.includes('ผู้เข้าชม')) val.textContent = (1842).toLocaleString();
+  });
+
+  // ── อัปเดต recent orders table ─────────────────────────
+  const orderTbody = document.querySelector('#page-dashboard table tbody');
   if (orderTbody && _sellerOrders.length) {
-    orderTbody.innerHTML = _sellerOrders.slice(0,8).map(o=>{
-      const items = (o.order_items||[]);
-      return `<tr>
+    orderTbody.innerHTML = _sellerOrders.slice(0,8).map(o => {
+      const items = o.order_items || [];
+      const names = items.map(i => i.name_th).join(', ').slice(0, 35);
+      const color = stColor[o.status] || '#737373';
+      return `<tr style="border-bottom:1px solid #F2F2F2">
         <td style="padding:10px 12px;font-family:var(--mono);font-size:11px">${o.order_number}</td>
-        <td style="padding:10px 12px;font-size:12px">${o.shipping_name||'-'}</td>
-        <td style="padding:10px 12px;font-size:12px">${items.map(i=>i.name_th).join(', ').slice(0,40)}</td>
-        <td style="padding:10px 12px;font-family:var(--mono);font-size:13px;font-weight:600">฿${Number(o.total_amount).toLocaleString()}</td>
-        <td style="padding:10px 12px"><span style="background:${stColor[o.status]||'#737373'}22;color:${stColor[o.status]||'#737373'};padding:3px 10px;font-size:11px;font-family:var(--mono)">${stMap[o.status]||o.status}</span></td>
+        <td style="padding:10px 12px;font-size:12px">${o.shipping_name||'—'}</td>
+        <td style="padding:10px 12px;font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${names||'—'}</td>
+        <td style="padding:10px 12px;font-family:var(--mono);font-size:13px;font-weight:600">฿${Number(o.total_amount||0).toLocaleString()}</td>
+        <td style="padding:10px 12px"><span style="background:${color}20;color:${color};padding:3px 10px;font-size:11px;font-family:var(--mono)">${stMap[o.status]||o.status}</span></td>
         <td style="padding:10px 12px;font-size:11px;color:#737373">${new Date(o.created_at).toLocaleDateString('th-TH')}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── อัปเดต top products ─────────────────────────────────
+  const prodTbody = document.querySelector('#page-dashboard table:nth-of-type(2) tbody, .sg:last-child table tbody');
+  if (prodTbody && _sellerProds.length) {
+    prodTbody.innerHTML = _sellerProds.slice(0,5).map(p => {
+      const thumb = p.thumbnail || p.images?.[0];
+      return `<tr style="border-bottom:1px solid #F2F2F2">
+        <td style="padding:8px 12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:36px;height:36px;background:#F2F2F2;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+              ${thumb?`<img src="${thumb}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`:'📦'}
+            </div>
+            <span style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px">${p.name_th}</span>
+          </div>
+        </td>
+        <td style="padding:8px 12px;font-family:var(--mono);font-size:12px">฿${Number(p.price||0).toLocaleString()}</td>
+        <td style="padding:8px 12px;font-family:var(--mono);font-size:12px">${(p.sold_count||0).toLocaleString()}</td>
+        <td style="padding:8px 12px;font-family:var(--mono);font-size:12px;color:${(p.stock_quantity||0)<=10?'#E63329':'#16A34A'}">${p.stock_quantity||0}</td>
       </tr>`;
     }).join('');
   }
@@ -1909,15 +1931,18 @@ function renderProdsLive() {
 document.addEventListener('DOMContentLoaded', () => {
   fixNavHeight();
   
-  // ตั้ง page-dashboard active ทันที
+  // ตั้ง page-dashboard active
   const dashPage = document.getElementById('page-dashboard');
   if (dashPage) dashPage.classList.add('active');
   
-  // render static dashboard ก่อน (ข้อมูล mock)
+  // render mock ก่อน
   if (typeof renderDashboard === 'function') renderDashboard();
   
-  // โหลดข้อมูลจริงจาก Supabase
-  setTimeout(loadSellerData, 500);
+  // โหลดจาก Supabase
+  setTimeout(async () => {
+    await loadSellerData();
+    renderDashboardLive();
+  }, 500);
 });
 
 
@@ -1932,64 +1957,50 @@ let _uploadedImages = [];
 async function loadCategoriesForProduct() {
   const container = document.getElementById('cat-chips-ap');
   if (!container) return;
-  container.innerHTML = '<div style="color:var(--g400);font-size:12px;padding:8px">⏳ กำลังโหลดหมวดหมู่จากระบบ...</div>';
-
+  container.innerHTML = '<div style="color:var(--g400);font-size:12px;padding:8px">⏳ กำลังโหลดหมวดหมู่...</div>';
   try {
     const sb = window._sb || _sbSeller;
-    // ── ดึง parent categories จาก DB (เหมือน admin-cms) ──
     const { data: all, error } = await sb
       .from('categories')
-      .select('id, name_th, name_en, icon, parent_id, sort_order')
+      .select('id, name_th, icon, parent_id, sort_order')
       .eq('is_active', true)
       .order('sort_order');
-
     if (error) throw error;
-
-    // แยก parent / children เหมือน admin-cms
     const parents  = (all || []).filter(c => !c.parent_id);
     const children = (all || []).filter(c => c.parent_id);
-
-    if (parents.length === 0) throw new Error('ไม่มีหมวดหมู่ในระบบ');
-
+    if (parents.length === 0) throw new Error('ไม่มีหมวดหมู่ในระบบ — กรุณา Run CATEGORIES-FIX.sql');
     _dbCats = parents;
-
-    // Render chip แต่ละ parent พร้อมจำนวน sub
-    container.innerHTML = parents.map((c, i) => {
+    // render chips
+    container.innerHTML = '';
+    parents.forEach((c, i) => {
       const subs = children.filter(ch => ch.parent_id === c.id);
-      const icon = c.icon || '📦';
-      const isFirst = i === 0;
-      return '<div class="cat-chip' + (isFirst ? ' active-chip' : '') + '" ' +
-        'data-id="' + c.id + '" ' +
-        'data-subs='' + JSON.stringify(subs) + '' ' +
-        'onclick="selectCatChipAP(this, '' + c.id + '')" ' +
-        'style="text-align:center;padding:10px 12px;min-width:100px">' +
-        '<div style="font-size:22px;margin-bottom:4px">' + icon + '</div>' +
-        '<div style="font-size:11px;font-weight:500;line-height:1.3">' + c.name_th + '</div>' +
-        (subs.length > 0 ? '<div style="font-size:10px;color:var(--g400);margin-top:2px">' + subs.length + ' หมวดย่อย</div>' : '') +
-        '</div>';
-    }).join('');
-
-    // set default
+      const el   = document.createElement('div');
+      el.className = 'cat-chip' + (i === 0 ? ' active-chip' : '');
+      el.dataset.id   = c.id;
+      el.dataset.subs = JSON.stringify(subs);
+      el.innerHTML    = '<div style="font-size:22px;margin-bottom:4px">' + (c.icon||'📦') + '</div>' +
+                        '<div style="font-size:11px;font-weight:500">' + c.name_th + '</div>' +
+                        (subs.length > 0 ? '<div style="font-size:10px;color:var(--g400)">' + subs.length + ' หมวดย่อย</div>' : '');
+      el.onclick = function() { selectCatChipAP(this, c.id); };
+      el.style.cssText = 'text-align:center;padding:10px 12px;min-width:90px';
+      container.appendChild(el);
+    });
+    // default
     if (parents.length > 0) {
       _selectedCatId = parents[0].id;
       const catIdEl = document.getElementById('ap-cat-id');
       if (catIdEl) catIdEl.value = _selectedCatId;
     }
-
-    // แสดง sub-categories row
     renderSubCatsForProduct(children, _selectedCatId);
-
   } catch(e) {
-    console.warn('loadCategoriesForProduct error:', e.message);
-    container.innerHTML = '<div style="color:var(--red);font-size:12px;padding:8px">⚠️ ' + e.message + ' — กรุณา Run CATEGORIES-FIX.sql ใน Supabase</div>';
+    container.innerHTML = '<div style="color:var(--red);font-size:12px;padding:8px">⚠️ ' + e.message + '</div>';
   }
 }
 
 // ── แสดง sub-categories ตาม parent ──────────────────────────
 function renderSubCatsForProduct(allChildren, parentId) {
   let subWrap = document.getElementById('ap-sub-cats');
-  const subs = allChildren ? allChildren.filter(c => c.parent_id === parentId) : [];
-
+  const subs  = allChildren ? allChildren.filter(c => c.parent_id === parentId) : [];
   if (!subWrap) {
     subWrap = document.createElement('div');
     subWrap.id = 'ap-sub-cats';
@@ -1999,23 +2010,23 @@ function renderSubCatsForProduct(allChildren, parentId) {
       container.parentNode.insertBefore(subWrap, container.nextSibling);
     }
   }
-
-  if (subs.length === 0) {
-    subWrap.innerHTML = '';
-    return;
-  }
-
-  subWrap.innerHTML = '<div style="font-size:10px;color:var(--g500);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;width:100%;margin-bottom:4px">หมวดย่อย</div>' +
-    subs.map(s => {
-      const isActive = _selectedCatId === s.id;
-      return '<div onclick="selectSubCatAP(this, '' + s.id + '')" ' +
-        'style="padding:5px 12px;border:1px solid ' + (isActive ? 'var(--black)' : 'var(--g200)') + ';' +
-        'background:' + (isActive ? 'var(--black)' : '#fff') + ';' +
-        'color:' + (isActive ? '#fff' : 'var(--g600)') + ';' +
-        'font-size:12px;cursor:pointer;transition:all .15s;font-family:var(--mono)">' +
-        (s.icon || '') + ' ' + s.name_th +
-        '</div>';
-    }).join('');
+  if (!subs.length) { subWrap.innerHTML = ''; return; }
+  subWrap.innerHTML = '';
+  const lbl = document.createElement('div');
+  lbl.style.cssText = 'font-size:10px;color:var(--g500);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;width:100%;margin-bottom:4px';
+  lbl.textContent = 'หมวดย่อย';
+  subWrap.appendChild(lbl);
+  subs.forEach(s => {
+    const isActive = _selectedCatId === s.id;
+    const el = document.createElement('div');
+    el.style.cssText = 'padding:5px 12px;border:1px solid ' + (isActive ? 'var(--black)' : 'var(--g200)') +
+      ';background:' + (isActive ? 'var(--black)' : '#fff') +
+      ';color:' + (isActive ? '#fff' : 'var(--g600)') +
+      ';font-size:12px;cursor:pointer;transition:all .15s;font-family:var(--mono)';
+    el.textContent = (s.icon || '') + ' ' + s.name_th;
+    el.onclick = function() { selectSubCatAP(this, s.id); };
+    subWrap.appendChild(el);
+  });
 }
 
 // ── เลือก sub-category ────────────────────────────────────────
@@ -2250,64 +2261,51 @@ async function loadSellerCategories() {
   if (!loading || !grid) return;
   loading.style.display = '';
   grid.style.display = 'none';
-
   try {
     const sb = window._sb || _sbSeller;
-    // ── ดึงทุก categories จาก DB (admin กรอกไว้) ──
     const { data: all, error } = await sb
       .from('categories')
       .select('id, name_th, icon, parent_id, sort_order')
       .eq('is_active', true)
       .order('sort_order');
-
     if (error) throw error;
-
-    _catParents  = (all || []).filter(c => !c.parent_id);
+    _catParents = (all || []).filter(c => !c.parent_id);
     const allSubs = (all || []).filter(c => c.parent_id);
-
     _catChildren = {};
     allSubs.forEach(c => {
       if (!_catChildren[c.parent_id]) _catChildren[c.parent_id] = [];
       _catChildren[c.parent_id].push(c);
     });
-
     if (_catParents.length === 0) {
-      loading.innerHTML = '<div style="color:var(--amber);font-size:13px;padding:20px">⚠️ ยังไม่มีหมวดหมู่ — กรุณา Run CATEGORIES-FIX.sql ใน Supabase หรือเพิ่มผ่าน Admin CMS</div>';
+      loading.innerHTML = '<div style="color:var(--amber);font-size:13px;padding:20px">⚠️ ยังไม่มีหมวดหมู่ — กรุณา Run CATEGORIES-FIX.sql</div>';
       return;
     }
-
-    // นับสินค้าต่อ category
-    const { data: prodCounts } = await sb
-      .from('products')
-      .select('category_id')
-      .eq('status', 'active');
+    // นับสินค้า
+    const { data: prodCounts } = await sb.from('products').select('category_id').eq('status', 'active');
     _catProducts = {};
-    (prodCounts || []).forEach(p => {
-      _catProducts[p.category_id] = (_catProducts[p.category_id] || 0) + 1;
+    (prodCounts || []).forEach(p => { _catProducts[p.category_id] = (_catProducts[p.category_id] || 0) + 1; });
+    // render
+    const COLORS = ['#7C3AED','#DB2777','#EA580C','#CA8A04','#16A34A','#0891B2','#2563EB','#9333EA','#C026D3','#E11D48','#65A30D','#D97706'];
+    grid.innerHTML = '';
+    const inner = document.createElement('div');
+    inner.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:12px';
+    _catParents.forEach((c, i) => {
+      const subs   = _catChildren[c.id] || [];
+      const total  = (_catProducts[c.id]||0) + subs.reduce((n, s) => n + (_catProducts[s.id]||0), 0);
+      const color  = COLORS[i % COLORS.length];
+      const el     = document.createElement('div');
+      el.className = 'cat-parent-card';
+      el.id        = 'cpc-' + c.id;
+      el.innerHTML = '<div class="cat-color-bar" style="background:' + color + '"></div>' +
+                     '<div class="cat-parent-ico">' + (c.icon||'📦') + '</div>' +
+                     '<div class="cat-parent-name">' + c.name_th + '</div>' +
+                     '<div class="cat-parent-count">' + total + ' สินค้า · ' + subs.length + ' หมวดย่อย</div>';
+      el.onclick = function() { selectParentCat(c.id, c.name_th, c.icon||'📦', subs.length, total); };
+      inner.appendChild(el);
     });
-
-    // Render
-    const COLORS = ['#7C3AED','#DB2777','#EA580C','#CA8A04','#16A34A',
-                    '#0891B2','#2563EB','#9333EA','#C026D3','#E11D48','#65A30D','#D97706'];
-
-    grid.innerHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">' +
-      _catParents.map((c, i) => {
-        const subs    = _catChildren[c.id] || [];
-        const subIds  = subs.map(s => s.id);
-        const total   = (_catProducts[c.id] || 0) + subIds.reduce((n, id) => n + (_catProducts[id] || 0), 0);
-        const color   = COLORS[i % COLORS.length];
-        return '<div class="cat-parent-card" id="cpc-' + c.id + '" ' +
-          'onclick="selectParentCat('' + c.id + '','' + c.name_th.replace(/'/g,"\'") + '','' + (c.icon||'📦') + '',' + subs.length + ',' + total + ')">' +
-          '<div class="cat-color-bar" style="background:' + color + '"></div>' +
-          '<div class="cat-parent-ico">' + (c.icon || '📦') + '</div>' +
-          '<div class="cat-parent-name">' + c.name_th + '</div>' +
-          '<div class="cat-parent-count">' + total + ' สินค้า · ' + subs.length + ' หมวดย่อย</div>' +
-          '</div>';
-      }).join('') + '</div>';
-
+    grid.appendChild(inner);
     loading.style.display = 'none';
     grid.style.display = '';
-
   } catch(e) {
     loading.innerHTML = '<div style="color:var(--red);font-size:13px;padding:20px">❌ ' + e.message + '</div>';
   }

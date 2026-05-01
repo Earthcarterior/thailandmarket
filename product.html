@@ -258,6 +258,38 @@ tbody tr:hover td{background:var(--g50)!important}
 .dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
 @keyframes tIn{from{transform:translateX(8px);opacity:0}to{transform:translateX(0);opacity:1}}
 
+
+/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
+.ann {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  flex-direction: row !important;
+}
+nav, .nav {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+body > .ann, body > nav {
+  position: relative !important;
+}
+
+
+/* ── GLOBAL NAV FIX ── */
+body { display: block !important; }
+.ann {
+  width: 100% !important; min-width: 100% !important;
+  height: auto !important; max-height: 60px !important;
+  display: flex !important; flex-direction: row !important;
+  flex-shrink: 0 !important;
+}
+nav, .nav { 
+  width: 100% !important; display: block !important;
+  height: auto !important; flex-shrink: 0 !important;
+}
+
 </style>
 <style id="page-css">
 
@@ -474,7 +506,32 @@ img{max-width:100%;height:auto}
 /* ── Selection color ── */
 ::selection{background:#0A0A0A;color:#fff}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- back nav -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js">
+function addToCart(id, name, price, img, qty) {
+  qty = qty || 1;
+  let cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+  const ex = cart.find(i => i.id === id);
+  if (ex) ex.qty = (ex.qty || 1) + qty;
+  else cart.push({id, name, price: Number(price), qty, img: img || ''});
+  localStorage.setItem('tm_cart', JSON.stringify(cart));
+  const badge = document.getElementById('cart-badge');
+  if (badge) badge.textContent = cart.reduce((s,i)=>s+(i.qty||1),0);
+  toast('✅ เพิ่มลงตะกร้าแล้ว', 'ok');
+}
+
+
+function buyNow() {
+  const id = new URLSearchParams(location.search).get('id');
+  if (id) {
+    const name  = document.querySelector('.prod-name, h1')?.textContent || 'สินค้า';
+    const price = parseFloat(document.querySelector('.prod-price')?.textContent?.replace(/[^0-9.]/g,'')) || 0;
+    addToCart(id, name, price, '', 1);
+  }
+  location.href = 'cart.html';
+}
+
+</script>
 <script>
 window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
 window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
@@ -510,7 +567,7 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
     <div class="nav-acts">
       <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
       <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
-      <button class="nav-btn" onclick="location.href='checkout.html'" style="position:relative">
+      <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
         <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
       </button>
       <div style="position:relative">
@@ -551,6 +608,11 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
       <button class="nav-btn sell" onclick="location.href='seller-portal.html'"><span class="nav-btn-ico">🏪</span>Sell</button>
     </div>
   </div></nav>
+<div style="padding:12px 24px;border-bottom:1px solid #E5E5E5;background:#fff">
+  <button onclick="history.back()" style="background:none;border:none;cursor:pointer;font-size:13px;color:#737373;display:flex;align-items:center;gap:6px">
+    ← กลับ
+  </button>
+</div>
 
 
 
@@ -959,8 +1021,7 @@ function tmToast(msg){
   } catch(e){ console.error('loadProductFromCMS:', e); }
 })();
 </script>
-
-
+<script>
 // ── Account Nav (shared) ─────────────────────────────────
 (async function initAccountNav() {
   const sb  = (window._sb) || supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
@@ -994,6 +1055,6 @@ function tmToast(msg){
     location.href='index.html';
   });
 })();
-
+</script>
 </body>
 </html>

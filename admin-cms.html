@@ -247,6 +247,46 @@ tbody tr:last-child td{border-bottom:none}
 .toast{background:var(--black);color:#fff;padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:240px;border-left:3px solid var(--red);animation:tIn .2s ease;pointer-events:all}
 .toast.ok{border-left-color:#16A34A}
 
+
+/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
+.ann {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  flex-direction: row !important;
+}
+nav, .nav {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+body > .ann, body > nav {
+  position: relative !important;
+}
+
+
+/* ── GLOBAL NAV FIX ── */
+body { display: block !important; }
+.ann {
+  width: 100% !important; min-width: 100% !important;
+  height: auto !important; max-height: 60px !important;
+  display: flex !important; flex-direction: row !important;
+  flex-shrink: 0 !important;
+}
+nav, .nav { 
+  width: 100% !important; display: block !important;
+  height: auto !important; flex-shrink: 0 !important;
+}
+
+</style>
+<style>
+/* ── Admin CMS Layout Fix ── */
+body { display: flex; flex-direction: column; min-height: 100vh; }
+.ann, nav { width: 100% !important; flex-shrink: 0; order: -1; }
+.ann { display: flex !important; flex-direction: row !important; height: auto !important; }
+nav { display: block !important; height: auto !important; }
+#app, .app { flex: 1; display: flex; min-height: 0; }
 </style>
 </head>
 <body>
@@ -280,10 +320,7 @@ tbody tr:last-child td{border-bottom:none}
 <!-- ══════════════════════════════════════════════════════ -->
 <!-- MAIN APP                                              -->
 <!-- ══════════════════════════════════════════════════════ -->
-<div id="app" class="app">
-
-  <!-- SIDEBAR -->
-  <!-- ── ANNOUNCEMENT ── -->
+<!-- ── ANNOUNCEMENT ── -->
 <div class="ann">
   <span><span class="ann-dot">·</span> ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500</span>
   <span><span class="ann-dot">·</span> Flash Sale ทุกวัน 10:00 / 14:00 / 20:00</span>
@@ -311,7 +348,7 @@ tbody tr:last-child td{border-bottom:none}
     <div class="nav-acts">
       <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
       <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
-      <button class="nav-btn" onclick="location.href='checkout.html'" style="position:relative">
+      <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
         <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
       </button>
       <div style="position:relative">
@@ -352,6 +389,10 @@ tbody tr:last-child td{border-bottom:none}
       <button class="nav-btn sell" onclick="location.href='seller-portal.html'"><span class="nav-btn-ico">🏪</span>Sell</button>
     </div>
   </div></nav>
+<div id="app" class="app">
+
+  <!-- SIDEBAR -->
+  
     <div class="sb-foot">
       <button class="sb-action" onclick="doLogout()">🚪 ออกจากระบบ</button>
       <button class="sb-action" onclick="location.href='setup.html'">⚙️ ตั้งค่า</button>
