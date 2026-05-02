@@ -1639,11 +1639,7 @@ function autoSlug() {
     document.getElementById('cat-slug').value = slug;
   }
 }
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('cat-slug')?.addEventListener('input', function() {
-    this.dataset.manual = '1';
-  });
-});
+
 function closeCatModal() { document.getElementById('cat-modal').classList.remove('on'); editingCatId = null; }
 
 async function editCat(id) {
@@ -2026,7 +2022,15 @@ async function populateCatParentSelect() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!initSupabase()) return;
+  // cat-slug auto-manual flag
+  document.getElementById('cat-slug')?.addEventListener('input', function() {
+    this.dataset.manual = '1';
+  });
+  // init Supabase + check session
+  if (!initSupabase()) {
+    console.error('Supabase init failed');
+    return;
+  }
   checkSession();
 });
 
@@ -2059,11 +2063,13 @@ window.showPanel = function(name) {
 
   // Load data per panel
   switch (name) {
-    case 'sellers': loadSellers('pending'); break;
-    case 'approve': loadPending('pending_review'); break;
-    case 'members': loadMembers('unconfirmed'); break;
-    case 'users':   loadUsers(); break;
-    case 'dashboard': loadDashboard(); break;
+    case 'dashboard':   loadDashboard();               break;
+    case 'products':    loadProducts();                break;
+    case 'categories':  loadCats();                    break;
+    case 'sellers':     loadSellers('pending');        break;
+    case 'approve':     loadPending('pending_review'); break;
+    case 'members':     loadMembers('unconfirmed');    break;
+    case 'users':       loadUsers();                   break;
   }
 };
 
