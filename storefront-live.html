@@ -434,6 +434,35 @@ footer{background:var(--black);padding:32px 24px;margin-top:60px;border-top:var(
 .ann{background:var(--black);color:var(--white);text-align:center;padding:8px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
 .ann-dot{color:var(--red)}
 
+
+/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
+.ann {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  flex-direction: row !important;
+}
+nav, .nav {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+
+/* ── GLOBAL NAV FIX ── */
+body { display: block !important; }
+.ann {
+  width: 100% !important; min-width: 100% !important;
+  height: auto !important; max-height: 60px !important;
+  display: flex !important; flex-direction: row !important;
+  flex-shrink: 0 !important;
+}
+nav, .nav { 
+  width: 100% !important; display: block !important;
+  height: auto !important; flex-shrink: 0 !important;
+}
+
 </style>
 </head>
 <body>
@@ -669,7 +698,7 @@ footer{background:var(--black);padding:32px 24px;margin-top:60px;border-top:var(
           <button class="qty-btn" onclick="changeQty(1)">+</button>
         </div>
         <button class="modal-cart-btn" onclick="addToCart()">🛒 เพิ่มลงตะกร้า</button>
-        <button class="modal-cart-btn" style="background:var(--white);color:var(--black);border:var(--border-dark)" onclick="buyNow()">⚡ ซื้อทันที</button>
+        <button class="modal-cart-btn" style="background:var(--white);color:var(--black);border:var(--border-dark)" onclick="viewDetail()">⚡ ซื้อทันที</button>
         <div class="modal-tags" id="modal-tags"></div>
       </div>
     </div>
@@ -750,7 +779,13 @@ function quickAddCart(id,name,price,img) {
   toast(`✅ ${name} +1`, true);
 }
 
-function buyNow() { addToCart(); location.href='checkout.html'; }
+
+function viewDetail() {
+  if (!currentProduct) return;
+  location.href = 'product.html?id=' + currentProduct.id;
+}
+
+function buyNow() { addToCart(); location.href='cart.html'; }
 
 function doSearch() {
   const q = document.getElementById('search-inp')?.value?.trim();
@@ -759,8 +794,14 @@ function doSearch() {
 
 // ── Categories ────────────────────────────────────────────
 async function loadCats() {
-  const { data } = await sb.from('categories').select('*').eq('is_active',true).order('sort_order');
-  allCats = data || [];
+  try {
+    const { data, error } = await sb.from('categories').select('*').eq('is_active',true).order('sort_order');
+    if (error) throw error;
+    allCats = data || [];
+  } catch(e) {
+    console.error('loadCats:', e.message);
+    allCats = [];
+  }
 
   const parents = allCats.filter(c => !c.parent_id);
   const children = allCats.filter(c => c.parent_id);

@@ -331,6 +331,21 @@ footer{background:var(--black);padding:40px 24px 28px;margin-top:16px}
   flex-shrink:0;
 }
 
+
+/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
+.ann {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  flex-direction: row !important;
+}
+nav, .nav {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
 </style>
 </head>
 <body>
@@ -363,7 +378,7 @@ footer{background:var(--black);padding:40px 24px 28px;margin-top:16px}
     <div class="nav-acts">
       <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
       <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
-      <button class="nav-btn" onclick="location.href='checkout.html'" style="position:relative">
+      <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
         <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
       </button>
       <div style="position:relative">
@@ -688,255 +703,110 @@ function disc(p) {
 
 // ── Categories ────────────────────────────────────────────
 async function loadCats() {
-  const { data } = await sb.from('categories').select('*').eq('is_active', true).order('sort_order');
-  allCats = data || [];
-  const parents = allCats.filter(c => !c.parent_id);
+  try {
+    const { data, error } = await sb.from('categories')
+      .select('*').eq('is_active', true).order('sort_order');
+    if (error) throw error;
+    allCats = data || [];
+  } catch(e) {
+    console.error('loadCats error:', e.message);
+    allCats = [];
+  }
 
-  // Category grid
+  const parents = allCats.filter(c => !c.parent_id);
+  const colors  = ['#7C3AED','#DB2777','#E8541A','#D97706','#2563EB','#374151',
+                   '#16A34A','#0891B2','#DC2626','#059669','#92400E','#1D4ED8'];
+
+  // ── Category grid (section หมวดหมู่สินค้า) ───────────────────────────────
   const grid = document.getElementById('cats-grid');
   if (grid) {
     if (!parents.length) {
       grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
         <div class="empty-ico">📂</div>
         <div class="empty-title">ยังไม่มีหมวดหมู่</div>
-        <div class="empty-sub">Run supabase-categories-full.sql ใน Supabase SQL Editor</div>
+        <div class="empty-sub">กรุณา Run CATEGORIES-FIX.sql ใน Supabase SQL Editor</div>
         <a href="admin-cms.html" class="empty-cta">⚙️ Admin CMS →</a>
       </div>`;
     } else {
-      const colors = ['#7C3AED','#DB2777','#E8541A','#D97706','#2563EB','#374151','#16A34A','#0891B2','#DC2626','#059669','#92400E','#1D4ED8'];
-      grid.innerHTML = parents.map((c, i) => `
-        <a class="cat-tile" href="storefront-live.html?cat=${c.id}" style="text-decoration:none;color:inherit;display:block">
-          <div class="cat-tile-bar" style="background:${colors[i%colors.length]}"></div>
+      grid.innerHTML = parents.map((c, i) => {
+        const subs = allCats.filter(s => s.parent_id === c.id);
+        return `<a class="cat-tile" href="storefront-live.html?cat=${encodeURIComponent(c.id)}" style="text-decoration:none;color:inherit;display:block">
+          <div class="cat-tile-bar" style="background:${colors[i % colors.length]}"></div>
           <span class="cat-ico">${c.icon || '📦'}</span>
-          <div class="cat-name">${c.name_th}</div>
-          <div class="cat-count">${c.product_count || 0} รายการ</div>
-        </a>`).join('');
-    }
-  }
-
-  // Catbar — marquee loop
-  const track = document.getElementById('catbar-track');
-  if (track && parents.length) {
-    const makeItems = () =>
-      `<a class="catbar-item on" href="storefront-live.html" style="border-bottom:2px solid var(--red);color:var(--black);text-decoration:none">ทั้งหมด</a>` +
-      parents.map(c => `<a class="catbar-item" href="storefront-live.html?cat=${c.id}" style="text-decoration:none">${c.icon||''} ${c.name_th}</a>`).join('');
-    // Duplicate for seamless loop
-    track.innerHTML = makeItems() + makeItems();
-
-    // Cats dropdown grid
-    const ddGrid = document.getElementById('cats-dropdown-grid');
-    if (ddGrid) {
-      const colors = ['#7C3AED','#DB2777','#E8541A','#D97706','#2563EB','#374151','#16A34A','#0891B2','#DC2626','#059669','#92400E','#1D4ED8'];
-      ddGrid.innerHTML = parents.map((c,i) => `
-        <a href="storefront-live.html?cat=${c.id}" onclick="closeAllCats()" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:var(--border);cursor:pointer;transition:all .15s;border-left:3px solid ${colors[i%colors.length]}" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background='var(--white)'">
-          <span style="font-size:18px">${c.icon||'📦'}</span>
-          <div>
-            <div style="font-size:12px;font-weight:500">${c.name_th}</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--g400)">${c.product_count||0} รายการ</div>
-          </div>
-        </a>`).join('');
-    }
-  }
-}
-
-function filterCat(catId, el) {
-  // Navigate to storefront-live with category filter
-  if (catId && catId !== 'all') {
-    location.href = 'storefront-live.html?cat=' + catId;
-  } else {
-    location.href = 'storefront-live.html';
-  }
-}
-
-function showAllCats() {
-  const dd = document.getElementById('cats-dropdown');
-  if (!dd) return;
-  const isOpen = dd.style.display !== 'none';
-  dd.style.display = isOpen ? 'none' : 'block';
-  document.querySelector('.catbar-seeall').textContent = isOpen ? 'ดูทั้งหมด ▸' : 'ปิด ✕';
-}
-
-function closeAllCats() {
-  const dd = document.getElementById('cats-dropdown');
-  if (dd) dd.style.display = 'none';
-  const btn = document.querySelector('.catbar-seeall');
-  if (btn) btn.textContent = 'ดูทั้งหมด ▸';
-}
-
-// ── Banners ────────────────────────────────────────────────
-async function loadBanners() {
-  const bannerEl = document.getElementById('banners');
-  if (!bannerEl) return;
-  const { data } = await sb.from('banners').select('*').eq('is_active', true).order('sort_order');
-  const banners = data || [];
-
-  if (!banners.length) {
-    // Default banners
-    bannerEl.innerHTML = `
-      <div class="banner-main" style="background:#0A0A0A" onclick="location.href='storefront-live.html?cat=00000000-0000-0000-0000-000000000007'">
-        <div class="banner-content">
-          <div class="banner-title">บ้านสวย<br>เริ่มต้นที่นี่</div>
-          <div class="banner-sub">เฟอร์นิเจอร์และของตกแต่งบ้าน<br>ลดสูงสุด 40% เฉพาะสัปดาห์นี้</div>
-          <button class="banner-cta">ช้อปเลย →</button>
-        </div>
-        <div class="banner-disc">Home & Lifestyle</div>
-      </div>
-      <div class="banner-sm" style="background:var(--g50)" onclick="location.href='storefront-live.html?cat=00000000-0000-0000-0000-000000000008'">
-        <div><div class="banner-sm-title">Fashion<br>Week Sale</div><div class="banner-sm-sub">เสื้อผ้า รองเท้า กระเป๋า</div></div>
-        <div class="banner-sm-disc">-60%</div>
-      </div>
-      <div class="banner-sm" style="background:var(--g50)" onclick="location.href='storefront-live.html?cat=00000000-0000-0000-0000-000000000001'">
-        <div><div class="banner-sm-title">Tech<br>Special Deal</div><div class="banner-sm-sub">Gadgets & Electronics</div></div>
-        <div class="banner-sm-disc">-50%</div>
-      </div>`;
-    return;
-  }
-
-  const main = banners.find(b => b.type === 'main') || banners[0];
-  const sides = banners.filter(b => b.type === 'side').slice(0, 2);
-
-  let html = `
-    <div class="banner-main" style="background:${main.bg_color||'#0A0A0A'}" onclick="location.href='${main.cta_url||'#'}'">
-      <div class="banner-content">
-        <div class="banner-title">${main.title}</div>
-        <div class="banner-sub">${main.subtitle || ''}</div>
-        <button class="banner-cta">${main.cta_text || 'ช้อปเลย'} →</button>
-      </div>
-      <div class="banner-disc">${main.discount || ''}</div>
-    </div>`;
-
-  if (sides.length >= 2) {
-    sides.slice(0, 2).forEach(s => {
-      html += `
-        <div class="banner-sm" style="background:${s.bg_color||'var(--g50)'}" onclick="location.href='${s.cta_url||'#'}'">
-          <div>
-            <div class="banner-sm-title" style="color:${s.text_color||'#0A0A0A'}">${s.title}</div>
-            ${s.subtitle ? `<div class="banner-sm-sub" style="color:${s.text_color||'#737373'}">${s.subtitle}</div>` : ''}
-          </div>
-          <div class="banner-sm-disc" style="color:${s.text_color||'#0A0A0A'}">${s.discount||''}</div>
-        </div>`;
-    });
-  } else {
-    // Fallback side banners
-    html += `
-      <div class="banner-sm" style="background:var(--g50)" onclick="location.href='storefront-live.html'">
-        <div><div class="banner-sm-title">ช้อปสินค้า<br>ทุกหมวด</div></div>
-        <div class="banner-sm-disc" style="font-size:14px;font-family:var(--mono)">→</div>
-      </div>
-      <div class="banner-sm" style="background:var(--black);color:var(--white)" onclick="location.href='admin-cms.html'">
-        <div><div class="banner-sm-title" style="color:var(--white)">Admin<br>CMS</div><div class="banner-sm-sub" style="color:rgba(255,255,255,.5)">จัดการสินค้า</div></div>
-        <div class="banner-sm-disc" style="color:var(--red)">⚙️</div>
-      </div>`;
-  }
-  bannerEl.innerHTML = html;
-}
-
-// ── Coupons ────────────────────────────────────────────────
-async function loadCoupons() {
-  const { data } = await sb.from('coupons')
-    .select('*').eq('is_active', true)
-    .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
-    .order('created_at').limit(4);
-  const coupons = data || [];
-
-  const el = document.getElementById('coupon-codes');
-  if (!el) return;
-  if (!coupons.length) { el.innerHTML = '<div style="font-size:12px;color:var(--g400)">ไม่มีคูปองขณะนี้</div>'; return; }
-
-  el.innerHTML = coupons.map(c => {
-    let label = '';
-    if (c.type === 'fixed') label = `ลด ฿${Number(c.value).toLocaleString()}`;
-    else if (c.type === 'percent') label = `ลด ${c.value}%`;
-    else if (c.type === 'free_ship') label = 'ส่งฟรี';
-    const isGreen = c.type === 'free_ship';
-    return `
-      <div class="coupon-code${isGreen?' free':''}" onclick="toast('🎟️ คัดลอกรหัส ${c.code} แล้ว!');navigator.clipboard?.writeText('${c.code}')">
-        <div class="cc-val">${label}</div>
-        <div class="cc-min">${c.min_purchase > 0 ? `ขั้นต่ำ ฿${Number(c.min_purchase).toLocaleString()}` : 'ไม่มีขั้นต่ำ'}</div>
-      </div>`;
-  }).join('');
-}
-
-// ── Flash Sale ─────────────────────────────────────────────
-async function loadFlash() {
-  const grid = document.getElementById('flash-grid');
-  if (!grid) return;
-
-  // Skeleton
-  grid.innerHTML = Array(6).fill(0).map(() => `
-    <div class="flash-card">
-      <div class="flash-img skeleton" style="aspect-ratio:1"></div>
-      <div class="flash-info"><div class="skeleton" style="height:11px;margin-bottom:6px;border-radius:1px"></div><div class="skeleton" style="height:15px;width:60%;border-radius:1px"></div></div>
-    </div>`).join('');
-
-  try {
-    // Try flash sale products first
-    let { data } = await sb.from('products')
-      .select('id,name_th,price,compare_price,thumbnail,images,stock_quantity,is_flash_sale')
-      .eq('status','active').eq('is_flash_sale',true).limit(6);
-
-    // Fallback: latest products
-    if (!data?.length) {
-      const res = await sb.from('products')
-        .select('id,name_th,price,compare_price,thumbnail,images,stock_quantity')
-        .eq('status','active').order('created_at',{ascending:false}).limit(6);
-      data = res.data || [];
-    }
-
-    if (!data?.length) {
-      grid.innerHTML = Array(6).fill(0).map((_,i) => {
-        const items = [
-          {n:'Samsung Galaxy S24',p:32900,o:38900,d:15},
-          {n:'โซฟา Velvet L-Shape',p:8900,o:14500,d:39},
-          {n:'SK-II Facial Essence',p:2890,o:4500,d:36},
-          {n:'Nike Air Max 270',p:2490,o:3990,d:38},
-          {n:'Royal Canin 15kg',p:1890,o:2490,d:24},
-          {n:'Bosch Drill 18V',p:3890,o:5200,d:25},
-        ][i];
-        return `<div class="flash-card" onclick="toast('🛒 เพิ่ม ${items.n} ลงตะกร้า', true)">
-          <div class="flash-img"><span style="font-size:44px">📦</span><div class="flash-disc">-${items.d}%</div></div>
-          <div class="flash-info">
-            <div class="flash-name">${items.n}</div>
-            <div style="display:flex;align-items:baseline;gap:4px"><div class="flash-price">฿${items.p.toLocaleString()}</div><div class="flash-old">฿${items.o.toLocaleString()}</div></div>
-            <div class="flash-bar"><div class="flash-bar-fill" style="width:${50+i*8}%"></div></div>
-            <div class="flash-sold">ขายแล้ว ${50+i*8}%</div>
-          </div>
-        </div>`;
+          <span class="cat-nm">${c.name_th}</span>
+          <span class="cat-cnt" style="font-size:10px;color:var(--g400);font-family:monospace">${subs.length} หมวดย่อย</span>
+        </a>`;
       }).join('');
-      return;
     }
+  }
 
-    grid.innerHTML = data.map(p => {
-      const d = disc(p);
-      const sold = Math.floor(Math.random() * 50) + 40;
-      const thumb = p.thumbnail || p.images?.[0];
-      return `
-        <div class="flash-card" onclick="addCart('${p.id}','${escQ(p.name_th)}',${p.price},'${thumb||''}')">
-          <div class="flash-img">
-            ${thumb ? `<img src="${thumb}" alt="" loading="lazy">` : '<span style="font-size:44px">📦</span>'}
-            ${d > 0 ? `<div class="flash-disc">-${d}%</div>` : ''}
-          </div>
-          <div class="flash-info">
-            <div class="flash-name">${p.name_th}</div>
-            <div style="display:flex;align-items:baseline;gap:4px">
-              <div class="flash-price">฿${Number(p.price).toLocaleString()}</div>
-              ${p.compare_price ? `<div class="flash-old">฿${Number(p.compare_price).toLocaleString()}</div>` : ''}
-            </div>
-            <div class="flash-bar"><div class="flash-bar-fill" style="width:${sold}%"></div></div>
-            <div class="flash-sold">ขายแล้ว ${sold}%</div>
-          </div>
-        </div>`;
-    }).join('');
-  } catch(e) { console.error('loadFlash:', e); }
+  // ── Catbar (แถบหมวดหมู่ด้านบน) ─────────────────────────────────────────
+  const track = document.getElementById('catbar-track');
+  if (track) {
+    const allLink = `<a class="catbar-item on" href="storefront-live.html"
+      style="border-bottom:2px solid var(--red);color:var(--black);text-decoration:none;
+             padding:0 14px;height:100%;display:flex;align-items:center;white-space:nowrap;
+             font-size:13px;font-weight:500;flex-shrink:0">ทั้งหมด</a>`;
+    const catLinks = parents.map(c =>
+      `<a class="catbar-item" href="storefront-live.html?cat=${encodeURIComponent(c.id)}"
+        style="padding:0 14px;height:100%;display:flex;align-items:center;white-space:nowrap;
+               font-size:13px;text-decoration:none;color:var(--g600);flex-shrink:0;
+               transition:color .15s"
+        onmouseover="this.style.color='var(--black)'" onmouseout="this.style.color='var(--g600)'">
+        ${c.icon || ''} ${c.name_th}
+      </a>`).join('');
+    track.innerHTML = allLink + catLinks;
+  }
+
+  // ── Filter chips ใน products section ──────────────────────────────────
+  const filterWrap = document.getElementById('cat-filter-wrap') || document.getElementById('filter-wrap');
+  if (filterWrap && parents.length) {
+    const allChip = `<button class="cat-chip active" onclick="filterBycat('all',this)"
+      style="padding:6px 16px;border:1px solid var(--black);background:var(--black);color:#fff;
+             font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s">ทั้งหมด</button>`;
+    const chips = parents.map(c =>
+      `<button class="cat-chip" onclick="filterBycat('${c.id}',this)"
+        style="padding:6px 16px;border:1px solid var(--g200);background:none;
+               font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;
+               color:var(--g600)"
+        onmouseover="this.style.background='var(--g50)'" onmouseout="if(!this.classList.contains('active'))this.style.background='none'">
+        ${c.icon || ''} ${c.name_th}
+      </button>`).join('');
+    filterWrap.innerHTML = allChip + chips;
+  }
 }
 
-// ── Products ───────────────────────────────────────────────
+function filterBycat(catId, btn) {
+  currentFilter = catId;
+  document.querySelectorAll('.cat-chip').forEach(b => {
+    b.classList.remove('active');
+    b.style.background = 'none';
+    b.style.borderColor = 'var(--g200)';
+    b.style.color = 'var(--g600)';
+  });
+  if (btn) {
+    btn.classList.add('active');
+    btn.style.background = 'var(--black)';
+    btn.style.borderColor = 'var(--black)';
+    btn.style.color = '#fff';
+  }
+  renderProducts();
+  renderCatSections();
+}
+
+
 async function loadProducts() {
-  const { data } = await sb.from('products')
-    .select('*,categories(name_th,icon)')
-    .eq('status','active')
-    .order('created_at',{ascending:false}).limit(20);
-  allProducts = data || [];
+  try {
+    const { data, error } = await sb.from('products')
+      .select('id,name_th,name_en,price,compare_price,discount_percent,thumbnail,images,stock_quantity,sold_count,rating_avg,rating_count,category_id,seller_id,is_flash_sale,flash_price,is_featured,status,created_at,categories(name_th,icon),sellers(shop_name,logo_url)')
+      .eq('status','active')
+      .order('created_at', { ascending:false }).limit(40);
+    if (error) throw error;
+    allProducts = data || [];
+  } catch(e) {
+    console.error('loadProducts error:', e.message);
+    allProducts = [];
+  }
   renderProducts();
   renderCatSections();
 }
