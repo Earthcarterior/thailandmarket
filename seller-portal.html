@@ -716,7 +716,11 @@ nav, .nav {
           </div>
           <div class="fg">
             <label class="fl">แบรนด์</label>
-            <input class="fi" id="ap-brand" placeholder="ชื่อแบรนด์">
+            <select class="fi" id="ap-brand-id" onchange="onBrandChange()">
+              <option value="">-- เลือกแบรนด์ --</option>
+              <option value="__custom__">+ พิมพ์เอง (ไม่อยู่ในรายการ)</option>
+            </select>
+            <input class="fi" id="ap-brand" placeholder="ชื่อแบรนด์" style="margin-top:6px;display:none">
           </div>
           <div class="fg-row">
             <div class="fg">
@@ -1090,7 +1094,7 @@ window.goto = function(view, el) {
   switch (view) {
     case 'dashboard':    renderDashboardLive(); break;
     case 'products':     loadSellerProducts().then(renderProdsLive); break;
-    case 'add-product':  clearProductForm(); loadCategoriesForProduct(); break;
+    case 'add-product':  clearProductForm(); loadCategoriesForProduct(); loadBrandsForSeller(); break;
     case 'categories':   loadSellerCategories(); break;
     case 'orders':       loadSellerOrders().then(renderOrdersLive); break;
     case 'flash':        renderFlashLive(); break;
@@ -1567,7 +1571,10 @@ async function submitNewProduct(){
     const payload={name_th,price,stock_quantity:stock,category_id:_selectedCatId,name_en:g('ap-name-en')||name_th,description:g('ap-desc'),compare_price:cp,discount_percent:disc,sku:g('ap-sku'),brand:g('ap-brand'),tags:g('ap-tags')?g('ap-tags').split(',').map(t=>t.trim()).filter(Boolean):null,status:$('ap-status')?.value||'active',slug,weight:parseFloat($('ap-weight')?.value)||null,updated_at:new Date().toISOString()};
     if(thumbnail) payload.thumbnail=thumbnail;
     if(_sellerSellerId) payload.seller_id=_sellerSellerId;
-    if(_sellerUserId) payload.user_id=_sellerUserId;
+    // [PATCH 2026-05-02] ลบ user_id ออก — schema products ไม่มี column นี้
+    // (เคยทำให้เกิด error: Could not find the 'user_id' column of 'products' in the schema cache)
+    // ถ้าต้องการเก็บ brand_id ให้ uncomment บรรทัดล่าง:
+    if(g('ap-brand-id')) payload.brand_id=g('ap-brand-id');
     let err;
     if(editId){
       ({error:err}=await _sb.from('products').update(payload).eq('id',editId));
@@ -1610,6 +1617,8 @@ async function confirmDeleteProduct(id,name){
 
 function clearProductForm(){
   ['ap-name-th','ap-name-en','ap-desc','ap-price','ap-compare-price','ap-stock','ap-sku','ap-brand','ap-tags','ap-slug','ap-weight'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  const bs=$('ap-brand-id');if(bs)bs.value='';
+  const bi=$('ap-brand');if(bi)bi.style.display='none';
   const se=$('ap-status');if(se)se.value='active';
   const pv=$('ap-img-preview');if(pv)pv.innerHTML='';
   const ii=$('ap-img-input');if(ii)ii.value='';
@@ -1618,6 +1627,31 @@ function clearProductForm(){
   document.querySelectorAll('#cat-chips-ap .cat-chip').forEach(c=>c.classList.remove('active-chip'));
   const sw=$('ap-sub-cats');if(sw)sw.innerHTML='';
   const re=$('ap-result');if(re)re.innerHTML='';
+}
+
+// [PATCH 2026-05-02] โหลดรายชื่อแบรนด์สำหรับ dropdown
+async function loadBrandsForSeller(){
+  const sel=$('ap-brand-id');
+  if(!sel) return;
+  try{
+    const{data,error}=await _sb.from('brands').select('id,name').eq('is_active',true).order('name');
+    if(error) throw error;
+    sel.innerHTML='<option value="">-- เลือกแบรนด์ --</option>'
+      +(data||[]).map(b=>`<option value="${b.id}">${b.name}</option>`).join('')
+      +'<option value="__custom__">+ พิมพ์เอง (ไม่อยู่ในรายการ)</option>';
+  }catch(e){
+    console.warn('โหลดแบรนด์ไม่ได้:',e.message);
+    // ถ้ายังไม่มีตาราง brands → ให้พิมพ์เองได้
+    sel.innerHTML='<option value="__custom__" selected>พิมพ์ชื่อแบรนด์เอง</option>';
+    const bi=$('ap-brand');if(bi)bi.style.display='block';
+  }
+}
+
+function onBrandChange(){
+  const sel=$('ap-brand-id'),inp=$('ap-brand');
+  if(!sel||!inp) return;
+  if(sel.value==='__custom__'){inp.style.display='block';inp.focus();}
+  else{inp.style.display='none';inp.value='';}
 }
 
 function previewImages(input){
