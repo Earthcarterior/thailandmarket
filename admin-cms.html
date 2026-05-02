@@ -603,6 +603,108 @@ nav { display: block !important; height: auto !important; }
     </div>
 
     <!-- ── CATEGORIES ── -->
+    
+    <!-- ═══ FLASH SALE PANEL ═══ -->
+    <div id="panel-flash" class="panel admin-only" style="padding:24px;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:15px;font-weight:600">⚡ Flash Sale</div>
+          <div style="font-size:12px;color:var(--g500);margin-top:2px">
+            ตั้งค่าสินค้าลดราคา — แสดงอัตโนมัติบนหน้าหลัก
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" style="background:#D97706;color:#fff" onclick="filterFlash('all')">
+            ทั้งหมด <span id="flash-all-cnt" style="background:rgba(255,255,255,.25);padding:1px 7px;margin-left:4px;font-family:monospace">—</span>
+          </button>
+          <button class="btn btn-sm" style="background:#E63329;color:#fff" onclick="filterFlash('flash')">
+            ⚡ Flash Sale เท่านั้น
+          </button>
+          <button class="btn btn-sm btn-k" onclick="openFlashPicker()">
+            ➕ เพิ่มสินค้า Flash Sale
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="flash-stats"></div>
+
+      <!-- Product Table -->
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:38%">สินค้า</th>
+              <th>ราคาปกติ</th>
+              <th>ราคา Flash</th>
+              <th>ส่วนลด</th>
+              <th>ขายแล้ว</th>
+              <th>สต็อก</th>
+              <th style="text-align:center">Flash Sale</th>
+              <th style="text-align:center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="flash-tbody">
+            <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--g400)">⏳ กำลังโหลด...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ FLASH PRODUCT PICKER MODAL ═══ -->
+    <div id="flash-picker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center">
+      <div style="background:#fff;width:680px;max-height:85vh;overflow-y:auto;padding:0;position:relative">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--g200);position:sticky;top:0;background:#fff;z-index:1;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:15px;font-weight:700">⚡ เลือกสินค้าขึ้น Flash Sale</div>
+            <div style="font-size:12px;color:var(--g500);margin-top:2px">เลือกสินค้า → ตั้งราคา Flash → บันทึก</div>
+          </div>
+          <button onclick="closeFlashPicker()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--g400)">✕</button>
+        </div>
+        <div style="padding:16px 24px;border-bottom:1px solid var(--g200)">
+          <input type="text" id="flash-search-input" placeholder="ค้นหาสินค้า..." oninput="searchFlashProducts(this.value)"
+            style="width:100%;padding:9px 14px;border:1px solid var(--g200);font-size:13px;font-family:inherit;outline:none">
+        </div>
+        <div id="flash-picker-list" style="padding:16px 24px">
+          <div style="text-align:center;padding:24px;color:var(--g400)">⏳ กำลังโหลด...</div>
+        </div>
+        <div style="padding:16px 24px;border-top:1px solid var(--g200);background:#F9FAFB;position:sticky;bottom:0">
+          <div style="font-size:12px;color:var(--g500);margin-bottom:8px">
+            ✓ คลิกสินค้าเพื่อตั้งราคา Flash Sale · ราคาจะแสดงบนหน้าหลักทันที
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SET FLASH PRICE MODAL ═══ -->
+    <div id="flash-price-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2100;align-items:center;justify-content:center">
+      <div style="background:#fff;width:420px;padding:28px;position:relative">
+        <button onclick="closeFlashPriceModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--g400)">✕</button>
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px">⚡ ตั้งราคา Flash Sale</div>
+        <div style="font-size:12px;color:var(--g500);margin-bottom:20px" id="flash-price-product-name"></div>
+        <input type="hidden" id="flash-price-product-id">
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:12px;color:var(--g500);margin-bottom:6px;font-family:monospace;text-transform:uppercase">ราคาปกติ</label>
+          <div id="flash-orig-price" style="font-size:18px;font-weight:600;color:var(--g500);font-family:monospace;text-decoration:line-through"></div>
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:12px;color:var(--g500);margin-bottom:6px;font-family:monospace;text-transform:uppercase">ราคา Flash Sale <span style="color:var(--red)">*</span></label>
+          <input id="flash-price-input" type="number" placeholder="ราคา Flash" min="0" step="1"
+            style="width:100%;padding:10px 14px;border:1px solid var(--g200);font-size:16px;font-family:monospace;outline:none;font-weight:600;color:var(--red)"
+            oninput="calcFlashDiscount(this.value)">
+        </div>
+        <div id="flash-discount-preview" style="margin-bottom:20px;padding:12px;background:var(--g50);text-align:center;font-size:13px;color:var(--g600)">
+          กรอกราคา Flash เพื่อดูส่วนลด
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onclick="closeFlashPriceModal()" style="flex:1;padding:10px;background:none;border:1px solid var(--g200);cursor:pointer;font-size:13px">ยกเลิก</button>
+          <button onclick="saveFlashPrice()" style="flex:2;padding:10px;background:#E63329;color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600">
+            ⚡ บันทึกราคา Flash Sale
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="panel-categories" class="panel admin-only" style="padding:24px;display:none">
       <div class="table-header">
         <span style="font-size:13px;color:var(--g500)">หมวดหมู่สินค้า — จัดการจากที่นี่</span>
@@ -2021,6 +2123,277 @@ async function populateCatParentSelect() {
     parents.map(p => `<option value="${p.id}">${p.icon || ''} ${p.name_th}</option>`).join('');
 }
 
+
+// ════════════════════════════════════════════════════════════════════════
+//  FLASH SALE MANAGEMENT (Admin)
+// ════════════════════════════════════════════════════════════════════════
+
+let _allFlashProducts  = [];
+let _pickerProducts    = [];
+let _flashCurrentProd  = null;
+let _flashFilterMode   = 'all';
+
+async function loadFlash() {
+  const tbody   = document.getElementById('flash-tbody');
+  const statsEl = document.getElementById('flash-stats');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--g400)">⏳ กำลังโหลด...</td></tr>';
+
+  try {
+    const { data, error } = await sb.from('products')
+      .select('id,name_th,price,compare_price,flash_price,thumbnail,sold_count,stock_quantity,rating_avg,is_flash_sale,status,categories(name_th)')
+      .eq('status', 'active')
+      .order('sold_count', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+
+    _allFlashProducts = data || [];
+    const flashOnes   = _allFlashProducts.filter(p => p.is_flash_sale);
+    const topSellers  = _allFlashProducts.filter(p => !p.is_flash_sale).slice(0, 10);
+
+    // Stats
+    if (statsEl) {
+      const totalRevenue = flashOnes.reduce((s, p) => s + (p.sold_count || 0) * (p.flash_price || p.price), 0);
+      statsEl.innerHTML = [
+        { l:'⚡ ใน Flash Sale', n: flashOnes.length, c:'#E63329', bg:'#FEE2E2' },
+        { l:'📦 สินค้าทั้งหมด', n: _allFlashProducts.length, c:'var(--black)', bg:'#F9FAFB' },
+        { l:'💰 ยอดขาย Flash', n: '฿'+totalRevenue.toLocaleString(), c:'#16A34A', bg:'#DCFCE7', num:false },
+        { l:'🔥 ขายดีสุด', n: _allFlashProducts[0]?.name_th?.slice(0,12)||'—', c:'#D97706', bg:'#FEF3C7', num:false },
+      ].map(s => `<div style="background:${s.bg};border:1px solid ${s.c}30;padding:14px;text-align:center">
+        <div style="font-size:${s.num===false?'13px':'22px'};font-weight:700;color:${s.c};font-family:${s.num===false?'inherit':'monospace'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.n}</div>
+        <div style="font-size:11px;color:${s.c}">${s.l}</div>
+      </div>`).join('');
+    }
+
+    // Flash cnt badge
+    const cntEl = document.getElementById('flash-all-cnt');
+    if (cntEl) cntEl.textContent = _allFlashProducts.length;
+
+    renderFlashTable(_allFlashProducts);
+
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--red)">❌ ${e.message}</td></tr>`;
+  }
+}
+
+function filterFlash(mode) {
+  _flashFilterMode = mode;
+  const prods = mode === 'flash'
+    ? _allFlashProducts.filter(p => p.is_flash_sale)
+    : _allFlashProducts;
+  renderFlashTable(prods);
+}
+
+function renderFlashTable(prods) {
+  const tbody = document.getElementById('flash-tbody');
+  if (!tbody) return;
+
+  if (!prods.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--g400)">
+      <div style="font-size:32px;margin-bottom:8px">⚡</div>
+      <div>ยังไม่มีสินค้า Flash Sale</div>
+      <div style="font-size:12px;margin-top:6px">กด "เพิ่มสินค้า Flash Sale" เพื่อเริ่ม</div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = prods.map(p => {
+    const origPrice  = p.price || 0;
+    const flashPrice = p.flash_price || (p.is_flash_sale ? Math.round(origPrice * 0.75) : origPrice);
+    const discPct    = origPrice > 0 ? Math.round((1 - flashPrice / origPrice) * 100) : 0;
+    const fmtP       = n => '฿' + Number(n).toLocaleString('th-TH');
+    const stockColor = p.stock_quantity <= 0 ? '#E63329' : p.stock_quantity <= 20 ? '#D97706' : '#16A34A';
+
+    return `<tr style="border-bottom:1px solid var(--g100)" id="flash-row-${p.id}">
+      <td style="padding:10px 14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:44px;height:44px;background:var(--g100);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center">
+            ${p.thumbnail ? `<img src="${p.thumbnail}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='📦'">` : '📦'}
+          </div>
+          <div style="min-width:0">
+            <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">${p.name_th}</div>
+            <div style="font-size:11px;color:var(--g400)">${p.categories?.name_th || '—'}</div>
+          </div>
+        </div>
+      </td>
+      <td style="padding:10px 14px;font-family:monospace;font-size:13px">${fmtP(origPrice)}</td>
+      <td style="padding:10px 14px;font-family:monospace;font-size:14px;font-weight:700;color:var(--red)">
+        ${p.is_flash_sale ? fmtP(flashPrice) : '<span style="color:var(--g400);font-weight:400">—</span>'}
+      </td>
+      <td style="padding:10px 14px">
+        ${discPct > 0 && p.is_flash_sale
+          ? `<span style="background:#FEE2E2;color:var(--red);font-size:11px;font-family:monospace;padding:3px 10px;font-weight:700">-${discPct}%</span>`
+          : '<span style="color:var(--g400);font-size:12px">—</span>'}
+      </td>
+      <td style="padding:10px 14px;font-family:monospace;font-size:12px">${Number(p.sold_count||0).toLocaleString()}</td>
+      <td style="padding:10px 14px;font-family:monospace;font-size:12px;color:${stockColor};font-weight:600">
+        ${p.stock_quantity <= 0 ? 'หมด' : Number(p.stock_quantity).toLocaleString()}
+      </td>
+      <td style="padding:10px 14px;text-align:center">
+        <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+          <input type="checkbox" ${p.is_flash_sale ? 'checked' : ''}
+            onchange="toggleFlash('${p.id}', this.checked)"
+            style="width:16px;height:16px;cursor:pointer;accent-color:var(--red)">
+          <span style="font-size:11px;color:${p.is_flash_sale ? 'var(--red)' : 'var(--g400)'}">
+            ${p.is_flash_sale ? '⚡ ON' : 'OFF'}
+          </span>
+        </label>
+      </td>
+      <td style="padding:10px 14px;text-align:center">
+        <button onclick="openFlashPriceModal('${p.id}')"
+          style="background:${p.is_flash_sale ? 'var(--red)' : 'none'};color:${p.is_flash_sale ? '#fff' : 'var(--black)'};
+                 border:1px solid ${p.is_flash_sale ? 'var(--red)' : 'var(--g200)'};
+                 padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit">
+          ${p.is_flash_sale ? '✏️ แก้ราคา' : '⚡ ตั้งราคา'}
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleFlash(productId, isFlash) {
+  const p = _allFlashProducts.find(x => x.id === productId);
+  if (!p) return;
+
+  const payload = {
+    is_flash_sale: isFlash,
+    updated_at: new Date().toISOString(),
+  };
+  // ถ้าเปิด flash และยังไม่มี flash_price → auto set 75% ของราคาปกติ
+  if (isFlash && !p.flash_price) {
+    payload.flash_price = Math.round((p.price || 0) * 0.75);
+  }
+  // ถ้าปิด flash → ล้าง flash_price
+  if (!isFlash) {
+    payload.flash_price = null;
+  }
+
+  const { error } = await sb.from('products').update(payload).eq('id', productId);
+  if (error) { toast(error.message); return; }
+
+  // อัปเดต local state
+  const idx = _allFlashProducts.findIndex(x => x.id === productId);
+  if (idx >= 0) { _allFlashProducts[idx] = { ..._allFlashProducts[idx], ...payload }; }
+
+  toast(isFlash
+    ? `⚡ เปิด Flash Sale: ${p.name_th} (ลด ${Math.round((1 - (payload.flash_price||p.price)/p.price)*100)}%)`
+    : `✅ ปิด Flash Sale: ${p.name_th}`);
+  loadFlash();
+}
+
+// ── Flash Price Modal ─────────────────────────────────────────────────────
+function openFlashPriceModal(productId) {
+  const p = _allFlashProducts.find(x => x.id === productId);
+  if (!p) return;
+  _flashCurrentProd = p;
+
+  document.getElementById('flash-price-product-id').value = productId;
+  document.getElementById('flash-price-product-name').textContent = p.name_th;
+  document.getElementById('flash-orig-price').textContent = '฿' + Number(p.price||0).toLocaleString('th-TH');
+  document.getElementById('flash-price-input').value = p.flash_price || Math.round((p.price||0) * 0.75);
+  calcFlashDiscount(document.getElementById('flash-price-input').value);
+  document.getElementById('flash-price-modal').style.display = 'flex';
+}
+
+function closeFlashPriceModal() {
+  document.getElementById('flash-price-modal').style.display = 'none';
+  _flashCurrentProd = null;
+}
+
+function calcFlashDiscount(flashPriceVal) {
+  const preview = document.getElementById('flash-discount-preview');
+  if (!preview || !_flashCurrentProd) return;
+  const fp   = parseFloat(flashPriceVal) || 0;
+  const orig = _flashCurrentProd.price || 0;
+  if (fp <= 0 || orig <= 0) { preview.textContent = 'กรอกราคา Flash'; preview.style.color='var(--g500)'; return; }
+  const disc = Math.round((1 - fp/orig)*100);
+  if (fp >= orig) {
+    preview.innerHTML = '<span style="color:#E63329">⚠️ ราคา Flash ต้องน้อยกว่าราคาปกติ</span>';
+    return;
+  }
+  preview.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px">
+      <div><div style="font-size:11px;color:var(--g400)">ราคาปกติ</div><div style="font-size:16px;text-decoration:line-through;color:var(--g400);font-family:monospace">฿${orig.toLocaleString()}</div></div>
+      <div style="font-size:20px;color:var(--red)">→</div>
+      <div><div style="font-size:11px;color:var(--red)">ราคา Flash</div><div style="font-size:20px;font-weight:700;color:var(--red);font-family:monospace">฿${fp.toLocaleString()}</div></div>
+      <div style="background:var(--red);color:#fff;font-size:14px;font-weight:700;padding:6px 14px;font-family:monospace">-${disc}%</div>
+    </div>`;
+}
+
+async function saveFlashPrice() {
+  const productId  = document.getElementById('flash-price-product-id').value;
+  const flashPrice = parseFloat(document.getElementById('flash-price-input').value);
+  const p          = _flashCurrentProd;
+  if (!productId || !p) return;
+  if (!flashPrice || flashPrice <= 0) { toast('กรุณากรอกราคา Flash'); return; }
+  if (flashPrice >= (p.price||0)) { toast('ราคา Flash ต้องน้อยกว่าราคาปกติ'); return; }
+
+  const discPct = Math.round((1 - flashPrice/(p.price||1))*100);
+  const { error } = await sb.from('products').update({
+    flash_price: flashPrice,
+    is_flash_sale: true,
+    discount_percent: discPct,
+    updated_at: new Date().toISOString(),
+  }).eq('id', productId);
+
+  if (error) { toast(error.message); return; }
+  toast(`⚡ บันทึกราคา Flash Sale สำเร็จ! ลด ${discPct}% (฿${flashPrice.toLocaleString()})`);
+  closeFlashPriceModal();
+  loadFlash();
+}
+
+// ── Flash Product Picker ──────────────────────────────────────────────────
+async function openFlashPicker() {
+  document.getElementById('flash-picker-modal').style.display = 'flex';
+  document.getElementById('flash-search-input').value = '';
+  const listEl = document.getElementById('flash-picker-list');
+  listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--g400)">⏳ กำลังโหลด...</div>';
+
+  try {
+    const { data, error } = await sb.from('products')
+      .select('id,name_th,price,flash_price,thumbnail,sold_count,is_flash_sale,categories(name_th)')
+      .eq('status','active')
+      .order('sold_count', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    _pickerProducts = data || [];
+    renderPickerList(_pickerProducts);
+  } catch(e) {
+    listEl.innerHTML = `<div style="color:var(--red);padding:16px">❌ ${e.message}</div>`;
+  }
+}
+
+function closeFlashPicker() {
+  document.getElementById('flash-picker-modal').style.display = 'none';
+}
+
+function searchFlashProducts(q) {
+  const kw = q.toLowerCase();
+  renderPickerList(_pickerProducts.filter(p => p.name_th.toLowerCase().includes(kw)));
+}
+
+function renderPickerList(prods) {
+  const listEl = document.getElementById('flash-picker-list');
+  if (!prods.length) { listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--g400)">ไม่พบสินค้า</div>'; return; }
+  listEl.innerHTML = prods.map(p => `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--g100);cursor:pointer;transition:background .15s"
+      onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''"
+      onclick="closeFlashPicker();openFlashPriceModal('${p.id}')">
+      <div style="width:44px;height:44px;background:var(--g100);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center">
+        ${p.thumbnail ? `<img src="${p.thumbnail}" style="width:100%;height:100%;object-fit:cover">` : '📦'}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name_th}</div>
+        <div style="font-size:11px;color:var(--g400)">${p.categories?.name_th||'—'} · ขาย ${Number(p.sold_count||0).toLocaleString()} ชิ้น</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:monospace;font-size:13px;font-weight:600">฿${Number(p.price||0).toLocaleString()}</div>
+        ${p.is_flash_sale ? '<div style="font-size:10px;color:var(--red);font-family:monospace">⚡ Flash ON</div>' : ''}
+      </div>
+    </div>`).join('');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // cat-slug auto-manual flag
   document.getElementById('cat-slug')?.addEventListener('input', function() {
@@ -2066,6 +2439,7 @@ window.showPanel = function(name) {
     case 'dashboard':   loadDashboard();               break;
     case 'products':    loadProducts();                break;
     case 'categories':  loadCats();                    break;
+    case 'flash':       loadFlash();                   break;
     case 'sellers':     loadSellers('pending');        break;
     case 'approve':     loadPending('pending_review'); break;
     case 'members':     loadMembers('unconfirmed');    break;
