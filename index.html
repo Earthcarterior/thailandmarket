@@ -1548,23 +1548,121 @@ function updateRecHeader(isPersonalized, catIds) {
 }
 
 
+// ════════════════════════════════════════════════════════════════════════
+//  [PATCH 2026-05-02] เพิ่มฟังก์ชันที่หายไป: loadBanners + loadCoupons
+//  สาเหตุ: init() เรียก 2 ฟังก์ชันนี้ใน Promise.all แต่ไม่มี implementation
+//          → ReferenceError → ทุก section ค้าง รวมถึง "แนะนำสำหรับคุณ"
+// ════════════════════════════════════════════════════════════════════════
+
+async function loadBanners() {
+  const el = document.getElementById('banners');
+  if (!el) return;
+  try {
+    // ลองดึงจากตาราง banners (ถ้ามี)
+    const { data, error } = await sb.from('banners')
+      .select('*').eq('is_active', true)
+      .order('sort_order', { ascending: true }).limit(3);
+    const banners = (!error && data?.length) ? data : null;
+
+    if (banners) {
+      el.innerHTML = banners.map(b => `
+        <a class="banner-card" href="${b.link_url || 'storefront-live.html'}">
+          ${b.image_url ? `<img src="${b.image_url}" alt="${b.title || ''}" loading="lazy">` : ''}
+          ${b.title ? `<div class="banner-title">${b.title}</div>` : ''}
+        </a>`).join('');
+      return;
+    }
+  } catch(e) { /* table ไม่มี — ใช้ default */ }
+
+  // Fallback: default banners
+  const defaults = [
+    { ico:'🔥', title:'Flash Sale ทุกวัน', sub:'ลดสูงสุด 70% · 3 รอบ/วัน', bg:'#0A0A0A', link:'flash-sale.html' },
+    { ico:'🚚', title:'ส่งฟรีทั่วไทย',  sub:'ไม่มีขั้นต่ำสำหรับสมาชิก Plus', bg:'#E63329', link:'storefront-live.html' },
+    { ico:'🎁', title:'รับคูปองใหม่ทุกสัปดาห์', sub:'ส่วนลดสูงสุด ฿500', bg:'#1a1a2e', link:'coupon-hub.html' },
+  ];
+  el.innerHTML = defaults.map(b => `
+    <a class="banner-card" href="${b.link}" style="background:${b.bg};color:#fff;padding:24px;display:block;text-decoration:none;border-radius:0;min-height:140px">
+      <div style="font-size:36px;margin-bottom:8px">${b.ico}</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:4px">${b.title}</div>
+      <div style="font-size:12px;opacity:.8">${b.sub}</div>
+    </a>`).join('');
+}
+
+async function loadCoupons() {
+  const el = document.getElementById('coupon-codes');
+  if (!el) return;
+  try {
+    const { data, error } = await sb.from('coupons')
+      .select('code,name,type,value')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }).limit(4);
+
+    const coupons = (!error && data?.length) ? data : null;
+
+    if (coupons) {
+      el.innerHTML = coupons.map(c => {
+        const label = c.type === 'shipping' ? 'ส่งฟรี'
+                    : c.type === 'fixed'    ? `-฿${Number(c.value).toLocaleString()}`
+                    : `-${Number(c.value)}%`;
+        const cls = c.type === 'shipping' ? 'coupon-code free' : 'coupon-code';
+        return `<div class="${cls}" onclick="copyCoupon('${c.code}')">
+                  <div style="font-weight:700;font-size:13px">${label}</div>
+                  <div style="font-size:10px;color:var(--g500);margin-top:2px">${c.code}</div>
+                </div>`;
+      }).join('');
+      return;
+    }
+  } catch(e) { /* fallback */ }
+
+  // Fallback: default coupons
+  const defaults = [
+    { code:'WELCOME50', label:'-฿50',  cls:'coupon-code' },
+    { code:'NEW100',    label:'-฿100', cls:'coupon-code' },
+    { code:'FREESHIP',  label:'ส่งฟรี', cls:'coupon-code free' },
+  ];
+  el.innerHTML = defaults.map(c => `
+    <div class="${c.cls}" onclick="copyCoupon('${c.code}')">
+      <div style="font-weight:700;font-size:13px">${c.label}</div>
+      <div style="font-size:10px;color:var(--g500);margin-top:2px">${c.code}</div>
+    </div>`).join('');
+}
+
+function copyCoupon(code) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(() => toast('📋 คัดลอกโค้ด ' + code + ' แล้ว', true));
+  } else {
+    toast('โค้ด: ' + code, true);
+  }
+}
+
+
 async function init() {
   updateCartUI();
   startTimer();
   loadSiteSettings();
-  // โหลดทุกส่วนพร้อมกัน
-  await Promise.all([
+
+  // [PATCH] ใช้ allSettled — ถ้า section ใดพังจะไม่ลากส่วนอื่นพังตาม
+  await Promise.allSettled([
     loadCats(),
     loadFlash(),
     loadBanners(),
     loadCoupons(),
     loadBrands(),
   ]);
-  // Personalized: ดู session → แนะนำสินค้าตาม wishlist/orders
-  await loadPersonalized();
+
+  // [PATCH] แยก try-catch รอบ loadPersonalized เพื่อให้แสดงสินค้าให้ได้แม้ session error
+  try {
+    await loadPersonalized();
+  } catch(e) {
+    console.error('[TM] loadPersonalized failed:', e);
+    // fallback: แสดงสินค้าคละหมวดอย่างน้อย
+    const sub = document.getElementById('rec-sub');
+    if (sub) sub.textContent = 'สินค้าน่าสนใจ';
+    try { await loadMixedProducts(); } catch(e2) { console.error('[TM] loadMixedProducts failed:', e2); }
+  }
 }
 
-init().catch(console.error);
+init().catch(e => console.error('[TM] init crashed:', e));
 </script>
 
 <script>
