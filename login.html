@@ -895,13 +895,21 @@ async function doRegister() {
     }
 
   } catch (err) {
-    const msg = err.message;
-    if (msg.includes('already registered') || msg.includes('already been registered')) {
-      showE('r-email', 'Email นี้มีบัญชีอยู่แล้ว');
-    } else if (msg.includes('Password should be')) {
+    const msg = (err.message || '').toLowerCase();
+
+    if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already registered')) {
+      showE('r-email', 'Email นี้มีบัญชีอยู่แล้ว กรุณา Login');
+    } else if (msg.includes('password should be') || msg.includes('password')) {
       showE('r-pass', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+    } else if (msg.includes('rate limit') || msg.includes('email rate limit') || msg.includes('too many') || msg.includes('over_email_send_rate_limit')) {
+      // Supabase จำกัด email ต่อชั่วโมง (Free plan: 3/hour)
+      showRateLimitMessage();
+    } else if (msg.includes('invalid email') || msg.includes('unable to validate')) {
+      showE('r-email', 'รูปแบบ Email ไม่ถูกต้อง');
+    } else if (msg.includes('network') || msg.includes('fetch')) {
+      toast('❌ ไม่สามารถเชื่อมต่อได้ กรุณาตรวจสอบอินเทอร์เน็ต');
     } else {
-      toast('❌ ' + msg);
+      toast('❌ ' + (err.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่'));
     }
     btn.textContent = 'สมัครสมาชิก';
     btn.disabled = false;
@@ -1053,6 +1061,50 @@ function showVerifiedSuccess(user) {
 
 
 // ── Auto-redirect ถ้า login อยู่แล้ว ──────────────────────
+
+// ── Rate Limit Handler ─────────────────────────────────────────────────
+function showRateLimitMessage() {
+  // ซ่อน form และแสดงข้อความ rate limit สวยงาม
+  const existing = document.getElementById('rate-limit-screen');
+  if (existing) existing.remove();
+
+  const screen = document.createElement('div');
+  screen.id = 'rate-limit-screen';
+  screen.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,10,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)';
+  screen.innerHTML = `
+    <div style="background:#fff;max-width:440px;width:100%;padding:36px;text-align:center;position:relative">
+      <button onclick="document.getElementById('rate-limit-screen').remove()"
+        style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1">✕</button>
+
+      <div style="font-size:52px;margin-bottom:16px">📧</div>
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:10px;color:#0A0A0A">ส่ง Email ได้เกินกำหนด</h3>
+      <p style="font-size:13px;color:#737373;line-height:1.7;margin-bottom:20px">
+        ระบบจำกัดการส่ง Email ยืนยันบัญชีเพื่อป้องกัน spam<br>
+        กรุณารอ <strong style="color:#E63329">1 ชั่วโมง</strong> แล้วลองสมัครใหม่
+      </p>
+
+      <div style="background:#FEF3C7;border:1px solid #F59E0B;padding:14px;text-align:left;margin-bottom:20px">
+        <div style="font-size:12px;font-weight:600;color:#D97706;margin-bottom:8px">💡 วิธีแก้ปัญหา</div>
+        <div style="font-size:12px;color:#92400E;line-height:1.7">
+          • ถ้าสมัครไปแล้ว — ตรวจกล่อง Email (รวม Spam)<br>
+          • ถ้ายังไม่ได้รับ — รอ 1 ชั่วโมงแล้วลองใหม่<br>
+          • หรือใช้ Google Login แทนการสมัครด้วย Email
+        </div>
+      </div>
+
+      <button onclick="doLoginGoogle();document.getElementById('rate-limit-screen').remove()"
+        style="width:100%;padding:12px;background:#4285F4;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit">
+        🌐 เข้าสู่ระบบด้วย Google แทน
+      </button>
+      <button onclick="document.getElementById('rate-limit-screen').remove()"
+        style="width:100%;padding:12px;background:none;border:1px solid #E5E5E5;font-size:13px;cursor:pointer;font-family:inherit;color:#737373">
+        ปิด
+      </button>
+    </div>
+  `;
+  document.body.appendChild(screen);
+}
+
 async function checkSession() {
   const params   = new URLSearchParams(location.search);
   const hashP    = new URLSearchParams(location.hash.replace('#',''));
