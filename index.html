@@ -515,11 +515,20 @@ nav, .nav {
 
   <!-- BRANDS -->
   <div class="section-hd">
-    <div class="section-title">แบรนด์ชั้นนำ</div>
+    <div>
+      <div class="section-title">แบรนด์ชั้นนำ</div>
+      <div id="brands-sub" style="font-size:12px;color:var(--g500);margin-top:3px">เรียงตามความนิยม</div>
+    </div>
     <a href="storefront-live.html" class="see-all">ดูทั้งหมด →</a>
   </div>
   <div class="brands-grid" id="brands-grid">
     <!-- Loaded from Supabase -->
+  </div>
+  <div id="brands-actions" style="text-align:center;margin-top:-16px;margin-bottom:32px;display:none">
+    <button id="brands-more-btn" onclick="showMoreBrands()"
+            style="padding:10px 24px;background:#fff;color:#0A0A0A;border:1px solid #0A0A0A;font-family:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s">
+      ดูเพิ่มเติม <span id="brands-more-cnt" style="color:#737373"></span>
+    </button>
   </div>
 
 </main>
@@ -928,32 +937,103 @@ function renderCatSections() {
 }
 
 // ── Brands ─────────────────────────────────────────────────
+// [PATCH 2026-05-02] โหลดแบรนด์เรียงตามความนิยม + pagination
+const BRAND_INITIAL = 16;     // จำนวนเริ่มต้น (2 แถว 8 ใบ)
+const BRAND_MAX     = 50;     // จำนวนสูงสุด
+let _allBrands = [];          // เก็บไว้เผื่อ "ดูเพิ่ม"
+let _brandsShown = 0;
+
 async function loadBrands() {
   const el = document.getElementById('brands-grid');
   if (!el) return;
-  const { data } = await sb.from('brands').select('*').eq('is_active',true).eq('is_featured',true).order('sort_order').limit(8);
-  const brands = data || [];
+  try {
+    // ดึงแบรนด์ active ทั้งหมด (เรียงตาม view_count → is_featured → sort_order)
+    const { data, error } = await sb.from('brands')
+      .select('id,name,icon,logo_url,view_count,is_featured,sort_order')
+      .eq('is_active', true)
+      .order('view_count', { ascending: false, nullsFirst: false })
+      .order('is_featured', { ascending: false })
+      .order('sort_order', { ascending: true })
+      .limit(BRAND_MAX);
 
-  if (!brands.length) {
-    // Default brands
-    const def = [
-      {icon:'📱',name:'Samsung'},{icon:'🍎',name:'Apple'},{icon:'📺',name:'LG'},
-      {icon:'🛋️',name:'IKEA'},{icon:'❄️',name:'Panasonic'},{icon:'👟',name:'Nike'},
-      {icon:'💄',name:"L'Oreal"},{icon:'🐾',name:'Royal Canin'},
+    if (error) throw error;
+    _allBrands = data || [];
+  } catch(e) {
+    console.warn('loadBrands:', e.message);
+    // fallback: default brands ถ้าตาราง brands ยังไม่มี
+    _allBrands = [
+      {id:'def-1',icon:'📱',name:'Samsung'},   {id:'def-2',icon:'🍎',name:'Apple'},
+      {id:'def-3',icon:'📺',name:'LG'},        {id:'def-4',icon:'🛋️',name:'IKEA'},
+      {id:'def-5',icon:'❄️',name:'Panasonic'},  {id:'def-6',icon:'👟',name:'Nike'},
+      {id:'def-7',icon:'💄',name:"L'Oreal"},   {id:'def-8',icon:'🐾',name:'Royal Canin'},
     ];
-    el.innerHTML = def.map(b => `
-      <div class="brand-card" onclick="location.href='storefront-live.html'">
-        <div class="brand-ico">${b.icon}</div>
-        <div class="brand-name">${b.name}</div>
-      </div>`).join('');
+  }
+
+  if (!_allBrands.length) {
+    el.innerHTML = `<div style="grid-column:1/-1;padding:32px;text-align:center;color:var(--g500);font-size:13px">
+      ยังไม่มีแบรนด์ในระบบ
+    </div>`;
+    document.getElementById('brands-actions').style.display = 'none';
     return;
   }
+
+  // แสดง BRAND_INITIAL ก่อน
+  _brandsShown = Math.min(BRAND_INITIAL, _allBrands.length);
+  renderBrandCards(_allBrands.slice(0, _brandsShown));
+  updateBrandsMoreBtn();
+}
+
+function renderBrandCards(brands) {
+  const el = document.getElementById('brands-grid');
+  if (!el) return;
   el.innerHTML = brands.map(b => `
-    <div class="brand-card" onclick="location.href='storefront-live.html'">
-      <div class="brand-ico">${b.icon || '🏷️'}</div>
-      <div class="brand-name">${b.name}</div>
+    <div class="brand-card" onclick="goBrand('${b.id}','${escQ(b.name)}')">
+      ${b.logo_url
+        ? `<img src="${b.logo_url}" alt="${escQ(b.name)}" style="width:36px;height:36px;object-fit:contain" loading="lazy">`
+        : `<div class="brand-ico" style="font-size:28px">${b.icon || '🏷️'}</div>`}
+      <div class="brand-name">${escQ(b.name)}</div>
     </div>`).join('');
 }
+
+function updateBrandsMoreBtn() {
+  const wrap = document.getElementById('brands-actions');
+  const cnt  = document.getElementById('brands-more-cnt');
+  if (!wrap) return;
+  const remaining = _allBrands.length - _brandsShown;
+  if (remaining <= 0) {
+    wrap.style.display = 'none';
+  } else {
+    wrap.style.display = 'block';
+    if (cnt) cnt.textContent = `(เหลืออีก ${remaining})`;
+  }
+}
+
+function showMoreBrands() {
+  const next = Math.min(_brandsShown + BRAND_INITIAL, _allBrands.length, BRAND_MAX);
+  _brandsShown = next;
+  renderBrandCards(_allBrands.slice(0, _brandsShown));
+  updateBrandsMoreBtn();
+}
+
+// คลิกที่แบรนด์ → track view + ไปหน้า storefront filter
+async function goBrand(brandId, brandName) {
+  // Track view (ใช้ RPC ถ้ามี — ไม่ต้องรอผล)
+  if (brandId && !brandId.startsWith('def-')) {
+    sb.rpc('increment_brand_view', { p_brand_id: brandId })
+      .then(() => {})
+      .catch(() => { /* table หรือ function ยังไม่มี — ignore */ });
+  }
+  // เก็บ guest tracking ใน localStorage ด้วย
+  try {
+    const v = JSON.parse(localStorage.getItem('tm_brand_views') || '{}');
+    v[brandId] = (v[brandId] || 0) + 1;
+    localStorage.setItem('tm_brand_views', JSON.stringify(v));
+  } catch(e) {}
+  // ไปหน้า storefront filter ด้วย brand
+  location.href = `storefront-live.html?brand=${encodeURIComponent(brandId)}&brand_name=${encodeURIComponent(brandName)}`;
+}
+
+function escQ(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
 // ── Timer (syncs with flash_sale_events table) ────────────
 async function startTimer() {
@@ -1558,12 +1638,10 @@ async function loadBanners() {
   const el = document.getElementById('banners');
   if (!el) return;
   try {
-    // ลองดึงจากตาราง banners (ถ้ามี)
     const { data, error } = await sb.from('banners')
       .select('*').eq('is_active', true)
       .order('sort_order', { ascending: true }).limit(3);
     const banners = (!error && data?.length) ? data : null;
-
     if (banners) {
       el.innerHTML = banners.map(b => `
         <a class="banner-card" href="${b.link_url || 'storefront-live.html'}">
@@ -1572,8 +1650,7 @@ async function loadBanners() {
         </a>`).join('');
       return;
     }
-  } catch(e) { /* table ไม่มี — ใช้ default */ }
-
+  } catch(e) {}
   // Fallback: default banners
   const defaults = [
     { ico:'🔥', title:'Flash Sale ทุกวัน', sub:'ลดสูงสุด 70% · 3 รอบ/วัน', bg:'#0A0A0A', link:'flash-sale.html' },
@@ -1596,9 +1673,7 @@ async function loadCoupons() {
       .select('code,name,type,value')
       .eq('is_active', true)
       .order('created_at', { ascending: false }).limit(4);
-
     const coupons = (!error && data?.length) ? data : null;
-
     if (coupons) {
       el.innerHTML = coupons.map(c => {
         const label = c.type === 'shipping' ? 'ส่งฟรี'
@@ -1612,9 +1687,8 @@ async function loadCoupons() {
       }).join('');
       return;
     }
-  } catch(e) { /* fallback */ }
-
-  // Fallback: default coupons
+  } catch(e) {}
+  // Fallback
   const defaults = [
     { code:'WELCOME50', label:'-฿50',  cls:'coupon-code' },
     { code:'NEW100',    label:'-฿100', cls:'coupon-code' },
@@ -1630,9 +1704,7 @@ async function loadCoupons() {
 function copyCoupon(code) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(code).then(() => toast('📋 คัดลอกโค้ด ' + code + ' แล้ว', true));
-  } else {
-    toast('โค้ด: ' + code, true);
-  }
+  } else { toast('โค้ด: ' + code, true); }
 }
 
 
@@ -1640,8 +1712,7 @@ async function init() {
   updateCartUI();
   startTimer();
   loadSiteSettings();
-
-  // [PATCH] ใช้ allSettled — ถ้า section ใดพังจะไม่ลากส่วนอื่นพังตาม
+  // [PATCH] allSettled กันลากกันพัง
   await Promise.allSettled([
     loadCats(),
     loadFlash(),
@@ -1649,16 +1720,12 @@ async function init() {
     loadCoupons(),
     loadBrands(),
   ]);
-
-  // [PATCH] แยก try-catch รอบ loadPersonalized เพื่อให้แสดงสินค้าให้ได้แม้ session error
+  // [PATCH] แยก try-catch
   try {
     await loadPersonalized();
   } catch(e) {
     console.error('[TM] loadPersonalized failed:', e);
-    // fallback: แสดงสินค้าคละหมวดอย่างน้อย
-    const sub = document.getElementById('rec-sub');
-    if (sub) sub.textContent = 'สินค้าน่าสนใจ';
-    try { await loadMixedProducts(); } catch(e2) { console.error('[TM] loadMixedProducts failed:', e2); }
+    try { await loadMixedProducts(); } catch(e2) {}
   }
 }
 
