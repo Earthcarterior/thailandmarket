@@ -578,8 +578,8 @@ window._sb = supabase.createClient(window.TM_SB_URL, window.TM_SB_KEY);
       </div>
       <button class="btn-main" onclick="doLogin()">🔐 เข้าสู่ระบบ</button>
       <div class="divider"><div class="div-line"></div><div class="div-txt">หรือ</div><div class="div-line"></div></div>
-      <button class="social-btn" onclick="toast('🌐 กำลังเชื่อมต่อ Google...')"><span style="font-size:18px">🌐</span>เข้าสู่ระบบด้วย Google</button>
-      <button class="social-btn" onclick="toast('💬 กำลังเชื่อมต่อ LINE...')"><span style="font-size:18px;color:#00B900">💬</span>เข้าสู่ระบบด้วย LINE</button>
+      <button class="social-btn" onclick="doLoginGoogle()"><span style="font-size:18px">🌐</span>เข้าสู่ระบบด้วย Google</button>
+      <button class="social-btn" onclick="doLoginLine()"><span style="font-size:18px;color:#00B900">💬</span>เข้าสู่ระบบด้วย LINE</button>
       <div class="bottom-note">ยังไม่มีบัญชี? <a onclick="switchTab('register')">สมัครฟรีเลย →</a></div>
     </div>
 
@@ -610,7 +610,7 @@ window._sb = supabase.createClient(window.TM_SB_URL, window.TM_SB_KEY);
       <div class="fg" style="margin-bottom:18px"><label class="chk-wrap"><input type="checkbox" id="agree"> ยอมรับ <a style="color:var(--accent);font-weight:600">ข้อกำหนดการใช้งาน</a> และ <a style="color:var(--accent);font-weight:600">นโยบายความเป็นส่วนตัว</a></label></div>
       <button class="btn-main" onclick="doRegister()">✨ สมัครสมาชิกฟรี</button>
       <div class="divider"><div class="div-line"></div><div class="div-txt">หรือ</div><div class="div-line"></div></div>
-      <button class="social-btn" onclick="toast('🌐 สมัครด้วย Google')"><span style="font-size:18px">🌐</span>สมัครด้วย Google</button>
+      <button class="social-btn" onclick="doLoginGoogle()"><span style="font-size:18px">🌐</span>สมัครด้วย Google</button>
       <div class="bottom-note">มีบัญชีแล้ว? <a onclick="switchTab('login')">เข้าสู่ระบบ →</a></div>
     </div>
   </div>
@@ -683,55 +683,112 @@ async function doLogin() {
   const email = document.getElementById('l-email').value.trim();
   const pass  = document.getElementById('l-pass').value;
   let ok = true;
-  if (!email) ok = showE('l-email', 'กรุณากรอก Email');
+  if (!email) ok = showE('l-email', 'กรุณากรอก Email หรือเบอร์โทร');
   if (!pass)  ok = showE('l-pass', 'กรุณากรอกรหัสผ่าน');
   if (!ok) return;
 
   const btn = document.querySelector('#frm-login .btn-main');
-  btn.textContent = '🔐 กำลังเข้าสู่ระบบ...';
-  btn.disabled = true;
+  if (btn) { btn.textContent = '🔐 กำลังเข้าสู่ระบบ...'; btn.disabled = true; }
 
   try {
+    // ── 1. Supabase Auth ─────────────────────────────────────────────
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes('Email not confirmed')) {
+        // Supabase confirm ยังไม่ผ่าน → แสดงหน้ายืนยัน email
+        showVerifyEmailScreen(email, email.split('@')[0], true);
+        return;
+      }
+      throw error;
+    }
 
-    // บันทึก session
+    // ── 2. ดึง user profile ─────────────────────────────────────────
+    const { data: userRow } = await sb.from('users')
+      .select('id,role,display_name,is_active,seller_id')
+      .or(`id.eq.${data.user.id},email.eq.${email}`)
+      .maybeSingle();
+
+    const role = userRow?.role || 'user';
+    const name = userRow?.display_name || email.split('@')[0];
+
+    // ── 3. ตรวจ is_active ─────────────────────────────────────────
+    if (userRow?.is_active === false) {
+      // ยังไม่ยืนยัน email → แสดงหน้ายืนยัน
+      await sb.auth.signOut();
+      showVerifyEmailScreen(email, name, role !== 'seller');
+      return;
+    }
+
     localStorage.setItem('tm_user_email', email);
     localStorage.setItem('tm_user_id', data.user.id);
-
-    // ดึง role จาก users table
-    const { data: userRow } = await sb.from('users').select('role,display_name').eq('email', email).maybeSingle();
-    const role = userRow?.role || 'buyer';
-    const name = userRow?.display_name || email.split('@')[0];
     localStorage.setItem('tm_user_role', role);
     localStorage.setItem('tm_user_name', name);
 
-    toast('✅ เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับ ' + name);
+    toast('✅ ยินดีต้อนรับ คุณ' + name + '!');
 
-    // Redirect ตาม role
+    // ── 4. Redirect ตาม role ────────────────────────────────────────
+    const redirect = new URLSearchParams(location.search).get('from') || 'index.html';
     setTimeout(() => {
-      if (role === 'admin') location.href = 'admin-cms.html';
+      if      (role === 'admin')  location.href = 'admin-cms.html';
       else if (role === 'seller') location.href = 'seller-portal.html';
-      else {
-        const redirect = new URLSearchParams(location.search).get('from') || 'index.html';
-        location.href = redirect;
-      }
-    }, 900);
+      else                        location.href = redirect;
+    }, 800);
 
   } catch (err) {
-    const msg = err.message;
+    const msg = err.message || '';
     if (msg.includes('Invalid login') || msg.includes('invalid_credentials')) {
       showE('l-pass', 'Email หรือรหัสผ่านไม่ถูกต้อง');
     } else if (msg.includes('Email not confirmed')) {
-      toast('📧 กรุณายืนยัน Email ก่อนเข้าสู่ระบบ');
+      const email2 = document.getElementById('l-email').value.trim();
+      showVerifyEmailScreen(email2, email2.split('@')[0], true);
+    } else if (msg.includes('Too many requests')) {
+      showE('l-email', 'ลองใหม่อีกครั้งในอีกสักครู่');
     } else {
-      toast('❌ ' + msg);
+      toast('❌ ' + msg, 'error');
     }
-    btn.textContent = 'เข้าสู่ระบบ';
-    btn.disabled = false;
+    if (btn) { btn.textContent = 'เข้าสู่ระบบ'; btn.disabled = false; }
   }
 }
 
+// ── Google OAuth ────────────────────────────────────────────────────────
+async function doLoginGoogle() {
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: location.origin + '/login.html?verified=1',
+        queryParams: { access_type:'offline', prompt:'consent' },
+      }
+    });
+    if (error) throw error;
+    // Supabase จะ redirect ไป Google และกลับมาที่ redirectTo อัตโนมัติ
+  } catch(e) {
+    toast('❌ Google Login: ' + e.message, 'error');
+  }
+}
+
+// ── LINE OAuth (placeholder — ต้องตั้งค่า LINE provider ใน Supabase) ───
+async function doLoginLine() {
+  try {
+    // LINE ต้องเปิดใช้งานใน Supabase Dashboard ก่อน
+    // Auth → Providers → LINE → เปิด + ใส่ Channel ID & Secret
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'line',
+      options: { redirectTo: location.origin + '/login.html?verified=1' }
+    });
+    if (error) throw error;
+  } catch(e) {
+    // LINE ยังไม่ได้ตั้งค่า → แจ้ง
+    if (e.message.includes('provider') || e.message.includes('not enabled')) {
+      toast('⚠️ LINE Login ยังไม่ได้เปิดใช้งาน กรุณา Login ด้วย Email แทน');
+    } else {
+      toast('❌ LINE Login: ' + e.message, 'error');
+    }
+  }
+}
+
+
+// ── REGISTER
 // ── REGISTER (Supabase Auth) ───────────────────────────────
 async function doRegister() {
   const fname = document.getElementById('r-fname').value.trim();
@@ -758,31 +815,84 @@ async function doRegister() {
   try {
     const displayName = `${fname} ${lname}`;
 
-    // สมัครสมาชิกผ่าน Supabase Auth
+    // ── สมัครสมาชิก (ผู้ซื้อ): ไม่ต้องยืนยัน Email ──────────
+    const isBuyer = (curRole === 'buyer' || curRole === 'user' || !curRole);
+
     const { data, error } = await sb.auth.signUp({
       email,
       password: pass,
-      options: { data: { display_name: displayName, role: curRole } }
+      options: {
+        data: { display_name: displayName, role: curRole || 'user' },
+        // ไม่ redirect ไป email confirm สำหรับ buyer
+        emailRedirectTo: isBuyer ? null : `${location.origin}/login.html`,
+      }
     });
     if (error) throw error;
 
-    // บันทึกลง users table
-    await sb.from('users').upsert({
-      email,
-      display_name: displayName,
-      role: curRole,
-      is_active: true,
-    }, { onConflict: 'email' });
+    // ── บันทึกลง users table ทันที (active=true ไม่รอยืนยัน) ───────
+    if (data.user) {
+      await sb.from('users').upsert({
+        id:           data.user.id,
+        email:        email,
+        display_name: displayName,
+        role:         isBuyer ? 'user' : (curRole || 'user'),
+        is_active:    true,          // ← buyer ผ่านเลย ไม่รอ confirm
+        loyalty_pts:  0,
+        created_at:   new Date().toISOString(),
+        updated_at:   new Date().toISOString(),
+      }, { onConflict: 'email', ignoreDuplicates: false });
 
-    // แสดง success
-    switchTab('login');
-    const bar = document.getElementById('success-bar');
-    const msg = document.getElementById('success-msg');
-    if (bar && msg) {
-      msg.textContent = `สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ คุณ${fname} 🎉 กรุณาตรวจสอบ Email เพื่อยืนยันบัญชี`;
-      bar.classList.add('show');
+    // ── 3. ถ้าเป็น Seller → สร้าง sellers record รอ Admin อนุมัติ ─────
+    if (!isBuyer && data.user) {
+      await sb.from('sellers').upsert({
+        user_id:    data.user.id,
+        shop_name:  displayName + ' Shop',
+        status:     'pending',
+        email:      email,
+        phone:      tel || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id', ignoreDuplicates: true });
     }
-    toast('✅ สมัครสมาชิกสำเร็จ! กรุณายืนยัน Email');
+    }
+
+    if (isBuyer) {
+      // ── Buyer: auto-login ทันที ────────────────────────────
+      // Supabase อาจ return session ทันที (ถ้า email confirm ปิดใน dashboard)
+      // ถ้าไม่มี session → ลอง signIn ต่อ
+      let session = data.session;
+      if (!session) {
+        const loginRes = await sb.auth.signInWithPassword({ email, password: pass });
+        session = loginRes.data?.session;
+      }
+
+      if (session) {
+        // Login สำเร็จ → redirect ทันที
+        toast('✅ ยินดีต้อนรับ คุณ' + fname + '! 🎉');
+        const redirect = new URLSearchParams(location.search).get('from') || 'index.html';
+        setTimeout(() => { location.href = redirect; }, 800);
+      } else {
+        // Supabase บังคับ confirm อยู่ → แจ้งให้ตรวจ email
+        switchTab('login');
+        const bar = document.getElementById('success-bar');
+        const msg = document.getElementById('success-msg');
+        if (bar && msg) {
+          msg.textContent = 'สมัครสมาชิกสำเร็จ! คุณ' + fname + ' กรุณายืนยัน Email ก่อนเข้าใช้งาน 📧';
+          bar.classList.add('show');
+        }
+        toast('📧 กรุณาตรวจสอบ Email เพื่อยืนยันบัญชี');
+      }
+    } else {
+      // ── Seller: แจ้งรอ Admin อนุมัติ ───────────────────────
+      switchTab('login');
+      const bar = document.getElementById('success-bar');
+      const msg = document.getElementById('success-msg');
+      if (bar && msg) {
+        msg.textContent = 'สมัครเป็น Seller สำเร็จ! คุณ' + fname + ' ทีม Admin จะตรวจสอบและแจ้งผลภายใน 24 ชั่วโมง 🏪';
+        bar.classList.add('show');
+      }
+      toast('✅ สมัคร Seller สำเร็จ รอ Admin อนุมัติ');
+    }
 
   } catch (err) {
     const msg = err.message;
@@ -810,14 +920,192 @@ async function doForgotPassword() {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+
+
+// ════════════════════════════════════════════════════════════════════════
+//  EMAIL VERIFICATION FLOW
+// ════════════════════════════════════════════════════════════════════════
+
+function showVerifyEmailScreen(email, fname, isBuyer) {
+  const existing = document.getElementById('verify-email-screen');
+  if (existing) existing.remove();
+  const screen = document.createElement('div');
+  screen.id = 'verify-email-screen';
+  screen.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
+  screen.innerHTML = `
+    <div style="max-width:480px;width:100%;text-align:center">
+      <div style="width:80px;height:80px;background:#FEF3C7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px">&#128231;</div>
+      <h2 style="font-size:24px;font-weight:700;margin-bottom:8px;font-family:var(--font,inherit)">ยืนยัน Email ของคุณ</h2>
+      <p style="font-size:14px;color:#737373;line-height:1.7;margin-bottom:24px">
+        เราส่ง Email ยืนยันไปที่<br>
+        <strong style="color:#0A0A0A">${email}</strong><br>
+        กรุณากดลิงก์ใน Email เพื่อเปิดใช้งานบัญชี
+      </p>
+      <div style="background:#F9FAFB;border:1px solid #E5E5E5;padding:20px;text-align:left;margin-bottom:24px;border-radius:2px">
+        <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">ขั้นตอน</div>
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+          <div style="width:22px;height:22px;background:#0A0A0A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">1</div>
+          <span style="font-size:13px;line-height:1.5">เปิด Email inbox ของคุณ</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+          <div style="width:22px;height:22px;background:#0A0A0A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">2</div>
+          <span style="font-size:13px;line-height:1.5">ค้นหา Email จาก <strong>Thailand Market</strong></span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+          <div style="width:22px;height:22px;background:#0A0A0A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">3</div>
+          <span style="font-size:13px;line-height:1.5">กดปุ่ม <strong>"ยืนยันบัญชี"</strong> ในอีเมล</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:22px;height:22px;background:#0A0A0A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">4</div>
+          <span style="font-size:13px;line-height:1.5">กลับมา Login และเริ่มช้อปปิ้งได้เลย</span>
+        </div>
+      </div>
+      ${!isBuyer ? `
+      <div style="background:#FEF3C7;border:1px solid #F59E0B;padding:14px;margin-bottom:20px;text-align:left;border-radius:2px">
+        <div style="font-size:13px;font-weight:600;color:#D97706;margin-bottom:4px">&#127978; สำหรับผู้ขาย</div>
+        <div style="font-size:12px;color:#92400E;line-height:1.6">หลังยืนยัน Email แล้ว ทีม Admin จะตรวจสอบและอนุมัติร้านค้าภายใน 24 ชั่วโมง</div>
+      </div>` : ''}
+      <button id="resend-btn" onclick="resendVerifyEmail('${email}')"
+        style="width:100%;padding:13px;background:#E63329;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:all .15s">
+        &#128228; ส่ง Email ยืนยันอีกครั้ง
+      </button>
+      <button onclick="backToLogin()"
+        style="width:100%;padding:12px;background:none;border:1px solid #E5E5E5;font-size:13px;cursor:pointer;font-family:inherit;color:#737373">
+        &#8592; กลับไปหน้า Login
+      </button>
+      <div id="resend-msg" style="margin-top:12px;font-size:12px;min-height:18px"></div>
+      <div style="margin-top:20px;font-size:12px;color:#A3A3A3;line-height:1.7">
+        ไม่เจอ Email? ตรวจกล่อง Spam / Junk<br>หรือตรวจว่ากรอก Email ถูกต้อง
+      </div>
+    </div>
+  `;
+  document.body.appendChild(screen);
+}
+
+async function resendVerifyEmail(email) {
+  const btn = document.getElementById('resend-btn');
+  const msg = document.getElementById('resend-msg');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.textContent = 'กำลังส่ง...';
+  try {
+    const { error } = await sb.auth.resend({
+      type: 'signup',
+      email: email,
+      options: { emailRedirectTo: location.origin + '/login.html?verified=1' }
+    });
+    if (error) throw error;
+    if (msg) { msg.textContent = 'ส่ง Email ยืนยันแล้ว กรุณาตรวจสอบ inbox'; msg.style.color = '#16A34A'; }
+    let cd = 60;
+    btn.textContent = 'รอ ' + cd + ' วิ';
+    const timer = setInterval(() => {
+      cd--;
+      btn.textContent = 'รอ ' + cd + ' วิ';
+      if (cd <= 0) {
+        clearInterval(timer);
+        btn.textContent = 'ส่ง Email ยืนยันอีกครั้ง';
+        btn.disabled = false;
+        if (msg) msg.textContent = '';
+      }
+    }, 1000);
+  } catch(e) {
+    if (msg) { msg.textContent = (e.message.includes('rate') ? 'ส่งบ่อยเกินไป รอสักครู่' : e.message); msg.style.color = '#E63329'; }
+    btn.textContent = 'ส่ง Email ยืนยันอีกครั้ง';
+    btn.disabled = false;
+  }
+}
+
+function backToLogin() {
+  const el = document.getElementById('verify-email-screen');
+  if (el) el.remove();
+  if (typeof switchTab === 'function') switchTab('login');
+  const btn = document.querySelector('#frm-register .btn-main');
+  if (btn) { btn.textContent = 'สมัครสมาชิก'; btn.disabled = false; }
+}
+
+function showVerifiedSuccess(user) {
+  const screen = document.createElement('div');
+  screen.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
+  screen.innerHTML = `
+    <div style="max-width:440px;width:100%;text-align:center">
+      <div style="width:80px;height:80px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 24px">&#9989;</div>
+      <h2 style="font-size:24px;font-weight:700;margin-bottom:8px;font-family:var(--font,inherit)">ยืนยัน Email สำเร็จ!</h2>
+      <p style="font-size:14px;color:#737373;line-height:1.7;margin-bottom:28px">
+        บัญชีของคุณพร้อมใช้งานแล้ว<br>
+        <strong style="color:#0A0A0A">${user.email || ''}</strong>
+      </p>
+      <div style="background:#DCFCE7;border:1px solid #86EFAC;padding:14px;margin-bottom:24px;font-size:13px;color:#166534;line-height:1.6">
+        &#127881; ยินดีต้อนรับสู่ Thailand Market!<br>
+        คุณสามารถเริ่มช้อปปิ้งได้ทันที
+      </div>
+      <button onclick="location.href='index.html'"
+        style="width:100%;padding:13px;background:#E63329;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">
+        เริ่มช้อปปิ้งเลย &#8594;
+      </button>
+      <button onclick="document.querySelector('[id*=login-screen],[id*=login]')?.style.setProperty('display','block');this.parentElement.parentElement.remove()"
+        style="width:100%;padding:12px;background:none;border:1px solid #E5E5E5;font-size:13px;cursor:pointer;font-family:inherit;color:#737373">
+        Login เข้าสู่ระบบ
+      </button>
+    </div>
+  `;
+  document.body.appendChild(screen);
+}
+
+
 // ── Auto-redirect ถ้า login อยู่แล้ว ──────────────────────
 async function checkSession() {
-  const { data: { session } } = await sb.auth.getSession();
+  const params   = new URLSearchParams(location.search);
+  const hashP    = new URLSearchParams(location.hash.replace('#',''));
+
+  // ── OAuth / email-verify callback (Supabase ส่ง token กลับมา) ─────
+  const accessToken = hashP.get('access_token') || params.get('access_token');
+  if (accessToken) {
+    const refreshToken = hashP.get('refresh_token') || params.get('refresh_token') || '';
+    const { data, error } = await sb.auth.setSession({ access_token:accessToken, refresh_token:refreshToken });
+    if (!error && data.session) {
+      // อัปเดต is_active = TRUE (ยืนยัน email แล้ว)
+      await sb.from('users').update({
+        is_active: true,
+        email_verified_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', data.session.user.id);
+      showVerifiedSuccess(data.session.user);
+      return;
+    }
+  }
+
+  // ── verified=1 query (redirect หลัง email confirm) ────────────────
+  if (params.get('verified') === '1') {
+    const { data:{ session } } = await sb.auth.getSession();
+    if (session) {
+      await sb.from('users').update({
+        is_active: true,
+        email_verified_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', session.user.id);
+      showVerifiedSuccess(session.user);
+      return;
+    }
+  }
+
+  // ── Login อยู่แล้ว → redirect ─────────────────────────────────────
+  const { data:{ session } } = await sb.auth.getSession();
   if (session) {
-    const role = localStorage.getItem('tm_user_role') || 'buyer';
-    const redirect = new URLSearchParams(location.search).get('from') || 'index.html';
-    if (role === 'admin') location.href = 'admin-cms.html';
-    else location.href = redirect;
+    const { data: userRow } = await sb.from('users')
+      .select('role,is_active,display_name')
+      .eq('id', session.user.id).maybeSingle();
+
+    // ยังไม่ยืนยัน email → แสดงหน้ารอ
+    if (userRow?.is_active === false) {
+      showVerifyEmailScreen(session.user.email, userRow?.display_name || session.user.email.split('@')[0], userRow?.role !== 'seller');
+      return;
+    }
+
+    const role = userRow?.role || localStorage.getItem('tm_user_role') || 'user';
+    const redirect = params.get('from') || 'index.html';
+    if      (role === 'admin')  location.href = 'admin-cms.html';
+    else if (role === 'seller') location.href = 'seller-portal.html';
+    else                        location.href = redirect;
   }
 }
 checkSession();
