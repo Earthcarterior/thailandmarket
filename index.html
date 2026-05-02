@@ -483,22 +483,31 @@ nav, .nav {
     </div>
   </div>
 
-  <!-- RECOMMENDED PRODUCTS -->
-  <div class="section-hd">
-    <div class="section-title">แนะนำสำหรับคุณ</div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <select class="sort-sel" onchange="sortProds(this.value)">
-        <option value="new">สินค้าใหม่</option>
-        <option value="pop">ยอดนิยม</option>
-        <option value="price-asc">ราคาต่ำ→สูง</option>
-        <option value="price-desc">ราคาสูง→ต่ำ</option>
-        <option value="rating">คะแนนสูงสุด</option>
-      </select>
-      <a href="storefront-live.html" class="see-all">ดูทั้งหมด →</a>
+  <!-- RECOMMENDED PRODUCTS — Personalized -->
+  <div class="section-hd" style="flex-direction:column;align-items:flex-start;gap:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+      <div>
+        <div class="section-title rec-section-title" id="rec-title">✨ แนะนำสำหรับคุณ</div>
+        <div id="rec-sub" style="font-size:12px;color:var(--g500);margin-top:3px">
+          กำลังโหลดสินค้าที่เหมาะกับคุณ...
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <select class="sort-sel" onchange="sortProds(this.value)">
+          <option value="new">สินค้าใหม่</option>
+          <option value="pop">ยอดนิยม</option>
+          <option value="price-asc">ราคาต่ำ→สูง</option>
+          <option value="price-desc">ราคาสูง→ต่ำ</option>
+          <option value="rating">คะแนนสูงสุด</option>
+        </select>
+        <a href="storefront-live.html" class="see-all">ดูทั้งหมด →</a>
+      </div>
     </div>
+    <!-- Category interest tags (แสดงเมื่อ login) -->
+    <div id="rec-cat-tags" style="display:flex;flex-wrap:wrap;gap:6px"></div>
   </div>
   <div class="products-grid" id="products-grid">
-    <!-- Loaded from Supabase -->
+    <!-- Loaded from Supabase — personalized per user -->
   </div>
 
   <!-- CATEGORY SECTIONS -->
@@ -815,7 +824,7 @@ function renderProducts() {
   const grid = document.getElementById('products-grid');
   if (!grid) return;
 
-  let prods = allProducts;
+  let prods = allProducts;  // allProducts ถูก set จาก loadMixedProducts/loadRecommended แล้ว
   if (currentFilter !== 'all') {
     const childIds = allCats.filter(c => c.parent_id === currentFilter).map(c => c.id);
     prods = allProducts.filter(p => [currentFilter,...childIds].includes(p.category_id));
@@ -1192,6 +1201,353 @@ function startFlashCountdown() {
 }
 
 
+// ════════════════════════════════════════════════════════════════════════
+//  PERSONALIZED RECOMMENDATIONS
+//  Logic: login → ดู wishlist + orders → หาหมวดที่ชอบ → แสดงสินค้าคล้าย
+//         ไม่ login → top-selling + featured products
+// ════════════════════════════════════════════════════════════════════════
+
+let _recCategoryIds  = [];   // หมวดหมู่ที่ user สนใจ
+let _recProductIds   = [];   // สินค้าที่ user เคยซื้อ/ดู (ไม่ต้องแสดงซ้ำ)
+let _isPersonalized  = false;
+
+
+// ════════════════════════════════════════════════════════════════════════
+//  MIXED PRODUCTS — สินค้าคละหมวดหมู่ (fallback / ยังไม่มีสถิติ)
+//  Logic: ดึงหมวดหลัก → เอา 1-2 สินค้าต่อหมวด → รวม 8 ชิ้น
+// ════════════════════════════════════════════════════════════════════════
+let _showingMixed   = false;
+let _mixedPage      = 0;  // pagination
+const REC_PAGE_SIZE = 8;
+
+async function loadMixedProducts(page) {
+  page = page || 0;
+  _mixedPage = page;
+  _showingMixed = true;
+
+  const grid = document.getElementById('products-grid');
+  if (grid && page === 0) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:40px;text-align:center">
+      <div style="font-size:40px;margin-bottom:8px">🛍️</div>
+      <div style="color:var(--g400)">กำลังโหลดสินค้า...</div>
+    </div>`;
+  }
+
+  try {
+    // ดึงหมวดหลักทั้งหมด
+    const parents = allCats.filter(c => !c.parent_id);
+
+    if (!parents.length) {
+      // ไม่มีหมวดหมู่ → ดึงสินค้าตรงๆ
+      const { data } = await sb.from('products')
+        .select('id,name_th,price,compare_price,discount_percent,thumbnail,sold_count,rating_avg,category_id,is_flash_sale,flash_price,categories(name_th,icon),sellers(shop_name)')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .range(page * REC_PAGE_SIZE, page * REC_PAGE_SIZE + REC_PAGE_SIZE - 1);
+      allProducts = data || [];
+      renderProducts();
+      renderLoadMoreBtn(data?.length === REC_PAGE_SIZE, page);
+      return;
+    }
+
+    // ดึงสินค้าจากทุกหมวดพร้อมกัน → เอาหมวดละ 1-2 ชิ้น
+    const perCat = Math.max(1, Math.ceil(REC_PAGE_SIZE / parents.length));
+    const offset  = page * perCat;
+
+    const promises = parents.slice(0, REC_PAGE_SIZE).map(cat => {
+      // รวม sub-categories ด้วย
+      const subIds = allCats.filter(c => c.parent_id === cat.id).map(c => c.id);
+      const catIds = [cat.id, ...subIds];
+      return sb.from('products')
+        .select('id,name_th,name_en,price,compare_price,discount_percent,thumbnail,images,sold_count,stock_quantity,rating_avg,rating_count,category_id,seller_id,is_flash_sale,flash_price,is_featured,created_at,categories(name_th,icon),sellers(shop_name,logo_url)')
+        .eq('status', 'active')
+        .in('category_id', catIds)
+        .order('sold_count', { ascending: false })
+        .range(offset, offset + perCat - 1);
+    });
+
+    const results = await Promise.all(promises);
+
+    // รวมและสลับผลลัพธ์ (interleave) ให้คละหมวด
+    const interleaved = [];
+    const maxLen = Math.max(...results.map(r => (r.data || []).length));
+    for (let i = 0; i < maxLen; i++) {
+      results.forEach(r => {
+        if (r.data?.[i]) interleaved.push(r.data[i]);
+      });
+    }
+
+    // กันซ้ำ
+    const seen = new Set();
+    const mixed = interleaved.filter(p => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id); return true;
+    }).slice(0, REC_PAGE_SIZE);
+
+    if (page === 0) {
+      allProducts = mixed;
+    } else {
+      // append mode
+      const existingIds = new Set(allProducts.map(p => p.id));
+      allProducts = [...allProducts, ...mixed.filter(p => !existingIds.has(p.id))];
+    }
+
+    // บันทึกสถิติ (แม้ไม่ login) — track category exposure
+    trackCategoryExposure(mixed.map(p => p.category_id));
+
+    renderProducts();
+    renderLoadMoreBtn(mixed.length >= REC_PAGE_SIZE, page);
+
+  } catch(e) {
+    console.error('loadMixedProducts:', e);
+    // fallback: ดึงสินค้าทั้งหมดเลย
+    const { data } = await sb.from('products')
+      .select('id,name_th,price,compare_price,discount_percent,thumbnail,sold_count,rating_avg,category_id,is_flash_sale,flash_price,categories(name_th,icon),sellers(shop_name)')
+      .eq('status', 'active')
+      .order('sold_count', { ascending: false })
+      .range(page * REC_PAGE_SIZE, page * REC_PAGE_SIZE + REC_PAGE_SIZE - 1);
+    if (page === 0) allProducts = data || [];
+    else allProducts = [...allProducts, ...(data || [])];
+    renderProducts();
+    renderLoadMoreBtn((data?.length || 0) >= REC_PAGE_SIZE, page);
+  }
+}
+
+// ── ปุ่ม "ดูเพิ่มเติม" ────────────────────────────────────────────────────
+function renderLoadMoreBtn(hasMore, page) {
+  // ลบปุ่มเดิมก่อน
+  const old = document.getElementById('load-more-btn');
+  if (old) old.remove();
+
+  if (!hasMore) return;
+
+  const btn = document.createElement('div');
+  btn.id = 'load-more-btn';
+  btn.style.cssText = 'text-align:center;margin:28px 0 8px;grid-column:1/-1';
+  btn.innerHTML = `
+    <button onclick="loadMoreProducts()" id="load-more-inner"
+      style="padding:12px 40px;background:none;border:2px solid var(--black);font-size:13px;
+             font-family:var(--mono,monospace);letter-spacing:.08em;text-transform:uppercase;
+             cursor:pointer;transition:all .2s;font-weight:500"
+      onmouseover="this.style.background='var(--black)';this.style.color='#fff'"
+      onmouseout="this.style.background='none';this.style.color='var(--black)'">
+      ดูสินค้าเพิ่มเติม ↓
+    </button>
+  `;
+
+  const grid = document.getElementById('products-grid');
+  if (grid) grid.after(btn);
+}
+
+async function loadMoreProducts() {
+  const btn = document.getElementById('load-more-inner');
+  if (btn) { btn.textContent = '⏳ กำลังโหลด...'; btn.disabled = true; }
+
+  const nextPage = _mixedPage + 1;
+  if (_showingMixed) {
+    await loadMixedProducts(nextPage);
+  } else {
+    // personalized mode — โหลดเพิ่มจาก recommended
+    await loadRecommendedProducts(_recCategoryIds, _recProductIds, nextPage);
+  }
+}
+
+// ── Track category exposure (บันทึกสถิติแม้ไม่ login) ─────────────────────
+function trackCategoryExposure(catIds) {
+  try {
+    const key = 'tm_cat_views';
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    catIds.filter(Boolean).forEach(id => {
+      stored[id] = (stored[id] || 0) + 1;
+    });
+    localStorage.setItem(key, JSON.stringify(stored));
+  } catch(e) {}
+}
+
+// ── Get top categories จาก localStorage (สำหรับ guest) ─────────────────────
+function getGuestTopCats() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('tm_cat_views') || '{}');
+    return Object.entries(stored)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => id)
+      .slice(0, 4);
+  } catch(e) { return []; }
+}
+
+
+async function loadPersonalized() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+
+    if (!session) {
+      // ไม่ได้ login → แสดงสินค้าคละหมวด
+      _isPersonalized = false;
+      await loadMixedProducts();
+      updateRecHeader(false);
+      return;
+    }
+
+    const userId = session.user.id;
+    _isPersonalized = true;
+
+    // ดึง user behavior พร้อมกัน
+    const [wishlistRes, ordersRes] = await Promise.all([
+      sb.from('wishlist').select('product_id, products(category_id)').eq('user_id', userId).limit(20),
+      sb.from('orders').select('id').eq('user_id', userId).limit(10),
+    ]);
+
+    // ดึง order items
+    const orderIds = (ordersRes.data || []).map(o => o.id);
+    let orderItemsData = [];
+    if (orderIds.length > 0) {
+      const { data } = await sb.from('order_items')
+        .select('product_id, products(category_id)')
+        .in('order_id', orderIds).limit(30);
+      orderItemsData = data || [];
+    }
+
+    // นับ category frequency
+    const catCount = {};
+    const addCat = id => { if (id) catCount[id] = (catCount[id] || 0) + 1; };
+
+    (wishlistRes.data || []).forEach(w => {
+      _recProductIds.push(w.product_id);
+      addCat(w.products?.category_id);
+    });
+    orderItemsData.forEach(o => {
+      _recProductIds.push(o.product_id);
+      addCat(o.products?.category_id);
+    });
+
+    _recCategoryIds = Object.entries(catCount)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => id)
+      .slice(0, 4);
+
+    if (_recCategoryIds.length > 0) {
+      await loadRecommendedProducts(_recCategoryIds, _recProductIds);
+    } else {
+      // login แต่ยังไม่มี history → คละหมวด
+      await loadMixedProducts();
+    }
+
+    updateRecHeader(_recCategoryIds.length > 0, _recCategoryIds);
+
+  } catch(e) {
+    console.error('loadPersonalized:', e);
+    await loadMixedProducts();
+    updateRecHeader(false);
+  }
+}
+
+
+async function loadRecommendedProducts(catIds, excludeIds, page) {
+  page = page || 0;
+  _mixedPage = page;
+  _showingMixed = false;
+  const limit  = REC_PAGE_SIZE;
+  const offset = page * limit;
+
+  try {
+    let q = sb.from('products')
+      .select('id,name_th,name_en,price,compare_price,discount_percent,thumbnail,images,stock_quantity,sold_count,rating_avg,rating_count,category_id,seller_id,is_flash_sale,flash_price,is_featured,created_at,categories(name_th,icon),sellers(shop_name,logo_url)')
+      .eq('status', 'active')
+      .in('category_id', catIds)
+      .order('sold_count', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    const excl = [...new Set(excludeIds)].slice(0, 50);
+    if (excl.length > 0) q = q.not('id', 'in', `(${excl.join(',')})`);
+
+    const { data: recProds, error } = await q;
+    if (error) throw error;
+
+    let finalProds = recProds || [];
+
+    // เติมด้วย mixed ถ้าน้อยกว่า limit
+    if (finalProds.length < limit && page === 0) {
+      const need = limit - finalProds.length;
+      const usedIds = [...excl, ...finalProds.map(p => p.id)];
+      const { data: extra } = await sb.from('products')
+        .select('id,name_th,name_en,price,compare_price,discount_percent,thumbnail,images,stock_quantity,sold_count,rating_avg,rating_count,category_id,seller_id,is_flash_sale,flash_price,is_featured,created_at,categories(name_th,icon),sellers(shop_name,logo_url)')
+        .eq('status', 'active')
+        .not('id', 'in', `(${usedIds.slice(0,50).join(',')})`)
+        .order('sold_count', { ascending: false })
+        .limit(need);
+      finalProds = [...finalProds, ...(extra || [])];
+    }
+
+    if (page === 0) {
+      allProducts = finalProds;
+    } else {
+      const existingIds = new Set(allProducts.map(p => p.id));
+      allProducts = [...allProducts, ...finalProds.filter(p => !existingIds.has(p.id))];
+    }
+
+    renderProducts();
+    renderLoadMoreBtn(finalProds.length >= limit, page);
+
+  } catch(e) {
+    console.error('loadRecommendedProducts:', e);
+    await loadMixedProducts(page);
+  }
+}
+
+
+// ── อัปเดต header และ sub-title ──────────────────────────────────────────
+function updateRecHeader(isPersonalized, catIds) {
+  const titleEl = document.querySelector('.rec-section-title, #rec-title');
+  const subEl   = document.querySelector('.rec-section-sub, #rec-sub');
+  const tagWrap = document.getElementById('rec-cat-tags');
+
+  if (!isPersonalized) {
+    // ตรวจว่ามี guest history จาก localStorage ไหม
+    const guestCats = getGuestTopCats();
+    if (titleEl) titleEl.textContent = guestCats.length > 0 ? '🔍 สินค้าที่คุณอาจสนใจ' : 'สินค้าแนะนำ';
+    if (subEl)   subEl.textContent   = guestCats.length > 0
+      ? 'จากหมวดหมู่ที่คุณเคยเรียกดู'
+      : 'สินค้าคัดมาให้จากทุกหมวดหมู่';
+    // แสดง guest category tags ถ้ามี
+    if (tagWrap && guestCats.length > 0) {
+      const matchedCats = allCats.filter(c => guestCats.includes(c.id));
+      tagWrap.innerHTML = matchedCats.map(c =>
+        `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--g100);
+                      padding:4px 12px;font-size:11px;font-family:monospace;cursor:pointer;
+                      border:1px solid var(--g200);transition:all .15s"
+               onmouseover="this.style.background='var(--black)';this.style.color='#fff'"
+               onmouseout="this.style.background='var(--g100)';this.style.color=''"
+               onclick="filterBycat('${c.id}',null)">
+          ${c.icon || ''} ${c.name_th}
+        </span>`
+      ).join('');
+    } else if (tagWrap) {
+      tagWrap.innerHTML = '';
+    }
+    return;
+  }
+
+  if (titleEl) titleEl.textContent = '✨ แนะนำสำหรับคุณ';
+  if (subEl)   subEl.textContent   = 'เลือกจากหมวดหมู่ที่คุณชื่นชอบและประวัติการช้อปปิ้ง';
+
+  if (tagWrap && catIds?.length > 0) {
+    const matchedCats = allCats.filter(c => catIds.includes(c.id));
+    tagWrap.innerHTML = matchedCats.map(c =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--g100);
+                    padding:4px 12px;font-size:11px;font-family:monospace;cursor:pointer;
+                    border:1px solid var(--g200);transition:all .15s"
+             onmouseover="this.style.background='var(--black)';this.style.color='#fff'"
+             onmouseout="this.style.background='var(--g100)';this.style.color=''"
+             onclick="filterBycat('${c.id}',null)">
+        ${c.icon || ''} ${c.name_th}
+      </span>`
+    ).join('');
+  } else if (tagWrap) {
+    tagWrap.innerHTML = '';
+  }
+}
+
+
 async function init() {
   updateCartUI();
   startTimer();
@@ -1204,7 +1560,8 @@ async function init() {
     loadCoupons(),
     loadBrands(),
   ]);
-  await loadProducts();
+  // Personalized: ดู session → แนะนำสินค้าตาม wishlist/orders
+  await loadPersonalized();
 }
 
 init().catch(console.error);
