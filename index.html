@@ -192,6 +192,58 @@ input,select{font-family:var(--font)}
 .cm-btn.primary:hover{background:var(--red);border-color:var(--red)}
 .cm-btn:disabled{opacity:.5;cursor:not-allowed}
 
+/* ═══════════════════════════════════════════════════════════
+   COUPON SECTIONS (Category / Store / Popular) [PATCH 2026-05-03]
+   ═══════════════════════════════════════════════════════════ */
+.cs-section{margin-bottom:32px}
+.cs-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cs-title{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.cs-more{font-size:11px;color:var(--g500);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;text-decoration:none}
+.cs-more:hover{color:var(--red)}
+.cs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:1024px){.cs-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.cs-grid{grid-template-columns:1fr}}
+
+/* COUPON CARD (Category / Store style — horizontal) */
+.cs-card{background:#fff;border:var(--border);display:flex;min-height:120px;position:relative;overflow:hidden;transition:all .15s;cursor:pointer}
+.cs-card:hover{border-color:var(--black);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.cs-card.expired{opacity:.5;cursor:not-allowed}
+.cs-card.expired:hover{transform:none;box-shadow:none}
+
+.cs-card-l{width:96px;flex-shrink:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px;text-align:center;position:relative;font-size:11px;font-weight:600;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;line-height:1.3}
+.cs-card-l-ico{font-size:28px;margin-bottom:4px}
+
+.cs-card-r{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;min-width:0}
+.cs-card-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.cs-card-disc{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.01em;line-height:1.1;flex-shrink:0}
+.cs-card-name{font-size:12px;color:var(--g600);line-height:1.4;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cs-card-meta{font-size:10px;color:var(--g500);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;line-height:1.5}
+.cs-card-meta-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.cs-card-meta .urgent{color:var(--red);font-weight:600}
+.cs-card-meta .left{color:var(--orange,#F59E0B);font-weight:600}
+
+.cs-card-btn{padding:6px 12px;font-size:10px;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.04em;border:1px dashed var(--g300);background:#fff;color:var(--g600);cursor:pointer;flex-shrink:0;transition:all .15s}
+.cs-card-btn:hover{border-color:var(--red);color:var(--red);border-style:solid}
+.cs-card-btn.claimed{background:#F0FDF4;border-color:var(--green);color:var(--green);border-style:solid;cursor:default}
+.cs-card-btn.claimed:hover{border-color:var(--green);color:var(--green)}
+.cs-card-btn.primary{background:var(--red);color:#fff;border-color:var(--red);border-style:solid}
+.cs-card-btn.primary:hover{background:var(--black);border-color:var(--black);color:#fff}
+
+/* Badge */
+.cs-card-badge{position:absolute;top:8px;right:8px;background:#FEE2E2;color:#991B1B;font-size:9px;padding:2px 7px;font-family:var(--mono);font-weight:600;letter-spacing:.04em;text-transform:uppercase;z-index:2}
+.cs-card-badge.hot{background:linear-gradient(135deg,#E63329,#FF6B35);color:#fff}
+.cs-card-badge.limited{background:#7C3AED;color:#fff}
+.cs-card-badge.new{background:#16A34A;color:#fff}
+
+/* Progress bar (popular section) */
+.cs-progress{height:3px;background:var(--g100);position:relative;overflow:hidden;margin-top:6px}
+.cs-progress-fill{height:100%;background:linear-gradient(90deg,#E63329,#FF6B35);transition:width .4s}
+.cs-progress.urgent .cs-progress-fill{background:linear-gradient(90deg,#DC2626,#F59E0B)}
+
+/* Skeleton */
+.cs-skeleton{background:#fff;border:var(--border);height:120px;animation:csskel 1.4s infinite;background:linear-gradient(90deg,#f5f5f5 25%,#fafafa 50%,#f5f5f5 75%);background-size:200% 100%}
+@keyframes csskel{to{background-position:-200% 0}}
+
 /* ── PRODUCTS ── */
 .products-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--g200);margin-bottom:32px;border:var(--border)}
 .prod-card{background:var(--white);cursor:pointer;transition:background .15s;overflow:hidden;display:flex;flex-direction:column}
@@ -545,6 +597,38 @@ nav, .nav {
         <div class="cm-actions" id="cm-actions"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       COUPON CATEGORY SECTIONS [PATCH 2026-05-03]
+       3 sections: Category / Store / Popular (Lazada/Shopee style)
+       ════════════════════════════════════════════════════════════════════ -->
+
+  <!-- 🔥 POPULAR COUPONS -->
+  <div class="cs-section" id="cs-popular-section" style="display:none">
+    <div class="cs-hd">
+      <div class="cs-title">🔥 คูปองยอดนิยม</div>
+      <a href="coupon-hub.html" class="cs-more">ดูทั้งหมด →</a>
+    </div>
+    <div class="cs-grid" id="cs-popular-list"></div>
+  </div>
+
+  <!-- 🏠 CATEGORY COUPONS -->
+  <div class="cs-section" id="cs-category-section" style="display:none">
+    <div class="cs-hd">
+      <div class="cs-title">🏠 คูปองตามหมวดหมู่</div>
+      <a href="coupon-hub.html" class="cs-more">ดูทั้งหมด →</a>
+    </div>
+    <div class="cs-grid" id="cs-category-list"></div>
+  </div>
+
+  <!-- 🏪 STORE COUPONS -->
+  <div class="cs-section" id="cs-store-section" style="display:none">
+    <div class="cs-hd">
+      <div class="cs-title">🏪 คูปองจากร้านค้า</div>
+      <a href="coupon-hub.html" class="cs-more">ดูทั้งหมด →</a>
+    </div>
+    <div class="cs-grid" id="cs-store-list"></div>
   </div>
 
   <!-- RECOMMENDED PRODUCTS — Personalized -->
@@ -1890,6 +1974,209 @@ function copyCoupon(code) {
 }
 
 
+// ════════════════════════════════════════════════════════════════════════
+//  COUPON SECTIONS (Popular / Category / Store) [PATCH 2026-05-03]
+// ════════════════════════════════════════════════════════════════════════
+
+const _CS_PALETTES = {
+  // หมวด → สีพื้น
+  home:    { bg:'#F59E0B', label:'บ้าน\n&เฟอร์', ico:'🏠' },
+  tech:    { bg:'#2563EB', label:'Tech\nGadget', ico:'💻' },
+  beauty:  { bg:'#9333EA', label:'Beauty\nHealth', ico:'💄' },
+  fashion: { bg:'#EC4899', label:'Fashion', ico:'👗' },
+  fmcg:    { bg:'#10B981', label:'FMCG', ico:'🛒' },
+  pet:     { bg:'#8B5CF6', label:'Pet', ico:'🐾' },
+  // store fallback
+  store:   { bg:'#0F172A', label:'Store', ico:'🏪' },
+  // popular blocks
+  pop_red: { bg:'#DC2626', ico:'🛒' },
+  pop_grn: { bg:'#065F46', ico:'🚚' },
+  pop_yel: { bg:'#FBBF24', ico:'💰' },
+};
+
+// guess category จาก name+description+code
+function _csGuessCategory(c) {
+  const txt = ((c.name||'') + ' ' + (c.description||'') + ' ' + (c.code||'')).toLowerCase();
+  if (/บ้าน|เฟอร์|ติดตั้ง|home|furniture|ikea/.test(txt)) return 'home';
+  if (/tech|gadget|iphone|samsung|apple|android|laptop|คอม|โทร|มือถือ|gaming/.test(txt)) return 'tech';
+  if (/beauty|skin|cosmetic|ผิว|เครื่องสำอาง|health|loreal|maybelline/.test(txt)) return 'beauty';
+  if (/fashion|เสื้อผ้า|รองเท้า|nike|adidas|กระเป๋า|กางเกง/.test(txt)) return 'fashion';
+  if (/fmcg|ของชำ|อาหาร|น้ำดื่ม|สบู่|ยาสีฟัน/.test(txt)) return 'fmcg';
+  if (/pet|สัตว์เลี้ยง|royal canin|whiskas|อาหารหมา|อาหารแมว|สุนัข|แมว/.test(txt)) return 'pet';
+  return null;
+}
+
+// แปลง coupon → card data
+function _csCardHTML(c, kind) {
+  // discount label
+  const disc = c.type === 'percent'  ? `ลด ${Number(c.value)}%`
+             : c.type === 'shipping' ? 'ส่งฟรี'
+             : c.type === 'cashback' ? `แคชแบ็ก ${Number(c.value)}%`
+             : `ลด ฿${Number(c.value||0).toLocaleString()}`;
+
+  // min order
+  const minTxt = c.min_order > 0 ? `ขั้นต่ำ ฿${Number(c.min_order).toLocaleString()}` : 'ไม่มีขั้นต่ำ';
+  const maxTxt = c.max_discount ? `สูงสุด ฿${Number(c.max_discount).toLocaleString()}` : '';
+
+  // expire / days left
+  const dt = c.end_at ? new Date(c.end_at) : null;
+  const dl = dt ? Math.ceil((dt - new Date())/86400000) : null;
+  const expired = dl !== null && dl < 0;
+  const dlTxt = !dt ? '' :
+                dl <= 0 ? 'หมดวันนี้' :
+                dl <= 3 ? `เหลือ ${dl} วัน` :
+                `หมด ${dt.toLocaleDateString('th-TH', {day:'numeric',month:'short'})}`;
+  const dlClass = (dl !== null && dl <= 3) ? 'urgent' : '';
+
+  // remaining quota
+  const usable = c.usage_limit ? Math.max(0, c.usage_limit - (c.used_count||0)) : null;
+  const leftTxt = (usable !== null && usable <= 200) ? `เหลือ ${usable.toLocaleString()} สิทธิ์` : '';
+
+  // badge
+  let badge = '';
+  if (c.priority >= 90) badge = '<div class="cs-card-badge hot">🔥 HOT</div>';
+  else if (c.usage_limit && c.usage_limit <= 200) badge = '<div class="cs-card-badge limited">Limited</div>';
+  else if (c.created_at && (Date.now() - new Date(c.created_at).getTime()) < 7*86400000)
+    badge = '<div class="cs-card-badge new">New</div>';
+
+  // claimed?
+  const claimed = _claimedIds && _claimedIds.has(c.id);
+
+  // left side palette
+  let palette;
+  let leftLabel = '';
+  if (kind === 'category') {
+    const cat = _csGuessCategory(c) || 'home';
+    palette = _CS_PALETTES[cat];
+    leftLabel = `<div class="cs-card-l-ico">${palette.ico}</div><div>${palette.label.replace('\n','<br>')}</div>`;
+  } else if (kind === 'store') {
+    palette = { bg: c.banner_color || '#0F172A' };
+    leftLabel = `<div class="cs-card-l-ico">${c.icon || '🏪'}</div><div>STORE</div>`;
+  } else {
+    // popular — สลับสีตาม index
+    const popPal = ['pop_red','pop_grn','pop_yel'];
+    const idx = (c._popIdx || 0) % 3;
+    palette = _CS_PALETTES[popPal[idx]];
+    leftLabel = `<div class="cs-card-l-ico">${c.icon || palette.ico}</div><div>${
+      c.type === 'shipping' ? 'ฟรี<br>ค่าส่ง' :
+      c.type === 'cashback' ? 'แคช<br>แบ็ก' :
+      'ส่วนลด<br>ทุกหมวด'
+    }</div>`;
+  }
+
+  // progress (popular only)
+  let progress = '';
+  if (kind === 'popular' && c.usage_limit && c.used_count !== null) {
+    const pct = Math.min(100, ((c.used_count||0) / c.usage_limit) * 100);
+    const urgent = pct >= 70 ? 'urgent' : '';
+    progress = `<div class="cs-progress ${urgent}"><div class="cs-progress-fill" style="width:${pct.toFixed(0)}%"></div></div>`;
+  }
+
+  // action button
+  const btnHTML = expired
+    ? '<button class="cs-card-btn" disabled>หมดอายุ</button>'
+    : claimed
+    ? `<button class="cs-card-btn claimed">✓ เก็บแล้ว</button>`
+    : `<button class="cs-card-btn primary">+ เก็บ</button>`;
+
+  return `<div class="cs-card ${expired?'expired':''}" onclick="openCouponModal('${c.id}')" data-id="${c.id}">
+    ${badge}
+    <div class="cs-card-l" style="background:${palette.bg}">${leftLabel}</div>
+    <div class="cs-card-r">
+      <div>
+        <div class="cs-card-row1">
+          <div class="cs-card-disc">${disc}</div>
+          ${btnHTML}
+        </div>
+        <div class="cs-card-name">${c.name || ''}</div>
+      </div>
+      <div class="cs-card-meta">
+        <div class="cs-card-meta-row">
+          <span>${minTxt}${maxTxt ? ' · ' + maxTxt : ''}</span>
+          <span class="${dlClass}">${dlTxt}</span>
+        </div>
+        ${leftTxt ? `<div class="cs-card-meta-row" style="margin-top:2px"><span class="left">${leftTxt}</span></div>` : ''}
+        ${progress}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function loadCouponSections() {
+  const popSec = document.getElementById('cs-popular-section');
+  const catSec = document.getElementById('cs-category-section');
+  const stoSec = document.getElementById('cs-store-section');
+  if (!popSec && !catSec && !stoSec) return;
+
+  // ใส่ skeleton ระหว่างรอโหลด
+  ['cs-popular-list','cs-category-list','cs-store-list'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<div class="cs-skeleton"></div><div class="cs-skeleton"></div><div class="cs-skeleton"></div>';
+  });
+
+  try {
+    // ดึงคูปอง active ทั้งหมด
+    const { data, error } = await sb.from('coupons')
+      .select('id,code,name,description,type,value,min_order,max_discount,icon,banner_color,end_at,start_at,usage_limit,used_count,coin_cost,priority,is_active,visibility,seller_id,brand_id,category_id,claim_count,created_at')
+      .eq('is_active', true)
+      .order('priority', { ascending: false })
+      .limit(60);
+
+    if (error) throw error;
+
+    const now = new Date();
+    const usable = (data || []).filter(c => {
+      if (c.start_at && new Date(c.start_at) > now) return false;
+      if (c.end_at && new Date(c.end_at) < now) return false;
+      if (c.usage_limit && c.used_count >= c.usage_limit) return false;
+      if (c.visibility && c.visibility !== 'public' && c.visibility !== 'targeted') return false;
+      return true;
+    });
+
+    // อัปเดต cache สำหรับ modal
+    usable.forEach(c => {
+      if (!_couponCache.find(x => x.id === c.id)) _couponCache.push(c);
+    });
+
+    // refresh claimed ids
+    await refreshClaimedIds();
+
+    // ─── 1) Popular: เรียงตาม claim_count แล้ว priority — เอา 3 ใบ
+    const popular = [...usable]
+      .sort((a,b) => (b.claim_count||0) - (a.claim_count||0) || (b.priority||0) - (a.priority||0))
+      .slice(0, 3)
+      .map((c, i) => ({ ...c, _popIdx: i }));
+    if (popular.length) {
+      popSec.style.display = 'block';
+      document.getElementById('cs-popular-list').innerHTML = popular.map(c => _csCardHTML(c, 'popular')).join('');
+    }
+
+    // ─── 2) Category: filter เฉพาะที่ guess ได้ + ไม่มี seller — 3 ใบ
+    const catList = usable
+      .filter(c => !c.seller_id && _csGuessCategory(c))
+      .slice(0, 3);
+    if (catList.length) {
+      catSec.style.display = 'block';
+      document.getElementById('cs-category-list').innerHTML = catList.map(c => _csCardHTML(c, 'category')).join('');
+    }
+
+    // ─── 3) Store: เฉพาะที่มี seller_id หรือ brand_id — 3 ใบ
+    const storeList = usable.filter(c => c.seller_id || c.brand_id).slice(0, 3);
+    if (storeList.length) {
+      stoSec.style.display = 'block';
+      document.getElementById('cs-store-list').innerHTML = storeList.map(c => _csCardHTML(c, 'store')).join('');
+    } else {
+      // ถ้าไม่มี store coupon ในปัจจุบัน ซ่อน section
+      if (stoSec) stoSec.style.display = 'none';
+    }
+
+  } catch(e) {
+    console.warn('loadCouponSections:', e.message);
+    [popSec, catSec, stoSec].forEach(s => { if (s) s.style.display = 'none'; });
+  }
+}
+
+
 async function init() {
   updateCartUI();
   startTimer();
@@ -1901,6 +2188,7 @@ async function init() {
     loadFlash(),
     loadBanners(),
     loadCoupons(),
+    loadCouponSections(),  // [PATCH 2026-05-03] เพิ่ม 3 sections
     loadBrands(),
   ]);
 
