@@ -765,29 +765,231 @@ function selPayMethod(id){
   toast({credit:'💳 เลือกบัตรเครดิต/เดบิต',qr:'📱 เลือก QR PromptPay',install:'📅 เลือกผ่อนชำระ 0%',counter:'🏪 เลือก Counter Service'}[id]||'✅');
 }
 
-function updateTotal(){
-  const sub=CART.reduce((s,it)=>s+it.price*it.qty,0);
-  const disc=CART.reduce((s,it)=>s+(it.old-it.price)*it.qty,0);
-  const total=sub-couponDiscount;
-  document.getElementById('total-val').textContent='฿'+total.toLocaleString();
-}
+// updateTotal moved to PATCH section below — uses _appliedCoupons
+
+// ════════════════════════════════════════════════════════════════════════
+//  COUPON SYSTEM — เชื่อม Supabase จริง [PATCH 2026-05-03]
+// ════════════════════════════════════════════════════════════════════════
+
+let _appliedCoupons = []; // [{ id, code, name, discount, type, stackable }]
+
+function _coupSb() { return window._sb; }
 
 function prefillCoupon(code){document.getElementById('coup-input').value=code;}
-function applyCoupon(){
-  const code=document.getElementById('coup-input').value.trim().toUpperCase();
-  const coupons={FREESHIP:{disc:0,label:'ส่งฟรี'},GOLD500:{disc:500,label:'฿500'},FLASH10:{disc:1299,label:'10%'}};
-  if(coupons[code]&&!couponApplied){
-    couponApplied=true;couponDiscount=coupons[code].disc;
-    document.getElementById('coup-applied').style.display='flex';
-    document.getElementById('coup-code-display').textContent=code;
-    document.getElementById('coup-disc-display').textContent=coupons[code].label;
-    document.getElementById('coup-row').style.display='flex';
-    document.getElementById('coup-disc').textContent='-฿'+couponDiscount.toLocaleString();
-    updateTotal();toast('✅ ใช้คูปอง '+code+' สำเร็จ!');
-  } else if(!code){toast('⚠️ กรอกโค้ดส่วนลด');}
-  else if(couponApplied){toast('⚠️ ใช้คูปองแล้ว ลบก่อนเพื่อใช้ใหม่');}
-  else{toast('❌ รหัสคูปองไม่ถูกต้องหรือหมดอายุ');}
+
+async function applyCoupon(){
+  const inp = document.getElementById('coup-input');
+  const code = inp.value.trim().toUpperCase();
+  if (!code) { toast('⚠️ กรอกโค้ดส่วนลด'); return; }
+
+  // เช็คซ้ำ
+  if (_appliedCoupons.find(c => c.code === code)) {
+    toast('⚠️ ใช้คูปองนี้แล้ว'); return;
+  }
+
+  const sb = _coupSb();
+  if (!sb) { toast('❌ ระบบยังไม่พร้อม'); return; }
+
+  // คำนวณยอดสินค้า (ก่อนหักคูปอง)
+  const subtotal = CART.reduce((s,it) => s + it.price * it.qty, 0);
+
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+
+    let result = null;
+    // ลอง RPC ก่อน
+    try {
+      const { data, error } = await sb.rpc('validate_coupon', {
+        p_code: code, p_user_id: user?.id || null, p_cart_total: subtotal
+      });
+      if (error) throw error;
+      result = data;
+    } catch(rpcErr) {
+      // fallback: query ตรง + คำนวณเอง
+      const { data: c } = await sb.from('coupons').select('*')
+        .ilike('code', code).eq('is_active', true).limit(1).maybeSingle();
+      if (!c) { toast('❌ ไม่พบโค้ด ' + code); return; }
+
+      // เช็คเงื่อนไขเอง
+      const now = new Date();
+      if (c.start_at && new Date(c.start_at) > now) { toast('⏳ คูปองยังไม่เริ่มใช้งาน'); return; }
+      if (c.end_at && new Date(c.end_at) < now)     { toast('⌛ คูปองหมดอายุ'); return; }
+      if (subtotal < (c.min_order||0)) { toast(`⚠️ ยอดขั้นต่ำ ฿${c.min_order}`); return; }
+      if (c.usage_limit && c.used_count >= c.usage_limit) { toast('❌ คูปองถูกใช้ครบ'); return; }
+
+      let disc = 0;
+      if (c.type === 'percent') {
+        disc = subtotal * (c.value/100);
+        if (c.max_discount) disc = Math.min(disc, c.max_discount);
+      } else if (c.type === 'fixed') {
+        disc = Math.min(c.value, subtotal);
+      } else if (c.type === 'shipping') {
+        disc = c.value || 50;
+      }
+
+      result = {
+        valid: true, discount: Math.round(disc*100)/100,
+        coupon_id: c.id, code: c.code, name: c.name, type: c.type,
+        icon: c.icon, stackable: c.stackable !== false, priority: c.priority||50
+      };
+    }
+
+    if (!result?.valid) { toast('❌ ' + (result?.reason || 'ไม่สามารถใช้โค้ดนี้ได้')); return; }
+
+    // เช็ค stacking
+    const hasNonStack = _appliedCoupons.some(c => c.stackable === false);
+    if (hasNonStack && _appliedCoupons.length > 0) {
+      toast('⚠️ มีคูปองที่ใช้คู่กับใบอื่นไม่ได้อยู่แล้ว'); return;
+    }
+    if (result.stackable === false && _appliedCoupons.length > 0) {
+      toast('⚠️ คูปองนี้ใช้คู่กับใบอื่นไม่ได้'); return;
+    }
+
+    // เก็บ
+    _appliedCoupons.push({
+      id: result.coupon_id, code: result.code, name: result.name,
+      discount: result.discount, type: result.type, icon: result.icon || '🎟️',
+      stackable: result.stackable !== false
+    });
+    inp.value = '';
+    toast(`✅ ใช้คูปอง ${result.code} ลด ฿${result.discount}`);
+    renderAppliedCoupons();
+    updateTotal();
+
+  } catch(e) {
+    toast('❌ เกิดข้อผิดพลาด: ' + e.message);
+  }
 }
+
+function removeCouponItem(code) {
+  _appliedCoupons = _appliedCoupons.filter(c => c.code !== code);
+  renderAppliedCoupons();
+  updateTotal();
+  toast('✕ ลบคูปอง ' + code);
+}
+
+function renderAppliedCoupons() {
+  const wrap = document.getElementById('coup-applied');
+  const row = document.getElementById('coup-row');
+  if (!wrap) return;
+
+  if (!_appliedCoupons.length) {
+    wrap.style.display = 'none';
+    if (row) row.style.display = 'none';
+    return;
+  }
+
+  // sum discount
+  const totalDisc = _appliedCoupons.reduce((s,c) => s + (c.discount||0), 0);
+
+  wrap.style.display = 'block';
+  wrap.innerHTML = _appliedCoupons.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#F0FDF4;border:1px solid #6EE7B7;margin-bottom:6px;border-radius:2px">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#065F46">
+        <span>${c.icon}</span>
+        <span><strong>${c.name}</strong> <span style="font-family:'DM Mono',monospace;font-size:10px;color:#737373">${c.code}</span></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-weight:700;font-family:'DM Mono',monospace;color:#065F46">-฿${Number(c.discount).toLocaleString()}</span>
+        <button onclick="removeCouponItem('${c.code}')" style="background:none;border:none;color:#737373;cursor:pointer;font-size:16px;padding:0 4px" title="ลบ">✕</button>
+      </div>
+    </div>`).join('');
+
+  if (row) {
+    row.style.display = 'flex';
+    document.getElementById('coup-disc').textContent = '-฿' + totalDisc.toLocaleString();
+  }
+}
+
+// override updateTotal เพื่อให้รวม coupon discount
+function updateTotal(){
+  const sub = CART.reduce((s,it) => s + it.price * it.qty, 0);
+  const couponDisc = _appliedCoupons.reduce((s,c) => s + (c.discount||0), 0);
+  const total = Math.max(0, sub - couponDisc);
+  const totalEl = document.getElementById('total-val');
+  if (totalEl) totalEl.textContent = '฿' + total.toLocaleString();
+}
+
+// auto-suggest คูปองที่ใช้ได้ → เปิดเป็น chip ใต้กล่อง input
+async function loadSuggestedCoupons() {
+  const sb = _coupSb();
+  if (!sb) return;
+  try {
+    const subtotal = CART.reduce((s,it) => s + it.price * it.qty, 0);
+    let suggestions = null;
+    try {
+      const { data, error } = await sb.rpc('get_available_coupons', { p_cart_total: subtotal });
+      if (error) throw error;
+      suggestions = data;
+    } catch(e) {
+      const { data } = await sb.from('coupons').select('*').eq('is_active', true)
+        .order('priority',{ascending:false}).limit(20);
+      suggestions = (data||[]).map(c => ({
+        ...c,
+        estimated_discount: c.type==='percent' ? Math.min(subtotal*c.value/100, c.max_discount||999999)
+          : c.type==='fixed' ? Math.min(c.value, subtotal)
+          : c.type==='shipping' ? (c.value||50) : 0
+      }));
+    }
+
+    // เลือกที่ใช้ได้กับยอดปัจจุบัน
+    const usable = (suggestions||[])
+      .filter(c => c.estimated_discount > 0 && (!c.min_order || subtotal >= c.min_order))
+      .slice(0, 4);
+
+    if (!usable.length) return;
+
+    // หาที่ที่จะแทรก
+    const inp = document.getElementById('coup-input');
+    if (!inp) return;
+
+    let wrap = document.getElementById('coup-suggest-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'coup-suggest-wrap';
+      wrap.style.cssText = 'margin-top:8px;display:flex;gap:6px;overflow-x:auto;padding-bottom:4px';
+      inp.closest('.coupon-row').parentNode.insertBefore(wrap, inp.closest('.coupon-row').nextSibling);
+    }
+
+    wrap.innerHTML = '<div style="font-size:10px;color:#737373;letter-spacing:.04em;text-transform:uppercase;font-family:\'DM Mono\',monospace;padding:4px 0;flex-shrink:0;align-self:center">💡 ใช้ได้:</div>' +
+      usable.map(c => `
+        <button onclick="prefillCoupon('${c.code}');applyCoupon()" 
+          style="flex-shrink:0;background:#fff;border:1px dashed #E63329;padding:6px 10px;cursor:pointer;font-size:11px;color:#E63329;font-family:'DM Mono',monospace;font-weight:600;letter-spacing:.04em;transition:all .15s"
+          onmouseover="this.style.background='#E63329';this.style.color='#fff';this.style.borderStyle='solid'"
+          onmouseout="this.style.background='#fff';this.style.color='#E63329';this.style.borderStyle='dashed'"
+          title="${c.name||''} ลด ฿${Math.round(c.estimated_discount)}">
+          ${c.code}
+        </button>`).join('');
+  } catch(e) { /* silent */ }
+}
+
+// pre-fill จาก URL ?coupon=CODE
+function _coupPrefillFromURL() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('coupon');
+    if (code) {
+      const inp = document.getElementById('coup-input');
+      if (inp) inp.value = code;
+      setTimeout(() => applyCoupon(), 600);
+    }
+  } catch(e) {}
+}
+
+// expose สำหรับ checkout เดิมเรียก redeem หลัง order success
+window.getAppliedCoupons = () => _appliedCoupons;
+window.getCouponDiscount = () => _appliedCoupons.reduce((s,c) => s + (c.discount||0), 0);
+
+// init เมื่อ DOM พร้อม
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    loadSuggestedCoupons();
+    _coupPrefillFromURL();
+  }, 800);
+});
+
+// reload suggestions เมื่อ cart เปลี่ยน
+window.addEventListener('cart-changed', () => setTimeout(loadSuggestedCoupons, 200));
 
 function updateInstallment(months){
   const total=12990;const perMonth=Math.ceil(total/parseInt(months));
@@ -1040,7 +1242,36 @@ async function placeOrder() {
         .update({loyalty_pts: pts, updated_at: new Date().toISOString()})
         .eq('id', user.id);
     }
-    
+
+    // [PATCH 2026-05-03] Redeem คูปองที่ใช้ — บันทึกประวัติ + เพิ่ม used_count
+    try {
+      const applied = window.getAppliedCoupons?.() || [];
+      for (const c of applied) {
+        try {
+          // ลอง RPC ก่อน
+          await _sbCO.rpc('redeem_coupon', {
+            p_coupon_id: c.id,
+            p_order_id: order.id,
+            p_discount_amount: c.discount,
+            p_cart_total: total
+          });
+        } catch(rpcErr) {
+          // fallback: insert log + update used_count + mark user_coupon used
+          await _sbCO.from('coupon_usage_log').insert({
+            coupon_id: c.id, user_id: user.id, order_id: order.id,
+            discount_amount: c.discount, cart_total: total
+          });
+          // mark used
+          await _sbCO.from('user_coupons')
+            .update({ used_at: new Date().toISOString(), used_in_order: order.id })
+            .eq('coupon_id', c.id).eq('user_id', user.id).is('used_at', null);
+        }
+      }
+    } catch(redeemErr) {
+      console.warn('[redeem coupon failed]', redeemErr);
+      // ไม่ blocking — order สั่งสำเร็จแล้ว
+    }
+
     // Clear cart
     localStorage.removeItem('tm_cart');
     
