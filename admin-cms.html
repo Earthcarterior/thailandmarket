@@ -317,6 +317,32 @@ nav, .nav {
 
 </style>
 <style>
+/* COUPON PANEL CSS [PATCH 2026-05-02] */
+.cp-kpi-card{background:#fff;border:1px solid #E5E5E5;padding:16px}
+.cp-kpi-lbl{font-size:11px;color:#737373;text-transform:uppercase;letter-spacing:.06em;font-family:'DM Mono',monospace;margin-bottom:6px}
+.cp-kpi-val{font-size:24px;font-weight:700;font-family:'DM Mono',monospace}
+.cp-tab{padding:11px 18px;font-size:13px;border-bottom:2px solid transparent;background:none;cursor:pointer;color:#737373;font-family:inherit}
+.cp-tab.on{color:#0A0A0A;border-bottom-color:#E63329;font-weight:600}
+.cp-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.cp-fg{margin-bottom:12px}
+.cp-lbl{font-size:11px;color:#525252;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;font-family:'DM Mono',monospace}
+.cp-inp{width:100%;padding:9px 12px;border:1px solid #E5E5E5;font-size:13px;font-family:inherit;outline:none}
+.cp-inp:focus{border-color:#0A0A0A}
+.cp-type-btn{padding:10px;border:1px solid #E5E5E5;background:#fff;font-size:11px;cursor:pointer;font-family:inherit;letter-spacing:.04em;text-transform:uppercase;transition:all .15s}
+.cp-type-btn:hover{border-color:#0A0A0A}
+.cp-type-btn.on{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+.cp-type-pill{display:inline-block;padding:2px 8px;font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em;background:#F2F2F2;border-radius:0}
+.cp-type-pill.percent{background:#FEE2E2;color:#991B1B}
+.cp-type-pill.fixed{background:#DBEAFE;color:#1E40AF}
+.cp-type-pill.shipping{background:#D1FAE5;color:#065F46}
+.cp-type-pill.cashback{background:#FEF3C7;color:#92400E}
+.cp-type-pill.spend_save{background:#EDE9FE;color:#5B21B6}
+.cp-type-pill.bogo{background:#CFFAFE;color:#155E75}
+.cp-bar{height:160px;flex:1;background:#0A0A0A;position:relative;display:flex;align-items:flex-end;justify-content:center;color:#fff;font-size:9px;font-family:'DM Mono',monospace;padding:4px;min-width:18px;transition:background .15s}
+.cp-bar:hover{background:#E63329}
+.cp-tier{display:flex;gap:8px;margin-bottom:6px;align-items:center}
+.cp-tier-rm{background:none;border:none;color:#E63329;cursor:pointer;font-size:18px}
+
 /* ── Admin CMS Layout Fix ── */
 body { display: flex; flex-direction: column; min-height: 100vh; }
 .ann, nav { width: 100% !important; flex-shrink: 0; order: -1; }
@@ -770,6 +796,263 @@ nav { display: block !important; height: auto !important; }
           <div style="display:flex;gap:10px;justify-content:flex-end">
             <button class="btn" style="background:#fff;color:#0A0A0A;border:1px solid #E5E5E5" onclick="closeBrandModal()">ยกเลิก</button>
             <button class="btn btn-k" onclick="saveBrand()" id="brand-save-btn">💾 บันทึก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ── COUPONS PANEL [PATCH 2026-05-02] ── -->
+    <div id="panel-coupons" class="panel admin-only" style="padding:24px;display:none">
+
+      <!-- KPI Cards -->
+      <div id="cp-kpi" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+        <div class="cp-kpi-card"><div class="cp-kpi-lbl">คูปองทั้งหมด</div><div class="cp-kpi-val" id="kpi-total">—</div></div>
+        <div class="cp-kpi-card"><div class="cp-kpi-lbl">ใช้งานอยู่</div><div class="cp-kpi-val" id="kpi-active">—</div></div>
+        <div class="cp-kpi-card"><div class="cp-kpi-lbl">ครั้งที่ใช้ (30 วัน)</div><div class="cp-kpi-val" id="kpi-redeem">—</div></div>
+        <div class="cp-kpi-card"><div class="cp-kpi-lbl">ส่วนลดรวม</div><div class="cp-kpi-val" id="kpi-savings">—</div></div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;border-bottom:1px solid #E5E5E5;margin-bottom:18px;flex-wrap:wrap">
+        <button class="cp-tab on" data-cp-tab="list"      onclick="cpSwitchTab('list')">📋 รายการคูปอง</button>
+        <button class="cp-tab"    data-cp-tab="analytics" onclick="cpSwitchTab('analytics')">📊 Analytics</button>
+        <button class="cp-tab"    data-cp-tab="spin"      onclick="cpSwitchTab('spin')">🎰 Spin Wheel</button>
+        <button class="cp-tab"    data-cp-tab="campaign"  onclick="cpSwitchTab('campaign')">📣 Campaign</button>
+      </div>
+
+      <!-- TAB: List -->
+      <div class="cp-tab-content" id="cp-tab-list">
+        <div class="table-header" style="margin-bottom:14px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input type="text" id="cp-search" placeholder="🔍 ค้นหา code/ชื่อ" oninput="cpDebouncedLoad()" style="padding:8px 12px;border:1px solid #E5E5E5;font-size:13px;width:220px">
+            <select id="cp-filter-type" onchange="loadAdminCoupons()" style="padding:8px;border:1px solid #E5E5E5;font-size:13px">
+              <option value="">ทุกประเภท</option>
+              <option value="percent">ลด %</option>
+              <option value="fixed">ลด ฿</option>
+              <option value="shipping">ส่งฟรี</option>
+              <option value="cashback">Cashback</option>
+              <option value="spend_save">ซื้อครบลด</option>
+              <option value="bogo">ซื้อ X แถม Y</option>
+            </select>
+            <select id="cp-filter-status" onchange="loadAdminCoupons()" style="padding:8px;border:1px solid #E5E5E5;font-size:13px">
+              <option value="">ทุกสถานะ</option>
+              <option value="active">ใช้งาน</option>
+              <option value="inactive">ปิด</option>
+              <option value="expired">หมดอายุ</option>
+            </select>
+          </div>
+          <button class="btn btn-k btn-sm" onclick="openCouponModal()">➕ เพิ่มคูปอง</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:50px">ICON</th><th>ชื่อ / Code</th><th>ประเภท</th><th>มูลค่า</th>
+              <th>เก็บ/ใช้</th><th>หมดอายุ</th><th>สถานะ</th><th style="width:130px"></th>
+            </tr></thead>
+            <tbody id="cp-tbody"><tr><td colspan="8"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: Analytics -->
+      <div class="cp-tab-content" id="cp-tab-analytics" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+          <div style="background:#fff;border:1px solid #E5E5E5;padding:18px">
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-family:'DM Mono',monospace;margin-bottom:12px">📈 การใช้งาน 14 วันล่าสุด</div>
+            <div id="chart-usage" style="height:200px;display:flex;align-items:flex-end;gap:4px"></div>
+          </div>
+          <div style="background:#fff;border:1px solid #E5E5E5;padding:18px">
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-family:'DM Mono',monospace;margin-bottom:12px">🏆 Top 5 คูปอง</div>
+            <div id="top-coupons"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Spin Wheel -->
+      <div class="cp-tab-content" id="cp-tab-spin" style="display:none">
+        <div class="table-header" style="margin-bottom:14px">
+          <div style="font-size:13px;color:#737373">รางวัลของ Spin Wheel — น้ำหนักสูง = ออกบ่อยกว่า</div>
+          <button class="btn btn-k btn-sm" onclick="openSpinPrizeModal()">➕ เพิ่มรางวัล</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th style="width:50px">ICON</th><th>ชื่อรางวัล</th><th>ประเภท</th><th>มูลค่า</th><th>น้ำหนัก</th><th>%โอกาส</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody id="spin-tbody"><tr><td colspan="8"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: Campaign -->
+      <div class="cp-tab-content" id="cp-tab-campaign" style="display:none">
+        <div style="padding:32px;text-align:center;color:#737373">
+          <div style="font-size:32px;margin-bottom:8px">📣</div>
+          <div style="margin-bottom:14px">ระบบ Campaign — group คูปองเป็นชุดสำหรับ marketing</div>
+          <button class="btn btn-k btn-sm" onclick="openCampaignModal()">➕ สร้าง Campaign</button>
+          <div id="campaign-list" style="margin-top:24px"></div>
+        </div>
+      </div>
+
+
+      <!-- COUPON MODAL — รองรับทุกประเภท -->
+      <div id="cp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center;padding:20px;overflow:auto">
+        <div style="background:#fff;width:680px;max-width:100%;max-height:92vh;overflow-y:auto;padding:28px;position:relative">
+          <button onclick="closeCouponModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+          <div style="font-size:18px;font-weight:600;margin-bottom:6px" id="cp-modal-title">เพิ่มคูปอง</div>
+          <div style="font-size:12px;color:#737373;margin-bottom:20px">รองรับ 7 ประเภท ครอบคลุมทุก use case</div>
+          <input type="hidden" id="cp-id">
+
+          <!-- Type Selector -->
+          <div style="margin-bottom:18px">
+            <label class="cp-lbl">ประเภทคูปอง *</label>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px">
+              <button class="cp-type-btn on" data-type="percent" onclick="cpSetType(this,'percent')">ลด %</button>
+              <button class="cp-type-btn"    data-type="fixed"   onclick="cpSetType(this,'fixed')">ลด ฿</button>
+              <button class="cp-type-btn"    data-type="shipping" onclick="cpSetType(this,'shipping')">ส่งฟรี</button>
+              <button class="cp-type-btn"    data-type="cashback" onclick="cpSetType(this,'cashback')">Cashback</button>
+              <button class="cp-type-btn"    data-type="spend_save" onclick="cpSetType(this,'spend_save')">ซื้อครบลด</button>
+              <button class="cp-type-btn"    data-type="bogo"    onclick="cpSetType(this,'bogo')">BOGO</button>
+              <button class="cp-type-btn"    data-type="bundle"  onclick="cpSetType(this,'bundle')">Bundle</button>
+            </div>
+            <input type="hidden" id="cp-type" value="percent">
+          </div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">โค้ด *</label><input class="cp-inp" id="cp-code" placeholder="WELCOME50" style="text-transform:uppercase;font-family:'DM Mono',monospace"></div>
+            <div class="cp-fg"><label class="cp-lbl">ชื่อแสดง *</label><input class="cp-inp" id="cp-name" placeholder="ลด ฿50 ครั้งแรก"></div>
+          </div>
+
+          <div class="cp-fg"><label class="cp-lbl">คำอธิบาย</label><input class="cp-inp" id="cp-desc" placeholder="ใช้ครั้งแรก เมื่อยอดครบ ฿200"></div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">Icon</label><input class="cp-inp" id="cp-icon" value="🎟️" style="font-size:18px;text-align:center"></div>
+            <div class="cp-fg"><label class="cp-lbl">สีพื้น</label><input class="cp-inp" id="cp-color" type="color" value="#E63329"></div>
+          </div>
+
+          <!-- Value (เปลี่ยนตาม type) -->
+          <div id="cp-value-section">
+            <div class="cp-form-grid">
+              <div class="cp-fg"><label class="cp-lbl" id="cp-value-lbl">มูลค่า *</label><input class="cp-inp" id="cp-value" type="number" min="0" step="0.01" value="50"></div>
+              <div class="cp-fg"><label class="cp-lbl">ลดสูงสุด (cap)</label><input class="cp-inp" id="cp-max-disc" type="number" min="0" placeholder="ไม่จำกัด"></div>
+            </div>
+          </div>
+
+          <!-- Spend Save Tiers (แสดงเฉพาะ type=spend_save) -->
+          <div id="cp-spend-tiers" style="display:none;margin-bottom:14px;padding:12px;background:#FAFAFA;border:1px dashed #E5E5E5">
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px">ระดับซื้อครบลด</div>
+            <div id="cp-tiers-list"></div>
+            <button onclick="cpAddTier()" style="margin-top:8px;padding:6px 12px;background:#fff;border:1px solid #0A0A0A;font-size:11px;cursor:pointer">+ เพิ่มระดับ</button>
+          </div>
+
+          <!-- BOGO settings (แสดงเฉพาะ type=bogo) -->
+          <div id="cp-bogo-section" style="display:none">
+            <div class="cp-form-grid">
+              <div class="cp-fg"><label class="cp-lbl">ซื้อกี่ชิ้น</label><input class="cp-inp" id="cp-buy-qty" type="number" min="1" value="1"></div>
+              <div class="cp-fg"><label class="cp-lbl">แถมกี่ชิ้น</label><input class="cp-inp" id="cp-get-qty" type="number" min="1" value="1"></div>
+            </div>
+          </div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">ยอดสั่งซื้อขั้นต่ำ (฿)</label><input class="cp-inp" id="cp-min-order" type="number" min="0" value="0"></div>
+            <div class="cp-fg"><label class="cp-lbl">Coin ที่ใช้แลก</label><input class="cp-inp" id="cp-coin-cost" type="number" min="0" value="0" placeholder="0 = ฟรี"></div>
+          </div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">จำกัดทั้งหมด (ครั้ง)</label><input class="cp-inp" id="cp-usage-limit" type="number" min="1" placeholder="ไม่จำกัด"></div>
+            <div class="cp-fg"><label class="cp-lbl">จำกัดต่อคน (ครั้ง)</label><input class="cp-inp" id="cp-user-limit" type="number" min="1" value="1"></div>
+          </div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">เริ่มใช้</label><input class="cp-inp" id="cp-start" type="datetime-local"></div>
+            <div class="cp-fg"><label class="cp-lbl">หมดอายุ</label><input class="cp-inp" id="cp-end" type="datetime-local"></div>
+          </div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg">
+              <label class="cp-lbl">User Segment</label>
+              <select class="cp-inp" id="cp-segment">
+                <option value="all">ทุกคน</option>
+                <option value="new">สมาชิกใหม่</option>
+                <option value="loyal">สมาชิกประจำ</option>
+                <option value="vip">VIP / Gold+</option>
+                <option value="birthday">วันเกิด</option>
+              </select>
+            </div>
+            <div class="cp-fg">
+              <label class="cp-lbl">Priority (0-100)</label>
+              <input class="cp-inp" id="cp-priority" type="number" min="0" max="100" value="50">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:18px;flex-wrap:wrap;margin:12px 0 18px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="cp-active" checked> เปิดใช้งาน
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="cp-stackable" checked> ใช้คู่ใบอื่นได้ (Stackable)
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="cp-auto-apply"> ใช้อัตโนมัติเมื่อตรงเงื่อนไข
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="cp-claim-required" checked> ต้องเก็บก่อน
+            </label>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn" style="background:#fff;color:#0A0A0A;border:1px solid #E5E5E5" onclick="closeCouponModal()">ยกเลิก</button>
+            <button class="btn btn-k" onclick="saveCoupon()" id="cp-save-btn">💾 บันทึก</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SPIN PRIZE MODAL -->
+      <div id="spin-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center">
+        <div style="background:#fff;width:480px;max-width:92vw;padding:28px;position:relative">
+          <button onclick="closeSpinPrizeModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer">✕</button>
+          <div style="font-size:18px;font-weight:600;margin-bottom:18px" id="spin-modal-title">เพิ่มรางวัล Spin Wheel</div>
+          <input type="hidden" id="sp-id">
+          <div class="cp-form-grid"><div class="cp-fg"><label class="cp-lbl">Icon</label><input class="cp-inp" id="sp-icon" value="🎁"></div>
+            <div class="cp-fg"><label class="cp-lbl">สี</label><input class="cp-inp" id="sp-color" type="color" value="#E63329"></div></div>
+          <div class="cp-fg"><label class="cp-lbl">ชื่อรางวัล *</label><input class="cp-inp" id="sp-label" placeholder="เช่น ลด ฿50 หรือ 10 Coin"></div>
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">ประเภท</label>
+              <select class="cp-inp" id="sp-type" onchange="cpToggleSpinType()">
+                <option value="coupon">คูปอง</option>
+                <option value="coin">Coin</option>
+                <option value="nothing">เสียดาย ลองใหม่</option>
+              </select>
+            </div>
+            <div class="cp-fg"><label class="cp-lbl">น้ำหนัก (probability weight)</label><input class="cp-inp" id="sp-weight" type="number" min="1" value="10"></div>
+          </div>
+          <div class="cp-fg" id="sp-coupon-row"><label class="cp-lbl">เลือกคูปอง</label>
+            <select class="cp-inp" id="sp-coupon"><option value="">— เลือก —</option></select></div>
+          <div class="cp-fg" id="sp-coin-row" style="display:none"><label class="cp-lbl">จำนวน Coin</label>
+            <input class="cp-inp" id="sp-coin" type="number" min="1" value="10"></div>
+          <div style="margin-bottom:18px"><label style="display:flex;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="sp-active" checked> เปิดใช้</label></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn" style="background:#fff;color:#0A0A0A;border:1px solid #E5E5E5" onclick="closeSpinPrizeModal()">ยกเลิก</button>
+            <button class="btn btn-k" onclick="saveSpinPrize()">💾 บันทึก</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAMPAIGN MODAL -->
+      <div id="cm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center">
+        <div style="background:#fff;width:520px;max-width:92vw;padding:28px;position:relative">
+          <button onclick="closeCampaignModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer">✕</button>
+          <div style="font-size:18px;font-weight:600;margin-bottom:18px">สร้าง Campaign</div>
+          <div class="cp-fg"><label class="cp-lbl">ชื่อ Campaign *</label><input class="cp-inp" id="cm-name" placeholder="11.11 Mega Sale"></div>
+          <div class="cp-fg"><label class="cp-lbl">คำอธิบาย</label><input class="cp-inp" id="cm-desc"></div>
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">เริ่ม</label><input class="cp-inp" id="cm-start" type="datetime-local"></div>
+            <div class="cp-fg"><label class="cp-lbl">จบ</label><input class="cp-inp" id="cm-end" type="datetime-local"></div>
+          </div>
+          <div class="cp-fg"><label class="cp-lbl">Budget (฿)</label><input class="cp-inp" id="cm-budget" type="number" min="0" placeholder="งบประมาณคาดการณ์"></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+            <button class="btn" style="background:#fff;border:1px solid #E5E5E5" onclick="closeCampaignModal()">ยกเลิก</button>
+            <button class="btn btn-k" onclick="saveCampaign()">💾 สร้าง</button>
           </div>
         </div>
       </div>
@@ -2542,6 +2825,7 @@ window.showPanel = function(name) {
     case 'products':    loadProducts();                break;
     case 'categories':  loadCats();                    break;
     case 'brands':      loadAdminBrands();             break;
+    case 'coupons':     loadAdminCoupons(); loadCpKpis(); break;
     case 'flash':       loadFlash();                   break;
     case 'sellers':     loadSellers('pending');        break;
     case 'approve':     loadPending('pending_review'); break;
@@ -2690,6 +2974,454 @@ async function deleteBrand(id, name) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+//  COUPONS PANEL [PATCH 2026-05-02]
+// ══════════════════════════════════════════════════════════════════════════
+let _cpSearchTimer = null;
+function cpDebouncedLoad() {
+  clearTimeout(_cpSearchTimer);
+  _cpSearchTimer = setTimeout(loadAdminCoupons, 350);
+}
+
+function cpSwitchTab(name) {
+  document.querySelectorAll('.cp-tab').forEach(t => t.classList.toggle('on', t.dataset.cpTab === name));
+  document.querySelectorAll('.cp-tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById('cp-tab-' + name).style.display = 'block';
+  if (name === 'analytics') loadCpAnalytics();
+  if (name === 'spin') loadSpinPrizes();
+  if (name === 'campaign') loadCampaigns();
+}
+
+async function loadCpKpis() {
+  try {
+    const { data, error } = await sb.rpc('get_coupon_analytics');
+    if (error) throw error;
+    document.getElementById('kpi-total').textContent = (data.total_coupons || 0).toLocaleString();
+    document.getElementById('kpi-active').textContent = (data.active_coupons || 0).toLocaleString();
+    document.getElementById('kpi-redeem').textContent = (data.redemptions_30d || 0).toLocaleString();
+    document.getElementById('kpi-savings').textContent = '฿' + (data.total_savings || 0).toLocaleString();
+  } catch(e) { console.warn('loadCpKpis:', e.message); }
+}
+
+async function loadAdminCoupons() {
+  const tbody = document.getElementById('cp-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr>';
+
+  try {
+    const search = document.getElementById('cp-search').value.trim();
+    const fType = document.getElementById('cp-filter-type').value;
+    const fStatus = document.getElementById('cp-filter-status').value;
+
+    let q = sb.from('coupons').select('*').order('created_at', { ascending: false });
+    if (search) q = q.or(`code.ilike.%${search}%,name.ilike.%${search}%`);
+    if (fType) q = q.eq('type', fType);
+    if (fStatus === 'active') q = q.eq('is_active', true);
+    if (fStatus === 'inactive') q = q.eq('is_active', false);
+    if (fStatus === 'expired') q = q.lt('end_at', new Date().toISOString());
+
+    const { data, error } = await q;
+    if (error) throw error;
+
+    if (!data?.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="padding:32px;text-align:center;color:#737373">
+        <div style="font-size:32px;margin-bottom:8px">🎟️</div>
+        <div style="margin-bottom:14px">ไม่พบคูปอง</div>
+        <button class="btn btn-k btn-sm" onclick="openCouponModal()">➕ เพิ่มคูปองแรก</button></td></tr>`;
+      return;
+    }
+
+    const typeLabels = {percent:'ลด %',fixed:'ลด ฿',shipping:'ส่งฟรี',cashback:'Cashback',spend_save:'ซื้อครบลด',bogo:'BOGO',bundle:'Bundle'};
+    tbody.innerHTML = data.map(c => {
+      const valStr = c.type === 'percent' ? c.value + '%'
+                   : c.type === 'shipping' ? 'ส่งฟรี'
+                   : '฿' + Number(c.value || 0).toLocaleString();
+      const expired = c.end_at && new Date(c.end_at) < new Date();
+      const status = !c.is_active ? '<span style="background:#737373;color:#fff;padding:2px 8px;font-size:10px">⏸ ปิด</span>'
+                   : expired ? '<span style="background:#DC2626;color:#fff;padding:2px 8px;font-size:10px">⌛ หมด</span>'
+                   : '<span style="background:#16A34A;color:#fff;padding:2px 8px;font-size:10px">✓ ACTIVE</span>';
+      const endTxt = c.end_at ? new Date(c.end_at).toLocaleDateString('th-TH', {day:'2-digit',month:'short',year:'2-digit'}) : 'ไม่จำกัด';
+
+      return `<tr>
+        <td style="font-size:24px;text-align:center">${c.icon || '🎟️'}</td>
+        <td>
+          <div style="font-weight:600;font-size:13px">${c.name}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:#737373">${c.code}</div>
+        </td>
+        <td><span class="cp-type-pill ${c.type}">${typeLabels[c.type] || c.type}</span></td>
+        <td style="font-family:'DM Mono',monospace;font-weight:600">${valStr}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">
+          <span style="color:#16A34A">${c.claim_count || 0}</span> / 
+          <span style="color:#E63329">${c.used_count || 0}</span>
+        </td>
+        <td style="font-family:'DM Mono',monospace;font-size:11px;color:#737373">${endTxt}</td>
+        <td>${status}</td>
+        <td>
+          <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px" onclick="editCoupon('${c.id}')">✏️</button>
+          <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="cpToggleActive('${c.id}',${!c.is_active})">${c.is_active?'⏸':'▶️'}</button>
+          <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="deleteCoupon('${c.id}','${(c.name||'').replace(/'/g,'')}')">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    console.error('loadAdminCoupons:', e);
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:24px;text-align:center;color:#E63329">❌ ${e.message}</td></tr>`;
+  }
+}
+
+async function cpToggleActive(id, newVal) {
+  try {
+    const { error } = await sb.from('coupons').update({ is_active: newVal }).eq('id', id);
+    if (error) throw error;
+    await loadAdminCoupons();
+    await loadCpKpis();
+  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+}
+
+async function deleteCoupon(id, name) {
+  if (!confirm(`ลบคูปอง "${name}"?\n\nการลบจะลบประวัติทั้งหมดด้วย — ถ้าต้องการแค่ปิด ใช้ปุ่ม ⏸ แทน`)) return;
+  try {
+    const { error } = await sb.from('coupons').delete().eq('id', id);
+    if (error) throw error;
+    await loadAdminCoupons();
+    await loadCpKpis();
+  } catch(e) { alert('ลบไม่สำเร็จ: ' + e.message); }
+}
+
+function cpSetType(btn, type) {
+  document.querySelectorAll('.cp-type-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('cp-type').value = type;
+
+  const valueLbl = document.getElementById('cp-value-lbl');
+  const valueInp = document.getElementById('cp-value');
+  const tiersWrap = document.getElementById('cp-spend-tiers');
+  const bogoWrap = document.getElementById('cp-bogo-section');
+  const valSection = document.getElementById('cp-value-section');
+
+  tiersWrap.style.display = (type === 'spend_save') ? 'block' : 'none';
+  bogoWrap.style.display = (type === 'bogo') ? 'block' : 'none';
+  valSection.style.display = (type === 'spend_save' || type === 'bogo') ? 'none' : 'block';
+
+  if (type === 'percent')      valueLbl.textContent = 'ส่วนลด (%)';
+  else if (type === 'fixed')   valueLbl.textContent = 'ส่วนลด (฿)';
+  else if (type === 'shipping')valueLbl.textContent = 'ค่าส่งสูงสุด (฿)';
+  else if (type === 'cashback')valueLbl.textContent = 'Cashback (%)';
+  else                          valueLbl.textContent = 'มูลค่า';
+}
+
+function cpAddTier(spend, save) {
+  const list = document.getElementById('cp-tiers-list');
+  const div = document.createElement('div');
+  div.className = 'cp-tier';
+  div.innerHTML = `
+    <span style="font-size:12px">ซื้อครบ ฿</span>
+    <input type="number" class="cp-inp cp-tier-spend" min="0" value="${spend||500}" style="width:100px;padding:6px 8px">
+    <span style="font-size:12px">ลด ฿</span>
+    <input type="number" class="cp-inp cp-tier-save" min="0" value="${save||50}" style="width:100px;padding:6px 8px">
+    <button class="cp-tier-rm" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(div);
+}
+
+function openCouponModal(data) {
+  document.getElementById('cp-modal-title').textContent = data ? '✏️ แก้ไขคูปอง' : '➕ เพิ่มคูปอง';
+  document.getElementById('cp-id').value = data?.id || '';
+  document.getElementById('cp-code').value = data?.code || '';
+  document.getElementById('cp-name').value = data?.name || '';
+  document.getElementById('cp-desc').value = data?.description || '';
+  document.getElementById('cp-icon').value = data?.icon || '🎟️';
+  document.getElementById('cp-color').value = data?.banner_color || '#E63329';
+  document.getElementById('cp-value').value = data?.value || 50;
+  document.getElementById('cp-max-disc').value = data?.max_discount || '';
+  document.getElementById('cp-min-order').value = data?.min_order || 0;
+  document.getElementById('cp-coin-cost').value = data?.coin_cost || 0;
+  document.getElementById('cp-usage-limit').value = data?.usage_limit || '';
+  document.getElementById('cp-user-limit').value = data?.user_limit || 1;
+  document.getElementById('cp-segment').value = data?.user_segment || 'all';
+  document.getElementById('cp-priority').value = data?.priority ?? 50;
+  document.getElementById('cp-active').checked = data ? !!data.is_active : true;
+  document.getElementById('cp-stackable').checked = data ? !!data.stackable : true;
+  document.getElementById('cp-auto-apply').checked = data ? !!data.auto_apply : false;
+  document.getElementById('cp-claim-required').checked = data ? !!data.claim_required : true;
+  document.getElementById('cp-buy-qty').value = data?.bxgy_buy_qty || 1;
+  document.getElementById('cp-get-qty').value = data?.bxgy_get_qty || 1;
+  document.getElementById('cp-start').value = data?.start_at ? new Date(data.start_at).toISOString().slice(0,16) : '';
+  document.getElementById('cp-end').value = data?.end_at ? new Date(data.end_at).toISOString().slice(0,16) : '';
+
+  // Set type
+  const type = data?.type || 'percent';
+  const typeBtn = document.querySelector(`.cp-type-btn[data-type="${type}"]`);
+  if (typeBtn) cpSetType(typeBtn, type);
+
+  // tiers
+  document.getElementById('cp-tiers-list').innerHTML = '';
+  if (type === 'spend_save' && data?.spend_tiers) {
+    data.spend_tiers.forEach(t => cpAddTier(t.spend, t.save));
+  } else if (type === 'spend_save') {
+    cpAddTier(500, 50);
+  }
+
+  document.getElementById('cp-modal').style.display = 'flex';
+}
+
+function closeCouponModal() {
+  document.getElementById('cp-modal').style.display = 'none';
+}
+
+async function editCoupon(id) {
+  try {
+    const { data, error } = await sb.from('coupons').select('*').eq('id', id).maybeSingle();
+    if (error || !data) throw error || new Error('ไม่พบคูปอง');
+    openCouponModal(data);
+  } catch(e) { alert('โหลดไม่สำเร็จ: ' + e.message); }
+}
+
+async function saveCoupon() {
+  const btn = document.getElementById('cp-save-btn');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  try {
+    const id = document.getElementById('cp-id').value;
+    const code = document.getElementById('cp-code').value.trim().toUpperCase();
+    const name = document.getElementById('cp-name').value.trim();
+    if (!code || !name) throw new Error('กรอก code และ ชื่อ');
+
+    const type = document.getElementById('cp-type').value;
+    let spendTiers = null;
+    if (type === 'spend_save') {
+      const spends = document.querySelectorAll('.cp-tier-spend');
+      const saves = document.querySelectorAll('.cp-tier-save');
+      spendTiers = [];
+      for (let i=0; i<spends.length; i++) {
+        spendTiers.push({ spend: parseFloat(spends[i].value)||0, save: parseFloat(saves[i].value)||0 });
+      }
+    }
+
+    const payload = {
+      code, name,
+      description: document.getElementById('cp-desc').value || null,
+      icon: document.getElementById('cp-icon').value || '🎟️',
+      banner_color: document.getElementById('cp-color').value,
+      type,
+      value: parseFloat(document.getElementById('cp-value').value) || 0,
+      max_discount: parseFloat(document.getElementById('cp-max-disc').value) || null,
+      min_order: parseFloat(document.getElementById('cp-min-order').value) || 0,
+      coin_cost: parseInt(document.getElementById('cp-coin-cost').value) || 0,
+      usage_limit: parseInt(document.getElementById('cp-usage-limit').value) || null,
+      user_limit: parseInt(document.getElementById('cp-user-limit').value) || null,
+      user_segment: document.getElementById('cp-segment').value,
+      priority: parseInt(document.getElementById('cp-priority').value) || 50,
+      is_active: document.getElementById('cp-active').checked,
+      stackable: document.getElementById('cp-stackable').checked,
+      auto_apply: document.getElementById('cp-auto-apply').checked,
+      claim_required: document.getElementById('cp-claim-required').checked,
+      bxgy_buy_qty: type === 'bogo' ? parseInt(document.getElementById('cp-buy-qty').value) : null,
+      bxgy_get_qty: type === 'bogo' ? parseInt(document.getElementById('cp-get-qty').value) : null,
+      spend_tiers: spendTiers,
+      start_at: document.getElementById('cp-start').value || null,
+      end_at: document.getElementById('cp-end').value || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    let error;
+    if (id) ({ error } = await sb.from('coupons').update(payload).eq('id', id));
+    else    ({ error } = await sb.from('coupons').insert(payload));
+    if (error) throw error;
+
+    closeCouponModal();
+    await loadAdminCoupons();
+    await loadCpKpis();
+  } catch(e) {
+    alert('บันทึกไม่สำเร็จ: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 บันทึก';
+  }
+}
+
+// ─── Analytics ─────────────────────────────────────────────
+async function loadCpAnalytics() {
+  try {
+    const { data, error } = await sb.rpc('get_coupon_analytics');
+    if (error) throw error;
+
+    // Bar chart
+    const chart = document.getElementById('chart-usage');
+    const usage = data.usage_by_day || [];
+    if (!usage.length) {
+      chart.innerHTML = '<div style="margin:auto;color:#737373;font-size:13px">ยังไม่มีข้อมูล</div>';
+    } else {
+      const max = Math.max(...usage.map(u => u.count));
+      chart.innerHTML = usage.map(u => {
+        const h = max > 0 ? Math.max(8, (u.count/max) * 140) : 8;
+        const d = new Date(u.date);
+        return `<div class="cp-bar" style="height:${h}px" title="${u.date}: ${u.count}">
+          <span style="position:absolute;top:-18px;font-size:9px;color:#0A0A0A;writing-mode:initial;left:50%;transform:translateX(-50%)">${u.count}</span>
+          <span style="position:absolute;bottom:-18px;font-size:9px;color:#737373;left:50%;transform:translateX(-50%);white-space:nowrap">${d.getDate()}/${d.getMonth()+1}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // Top coupons
+    const top = data.top_coupons || [];
+    document.getElementById('top-coupons').innerHTML = top.length ? top.map((t,i) => `
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F2F2F2;font-size:13px">
+        <div><span style="font-family:'DM Mono',monospace;color:#737373">#${i+1}</span> <strong>${t.name}</strong> <span style="font-family:'DM Mono',monospace;font-size:10px;color:#737373">${t.code}</span></div>
+        <div style="text-align:right">
+          <div style="font-family:'DM Mono',monospace;font-weight:600">${t.used_count} ครั้ง</div>
+          <div style="font-size:10px;color:#16A34A">฿${Number(t.total_savings||0).toLocaleString()}</div>
+        </div>
+      </div>`).join('') : '<div style="color:#737373;text-align:center;padding:20px;font-size:13px">ยังไม่มีคูปองที่ถูกใช้</div>';
+  } catch(e) { console.warn('loadCpAnalytics:', e.message); }
+}
+
+// ─── Spin Wheel Prizes ─────────────────────────────────────
+async function loadSpinPrizes() {
+  const tbody = document.getElementById('spin-tbody');
+  try {
+    const { data, error } = await sb.from('spin_wheel_prizes').select('*,coupons(code,name)').order('sort_order');
+    if (error) throw error;
+    if (!data?.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="padding:32px;text-align:center;color:#737373">
+        <div style="font-size:32px;margin-bottom:8px">🎰</div>
+        <div style="margin-bottom:14px">ยังไม่มีรางวัล</div>
+        <button class="btn btn-k btn-sm" onclick="openSpinPrizeModal()">➕ เพิ่มรางวัลแรก</button></td></tr>`;
+      return;
+    }
+    const totalWeight = data.reduce((s,p) => s + (p.weight||0), 0);
+    tbody.innerHTML = data.map(p => {
+      const pct = totalWeight > 0 ? ((p.weight / totalWeight) * 100).toFixed(1) : 0;
+      const valStr = p.prize_type === 'coin' ? p.coin_amount + ' Coin'
+                   : p.prize_type === 'coupon' ? (p.coupons?.code || '—')
+                   : '—';
+      return `<tr>
+        <td style="font-size:24px;text-align:center;background:${p.color};color:#fff">${p.icon}</td>
+        <td><strong>${p.label}</strong></td>
+        <td>${p.prize_type === 'coupon' ? '🎟️ คูปอง' : p.prize_type === 'coin' ? '🪙 Coin' : '😅 ลองใหม่'}</td>
+        <td style="font-family:'DM Mono',monospace">${valStr}</td>
+        <td style="font-family:'DM Mono',monospace">${p.weight}</td>
+        <td style="font-family:'DM Mono',monospace;color:#E63329;font-weight:600">${pct}%</td>
+        <td>${p.is_active ? '<span style="background:#16A34A;color:#fff;padding:2px 8px;font-size:10px">ON</span>' : '<span style="background:#737373;color:#fff;padding:2px 8px;font-size:10px">OFF</span>'}</td>
+        <td>
+          <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px" onclick="editSpinPrize('${p.id}')">✏️</button>
+          <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="deleteSpinPrize('${p.id}')">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="8" style="padding:24px;color:#E63329;text-align:center">❌ ${e.message}</td></tr>`; }
+}
+
+function cpToggleSpinType() {
+  const t = document.getElementById('sp-type').value;
+  document.getElementById('sp-coupon-row').style.display = (t === 'coupon') ? 'block' : 'none';
+  document.getElementById('sp-coin-row').style.display = (t === 'coin') ? 'block' : 'none';
+}
+
+async function openSpinPrizeModal(data) {
+  // โหลดคูปองมาใส่ dropdown
+  const sel = document.getElementById('sp-coupon');
+  try {
+    const { data: cps } = await sb.from('coupons').select('id,code,name').eq('is_active', true).order('name');
+    sel.innerHTML = '<option value="">— เลือกคูปอง —</option>' + (cps||[]).map(c => `<option value="${c.id}">${c.code} · ${c.name}</option>`).join('');
+  } catch(e) {}
+
+  document.getElementById('spin-modal-title').textContent = data ? 'แก้ไขรางวัล' : 'เพิ่มรางวัล Spin Wheel';
+  document.getElementById('sp-id').value = data?.id || '';
+  document.getElementById('sp-icon').value = data?.icon || '🎁';
+  document.getElementById('sp-color').value = data?.color || '#E63329';
+  document.getElementById('sp-label').value = data?.label || '';
+  document.getElementById('sp-type').value = data?.prize_type || 'coupon';
+  document.getElementById('sp-weight').value = data?.weight || 10;
+  document.getElementById('sp-coupon').value = data?.coupon_id || '';
+  document.getElementById('sp-coin').value = data?.coin_amount || 10;
+  document.getElementById('sp-active').checked = data ? !!data.is_active : true;
+  cpToggleSpinType();
+  document.getElementById('spin-modal').style.display = 'flex';
+}
+
+function closeSpinPrizeModal() { document.getElementById('spin-modal').style.display = 'none'; }
+
+async function editSpinPrize(id) {
+  try {
+    const { data, error } = await sb.from('spin_wheel_prizes').select('*').eq('id', id).maybeSingle();
+    if (error || !data) throw error || new Error('ไม่พบ');
+    openSpinPrizeModal(data);
+  } catch(e) { alert(e.message); }
+}
+
+async function saveSpinPrize() {
+  try {
+    const id = document.getElementById('sp-id').value;
+    const payload = {
+      label: document.getElementById('sp-label').value.trim(),
+      icon: document.getElementById('sp-icon').value || '🎁',
+      color: document.getElementById('sp-color').value,
+      prize_type: document.getElementById('sp-type').value,
+      weight: parseInt(document.getElementById('sp-weight').value) || 1,
+      coupon_id: document.getElementById('sp-type').value === 'coupon' ? (document.getElementById('sp-coupon').value || null) : null,
+      coin_amount: document.getElementById('sp-type').value === 'coin' ? parseInt(document.getElementById('sp-coin').value)||0 : 0,
+      is_active: document.getElementById('sp-active').checked,
+    };
+    if (!payload.label) throw new Error('กรอกชื่อรางวัล');
+    let error;
+    if (id) ({ error } = await sb.from('spin_wheel_prizes').update(payload).eq('id', id));
+    else    ({ error } = await sb.from('spin_wheel_prizes').insert(payload));
+    if (error) throw error;
+    closeSpinPrizeModal();
+    await loadSpinPrizes();
+  } catch(e) { alert('บันทึกไม่สำเร็จ: ' + e.message); }
+}
+
+async function deleteSpinPrize(id) {
+  if (!confirm('ลบรางวัลนี้?')) return;
+  try {
+    const { error } = await sb.from('spin_wheel_prizes').delete().eq('id', id);
+    if (error) throw error;
+    await loadSpinPrizes();
+  } catch(e) { alert('ลบไม่สำเร็จ: ' + e.message); }
+}
+
+// ─── Campaign ──────────────────────────────────────────────
+function openCampaignModal() { document.getElementById('cm-modal').style.display = 'flex'; }
+function closeCampaignModal() { document.getElementById('cm-modal').style.display = 'none'; }
+
+async function saveCampaign() {
+  try {
+    const payload = {
+      name: document.getElementById('cm-name').value.trim(),
+      description: document.getElementById('cm-desc').value || null,
+      start_at: document.getElementById('cm-start').value || null,
+      end_at: document.getElementById('cm-end').value || null,
+      budget: parseFloat(document.getElementById('cm-budget').value) || null,
+      is_active: true,
+    };
+    if (!payload.name) throw new Error('กรอกชื่อ campaign');
+    const { error } = await sb.from('coupon_campaigns').insert(payload);
+    if (error) throw error;
+    closeCampaignModal();
+    await loadCampaigns();
+  } catch(e) { alert(e.message); }
+}
+
+async function loadCampaigns() {
+  const list = document.getElementById('campaign-list');
+  if (!list) return;
+  try {
+    const { data, error } = await sb.from('coupon_campaigns').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    if (!data?.length) { list.innerHTML = '<div style="color:#737373;font-size:13px">ยังไม่มี campaign</div>'; return; }
+    list.innerHTML = data.map(c => `
+      <div style="background:#fff;border:1px solid #E5E5E5;padding:14px;margin-bottom:10px;text-align:left">
+        <div style="font-weight:600">${c.name}</div>
+        <div style="font-size:12px;color:#737373;margin-top:4px">${c.description || ''}</div>
+        <div style="font-size:11px;color:#737373;margin-top:6px;font-family:'DM Mono',monospace">
+          ${c.start_at ? new Date(c.start_at).toLocaleDateString('th-TH') : '—'} →
+          ${c.end_at ? new Date(c.end_at).toLocaleDateString('th-TH') : '—'} ·
+          งบ ฿${(c.budget||0).toLocaleString()}
+        </div>
+      </div>`).join('');
+  } catch(e) { list.innerHTML = '<div style="color:#E63329">' + e.message + '</div>'; }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
 //  SELLER APPROVAL
 // ══════════════════════════════════════════════════════════════════════════
 async function loadSellers(statusFilter = 'pending') {
@@ -2698,6 +3430,7 @@ async function loadSellers(statusFilter = 'pending') {
   if (!listEl) return;
 
   listEl.innerHTML = '<div class="empty-state"><div class="empty-ico">⏳</div><div class="empty-txt">กำลังโหลด...</div></div>';
+
 
   try {
     // โหลด stats

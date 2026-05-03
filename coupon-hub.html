@@ -2,962 +2,500 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#0A0A0A">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thailand Market — Coupon Hub</title>
+<title>คูปอง · Thailand Market</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style id="tm-base">
-:root{
-  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
-  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
-  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
-  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
-  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
-  /* legacy compat */
-  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
-  --bg:#FAFAFA;--white-off:#FAFAFA;
-  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
-  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
-  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
-  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
-  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
-  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
-  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
-  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
-  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
-  --sidebar:220px;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
-
-/* ── NAV ── */
-#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
-.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
-.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
-.tn-logo .dot{color:var(--red)}
-.tn-links{display:flex;flex:1;overflow:hidden}
-.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
-.tn-link:hover{color:var(--black)}
-.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
-.tn-search{position:relative;margin-left:auto}
-.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
-.tn-search input:focus{border-color:var(--black)}
-.tn-search input::placeholder{color:var(--g400)}
-.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
-.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
-.tn-btn:hover{color:var(--black)}
-.tn-btn.sell{color:var(--red)}
-.tn-ico{font-size:15px;position:relative;line-height:1}
-.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
-.tn-cats{border-top:var(--border)}
-.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
-.tn-cats-inner::-webkit-scrollbar{display:none}
-.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
-.tn-cat:hover{color:var(--black)}
-.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
-
-/* ── GLOBAL BUTTONS ── */
-.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
-.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
-.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
-.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
-.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
-.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
-
-/* old btn-primary / btn-secondary overrides */
-.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.btn-primary:hover{background:var(--g800)!important}
-.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
-
-/* legacy btn-cart / btn-buy → new style */
-.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
-.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
-.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
-.btn-buy:hover{background:var(--g800)!important}
-.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
-.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
-
-/* ── CARDS ── */
-.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
-.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
-
-/* ── SECTION ── */
-.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
-.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
-.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
-.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
-.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
-.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
-
-/* ── PRODUCT CARDS ── */
-.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
-.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
-.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
-.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
-.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
-.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
-.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
-.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
-.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
-.badge-hot{background:var(--black)!important;color:var(--white)!important}
-
-/* ── PRICE BOX ── */
-.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
-.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
-.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
-.flash-tag{background:var(--red)!important;border-radius:0!important}
-
-/* ── NAV OLD → NEW ── */
-.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
-.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
-.nav-search input{border:var(--border)!important;border-radius:0!important}
-.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
-.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
-.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
-.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
-.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
-.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
-.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
-
-/* ── FORMS ── */
-.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
-.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
-.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
-
-/* ── STATUS / BADGE ── */
-.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
-.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
-.status-badge,.badge{border-radius:0!important}
-
-/* ── TABLES ── */
-table{border-collapse:collapse}
-thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
-tbody td{border-bottom:var(--border)!important}
-tbody tr:hover td{background:var(--g50)!important}
-
-/* ── MODALS ── */
-.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
-.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
-.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
-
-/* ── SIDEBAR (seller) ── */
-.sidebar,.sb{background:var(--black)!important}
-.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
-.sni-badge{background:var(--red)!important}
-.sb-logo-mark{background:var(--red)!important}
-.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
-
-/* ── COLORS: strip all gradients/rounded corners ── */
-[style*="background:linear-gradient"]{background:var(--g50)!important}
-[style*="border-radius"]{border-radius:0!important}
-
-/* ── TOAST ── */
-.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
-.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
-@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-/* ── FOOTER ── */
-#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
-#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
-#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
-#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
-#tm-footer .tf-logo .dot{color:var(--red)}
-#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
-#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
-#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
-#tm-footer .tf-link:hover{color:var(--white)}
-#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
-
-/* ── RESPONSIVE ── */
-@media(max-width:768px){
-  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
-  .tn-links{display:none}
-  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
-}
-@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
-.ann{background:var(--black);color:var(--white);text-align:center;padding:8px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
-.ann-dot{color:var(--red);font-size:16px;line-height:0}
-.nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:999}
-.nav-top{max-width:var(--max);margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;gap:16px}
-.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);flex-shrink:0;margin-right:8px}
-.nav-logo .dot{color:var(--red)}
-.nav-links{display:flex;gap:0;align-items:center;overflow-x:auto;scrollbar-width:none;flex:1}
-.nav-links::-webkit-scrollbar{display:none}
-.nav-link{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:0 14px;height:56px;display:flex;align-items:center;white-space:nowrap;transition:color .15s;border-bottom:2px solid transparent}
-.nav-link:hover{color:var(--black)}
-.nav-link.hot{color:var(--red)}
-.nav-search{display:flex;align-items:center;border:var(--border);background:var(--g50);flex:1;max-width:360px;margin:0 8px}
-.nav-search input{flex:1;padding:8px 14px;border:none;background:none;font-size:13px;outline:none}
-.nav-search button{padding:8px 14px;background:var(--black);color:var(--white);border:none;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;transition:background .15s}
-.nav-search button:hover{background:var(--g800)}
-.nav-acts{display:flex;gap:0;flex-shrink:0}
-.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);border:none;background:none;transition:color .15s;position:relative;white-space:nowrap}
-.nav-btn:hover{color:var(--black)}
-.nav-btn.sell{color:var(--red)}
-.nav-btn-ico{font-size:16px;line-height:1}
-.nav-badge{position:absolute;top:4px;right:8px;background:var(--red);color:var(--white);font-size:8px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
-.nav-links{display:none}
-.nav-search{max-width:200px}
-.nav-btn.account-btn{position:relative}
-.account-dropdown{
-  position:absolute;top:calc(100% + 4px);right:0;
-  background:var(--white);border:1px solid var(--black);
-  min-width:200px;z-index:9999;
-  display:none;flex-direction:column;
-  box-shadow:0 4px 16px rgba(0,0,0,.12);
-}
-.account-dropdown.open{display:flex}
-.account-dropdown-header{
-  padding:14px 16px;border-bottom:1px solid var(--g200);
-  background:var(--g50);
-}
-.account-dropdown-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px}
-.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
-.account-dropdown-role{
-  display:inline-block;margin-top:5px;
-  padding:2px 8px;font-family:var(--mono);font-size:9px;
-  letter-spacing:.06em;text-transform:uppercase;
-  background:var(--black);color:var(--white);
-}
-.account-dropdown-role.admin{background:var(--red)}
-.account-dropdown-role.seller{background:#2563EB}
-.dropdown-item{
-  display:flex;align-items:center;gap:10px;
-  padding:11px 16px;font-size:13px;color:var(--g600);
-  cursor:pointer;transition:all .12s;text-decoration:none;border:none;
-  background:none;font-family:var(--font);width:100%;text-align:left;
-}
-.dropdown-item:hover{background:var(--g50);color:var(--black)}
-.dropdown-item.logout{color:var(--red);border-top:1px solid var(--g200)}
-.dropdown-item.logout:hover{background:#FFF5F5}
-.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
-.nav-avatar{
-  width:24px;height:24px;border-radius:50%;
-  background:var(--black);color:var(--white);
-  font-size:11px;font-weight:600;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-.account-dropdown{position:absolute;top:calc(100%+4px);right:0;background:#fff;border:1px solid var(--black);min-width:200px;z-index:9999;display:none;flex-direction:column;box-shadow:0 4px 16px rgba(0,0,0,.12)}
-.account-dropdown.open{display:flex}
-.account-dropdown-header{padding:14px 16px;border-bottom:var(--border);background:var(--g50)}
-.account-dropdown-name{font-size:13px;font-weight:600;margin-bottom:2px}
-.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400)}
-.account-dropdown-role{display:inline-block;margin-top:5px;padding:2px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:var(--black);color:#fff}
-.account-dropdown-role.admin{background:var(--red)}.account-dropdown-role.seller{background:#2563EB}
-.dropdown-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:var(--g600);cursor:pointer;transition:all .12s;text-decoration:none;border:none;background:none;font-family:var(--font);width:100%;text-align:left}
-.dropdown-item:hover{background:var(--g50);color:var(--black)}
-.dropdown-item.logout{color:var(--red);border-top:var(--border)}.dropdown-item.logout:hover{background:#FFF5F5}
-.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
-@keyframes tIn{from{transform:translateX(8px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.toast{background:var(--black);color:#fff;padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:240px;border-left:3px solid var(--red);animation:tIn .2s ease;pointer-events:all}
-.toast.ok{border-left-color:#16A34A}
-
-
-/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
-.ann {
-  width: 100% !important;
-  min-width: 100% !important;
-  flex-shrink: 0 !important;
-  flex-direction: row !important;
-}
-nav, .nav {
-  width: 100% !important;
-  min-width: 100% !important;
-  flex-shrink: 0 !important;
-  display: block !important;
-}
-body > .ann, body > nav {
-  position: relative !important;
-}
-
-
-/* ── GLOBAL NAV FIX ── */
-body { display: block !important; }
-.ann {
-  width: 100% !important; min-width: 100% !important;
-  height: auto !important; max-height: 60px !important;
-  display: flex !important; flex-direction: row !important;
-  flex-shrink: 0 !important;
-}
-nav, .nav { 
-  width: 100% !important; display: block !important;
-  height: auto !important; flex-shrink: 0 !important;
-}
-
-</style>
-<style id="page-css">
-
-:root{--primary:#0A0A0A;--accent:#E63329;--teal:#404040;--gold:#F2F2F2;--orange:#D4D4D4;--green:#22C55E;--bg:#FFFFFF;--white:#FFFFFF;--gray100:#F0F0EF;--gray200:#E2E2E0;--gray400:#9A9A95;--gray600:#5A5A55;--gray900:#1A1A18;--r8:8px;--r12:12px;--r16:16px;--shadow:0 2px 8px rgba(0,0,0,0.08);--shadow-md:0 4px 16px rgba(0,0,0,0.12)}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--gray900);font-size:14px}
-a{text-decoration:none;color:inherit}
-.nav{background:var(--primary);position:sticky;top:0;z-index:100}
-.nav-top{display:flex;align-items:center;gap:16px;padding:12px 24px;max-width:1280px;margin:0 auto}
-.nav-logo{font-family:'DM Sans',sans-serif;font-weight:900;font-size:22px;color:#fff}
-.nav-logo span{color:var(--accent)}
-.nav-search{flex:1;max-width:540px;position:relative}
-.nav-search input{width:100%;padding:10px 16px 10px 44px;border:none;border-radius:2px;font-size:14px;font-family:'DM Sans',sans-serif;background:#fff;outline:none}
-.nav-search-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--gray400)}
-.nav-search button{position:absolute;right:0;top:0;bottom:0;background:var(--accent);color:#fff;border:none;padding:0 16px;border-radius:0 2px 2px 0;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer}
-.nav-actions{display:flex;align-items:center;gap:4px;margin-left:auto}
-.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;cursor:pointer;border-radius:2px;color:rgba(255,255,255,0.75);font-size:10px;border:none;background:none;font-family:'DM Sans',sans-serif}
-.nav-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
-.nav-btn-ico{font-size:18px;position:relative}
-.cart-badge{position:absolute;top:-4px;right:-6px;background:var(--accent);color:#fff;font-size:9px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
-
-/* HERO */
-.coupon-hero{background:linear-gradient(135deg,#B5261F 0%,var(--accent) 40%,#FF6B35 100%);padding:40px 0;overflow:hidden;position:relative}
-.hero-circles{position:absolute;inset:0;pointer-events:none}
-.hero-circle{position:absolute;border-radius:50%;background:rgba(255,255,255,0.07)}
-.hero-inner{max-width:1280px;margin:0 auto;padding:0 24px;text-align:center;position:relative}
-.hero-label{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);color:#fff;padding:6px 16px;border-radius:20px;font-size:12.5px;font-weight:600;margin-bottom:16px}
-.hero-title{font-family:'DM Sans',sans-serif;font-size:36px;font-weight:900;color:#fff;margin-bottom:8px}
-.hero-title span{color:var(--gold)}
-.hero-sub{font-size:15px;color:rgba(255,255,255,0.75);margin-bottom:24px}
-.coupon-input-row{display:flex;gap:0;max-width:480px;margin:0 auto;border-radius:2px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.2)}
-.coupon-input{flex:1;padding:14px 20px;border:none;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;text-transform:uppercase;letter-spacing:1px}
-.coupon-input::placeholder{text-transform:none;letter-spacing:0;color:var(--gray400)}
-.coupon-input-btn{padding:14px 24px;background:var(--primary);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
-.hero-stats{display:flex;gap:32px;justify-content:center;margin-top:24px}
-.hero-stat{color:rgba(255,255,255,0.8);text-align:center}
-.hero-stat-val{font-family:'DM Sans',sans-serif;font-size:24px;font-weight:800;color:#fff}
-.hero-stat-lbl{font-size:11.5px;margin-top:2px}
-
-.wrap{max-width:1280px;margin:0 auto;padding:28px 16px}
-
-/* MY COUPONS SUMMARY */
-.my-bar{background:#fff;border-radius:4px;box-shadow:var(--shadow-md);padding:18px 24px;margin-bottom:28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-.my-bar-ico{font-size:32px}
-.my-bar-info{flex:1}
-.my-bar-title{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700}
-.my-bar-sub{font-size:12.5px;color:var(--gray400);margin-top:2px}
-.my-bar-count{display:flex;gap:16px}
-.my-count-item{text-align:center;background:var(--gray100);padding:10px 20px;border-radius:2px}
-.my-count-val{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;color:var(--accent)}
-.my-count-lbl{font-size:11px;color:var(--gray400)}
-.btn-my{padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:2px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s}
-.btn-my:hover{background:var(--accent)}
-
-/* FILTERS */
-.filter-row{display:flex;gap:10px;margin-bottom:24px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;flex-wrap:wrap}
-.filter-chip{padding:8px 18px;border-radius:20px;border:1.5px solid var(--gray200);background:#fff;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.15s;white-space:nowrap;display:flex;align-items:center;gap:6px}
-.filter-chip:hover,.filter-chip.active{border-color:var(--accent);color:var(--accent);background:#FFF0F1}
-
-/* SECTIONS */
-.section{margin-bottom:36px}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.section-title{font-family:'DM Sans',sans-serif;font-size:18px;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px}
-.section-link{font-size:12.5px;color:var(--black);font-weight:600;cursor:pointer}
-.coupon-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-
-/* COUPON CARD */
-.coupon-card{background:#fff;border-radius:4px;box-shadow:var(--shadow);overflow:hidden;position:relative;transition:transform 0.2s,box-shadow 0.2s;display:flex}
-.coupon-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
-.coupon-card.collected{opacity:0.65}
-.coupon-left{width:80px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;position:relative}
-.coupon-left::after{content:'';position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:var(--bg);border-radius:50%;z-index:2}
-.coupon-left::before{content:'';position:absolute;right:-1px;top:0;bottom:0;border-right:2px dashed rgba(255,255,255,0.3)}
-.coupon-ico{font-size:28px;margin-bottom:4px}
-.coupon-type-lbl{font-size:9.5px;font-weight:700;text-align:center;color:rgba(255,255,255,0.8);line-height:1.3}
-.bg-red{background:linear-gradient(135deg,var(--accent),#B5261F)}
-.bg-gold{background:linear-gradient(135deg,var(--gold),#FFB300)}
-.bg-teal{background:linear-gradient(135deg,var(--black),#25a99e)}
-.bg-purple{background:linear-gradient(135deg,#7C3AED,#5B21B6)}
-.bg-orange{background:linear-gradient(135deg,var(--orange),#E8932A)}
-.bg-blue{background:linear-gradient(135deg,#2563EB,#1D4ED8)}
-.coupon-right{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between}
-.coupon-discount{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:800;color:var(--gray900);line-height:1.1}
-.coupon-desc{font-size:12px;color:var(--gray600);margin-top:3px;margin-bottom:6px;line-height:1.4}
-.coupon-terms{font-size:10.5px;color:var(--gray400);margin-bottom:8px}
-.coupon-footer{display:flex;align-items:center;justify-content:space-between}
-.coupon-expire{font-size:10.5px;color:var(--gray400)}
-.coupon-expire.soon{color:#FF6B35;font-weight:600}
-.coupon-stock{font-size:10.5px;color:var(--gray400)}
-.coupon-stock.low{color:#FF6B35;font-weight:600}
-.btn-collect{padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:2px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
-.btn-collect:hover{background:#B5261F}
-.btn-collected{background:var(--gray200);color:var(--gray400);cursor:default}
-.coupon-badge{position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--gold);color:#0A0A0A}
-
-/* EXPIRY PROGRESS */
-.expire-bar-wrap{height:3px;background:var(--gray200);border-radius:2px;margin-top:6px;overflow:hidden}
-.expire-bar-fill{height:100%;border-radius:2px;background:var(--green)}
-.expire-bar-fill.warn{background:#FF6B35}
-.expire-bar-fill.urgent{background:var(--accent)}
-
-/* PLATFORM COUPONS SPECIAL */
-.platform-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
-.platform-card{background:var(--primary);border-radius:4px;padding:20px;color:#fff;cursor:pointer;transition:transform 0.2s;position:relative;overflow:hidden}
-.platform-card:hover{transform:translateY(-2px)}
-.platform-card::after{content:'';position:absolute;right:-20px;bottom:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.05)}
-.platform-card-ico{font-size:28px;margin-bottom:10px}
-.platform-card-val{font-family:'DM Sans',sans-serif;font-size:24px;font-weight:800;color:var(--gold)}
-.platform-card-name{font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px}
-.platform-card-req{font-size:10.5px;color:rgba(255,255,255,0.4);margin-top:4px}
-
-@media(max-width:900px){.coupon-grid{grid-template-columns:repeat(2,1fr)}.platform-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.coupon-grid{grid-template-columns:1fr}.platform-grid{grid-template-columns:1fr 1fr}}
-
-</style>
-<style id="tm-responsive">
-/* ── Mobile fixes ── */
-@media(max-width:768px){
-  .tn-links{display:none!important}
-  .tn-srch{display:none!important}
-  /* hamburger hint */
-  .tn-top{padding:0 16px}
-  .tn-logo{margin-right:auto}
-  /* sidebar pages on mobile */
-  .app{flex-direction:column}
-  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
-  .sb-logo,.sb-user{flex-basis:100%}
-  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
-  .sb-lbl{display:none}
-  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
-  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
-  .sb-foot{display:none}
-  .main{margin-left:0!important}
-  /* layout grids */
-  .layout{grid-template-columns:1fr!important}
-  .form-row{grid-template-columns:1fr!important}
-  /* tables */
-  table{font-size:12px}
-  td,th{padding:8px 10px!important}
-  /* stat grids */
-  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  [style*="grid-template-columns:repeat(3"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* hero */
-  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
-  .hero-right{display:none}
-  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
-  /* product grids */
-  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* footer */
-  #tm-footer .tf-grid{grid-template-columns:1fr!important}
-  /* wrap padding */
-  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
-}
-@media(max-width:480px){
-  .hero-h1{font-size:36px!important}
-  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
-  .hero-stat-row{grid-template-columns:1fr 1fr}
-}
-/* ── Print friendly ── */
-@media print{
-  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
-  body{font-size:12px}
-}
-/* ── Focus / accessibility ── */
-a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
-  outline:2px solid #0A0A0A;outline-offset:2px
-}
-/* ── Smooth image loading ── */
-img{max-width:100%;height:auto}
-/* ── Selection color ── */
-::selection{background:#0A0A0A;color:#fff}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const _sb = (window._sb) || supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
-window._sb = _sb;
-
-// ── Account Nav ──────────────────────────────────────────
-(async function initAccountNav() {
-  const btn  = document.getElementById('account-nav-btn');
-  const drop = document.getElementById('account-dropdown');
-  if (!btn || !drop) return;
-  const { data:{ session } } = await _sb.auth.getSession();
-  if (!session) {
-    btn.onclick = () => location.href='login.html?from='+encodeURIComponent(location.pathname);
-    return;
-  }
-  const email = session.user.email;
-  const { data:user } = await _sb.from('users').select('display_name,role').eq('email',email).maybeSingle();
-  const name = user?.display_name || email.split('@')[0];
-  const ini  = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-  const ico = document.getElementById('account-ico');
-  const lbl = document.getElementById('account-lbl');
-  if (ico) ico.innerHTML = `<div style="width:22px;height:22px;border-radius:50%;background:var(--black);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">${ini}</div>`;
-  if (lbl) lbl.textContent = name.split(' ')[0];
-  ['dd-name','dd-email'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=id==='dd-name'?name:email; });
-  btn.onclick=e=>{ e.stopPropagation(); drop.classList.toggle('open'); };
-  document.addEventListener('click',()=>drop.classList.remove('open'));
-  document.getElementById('dd-logout')?.addEventListener('click',async()=>{ await _sb.auth.signOut(); location.href='index.html'; });
-})();
+  window.TM_SB_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
+  window.TM_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
+  window._sb = supabase.createClient(window.TM_SB_URL, window.TM_SB_KEY);
 </script>
+<style>
+:root{
+  --black:#0A0A0A; --white:#fff; --red:#E63329;
+  --g50:#FAFAFA; --g100:#F2F2F2; --g200:#E5E5E5; --g400:#A3A3A3; --g500:#737373; --g600:#525252; --g800:#262626;
+  --green:#16A34A; --gold:#FBBF24; --purple:#7C3AED;
+  --font:"DM Sans",system-ui,sans-serif; --mono:"DM Mono",monospace;
+  --border:1px solid #E5E5E5; --border-dark:1px solid #0A0A0A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--g50);color:var(--black);min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+/* ── HEADER ── */
+.hdr{background:var(--black);color:var(--white);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.hdr-logo{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.hdr-logo .dot{color:var(--red)}
+.hdr-back{font-size:13px;display:flex;align-items:center;gap:8px}
+
+/* ── HERO with coin balance + check-in ── */
+.hero{background:linear-gradient(135deg,#0A0A0A 0%,#1a1a2e 100%);color:#fff;padding:32px 20px}
+.hero-inner{max-width:900px;margin:0 auto}
+.hero-title{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase;font-family:var(--mono)}
+.hero-h1{font-size:28px;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.hero-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:18px}
+.hero-card-lbl{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-family:var(--mono)}
+.hero-card-val{font-size:28px;font-weight:700;display:flex;align-items:baseline;gap:6px}
+.hero-card-val .unit{font-size:14px;font-weight:400;color:rgba(255,255,255,.6)}
+.hero-card-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:6px}
+.btn-checkin{margin-top:10px;padding:8px 16px;background:var(--red);color:#fff;font-size:12px;letter-spacing:.06em;text-transform:uppercase;width:100%;transition:background .15s}
+.btn-checkin:hover{background:#c41f25}
+.btn-checkin:disabled{background:#525252;cursor:not-allowed;opacity:.6}
+@media(max-width:560px){.hero-grid{grid-template-columns:1fr}.hero-h1{font-size:22px}}
+
+/* ── SPIN WHEEL ── */
+.spin-section{background:#fff;padding:24px 20px;border-bottom:var(--border)}
+.spin-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:24px}
+.spin-info h2{font-size:18px;margin-bottom:4px}
+.spin-info p{font-size:12px;color:var(--g500);margin-bottom:14px}
+.btn-spin{padding:14px 28px;background:linear-gradient(135deg,#E63329,#FF6B35);color:#fff;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:0;box-shadow:0 4px 12px rgba(230,51,41,.3)}
+.btn-spin:disabled{background:var(--g400);box-shadow:none;cursor:not-allowed}
+.spin-wheel-vis{width:140px;height:140px;border-radius:50%;background:conic-gradient(#FBBF24 0 30%,#16A34A 30% 50%,#E63329 50% 60%,#7C3AED 60% 70%,#0A0A0A 70% 100%);position:relative;flex-shrink:0;border:6px solid #0A0A0A;animation:spin 8s linear infinite paused;transition:filter .3s}
+.spin-wheel-vis.spinning{animation-play-state:running;animation-duration:0.6s}
+.spin-wheel-vis::after{content:'🎁';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;background:#fff;border-radius:50%;width:50px;height:50px;margin:auto}
+@keyframes spin{to{transform:rotate(1080deg)}}
+@media(max-width:560px){.spin-inner{flex-direction:column;text-align:center}}
+
+/* ── TABS ── */
+.tabs-wrap{background:#fff;border-bottom:var(--border);position:sticky;top:0;z-index:10}
+.tabs{max-width:900px;margin:0 auto;display:flex;overflow-x:auto;padding:0 20px}
+.tab{padding:14px 20px;font-size:13px;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap;color:var(--g500);transition:all .15s}
+.tab.on{color:var(--black);border-bottom-color:var(--red)}
+.tab .badge{display:inline-block;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;border-radius:8px;font-family:var(--mono);font-weight:500}
+
+/* ── COUPON GRID ── */
+.main{max-width:900px;margin:0 auto;padding:20px;min-height:50vh}
+.section-hd{display:flex;align-items:baseline;justify-content:space-between;margin:20px 0 14px}
+.section-title{font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-family:var(--mono)}
+.section-sub{font-size:11px;color:var(--g500)}
+
+.coupon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.coupon-card{background:#fff;border:var(--border);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;display:flex;min-height:120px}
+.coupon-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.coupon-card.expired{opacity:.5}
+.coupon-card.used{opacity:.4}
+.cc-left{width:90px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:14px 6px;text-align:center;position:relative}
+.cc-left::after{content:'';position:absolute;top:0;right:-1px;bottom:0;width:2px;background:repeating-linear-gradient(0deg,var(--g100) 0 4px,transparent 4px 8px)}
+.cc-icon{font-size:28px;margin-bottom:6px}
+.cc-value{font-size:22px;font-weight:700;line-height:1;font-family:var(--mono)}
+.cc-value-unit{font-size:11px;font-weight:500;margin-top:2px;opacity:.85}
+.cc-right{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between}
+.cc-name{font-size:13px;font-weight:600;margin-bottom:3px;line-height:1.3}
+.cc-desc{font-size:11px;color:var(--g500);margin-bottom:8px;line-height:1.4}
+.cc-meta{font-size:10px;color:var(--g500);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.cc-meta .urgent{color:var(--red)}
+.cc-actions{display:flex;gap:6px}
+.cc-btn{flex:1;padding:8px 12px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--black);background:#fff;color:var(--black);transition:all .15s}
+.cc-btn:hover{background:var(--black);color:#fff}
+.cc-btn.primary{background:var(--black);color:#fff}
+.cc-btn.primary:hover{background:var(--red);border-color:var(--red)}
+.cc-btn:disabled{background:var(--g100);color:var(--g400);border-color:var(--g200);cursor:not-allowed}
+.cc-code{display:inline-flex;align-items:center;gap:6px;background:var(--g100);padding:5px 10px;font-family:var(--mono);font-size:11px;font-weight:500;border:1px dashed var(--g400);cursor:pointer}
+.cc-code:hover{border-color:var(--black);background:#fff}
+
+/* coin badge */
+.cc-coin-badge{position:absolute;top:8px;right:8px;background:var(--gold);color:#000;font-size:10px;font-weight:600;padding:2px 7px;font-family:var(--mono);letter-spacing:.04em}
+
+.empty{padding:60px 20px;text-align:center;color:var(--g500)}
+.empty-ico{font-size:48px;margin-bottom:12px;opacity:.4}
+.empty-title{font-size:15px;font-weight:600;margin-bottom:6px;color:var(--black)}
+.empty-sub{font-size:13px}
+
+.skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#fafafa 50%,#f0f0f0 75%);background-size:200% 100%;animation:sk 1.4s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+
+/* TOAST */
+.toast-wrap{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--black);color:#fff;padding:12px 18px;font-size:13px;animation:slideDown .3s ease-out;max-width:90vw;box-shadow:0 8px 20px rgba(0,0,0,.2)}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+@keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
+/* SPIN MODAL */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.modal-card{background:#fff;max-width:380px;width:100%;padding:32px 24px;text-align:center;animation:popIn .4s cubic-bezier(.25,1.5,.5,1)}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-prize-icon{font-size:64px;margin-bottom:12px}
+.modal-prize-label{font-size:24px;font-weight:700;margin-bottom:6px}
+.modal-prize-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
+.modal-btn{padding:14px 32px;background:var(--black);color:#fff;font-size:13px;letter-spacing:.06em;text-transform:uppercase;width:100%}
+.modal-btn:hover{background:var(--red)}
+</style>
 </head>
 <body>
-<!-- ── ANNOUNCEMENT ── -->
-<div class="ann">
-  <span><span class="ann-dot">·</span> ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500</span>
-  <span><span class="ann-dot">·</span> Flash Sale ทุกวัน 10:00 / 14:00 / 20:00</span>
-  <span><span class="ann-dot">·</span> รับคูปองใหม่ทุกวัน</span>
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <a href="index.html" class="hdr-back">← กลับ</a>
+  <a href="index.html" class="hdr-logo">Thailand<span class="dot">.</span>Market</a>
+  <a href="profile.html" class="hdr-back" style="font-size:18px">👤</a>
 </div>
 
-
-<!-- ── NAVIGATION ── -->
-<nav class="nav" style="position:relative">
-  <div class="nav-top">
-    <a href="index.html" class="nav-logo">Thailand<span class="dot">.</span>Market</a>
-    <div class="nav-links" id="nav-links">
-      <a href="flash-sale.html" class="nav-link hot">⚡ Flash Sale</a>
-      <a href="live-shopping.html" class="nav-link">🔴 Live</a>
-      <a href="brand-day.html" class="nav-link">Brand Day</a>
-      <a href="coupon-hub.html" class="nav-link">Coupon</a>
-      <a href="loyalty-catalog.html" class="nav-link">Loyalty</a>
-      <a href="subscription.html" class="nav-link">TM Plus</a>
-      <a href="b2b-portal.html" class="nav-link">B2B</a>
-    </div>
-    <div class="nav-search">
-      <input type="text" id="search-inp" placeholder="ค้นหาสินค้า แบรนด์ หรือร้านค้า..." onkeydown="if(event.key==='Enter')doSearch()">
-      <button onclick="doSearch()">ค้นหา</button>
-    </div>
-    <div class="nav-acts">
-      <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
-      <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
-      <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
-        <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
-      </button>
-      <div style="position:relative">
-      <button class="nav-btn account-btn" id="account-nav-btn" style="flex-direction:column;gap:2px;padding:6px 12px">
-        <span class="nav-btn-ico" id="account-ico">👤</span>
-        <span class="nav-btn-lbl" style="font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500)">Account</span>
-      </button>
-      <!-- Dropdown -->
-      <div class="account-dropdown" id="account-dropdown">
-        <div class="account-dropdown-header">
-          <div class="account-dropdown-name" id="dd-name">กำลังโหลด...</div>
-          <div class="account-dropdown-email" id="dd-email"></div>
-          <span class="account-dropdown-role" id="dd-role">Member</span>
-        </div>
-        <a href="profile.html" class="dropdown-item">
-          <span class="dropdown-item-ico">👤</span>โปรไฟล์ของฉัน
-        </a>
-        <a href="order-history.html" class="dropdown-item">
-          <span class="dropdown-item-ico">📦</span>คำสั่งซื้อ
-        </a>
-        <a href="wishlist.html" class="dropdown-item">
-          <span class="dropdown-item-ico">❤️</span>รายการโปรด
-        </a>
-        <a href="coupon-hub.html" class="dropdown-item">
-          <span class="dropdown-item-ico">🎟️</span>คูปองของฉัน
-        </a>
-        <a href="seller-portal.html" class="dropdown-item" id="dd-seller" style="display:none">
-          <span class="dropdown-item-ico">🏪</span>Seller Portal
-        </a>
-        <a href="admin-cms.html" class="dropdown-item" id="dd-admin" style="display:none;background:var(--g50)">
-          <span class="dropdown-item-ico">⚙️</span>Admin CMS
-        </a>
-        <button class="dropdown-item logout" id="dd-logout">
-          <span class="dropdown-item-ico">🚪</span>ออกจากระบบ
-        </button>
-      </div>
-    </div>
-      <button class="nav-btn sell" onclick="location.href='seller-portal.html'"><span class="nav-btn-ico">🏪</span>Sell</button>
-    </div>
-  </div></nav>
-
-
-
-
-
-
-
-
-
-<!-- HERO -->
-<div class="coupon-hero">
-  <div class="hero-circles">
-    <div class="hero-circle" style="width:400px;height:400px;top:-200px;right:-100px"></div>
-    <div class="hero-circle" style="width:200px;height:200px;bottom:-80px;left:100px"></div>
-  </div>
+<!-- HERO with coin + check-in -->
+<div class="hero">
   <div class="hero-inner">
-    <div class="hero-label">🎫 ศูนย์คูปอง Thailand Market</div>
-    <h1 class="hero-title">เก็บคูปอง<span>ประหยัด</span>ทุกวัน</h1>
-    <div class="hero-sub">คูปองส่วนลด ฟรีค่าส่ง แคชแบ็ก รอคุณอยู่ทุกวัน</div>
-    <div class="coupon-input-row">
-      <input class="coupon-input" type="text" placeholder="กรอกโค้ดคูปอง เช่น ZENMART200" id="couponCode">
-      <button class="coupon-input-btn" onclick="applyCoupon()">✅ ใช้คูปอง</button>
-    </div>
-    <div class="hero-stats">
-      <div class="hero-stat"><div class="hero-stat-val">128</div><div class="hero-stat-lbl">คูปองวันนี้</div></div>
-      <div class="hero-stat"><div class="hero-stat-val">฿45M</div><div class="hero-stat-lbl">ประหยัดรวม</div></div>
-      <div class="hero-stat"><div class="hero-stat-val">2.4M</div><div class="hero-stat-lbl">คูปองถูกเก็บ</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="wrap">
-  <!-- MY COUPONS -->
-  <div class="my-bar">
-    <div class="my-bar-ico">🎫</div>
-    <div class="my-bar-info">
-      <div class="my-bar-title">คูปองของฉัน</div>
-      <div class="my-bar-sub">ดูและใช้คูปองที่เก็บไว้ได้ที่หน้าชำระเงิน</div>
-    </div>
-    <div class="my-bar-count">
-      <div class="my-count-item"><div class="my-count-val">7</div><div class="my-count-lbl">ใช้ได้</div></div>
-      <div class="my-count-item"><div class="my-count-val" style="color:#FF6B35">2</div><div class="my-count-lbl">ใกล้หมดอายุ</div></div>
-      <div class="my-count-item"><div class="my-count-val" style="color:var(--gray400)">3</div><div class="my-count-lbl">ใช้แล้ว</div></div>
-    </div>
-    <button class="btn-my">📂 ดูคูปองของฉัน</button>
-  </div>
-
-  <!-- FILTERS -->
-  <div class="filter-row">
-    <div class="filter-chip active" onclick="setFilter(this)">🎫 ทั้งหมด</div>
-    <div class="filter-chip" onclick="setFilter(this)">🏪 Thailand Market คูปอง</div>
-    <div class="filter-chip" onclick="setFilter(this)">🚚 ฟรีค่าส่ง</div>
-    <div class="filter-chip" onclick="setFilter(this)">💰 แคชแบ็ก</div>
-    <div class="filter-chip" onclick="setFilter(this)">🏠 บ้านและเฟอร์นิเจอร์</div>
-    <div class="filter-chip" onclick="setFilter(this)">👗 แฟชั่น</div>
-    <div class="filter-chip" onclick="setFilter(this)">💻 เทคโนโลยี</div>
-    <div class="filter-chip" onclick="setFilter(this)">💄 Beauty</div>
-    <div class="filter-chip" onclick="setFilter(this)">🛒 FMCG</div>
-    <div class="filter-chip" onclick="setFilter(this)">🐾 สัตว์เลี้ยง</div>
-  </div>
-
-  <!-- PLATFORM FEATURED -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">🏪 คูปอง Thailand Market ประจำวัน</div>
-      <span class="section-link">ดูทั้งหมด →</span>
-    </div>
-    <div class="platform-grid">
-      <div class="platform-card" onclick="collectPlatformCoupon(this,'ส่วนลด 200 บาท')">
-        <div class="platform-card-ico">🛍️</div>
-        <div class="platform-card-val">฿200</div>
-        <div class="platform-card-name">ส่วนลดทุกหมวด</div>
-        <div class="platform-card-req">ขั้นต่ำ ฿1,000</div>
-        <div style="position:absolute;top:12px;right:12px;background:var(--gold);color:#0A0A0A;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px">เก็บเลย</div>
+    <div class="hero-title">Coupon Hub</div>
+    <h1 class="hero-h1">🎟️ ศูนย์รวมคูปอง</h1>
+    <div class="hero-grid">
+      <div class="hero-card">
+        <div class="hero-card-lbl">Coin คงเหลือ</div>
+        <div class="hero-card-val"><span id="coin-balance">—</span><span class="unit">🪙</span></div>
+        <div class="hero-card-sub" id="coin-tier">รับ coin ฟรีจาก check-in รายวัน</div>
       </div>
-      <div class="platform-card" style="background:linear-gradient(135deg,#0D5C3A,#16A34A)" onclick="collectPlatformCoupon(this,'ฟรีค่าส่ง 10 ครั้ง')">
-        <div class="platform-card-ico">🚚</div>
-        <div class="platform-card-val">ฟรีส่ง</div>
-        <div class="platform-card-name">10 ครั้ง ไม่มีขั้นต่ำ</div>
-        <div class="platform-card-req">ใช้ได้ถึง 30 เม.ย.</div>
-        <div style="position:absolute;top:12px;right:12px;background:var(--gold);color:#0A0A0A;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px">เก็บเลย</div>
-      </div>
-      <div class="platform-card" style="background:linear-gradient(135deg,#7C3AED,#5B21B6)" onclick="collectPlatformCoupon(this,'แคชแบ็ก 10%')">
-        <div class="platform-card-ico">💰</div>
-        <div class="platform-card-val">10%</div>
-        <div class="platform-card-name">แคชแบ็กทุกออเดอร์</div>
-        <div class="platform-card-req">สูงสุด ฿500 · ≥฿2,000</div>
-        <div style="position:absolute;top:12px;right:12px;background:var(--gold);color:#0A0A0A;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px">เก็บเลย</div>
-      </div>
-      <div class="platform-card" style="background:linear-gradient(135deg,#B45309,#D97706)" onclick="collectPlatformCoupon(this,'Gold Member 300 บาท')">
-        <div class="platform-card-ico">👑</div>
-        <div class="platform-card-val">฿300</div>
-        <div class="platform-card-name">Gold Member Exclusive</div>
-        <div class="platform-card-req">ระดับ Gold ขึ้นไป</div>
-        <div style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.2);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px">Exclusive</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- HOT COUPONS -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">🔥 คูปองยอดนิยม</div>
-      <span class="section-link">ดูทั้งหมด →</span>
-    </div>
-    <div class="coupon-grid">
-
-      <div class="coupon-card">
-        <div class="coupon-badge">🔥 HOT</div>
-        <div class="coupon-left bg-red">
-          <div class="coupon-ico">🛒</div>
-          <div class="coupon-type-lbl">ส่วนลด<br>ทุกหมวด</div>
-        </div>
-        <div class="coupon-right">
-          <div>
-            <div class="coupon-discount">ลด ฿150</div>
-            <div class="coupon-desc">ใช้ได้กับสินค้าทุกหมวดหมู่ ร้านค้าที่ร่วมรายการ</div>
-            <div class="coupon-terms">ขั้นต่ำ ฿500 · ใช้ได้ 1 ครั้ง</div>
-          </div>
-          <div class="coupon-footer">
-            <div>
-              <div class="coupon-expire soon">⏰ หมด 30 เม.ย.</div>
-              <div class="expire-bar-wrap"><div class="expire-bar-fill urgent" style="width:15%"></div></div>
-            </div>
-            <button class="btn-collect" onclick="collectCoupon(this)">เก็บ</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="coupon-card">
-        <div class="coupon-left bg-teal">
-          <div class="coupon-ico">🚚</div>
-          <div class="coupon-type-lbl">ฟรี<br>ค่าส่ง</div>
-        </div>
-        <div class="coupon-right">
-          <div>
-            <div class="coupon-discount">ฟรีค่าส่ง</div>
-            <div class="coupon-desc">ฟรีค่าจัดส่งไม่จำกัดมูลค่า Kerry Express</div>
-            <div class="coupon-terms">ไม่มีขั้นต่ำ · ใช้ได้ 3 ครั้ง</div>
-          </div>
-          <div class="coupon-footer">
-            <div>
-              <div class="coupon-expire">หมด 15 พ.ค.</div>
-              <div class="expire-bar-wrap"><div class="expire-bar-fill" style="width:70%"></div></div>
-            </div>
-            <button class="btn-collect btn-collected" disabled>✓ เก็บแล้ว</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="coupon-card">
-        <div class="coupon-badge">Limited</div>
-        <div class="coupon-left bg-gold">
-          <div class="coupon-ico">💰</div>
-          <div class="coupon-type-lbl">แคช<br>แบ็ก</div>
-        </div>
-        <div class="coupon-right">
-          <div>
-            <div class="coupon-discount">แคชแบ็ก 15%</div>
-            <div class="coupon-desc">แคชแบ็กเข้า Thailand Market Wallet หลังออเดอร์สำเร็จ</div>
-            <div class="coupon-terms">ขั้นต่ำ ฿2,000 · สูงสุด ฿500</div>
-          </div>
-          <div class="coupon-footer">
-            <div>
-              <div class="coupon-stock low">เหลือ 23 สิทธิ์</div>
-              <div class="expire-bar-wrap"><div class="expire-bar-fill warn" style="width:23%"></div></div>
-            </div>
-            <button class="btn-collect" onclick="collectCoupon(this)">เก็บ</button>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- CATEGORY COUPONS -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">🏠 คูปองหมวดบ้านและเฟอร์นิเจอร์</div>
-      <span class="section-link">ดูทั้งหมด →</span>
-    </div>
-    <div class="coupon-grid">
-      <div class="coupon-card">
-        <div class="coupon-left bg-orange">
-          <div class="coupon-ico">🏠</div>
-          <div class="coupon-type-lbl">บ้าน<br>&เฟอร์</div>
-        </div>
-        <div class="coupon-right">
-          <div>
-            <div class="coupon-discount">ลด ฿500</div>
-            <div class="coupon-desc">สินค้าหมวดบ้านและเฟอร์นิเจอร์ทุกชนิด</div>
-            <div class="coupon-terms">ขั้นต่ำ ฿3,000 · ฟรีติดตั้ง</div>
-          </div>
-          <div class="coupon-footer">
-            <div><div class="coupon-expire">หมด 31 พ.ค.</div></div>
-            <button class="btn-collect" onclick="collectCoupon(this)">เก็บ</button>
-          </div>
-        </div>
-      </div>
-      <div class="coupon-card">
-        <div class="coupon-left bg-blue">
-          <div class="coupon-ico">💻</div>
-          <div class="coupon-type-lbl">Tech<br>Gadget</div>
-        </div>
-        <div class="coupon-right">
-          <div>
-            <div class="coupon-discount">ลด 8%</div>
-            <div class="coupon-desc">สินค้า Tech & Gadgets ทุกแบรนด์ชั้นนำ</div>
-            <div class="coupon-terms">ขั้นต่ำ ฿5,000 · สูงสุด ฿800</div>
-          </div>
-          <div class="coupon-footer">
-            <div><div class="coupon-expire">หมด 10 พ.ค.</div></div>
-            <button class="btn-collect" onclick="collectCoupon(this)">เก็บ</button>
-          </div>
-        </div>
-      </div>
-      <div class="coupon-card">
-        <div class="coupon-left bg-purple">
-          <div class="coupon-ico">💄</div>
-          <div class="coupon-type-lbl">Beauty<br>Health</div>
-        </div>
-        <div class="coupon-right">
-          <div>
-            <div class="coupon-discount">ลด 12%</div>
-            <div class="coupon-desc">สินค้า Beauty & Health แบรนด์เกาหลี-ไทย</div>
-            <div class="coupon-terms">ขั้นต่ำ ฿800 · สูงสุด ฿200</div>
-          </div>
-          <div class="coupon-footer">
-            <div><div class="coupon-stock low">เหลือ 89 สิทธิ์</div></div>
-            <button class="btn-collect" onclick="collectCoupon(this)">เก็บ</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SHOP COUPONS -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">🏪 คูปองจากร้านค้า</div>
-      <span class="section-link">ดูทั้งหมด →</span>
-    </div>
-    <div class="coupon-grid">
-      <div class="coupon-card">
-        <div class="coupon-left" style="background:linear-gradient(135deg,#1428A0,#0076CE)">
-          <div class="coupon-ico">📺</div>
-          <div class="coupon-type-lbl">Samsung<br>Official</div>
-        </div>
-        <div class="coupon-right">
-          <div>
-            <div class="coupon-discount">ลด ฿1,000</div>
-            <div class="coupon-desc">ซื้อสินค้า Samsung ทุกรุ่นในร้าน Official</div>
-            <div class="coupon-terms">ขั้นต่ำ ฿10,000 · ใช้ได้ 1 ครั้ง</div>
-          </div>
-          <div class="coupon-footer">
-            <div><div class="coupon-expire">หมด 5 พ.ค.</div></div>
-            <button class="btn-collect" onclick="collectCoupon(this)">เก็บ</button>
-          </div>
-        </div>
-      </div>
-      <div class="coupon-card">
-        <div class="coupon-left" style="background:linear-gradient(135deg,#000,#333)">
-          <div class="coupon-ico">🍎</div>
-          <div class="coupon-type-lbl">Apple<br>Thailand</div>
-        </div>
-        <div class="coupon-right">
-          <div>
-            <div class="coupon-discount">ผ่อน 0%</div>
-            <div class="coupon-desc">ผ่อน 0% 12 เดือน ทุกสินค้า Apple</div>
-            <div class="coupon-terms">บัตรเครดิตทุกธนาคาร</div>
-          </div>
-          <div class="coupon-footer">
-            <div><div class="coupon-expire">ตลอดเดือน พ.ค.</div></div>
-            <button class="btn-collect" onclick="collectCoupon(this)">เก็บ</button>
-          </div>
-        </div>
-      </div>
-      <div class="coupon-card">
-        <div class="coupon-badge">New</div>
-        <div class="coupon-left" style="background:linear-gradient(135deg,#E63329,#B5261F)">
-          <div class="coupon-ico">🐾</div>
-          <div class="coupon-type-lbl">Royal<br>Canin</div>
-        </div>
-        <div class="coupon-right">
-          <div>
-            <div class="coupon-discount">ลด 20%</div>
-            <div class="coupon-desc">อาหารสัตว์เลี้ยง Royal Canin ทุกรุ่น</div>
-            <div class="coupon-terms">ไม่มีขั้นต่ำ · ลูกค้าใหม่ร้านนี้</div>
-          </div>
-          <div class="coupon-footer">
-            <div><div class="coupon-expire">หมด 20 พ.ค.</div></div>
-            <button class="btn-collect" onclick="collectCoupon(this)">เก็บ</button>
-          </div>
-        </div>
+      <div class="hero-card">
+        <div class="hero-card-lbl">เช็คอินรายวัน</div>
+        <div class="hero-card-val"><span id="streak">0</span><span class="unit">วันต่อเนื่อง</span></div>
+        <button class="btn-checkin" id="btn-checkin" onclick="doCheckin()">📅 เช็คอินวันนี้</button>
       </div>
     </div>
   </div>
 </div>
 
-<script>
-function applyCoupon(){
-  const code=document.getElementById('couponCode').value.trim();
-  if(!code){alert('กรุณากรอกโค้ดคูปอง');return}
-  if(code.toUpperCase()==='ZENMART200')alert('🎉 ใช้คูปองสำเร็จ! ส่วนลด ฿200 ถูกเพิ่มในตะกร้าแล้ว');
-  else alert('❌ โค้ดคูปองไม่ถูกต้องหรือหมดอายุแล้ว');
-}
-function collectCoupon(btn){
-  btn.textContent='✓ เก็บแล้ว';
-  btn.classList.add('btn-collected');
-  btn.disabled=true;
-  btn.style.background='var(--gray200)';
-  btn.style.color='var(--gray400)';
-}
-function collectPlatformCoupon(card,name){
-  alert(`✅ เก็บคูปอง "${name}" แล้ว! ใช้ได้ที่หน้าชำระเงิน`);
-}
-function setFilter(chip){
-  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-  chip.classList.add('active');
-}
-</script>
-
-
-
-
-<div class="tm-toast-wrap" id="tmToastWrap"></div>
-<script>
-function tmToast(msg){
-  var w=document.getElementById('tmToastWrap');
-  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
-  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
-  w.appendChild(t);setTimeout(function(){t.remove()},2600);
-}
-</script>
-<footer id="tm-footer">
-  <div class="tf-inner">
-    <div class="tf-grid">
-      <div>
-        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
-        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
-      </div>
-      <div>
-        <div class="tf-title">ช้อปปิ้ง</div>
-        <a href="index.html" class="tf-link">หน้าแรก</a>
-        <a href="category.html" class="tf-link">หมวดหมู่</a>
-        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
-        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
-        <a href="brand-day.html" class="tf-link">Brand Day</a>
-        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
-      </div>
-      <div>
-        <div class="tf-title">บัญชีของฉัน</div>
-        <a href="profile.html" class="tf-link">โปรไฟล์</a>
-        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
-        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
-        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
-        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
-        <a href="returns.html" class="tf-link">คืนสินค้า</a>
-      </div>
-      <div>
-        <div class="tf-title">ผู้ขาย</div>
-        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
-        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
-        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
-        <a href="seller-analytics.html" class="tf-link">Analytics</a>
-        <a href="b2b-portal.html" class="tf-link">B2B</a>
-        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
-      </div>
-      <div>
-        <div class="tf-title">ช่วยเหลือ</div>
-        <a href="help-center.html" class="tf-link">Help Center</a>
-        <a href="chat.html" class="tf-link">แชทกับเรา</a>
-        <a href="subscription.html" class="tf-link">TM Plus</a>
-        <a href="gift-card.html" class="tf-link">Gift Card</a>
-        <a href="sitemap.html" class="tf-link">Site Map</a>
-        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
-      </div>
-    </div>
-    <div class="tf-bottom">
-      <span>© 2026 Thailand Market · All rights reserved</span>
-      <span>TH · EN · 🔒 SSL · PCI DSS</span>
+<!-- SPIN WHEEL -->
+<div class="spin-section">
+  <div class="spin-inner">
+    <div class="spin-wheel-vis" id="spin-wheel"></div>
+    <div class="spin-info" style="flex:1">
+      <h2>🎰 หมุนวงล้อรับรางวัล</h2>
+      <p>ฟรี 1 ครั้งต่อวัน · มีโอกาสได้คูปองสูงสุด ฿100 หรือ Coin ฟรี</p>
+      <button class="btn-spin" id="btn-spin" onclick="doSpin()">🎲 หมุนวงล้อเลย!</button>
     </div>
   </div>
-</footer>
-<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
-<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab on" data-tab="available" onclick="switchTab('available')">เก็บได้ <span class="badge" id="b-available">—</span></button>
+    <button class="tab" data-tab="mine" onclick="switchTab('mine')">ของฉัน <span class="badge" id="b-mine">—</span></button>
+    <button class="tab" data-tab="expiring" onclick="switchTab('expiring')">ใกล้หมดอายุ</button>
+    <button class="tab" data-tab="used" onclick="switchTab('used')">ใช้ไปแล้ว</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div id="content">
+    <div class="coupon-grid" id="grid">
+      <div class="coupon-card skeleton" style="height:120px"></div>
+      <div class="coupon-card skeleton" style="height:120px"></div>
+      <div class="coupon-card skeleton" style="height:120px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SPIN RESULT MODAL -->
+<div class="modal" id="spin-modal">
+  <div class="modal-card">
+    <div class="modal-prize-icon" id="prize-icon">🎁</div>
+    <div class="modal-prize-label" id="prize-label">ยินดีด้วย!</div>
+    <div class="modal-prize-sub" id="prize-sub">คุณได้รางวัลพิเศษ</div>
+    <button class="modal-btn" onclick="closeSpinModal()">เยี่ยม! 🎉</button>
+  </div>
+</div>
+
+<script>
+const sb = window._sb;
+let currentTab = 'available';
+let allCoupons = [];
+
+// ── Toast ─────────────────────────────────────────
+function toast(msg, type='') {
+  const w = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' '+type : '');
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ── Auth check ────────────────────────────────────
+async function ensureAuth() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) {
+    location.href = 'login.html?from=' + encodeURIComponent(location.pathname);
+    return null;
+  }
+  return user;
+}
+
+// ── โหลด coin balance + check-in status ──────────
+async function loadHero() {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) {
+      document.getElementById('coin-balance').textContent = '—';
+      document.getElementById('streak').textContent = '0';
+      document.getElementById('btn-checkin').disabled = true;
+      document.getElementById('btn-checkin').textContent = '🔒 เข้าสู่ระบบก่อน';
+      document.getElementById('btn-spin').disabled = true;
+      return;
+    }
+
+    // coin
+    const { data: coins } = await sb.from('user_coins')
+      .select('balance,tier,total_earned').eq('user_id', user.id).maybeSingle();
+    document.getElementById('coin-balance').textContent = (coins?.balance || 0).toLocaleString();
+    const tier = coins?.tier || 'bronze';
+    const tierMap = {bronze:'🥉 Bronze',silver:'🥈 Silver',gold:'🥇 Gold',platinum:'💎 Platinum'};
+    document.getElementById('coin-tier').textContent = `Tier: ${tierMap[tier]} · ทั้งหมดที่เคยได้: ${(coins?.total_earned||0).toLocaleString()}`;
+
+    // streak (เช็คอินล่าสุดวันไหน)
+    const { data: lastCheckin } = await sb.from('daily_checkins')
+      .select('streak_day,checkin_date').eq('user_id', user.id)
+      .order('checkin_date', { ascending: false }).limit(1).maybeSingle();
+
+    const today = new Date().toISOString().slice(0,10);
+    const checkedToday = lastCheckin?.checkin_date === today;
+
+    document.getElementById('streak').textContent = lastCheckin?.streak_day || 0;
+    const btn = document.getElementById('btn-checkin');
+    if (checkedToday) {
+      btn.disabled = true;
+      btn.textContent = '✅ เช็คอินแล้ว · กลับมาพรุ่งนี้';
+    }
+
+    // เช็คว่าหมุน spin วันนี้แล้วยัง
+    const { count: spinToday } = await sb.from('spin_history')
+      .select('id', { count:'exact', head:true })
+      .eq('user_id', user.id)
+      .gte('spin_at', today + 'T00:00:00');
+    if (spinToday > 0) {
+      const sb2 = document.getElementById('btn-spin');
+      sb2.disabled = true;
+      sb2.textContent = '🔒 พรุ่งนี้ค่อยมาใหม่';
+    }
+
+  } catch(e) { console.error('loadHero:', e); }
+}
+
+// ── Daily Check-in ────────────────────────────────
+async function doCheckin() {
+  const user = await ensureAuth(); if (!user) return;
+  const btn = document.getElementById('btn-checkin');
+  btn.disabled = true; btn.textContent = '⏳ กำลังเช็คอิน...';
+  try {
+    const { data, error } = await sb.rpc('daily_checkin');
+    if (error) throw error;
+    if (!data.success) {
+      toast(data.reason || 'เช็คอินไม่สำเร็จ', 'err');
+      return;
+    }
+    toast(`✅ +${data.coins_earned} Coin · streak ${data.streak} วัน`, 'ok');
+    await loadHero();
+  } catch(e) {
+    toast('เกิดข้อผิดพลาด: ' + e.message, 'err');
+  } finally {
+    if (!btn.disabled) { btn.disabled = false; btn.textContent = '📅 เช็คอินวันนี้'; }
+  }
+}
+
+// ── Spin Wheel ────────────────────────────────────
+async function doSpin() {
+  const user = await ensureAuth(); if (!user) return;
+  const btn = document.getElementById('btn-spin');
+  const wheel = document.getElementById('spin-wheel');
+  btn.disabled = true; btn.textContent = '⏳ กำลังหมุน...';
+  wheel.classList.add('spinning');
+
+  try {
+    const { data, error } = await sb.rpc('spin_wheel');
+    // รอ animation ขั้นต่ำ 2 วินาที
+    await new Promise(r => setTimeout(r, 2000));
+    wheel.classList.remove('spinning');
+
+    if (error) throw error;
+    if (!data.success) {
+      toast(data.reason || 'หมุนไม่สำเร็จ', 'err');
+      return;
+    }
+
+    // แสดงผลรางวัล
+    document.getElementById('prize-icon').textContent = data.icon || '🎁';
+    document.getElementById('prize-label').textContent = data.label;
+    document.getElementById('prize-sub').textContent =
+      data.type === 'coupon' ? '✓ คูปองถูกเก็บเข้าคลังของคุณแล้ว' :
+      data.type === 'coin'   ? `✓ +${data.coin_amount} Coin ถูกเพิ่มเข้าบัญชี` :
+      'โอกาสหน้าค่อยลองใหม่นะ!';
+    document.getElementById('spin-modal').classList.add('on');
+
+    await loadHero();
+  } catch(e) {
+    wheel.classList.remove('spinning');
+    toast('เกิดข้อผิดพลาด: ' + e.message, 'err');
+  }
+}
+function closeSpinModal() {
+  document.getElementById('spin-modal').classList.remove('on');
+  loadCoupons(currentTab);
+}
+
+// ── Switch Tab ────────────────────────────────────
+function switchTab(name) {
+  currentTab = name;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('on', t.dataset.tab === name);
+  });
+  loadCoupons(name);
+}
+
+// ── Load Coupons ──────────────────────────────────
+async function loadCoupons(tab) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = `<div class="coupon-card skeleton" style="height:120px"></div>
+    <div class="coupon-card skeleton" style="height:120px"></div>
+    <div class="coupon-card skeleton" style="height:120px"></div>`;
+
+  try {
+    let coupons = [];
+    const { data: { user } } = await sb.auth.getUser();
+
+    if (tab === 'available') {
+      // คูปองที่ยังไม่ได้เก็บ + เก็บได้
+      const { data, error } = await sb.rpc('get_available_coupons', { p_cart_total: 0 });
+      if (error) throw error;
+      coupons = (data || []).filter(c => !c.claimed);
+      document.getElementById('b-available').textContent = coupons.length;
+    } else if (tab === 'mine') {
+      if (!user) { renderEmpty(grid, '🔒', 'ต้องเข้าสู่ระบบก่อน', 'เข้าสู่ระบบเพื่อดูคูปองของคุณ', 'login.html'); return; }
+      const { data, error } = await sb.rpc('get_my_coupons', { p_filter: 'unused' });
+      if (error) throw error;
+      coupons = data || [];
+      document.getElementById('b-mine').textContent = coupons.length;
+    } else if (tab === 'expiring') {
+      if (!user) { renderEmpty(grid, '🔒', 'ต้องเข้าสู่ระบบก่อน', 'เข้าสู่ระบบเพื่อดูคูปองของคุณ', 'login.html'); return; }
+      const { data, error } = await sb.rpc('get_my_coupons', { p_filter: 'unused' });
+      if (error) throw error;
+      coupons = (data || []).filter(c => c.days_left !== null && c.days_left <= 3);
+    } else if (tab === 'used') {
+      if (!user) { renderEmpty(grid, '🔒', 'ต้องเข้าสู่ระบบก่อน', 'เข้าสู่ระบบเพื่อดูประวัติ', 'login.html'); return; }
+      const { data, error } = await sb.rpc('get_my_coupons', { p_filter: 'used' });
+      if (error) throw error;
+      coupons = data || [];
+    }
+
+    allCoupons = coupons;
+    renderCoupons(coupons, tab);
+
+  } catch(e) {
+    console.error('loadCoupons:', e);
+    grid.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div>
+      <div class="empty-title">โหลดข้อมูลไม่สำเร็จ</div>
+      <div class="empty-sub">${e.message}</div></div>`;
+  }
+}
+
+function renderEmpty(grid, ico, title, sub, link) {
+  grid.innerHTML = `<div style="grid-column:1/-1" class="empty">
+    <div class="empty-ico">${ico}</div>
+    <div class="empty-title">${title}</div>
+    <div class="empty-sub">${sub}</div>
+    ${link ? `<a href="${link}" style="display:inline-block;margin-top:14px;padding:10px 20px;background:var(--black);color:#fff;font-size:12px;letter-spacing:.06em;text-transform:uppercase">เข้าสู่ระบบ →</a>` : ''}
+  </div>`;
+}
+
+function renderCoupons(coupons, tab) {
+  const grid = document.getElementById('grid');
+  if (!coupons.length) {
+    const messages = {
+      available: ['🎟️','ยังไม่มีคูปองให้เก็บ','รอรอบใหม่ที่จะปล่อยเร็วๆ นี้'],
+      mine: ['📭','ยังไม่มีคูปองในคลัง','ไปเก็บคูปองในแท็บ "เก็บได้" กันก่อน!'],
+      expiring: ['⏰','ไม่มีคูปองใกล้หมดอายุ','คูปองทั้งหมดยังใช้ได้ปกติ'],
+      used: ['📜','ยังไม่เคยใช้คูปอง','คูปองที่ใช้ไปแล้วจะแสดงที่นี่']
+    };
+    const [ico,title,sub] = messages[tab] || messages.available;
+    renderEmpty(grid, ico, title, sub);
+    return;
+  }
+
+  grid.innerHTML = coupons.map(c => {
+    const valStr = c.type === 'percent'  ? `${c.value}%` :
+                   c.type === 'shipping' ? 'ส่งฟรี'      :
+                   c.type === 'cashback' ? `+${c.value}%` :
+                   `฿${Number(c.value).toLocaleString()}`;
+    const valUnit = c.type === 'percent' ? 'OFF' :
+                    c.type === 'cashback' ? 'CASHBACK' :
+                    c.type === 'shipping' ? '' : 'OFF';
+    const minOrderTxt = c.min_order > 0 ? `ขั้นต่ำ ฿${c.min_order}` : 'ไม่มีขั้นต่ำ';
+    const dl = c.days_left;
+    const dlTxt = dl === null ? '' : (dl <= 0 ? 'หมดวันนี้' : dl <= 3 ? `เหลือ ${dl} วัน` : `${dl} วัน`);
+    const dlClass = (dl !== null && dl <= 3) ? 'urgent' : '';
+
+    let actions = '';
+    if (tab === 'available') {
+      const coinCost = c.coin_cost || 0;
+      const claimLabel = coinCost > 0 ? `🪙 แลก ${coinCost}` : '+ เก็บ';
+      actions = `<button class="cc-btn primary" onclick="claimCoupon('${c.id}','${c.name.replace(/'/g,"\\'")}')">${claimLabel}</button>
+                 <button class="cc-btn" onclick="copyCode('${c.code}')">📋 ${c.code}</button>`;
+    } else if (tab === 'mine' || tab === 'expiring') {
+      actions = `<button class="cc-btn primary" onclick="useCoupon('${c.code}')">🛒 ไปใช้</button>
+                 <button class="cc-btn" onclick="copyCode('${c.code}')">📋 Copy</button>`;
+    } else if (tab === 'used') {
+      actions = `<button class="cc-btn" disabled>✓ ใช้ไปแล้ว</button>`;
+    }
+
+    return `<div class="coupon-card ${tab==='used'?'used':''} ${dl !== null && dl < 0 ? 'expired' : ''}">
+      <div class="cc-left" style="background:${c.banner_color||'#E63329'}">
+        <div class="cc-icon">${c.icon || '🎟️'}</div>
+        <div class="cc-value">${valStr}</div>
+        ${valUnit ? `<div class="cc-value-unit">${valUnit}</div>` : ''}
+      </div>
+      <div class="cc-right">
+        <div>
+          <div class="cc-name">${c.name}</div>
+          ${c.description ? `<div class="cc-desc">${c.description}</div>` : ''}
+          <div class="cc-meta">${minOrderTxt} ${dlTxt ? '· <span class="'+dlClass+'">'+dlTxt+'</span>' : ''}</div>
+        </div>
+        <div class="cc-actions">${actions}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Claim coupon ──────────────────────────────────
+async function claimCoupon(couponId, name) {
+  const user = await ensureAuth(); if (!user) return;
+  try {
+    const { data, error } = await sb.rpc('claim_coupon', { p_coupon_id: couponId });
+    if (error) throw error;
+    if (!data.success) {
+      toast(data.reason || 'เก็บไม่สำเร็จ', 'err');
+      return;
+    }
+    toast(`✅ เก็บคูปอง "${name}" สำเร็จ`, 'ok');
+    await loadHero();
+    await loadCoupons(currentTab);
+  } catch(e) {
+    toast('เกิดข้อผิดพลาด: ' + e.message, 'err');
+  }
+}
+
+function copyCode(code) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(() => toast('📋 คัดลอก ' + code, 'ok'));
+  } else {
+    const ta = document.createElement('textarea'); ta.value = code; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+    toast('📋 คัดลอก ' + code, 'ok');
+  }
+}
+
+function useCoupon(code) {
+  // ไป checkout พร้อม pre-fill code
+  location.href = `checkout.html?coupon=${encodeURIComponent(code)}`;
+}
+
+// ── INIT ──────────────────────────────────────────
+(async function init() {
+  await loadHero();
+  await loadCoupons('available');
+})();
+</script>
 </body>
 </html>

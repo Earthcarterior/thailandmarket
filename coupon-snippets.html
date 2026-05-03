@@ -1,0 +1,364 @@
+<!--
+═══════════════════════════════════════════════════════════════════════
+  COUPON SNIPPETS — สำหรับใส่ใน checkout.html และ product.html
+  วาง HTML ในตำแหน่งที่ต้องการ + วาง <script> ก่อน </body>
+═══════════════════════════════════════════════════════════════════════
+-->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SNIPPET 1: ใส่ใน checkout.html (ส่วนชำระเงิน)
+     แทนที่ section คูปองเดิม — รองรับ stack หลายใบ + auto-suggest
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.coup-section{background:#fff;border:1px solid #E5E5E5;padding:18px;margin-bottom:16px}
+.coup-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.coup-title{font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-family:'DM Mono',monospace}
+.coup-toggle{font-size:12px;color:#737373;cursor:pointer}
+
+.coup-input-wrap{display:flex;gap:8px;margin-bottom:14px}
+.coup-input{flex:1;padding:11px 14px;border:1px solid #E5E5E5;font-family:'DM Mono',monospace;font-size:13px;text-transform:uppercase;letter-spacing:.04em;outline:none}
+.coup-input:focus{border-color:#0A0A0A}
+.coup-apply{padding:11px 18px;background:#0A0A0A;color:#fff;font-size:12px;letter-spacing:.06em;text-transform:uppercase;border:none;cursor:pointer}
+.coup-apply:disabled{background:#A3A3A3;cursor:not-allowed}
+
+.coup-suggest{margin-bottom:14px;padding:12px;background:#FAFAFA;border:1px dashed #E5E5E5}
+.coup-suggest-lbl{font-size:11px;color:#737373;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;font-family:'DM Mono',monospace}
+.coup-suggest-list{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.coup-suggest-card{flex-shrink:0;background:#fff;border:1px solid #E5E5E5;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:140px;transition:all .15s}
+.coup-suggest-card:hover{border-color:#0A0A0A;transform:translateY(-1px)}
+.coup-suggest-code{font-family:'DM Mono',monospace;font-size:11px;font-weight:600}
+.coup-suggest-disc{font-size:13px;font-weight:700;color:#E63329}
+.coup-suggest-cond{font-size:10px;color:#737373}
+
+.coup-applied{margin-bottom:12px}
+.coup-applied-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#F0FDF4;border-left:3px solid #16A34A;margin-bottom:6px}
+.coup-applied-item.invalid{background:#FFF5F5;border-color:#E63329}
+.coup-applied-info{display:flex;flex-direction:column;gap:2px}
+.coup-applied-name{font-size:12px;font-weight:600}
+.coup-applied-code{font-family:'DM Mono',monospace;font-size:10px;color:#737373}
+.coup-applied-disc{font-weight:700;font-size:14px;color:#16A34A;font-family:'DM Mono',monospace}
+.coup-applied-rm{margin-left:8px;background:none;border:none;color:#737373;cursor:pointer;font-size:18px;padding:0 4px}
+.coup-applied-rm:hover{color:#E63329}
+
+.coup-summary{padding-top:12px;border-top:1px dashed #E5E5E5}
+.coup-summary-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.coup-summary-row.total{font-size:18px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid #E5E5E5}
+.coup-savings{color:#16A34A;font-family:'DM Mono',monospace}
+</style>
+
+<!-- HTML ใส่ใน checkout.html (ในส่วนสรุปคำสั่งซื้อ ก่อนยอดรวม) -->
+<div class="coup-section" id="coup-section">
+  <div class="coup-head">
+    <div class="coup-title">🎟️ คูปอง</div>
+    <a href="coupon-hub.html" class="coup-toggle">เก็บคูปองเพิ่ม →</a>
+  </div>
+
+  <!-- Auto-suggest คูปองที่ใช้ได้ -->
+  <div class="coup-suggest" id="coup-suggest" style="display:none">
+    <div class="coup-suggest-lbl">💡 คูปองที่ใช้ได้กับตะกร้านี้</div>
+    <div class="coup-suggest-list" id="coup-suggest-list"></div>
+  </div>
+
+  <!-- Manual code entry -->
+  <div class="coup-input-wrap">
+    <input type="text" class="coup-input" id="coup-code-input" placeholder="ใส่โค้ดคูปอง เช่น WELCOME50" maxlength="20">
+    <button class="coup-apply" onclick="applyCouponCode()">ใช้</button>
+  </div>
+
+  <!-- Applied coupons list -->
+  <div class="coup-applied" id="coup-applied"></div>
+
+  <!-- Summary -->
+  <div class="coup-summary" id="coup-summary" style="display:none">
+    <div class="coup-summary-row"><span>ยอดสินค้า</span><span id="coup-subtotal" class="coup-savings"></span></div>
+    <div class="coup-summary-row"><span>ส่วนลดคูปอง</span><span id="coup-discount-total" class="coup-savings"></span></div>
+    <div class="coup-summary-row total"><span>ยอดสุทธิ</span><span id="coup-final-total"></span></div>
+  </div>
+</div>
+
+
+<!-- JavaScript ใส่ก่อน </body> -->
+<script>
+(function() {
+  const sb = window._sb || window.sb;
+  if (!sb) { console.warn('[coupon] Supabase client ไม่พร้อม'); return; }
+
+  let appliedCoupons = [];   // [{ id, code, name, discount, type, stackable }]
+  let cartTotal = 0;          // อ่านจากตัวแปร global ของ checkout เดิม
+
+  // ─── ดึง cart total จาก checkout — ปรับให้เข้ากับโค้ดเดิม
+  function getCartTotal() {
+    // ลองอ่านจากหลาย source
+    if (typeof window.getCartSubtotal === 'function') return window.getCartSubtotal();
+    if (window.cartTotal) return window.cartTotal;
+    // fallback อ่านจาก DOM
+    const el = document.querySelector('[data-cart-subtotal]');
+    if (el) return parseFloat(el.dataset.cartSubtotal) || 0;
+    return 0;
+  }
+
+  // ─── โหลดคูปองที่ใช้ได้ (auto-suggest)
+  async function loadSuggestedCoupons() {
+    cartTotal = getCartTotal();
+    const list = document.getElementById('coup-suggest-list');
+    const wrap = document.getElementById('coup-suggest');
+    if (!list || !wrap) return;
+    try {
+      const { data, error } = await sb.rpc('get_available_coupons', { p_cart_total: cartTotal });
+      if (error) throw error;
+      const usable = (data || []).filter(c => c.estimated_discount > 0).slice(0, 5);
+      if (!usable.length) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+      list.innerHTML = usable.map(c => `
+        <div class="coup-suggest-card" onclick="window._applySuggested('${c.code}')">
+          <div class="coup-suggest-code">${c.code}</div>
+          <div class="coup-suggest-disc">- ฿${Number(c.estimated_discount).toLocaleString()}</div>
+          <div class="coup-suggest-cond">${c.icon||''} ${c.name}</div>
+        </div>`).join('');
+    } catch(e) { console.warn('loadSuggestedCoupons:', e.message); }
+  }
+
+  window._applySuggested = code => {
+    document.getElementById('coup-code-input').value = code;
+    applyCouponCode();
+  };
+
+  // ─── Apply coupon code
+  window.applyCouponCode = async function() {
+    const inp = document.getElementById('coup-code-input');
+    const code = inp.value.trim().toUpperCase();
+    if (!code) return;
+    if (appliedCoupons.find(c => c.code === code)) {
+      _toast('คูปองนี้ใช้แล้ว', 'err'); return;
+    }
+    cartTotal = getCartTotal();
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      const { data, error } = await sb.rpc('validate_coupon', {
+        p_code: code,
+        p_user_id: user?.id || null,
+        p_cart_total: cartTotal
+      });
+      if (error) throw error;
+      if (!data.valid) { _toast(data.reason, 'err'); return; }
+
+      // เช็ค stack rules — ถ้ามีคูปอง non-stackable อยู่แล้ว → reject
+      if (appliedCoupons.length > 0 && !data.stackable) {
+        _toast('คูปองนี้ใช้คู่กับใบอื่นไม่ได้', 'err'); return;
+      }
+      const hasNonStack = appliedCoupons.some(c => !c.stackable);
+      if (hasNonStack) {
+        _toast('มีคูปองที่ใช้คู่กับใบอื่นไม่ได้อยู่แล้ว', 'err'); return;
+      }
+
+      appliedCoupons.push({
+        id: data.coupon_id, code: data.code, name: data.name,
+        discount: data.discount, type: data.type, icon: data.icon,
+        stackable: data.stackable
+      });
+      inp.value = '';
+      _toast(`✅ ใช้คูปอง ${data.code} ลด ฿${data.discount}`, 'ok');
+      renderApplied();
+    } catch(e) { _toast('เกิดข้อผิดพลาด: ' + e.message, 'err'); }
+  };
+
+  window.removeCoupon = function(code) {
+    appliedCoupons = appliedCoupons.filter(c => c.code !== code);
+    renderApplied();
+  };
+
+  function renderApplied() {
+    const wrap = document.getElementById('coup-applied');
+    const summary = document.getElementById('coup-summary');
+    if (!wrap) return;
+
+    if (!appliedCoupons.length) {
+      wrap.innerHTML = '';
+      if (summary) summary.style.display = 'none';
+      // ส่ง event ให้ checkout เดิมรู้ว่ามี discount เปลี่ยน
+      window.dispatchEvent(new CustomEvent('coupon-changed', {detail:{discount:0,coupons:[]}}));
+      return;
+    }
+
+    wrap.innerHTML = appliedCoupons.map(c => `
+      <div class="coup-applied-item">
+        <div class="coup-applied-info">
+          <div class="coup-applied-name">${c.icon || '🎟️'} ${c.name}</div>
+          <div class="coup-applied-code">${c.code}</div>
+        </div>
+        <div style="display:flex;align-items:center">
+          <div class="coup-applied-disc">-฿${Number(c.discount).toLocaleString()}</div>
+          <button class="coup-applied-rm" onclick="removeCoupon('${c.code}')">✕</button>
+        </div>
+      </div>`).join('');
+
+    // Summary
+    cartTotal = getCartTotal();
+    const totalDisc = appliedCoupons.reduce((s,c) => s + (c.discount||0), 0);
+    const final = Math.max(0, cartTotal - totalDisc);
+    if (summary) {
+      summary.style.display = 'block';
+      document.getElementById('coup-subtotal').textContent = '฿' + cartTotal.toLocaleString();
+      document.getElementById('coup-discount-total').textContent = '-฿' + totalDisc.toLocaleString();
+      document.getElementById('coup-final-total').textContent = '฿' + final.toLocaleString();
+    }
+
+    // ส่ง event ให้ checkout เดิมรับไปอัปเดต UI
+    window.dispatchEvent(new CustomEvent('coupon-changed', {
+      detail: { discount: totalDisc, coupons: appliedCoupons, final: final }
+    }));
+  }
+
+  // ─── ดึงคูปองที่ user เก็บไว้แล้ว (ของฉัน) แสดงเป็น chip ให้กดเลย
+  async function loadMyCoupons() {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      const { data } = await sb.rpc('get_my_coupons', { p_filter: 'unused' });
+      if (!data?.length) return;
+      // เพิ่มใน suggest list ด้วย — โดดเด่นกว่า
+      const list = document.getElementById('coup-suggest-list');
+      if (!list) return;
+      const myHtml = data.slice(0,3).map(c => `
+        <div class="coup-suggest-card" style="border-color:#0A0A0A" onclick="window._applySuggested('${c.code}')">
+          <div class="coup-suggest-code">⭐ ${c.code}</div>
+          <div class="coup-suggest-disc">${c.type==='percent'?c.value+'%':c.type==='shipping'?'ส่งฟรี':'฿'+c.value}</div>
+          <div class="coup-suggest-cond">ของคุณ</div>
+        </div>`).join('');
+      list.insertAdjacentHTML('afterbegin', myHtml);
+      document.getElementById('coup-suggest').style.display = 'block';
+    } catch(e) {}
+  }
+
+  function _toast(msg, type) {
+    if (typeof window.toast === 'function') return window.toast(msg, type==='ok');
+    alert(msg);
+  }
+
+  // Pre-fill จาก URL ?coupon=CODE
+  function prefillFromURL() {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('coupon');
+    if (code) {
+      const inp = document.getElementById('coup-code-input');
+      if (inp) inp.value = code;
+      setTimeout(applyCouponCode, 500);
+    }
+  }
+
+  // INIT
+  document.addEventListener('DOMContentLoaded', () => {
+    loadSuggestedCoupons();
+    loadMyCoupons();
+    prefillFromURL();
+    // Expose สำหรับ checkout เดิมเรียก redeem หลังสั่งซื้อสำเร็จ
+    window.getAppliedCoupons = () => appliedCoupons;
+    window.getCouponDiscount = () => appliedCoupons.reduce((s,c) => s + (c.discount||0), 0);
+  });
+  // ถ้า cart เปลี่ยน ให้โหลด suggest ใหม่
+  window.addEventListener('cart-changed', loadSuggestedCoupons);
+})();
+
+/*
+=========================================================================
+  หลังจากสั่งซื้อสำเร็จ → ใน checkout เดิมต้องเรียก redeem
+  เพิ่มโค้ดนี้ในส่วนที่ "ส่งสั่งซื้อสำเร็จ":
+
+  for (const c of (window.getAppliedCoupons?.() || [])) {
+    await sb.rpc('redeem_coupon', {
+      p_coupon_id: c.id,
+      p_order_id: orderId,
+      p_discount_amount: c.discount,
+      p_cart_total: cartTotal
+    });
+  }
+=========================================================================
+*/
+</script>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SNIPPET 2: ใส่ใน product.html (หน้าแสดงสินค้า)
+     แสดงคูปองที่ใช้กับสินค้านี้ได้ + ปุ่มเก็บ
+═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.pcoup-banner{background:linear-gradient(135deg,#FFF5F5 0%,#fff 100%);border:1px solid #FCA5A5;padding:14px;margin:16px 0}
+.pcoup-banner-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.pcoup-banner-icon{font-size:24px}
+.pcoup-banner-title{font-size:14px;font-weight:700;color:#0A0A0A}
+.pcoup-banner-sub{font-size:11px;color:#737373;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em}
+.pcoup-list{display:flex;gap:8px;overflow-x:auto;padding:2px}
+.pcoup-card{flex-shrink:0;background:#fff;border:1px dashed #E63329;padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .15s;min-width:200px}
+.pcoup-card:hover{background:#E63329;color:#fff;border-style:solid}
+.pcoup-card-info{flex:1;min-width:0}
+.pcoup-card-disc{font-weight:700;font-size:14px}
+.pcoup-card-name{font-size:11px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcoup-card-claim{font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em;padding:4px 8px;border:1px solid currentColor}
+</style>
+
+<!-- HTML ใส่ใน product.html (ในส่วน sidebar ของสินค้า ใต้ราคา) -->
+<div class="pcoup-banner" id="pcoup-banner" style="display:none">
+  <div class="pcoup-banner-hd">
+    <div class="pcoup-banner-icon">🎁</div>
+    <div>
+      <div class="pcoup-banner-title">คูปองที่ใช้ได้</div>
+      <div class="pcoup-banner-sub">เก็บก่อนหมด · ใช้ตอนชำระเงิน</div>
+    </div>
+  </div>
+  <div class="pcoup-list" id="pcoup-list"></div>
+</div>
+
+<script>
+(function() {
+  const sb = window._sb || window.sb;
+  if (!sb) return;
+
+  async function loadProductCoupons() {
+    const banner = document.getElementById('pcoup-banner');
+    const list = document.getElementById('pcoup-list');
+    if (!banner || !list) return;
+    try {
+      const { data, error } = await sb.rpc('get_available_coupons', { p_cart_total: 0 });
+      if (error) throw error;
+      const claimable = (data || []).filter(c => !c.claimed && c.estimated_discount > 0).slice(0, 6);
+      if (!claimable.length) return;
+
+      banner.style.display = 'block';
+      list.innerHTML = claimable.map(c => {
+        const valStr = c.type === 'percent' ? `${c.value}%` :
+                       c.type === 'shipping' ? 'ส่งฟรี' :
+                       `฿${Number(c.value).toLocaleString()}`;
+        return `<div class="pcoup-card" onclick="window._claimProductCoupon('${c.id}','${c.name.replace(/'/g,"\\'")}')">
+          <div class="pcoup-card-info">
+            <div class="pcoup-card-disc">${c.icon||'🎟️'} ${valStr} OFF</div>
+            <div class="pcoup-card-name">${c.name}</div>
+          </div>
+          <div class="pcoup-card-claim">+ เก็บ</div>
+        </div>`;
+      }).join('');
+    } catch(e) { console.warn('loadProductCoupons:', e.message); }
+  }
+
+  window._claimProductCoupon = async function(couponId, name) {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) {
+        location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search);
+        return;
+      }
+      const { data, error } = await sb.rpc('claim_coupon', { p_coupon_id: couponId });
+      if (error) throw error;
+      if (!data.success) {
+        alert(data.reason || 'เก็บไม่สำเร็จ'); return;
+      }
+      alert(`✅ เก็บคูปอง "${name}" สำเร็จ — ใช้ตอนชำระเงิน`);
+      loadProductCoupons();
+    } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  };
+
+  document.addEventListener('DOMContentLoaded', loadProductCoupons);
+})();
+</script>
