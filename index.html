@@ -133,19 +133,45 @@ input,select{font-family:var(--font)}
 
 /* ── BANNERS ── */
 .banners{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:32px}
-.banner-main{padding:28px 24px;color:var(--white);position:relative;overflow:hidden;cursor:pointer;min-height:200px;display:flex;flex-direction:column;justify-content:space-between}
+.banner-main{padding:28px 24px;color:var(--white);position:relative;overflow:hidden;cursor:pointer;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none}
 .banner-main::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.8) 0%,rgba(0,0,0,.2) 100%);pointer-events:none}
 .banner-content{position:relative;z-index:1}
 .banner-title{font-size:22px;font-weight:700;line-height:1.2;margin-bottom:6px}
 .banner-sub{font-size:13px;color:rgba(255,255,255,.65);margin-bottom:16px;line-height:1.6}
 .banner-disc{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.5);letter-spacing:.04em;position:relative;z-index:1}
-.banner-cta{background:var(--white);color:var(--black);border:none;padding:10px 20px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.banner-cta{background:var(--white);color:var(--black);border:none;padding:10px 20px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;align-self:flex-start;text-decoration:none}
 .banner-cta:hover{background:var(--red);color:var(--white)}
-.banner-sm{padding:20px;cursor:pointer;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;border:var(--border);transition:border-color .15s}
+.banner-sm{padding:20px;cursor:pointer;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;border:var(--border);transition:border-color .15s;text-decoration:none}
 .banner-sm:hover{border-color:var(--black)}
 .banner-sm-title{font-size:15px;font-weight:700;line-height:1.3}
 .banner-sm-sub{font-size:11px;margin-top:4px;opacity:.7}
 .banner-sm-disc{font-family:var(--mono);font-size:24px;font-weight:700;margin-top:auto}
+
+/* HERO SLIDER (auto-rotating) [PATCH 2026-05-03] */
+.banner-main.slide-anim{animation:slideFade .6s ease-out}
+@keyframes slideFade{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.hero-slide-dots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:3}
+.hero-slide-dot{width:24px;height:3px;background:rgba(255,255,255,.35);transition:background .15s;cursor:pointer}
+.hero-slide-dot.active{background:#fff}
+
+/* PROMO ROW — 3 cards แบบ HomePro [PATCH 2026-05-03] */
+.promo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px}
+@media(max-width:880px){.promo-row{grid-template-columns:1fr;gap:10px}}
+.promo-card{position:relative;overflow:hidden;cursor:pointer;text-decoration:none;color:#fff;min-height:160px;display:flex;flex-direction:column;justify-content:flex-end;padding:20px 22px;transition:transform .2s,box-shadow .2s}
+.promo-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.15)}
+.promo-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 60%,transparent 100%);pointer-events:none}
+.promo-card-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.promo-card-content{position:relative;z-index:1}
+.promo-card-title{font-size:20px;font-weight:700;line-height:1.2;margin-bottom:5px;letter-spacing:-.01em}
+.promo-card-sub{font-size:12px;line-height:1.5;color:rgba(255,255,255,.85);margin-bottom:12px}
+.promo-card-cta{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,255,255,.92);color:#0A0A0A;padding:7px 14px;align-self:flex-start;width:fit-content;transition:all .15s}
+.promo-card:hover .promo-card-cta{background:#fff;transform:translateX(2px)}
+
+/* Skeleton สำหรับ banners */
+.bn-skel{background:linear-gradient(90deg,#f5f5f5 25%,#fafafa 50%,#f5f5f5 75%);background-size:200% 100%;animation:bnskel 1.4s infinite;min-height:200px}
+.bn-skel-sm{min-height:96px}
+.bn-skel-promo{min-height:160px}
+@keyframes bnskel{to{background-position:-200% 0}}
 
 /* ── COUPON STRIP ── */
 .coupon-strip{border:var(--border);padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:32px;flex-wrap:wrap}
@@ -562,7 +588,16 @@ nav, .nav {
 
   <!-- BANNERS -->
   <div class="banners" id="banners">
-    <!-- Loaded from Supabase -->
+    <a class="banner-main bn-skel" id="hero-banner" style="background:#0A0A0A"></a>
+    <a class="banner-sm bn-skel bn-skel-sm" id="side-banner-1"></a>
+    <a class="banner-sm bn-skel bn-skel-sm" id="side-banner-2"></a>
+  </div>
+
+  <!-- PROMO ROW [PATCH 2026-05-03] — บ้านสวย / Fashion / Tech -->
+  <div class="promo-row" id="promo-row">
+    <div class="promo-card bn-skel bn-skel-promo"></div>
+    <div class="promo-card bn-skel bn-skel-promo"></div>
+    <div class="promo-card bn-skel bn-skel-promo"></div>
   </div>
 
   <!-- COUPON SEARCH BAR -->
@@ -1721,37 +1756,180 @@ function updateRecHeader(isPersonalized, catIds) {
 // ════════════════════════════════════════════════════════════════════════
 
 async function loadBanners() {
-  const el = document.getElementById('banners');
-  if (!el) return;
+  const sb2 = window._sb || sb;
+
+  // ───────── helpers
+  function bannerHref(b) {
+    if (!b) return '#';
+    const lt = b.link_type || 'url';
+    const lv = b.link_value || '';
+    if (lt === 'url')        return lv || '#';
+    if (lt === 'category')   return `category.html?slug=${encodeURIComponent(lv)}`;
+    if (lt === 'brand')      return `storefront-live.html?brand_name=${encodeURIComponent(lv)}`;
+    if (lt === 'coupon')     return `coupon-hub.html?code=${encodeURIComponent(lv)}`;
+    if (lt === 'collection') return `category.html?collection=${encodeURIComponent(lv)}`;
+    if (lt === 'article')    return `article.html?slug=${encodeURIComponent(lv)}`;
+    return '#';
+  }
+
+  async function trackClick(banner_id) {
+    try { sb2.rpc('track_banner_click', { p_banner_id: banner_id }); } catch(e) {}
+  }
+  // expose ให้ onclick ใช้
+  window._trackBannerClick = trackClick;
+
+  // ───────── load all banners
+  let banners = null;
   try {
-    // ลองดึงจากตาราง banners (ถ้ามี)
-    const { data, error } = await sb.from('banners')
-      .select('*').eq('is_active', true)
-      .order('sort_order', { ascending: true }).limit(3);
-    const banners = (!error && data?.length) ? data : null;
+    const { data, error } = await sb2.rpc('get_active_banners', { p_position: null });
+    if (!error && data) banners = data;
+  } catch(e) {}
+  if (!banners) {
+    try {
+      const { data, error } = await sb2.from('banners').select('*')
+        .eq('is_active', true).order('sort_order', { ascending: true });
+      if (!error) banners = data || [];
+    } catch(e) { banners = []; }
+  }
 
-    if (banners) {
-      el.innerHTML = banners.map(b => `
-        <a class="banner-card" href="${b.link_url || 'storefront-live.html'}">
-          ${b.image_url ? `<img src="${b.image_url}" alt="${b.title || ''}" loading="lazy">` : ''}
-          ${b.title ? `<div class="banner-title">${b.title}</div>` : ''}
-        </a>`).join('');
-      return;
+  const heroList  = (banners || []).filter(b => (b.position||'hero') === 'hero');
+  const sideList  = (banners || []).filter(b => b.position === 'side').slice(0, 2);
+  const promoList = (banners || []).filter(b => b.position === 'promo').slice(0, 3);
+
+  // ───────── HERO (auto-rotating slider)
+  const heroEl = document.getElementById('hero-banner');
+  if (heroEl) {
+    if (heroList.length === 0) {
+      heroEl.innerHTML = `
+        <div class="banner-content">
+          <div class="banner-disc">FEATURED</div>
+          <div class="banner-title">Welcome to Thailand Market</div>
+          <div class="banner-sub">ช้อปสินค้าครบทุกหมวด · ส่งฟรีเมื่อซื้อครบ ฿500</div>
+          <button class="banner-cta">เริ่มช้อป →</button>
+        </div>`;
+      heroEl.style.background = '#0A0A0A';
+      heroEl.classList.remove('bn-skel');
+      heroEl.removeAttribute('href');
+    } else {
+      let heroIdx = 0;
+      const renderHero = () => {
+        const b = heroList[heroIdx];
+        const dotsHTML = heroList.length > 1
+          ? `<div class="hero-slide-dots">${heroList.map((_,i) => `<div class="hero-slide-dot ${i===heroIdx?'active':''}" data-i="${i}"></div>`).join('')}</div>`
+          : '';
+        heroEl.innerHTML = `
+          <div class="banner-content">
+            ${b.cta_label ? `<div class="banner-disc">${b.cta_label.toUpperCase()}</div>` : '<div class="banner-disc">FEATURED</div>'}
+            <div class="banner-title">${b.title || ''}</div>
+            <div class="banner-sub">${b.subtitle || ''}</div>
+            ${b.cta_label ? `<button class="banner-cta">${b.cta_label} →</button>` : '<button class="banner-cta">ดูเลย →</button>'}
+          </div>
+          ${dotsHTML}`;
+        heroEl.style.background = b.image_url
+          ? `url('${b.image_url}') center/cover, ${b.bg_color||'#0A0A0A'}`
+          : (b.bg_color || '#0A0A0A');
+        heroEl.style.color = b.text_color || '#fff';
+        heroEl.href = bannerHref(b);
+        heroEl.dataset.bannerId = b.id;
+        heroEl.classList.remove('bn-skel');
+        heroEl.classList.add('slide-anim');
+        setTimeout(() => heroEl.classList.remove('slide-anim'), 600);
+
+        // dot click
+        heroEl.querySelectorAll('.hero-slide-dot').forEach(d => {
+          d.addEventListener('click', e => {
+            e.preventDefault(); e.stopPropagation();
+            heroIdx = parseInt(d.dataset.i);
+            renderHero();
+            resetTimer();
+          });
+        });
+      };
+      heroEl.addEventListener('click', () => {
+        const b = heroList[heroIdx];
+        if (b?.id) trackClick(b.id);
+      });
+      renderHero();
+
+      // auto-rotate every 5s
+      let heroTimer = null;
+      const resetTimer = () => {
+        if (heroTimer) clearInterval(heroTimer);
+        if (heroList.length > 1) {
+          heroTimer = setInterval(() => {
+            heroIdx = (heroIdx + 1) % heroList.length;
+            renderHero();
+          }, 5000);
+        }
+      };
+      resetTimer();
     }
-  } catch(e) { /* table ไม่มี — ใช้ default */ }
+  }
 
-  // Fallback: default banners
-  const defaults = [
-    { ico:'🔥', title:'Flash Sale ทุกวัน', sub:'ลดสูงสุด 70% · 3 รอบ/วัน', bg:'#0A0A0A', link:'flash-sale.html' },
-    { ico:'🚚', title:'ส่งฟรีทั่วไทย',  sub:'ไม่มีขั้นต่ำสำหรับสมาชิก Plus', bg:'#E63329', link:'storefront-live.html' },
-    { ico:'🎁', title:'รับคูปองใหม่ทุกสัปดาห์', sub:'ส่วนลดสูงสุด ฿500', bg:'#1a1a2e', link:'coupon-hub.html' },
-  ];
-  el.innerHTML = defaults.map(b => `
-    <a class="banner-card" href="${b.link}" style="background:${b.bg};color:#fff;padding:24px;display:block;text-decoration:none;border-radius:0;min-height:140px">
-      <div style="font-size:36px;margin-bottom:8px">${b.ico}</div>
-      <div style="font-size:18px;font-weight:700;margin-bottom:4px">${b.title}</div>
-      <div style="font-size:12px;opacity:.8">${b.sub}</div>
-    </a>`).join('');
+  // ───────── SIDE BANNERS
+  const sideColors = ['#E63329', '#1a1a2e'];
+  ['side-banner-1', 'side-banner-2'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const b = sideList[i];
+    if (!b) {
+      // fallback default
+      const defaults = [
+        { title: 'รับคูปองใหม่', subtitle: 'ทุกสัปดาห์', cta: 'ดูคูปอง', href: 'coupon-hub.html', bg: '#E63329' },
+        { title: 'Flash Sale', subtitle: 'ลด 70% 3 รอบ/วัน', cta: 'ดูดีล', href: 'flash-sale.html', bg: '#0A0A0A' },
+      ];
+      const d = defaults[i] || defaults[0];
+      el.innerHTML = `
+        <div>
+          <div class="banner-sm-title" style="color:#fff">${d.title}</div>
+          <div class="banner-sm-sub" style="color:rgba(255,255,255,.7)">${d.subtitle}</div>
+        </div>
+        <div class="banner-sm-disc" style="color:#fff;font-size:11px;font-weight:500">${d.cta} →</div>`;
+      el.style.background = d.bg;
+      el.href = d.href;
+    } else {
+      el.innerHTML = `
+        <div>
+          <div class="banner-sm-title" style="color:${b.text_color||'#fff'}">${b.title || ''}</div>
+          <div class="banner-sm-sub" style="color:${b.text_color||'#fff'};opacity:.75">${b.subtitle || ''}</div>
+        </div>
+        <div class="banner-sm-disc" style="color:${b.text_color||'#fff'};font-size:11px;font-weight:500">${b.cta_label || 'ดูเลย'} →</div>`;
+      el.style.background = b.image_url
+        ? `linear-gradient(135deg,rgba(0,0,0,.4),rgba(0,0,0,.1)), url('${b.image_url}') center/cover, ${b.bg_color||sideColors[i]}`
+        : (b.bg_color || sideColors[i]);
+      el.href = bannerHref(b);
+      el.dataset.bannerId = b.id;
+      el.addEventListener('click', () => trackClick(b.id));
+    }
+    el.classList.remove('bn-skel');
+  });
+
+  // ───────── PROMO ROW
+  const promoEl = document.getElementById('promo-row');
+  if (promoEl) {
+    if (promoList.length === 0) {
+      // hide section ถ้าไม่มี
+      promoEl.style.display = 'none';
+    } else {
+      promoEl.innerHTML = promoList.map((b,i) => {
+        const href = bannerHref(b);
+        const colors = ['#F59E0B', '#EC4899', '#0A0A0A'];
+        const bg = b.image_url
+          ? `url('${b.image_url}') center/cover`
+          : (b.bg_color || colors[i % 3]);
+        return `<a href="${href}" class="promo-card" data-id="${b.id}"
+          style="background:${bg};color:${b.text_color||'#fff'}"
+          onclick="window._trackBannerClick && window._trackBannerClick('${b.id}')">
+          <div class="promo-card-content">
+            <div class="promo-card-title">${b.title || ''}</div>
+            <div class="promo-card-sub">${b.subtitle || ''}</div>
+            <span class="promo-card-cta">${b.cta_label || 'ดูเลย'} →</span>
+          </div>
+        </a>`;
+      }).join('');
+      promoEl.style.display = 'grid';
+    }
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════

@@ -343,6 +343,17 @@ nav, .nav {
 .cp-tier{display:flex;gap:8px;margin-bottom:6px;align-items:center}
 .cp-tier-rm{background:none;border:none;color:#E63329;cursor:pointer;font-size:18px}
 
+/* BANNER PANEL [PATCH 2026-05-03] */
+.bn-tab{padding:11px 18px;font-size:13px;border-bottom:2px solid transparent;background:none;cursor:pointer;color:#737373;font-family:inherit}
+.bn-tab.on{color:#0A0A0A;border-bottom-color:#E63329;font-weight:600}
+.bn-pos-btn,.bn-link-btn{padding:10px 8px;border:1px solid #E5E5E5;background:#fff;font-size:11px;cursor:pointer;font-family:inherit;letter-spacing:.04em;text-transform:uppercase;line-height:1.5;transition:all .15s;text-align:center}
+.bn-pos-btn:hover,.bn-link-btn:hover{border-color:#0A0A0A}
+.bn-pos-btn.on,.bn-link-btn.on{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+.bn-pos-pill{display:inline-block;padding:2px 8px;font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em;border-radius:0}
+.bn-pos-pill.hero{background:#FEE2E2;color:#991B1B}
+.bn-pos-pill.side{background:#DBEAFE;color:#1E40AF}
+.bn-pos-pill.promo{background:#FEF3C7;color:#92400E}
+
 /* ── Admin CMS Layout Fix ── */
 body { display: flex; flex-direction: column; min-height: 100vh; }
 .ann, nav { width: 100% !important; flex-shrink: 0; order: -1; }
@@ -1053,6 +1064,128 @@ nav { display: block !important; height: auto !important; }
           <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
             <button class="btn" style="background:#fff;border:1px solid #E5E5E5" onclick="closeCampaignModal()">ยกเลิก</button>
             <button class="btn btn-k" onclick="saveCampaign()">💾 สร้าง</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ── BANNERS PANEL [PATCH 2026-05-03] ── -->
+    <div id="panel-banners" class="panel admin-only" style="padding:24px;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:18px;font-weight:700">🎨 จัดการ Banner</div>
+          <div style="font-size:12px;color:#737373;margin-top:2px">สร้าง/แก้ไข Banner สำหรับหน้า Home — Hero Slider · Side · Promo Row</div>
+        </div>
+        <button class="btn btn-k btn-sm" onclick="openBannerModal()">➕ เพิ่ม Banner</button>
+      </div>
+
+      <!-- Tabs ตาม position -->
+      <div style="display:flex;gap:0;border-bottom:1px solid #E5E5E5;margin-bottom:18px;flex-wrap:wrap">
+        <button class="bn-tab on" data-pos="all"   onclick="bnSwitchTab('all',this)">📋 ทั้งหมด <span id="bn-cnt-all" style="background:#0A0A0A;color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;font-family:'DM Mono',monospace">0</span></button>
+        <button class="bn-tab"    data-pos="hero"  onclick="bnSwitchTab('hero',this)">🎯 Hero Slider <span id="bn-cnt-hero" style="background:#E63329;color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;font-family:'DM Mono',monospace">0</span></button>
+        <button class="bn-tab"    data-pos="side"  onclick="bnSwitchTab('side',this)">📌 Side Cards <span id="bn-cnt-side" style="background:#2563EB;color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;font-family:'DM Mono',monospace">0</span></button>
+        <button class="bn-tab"    data-pos="promo" onclick="bnSwitchTab('promo',this)">🏷️ Promo Row <span id="bn-cnt-promo" style="background:#F59E0B;color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;font-family:'DM Mono',monospace">0</span></button>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:60px">Preview</th>
+            <th>Title / Subtitle</th>
+            <th>ตำแหน่ง</th>
+            <th>ลิงก์ไป</th>
+            <th>สถานะ</th>
+            <th style="width:90px">คลิก</th>
+            <th style="width:70px">Order</th>
+            <th style="width:130px"></th>
+          </tr></thead>
+          <tbody id="bn-tbody"><tr><td colspan="8"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- BANNER MODAL -->
+      <div id="bn-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center;padding:20px;overflow:auto">
+        <div style="background:#fff;width:640px;max-width:100%;max-height:92vh;overflow-y:auto;padding:28px;position:relative">
+          <button onclick="closeBannerModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+          <div style="font-size:18px;font-weight:600;margin-bottom:6px" id="bn-modal-title">เพิ่ม Banner</div>
+          <div style="font-size:12px;color:#737373;margin-bottom:20px">Banner จะแสดงในหน้า index ทันทีเมื่อบันทึก</div>
+          <input type="hidden" id="bn-id">
+
+          <!-- Position selector -->
+          <div style="margin-bottom:18px">
+            <label class="cp-lbl">ตำแหน่งที่จะแสดง *</label>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px">
+              <button class="bn-pos-btn on" data-pos="hero" onclick="bnSetPos(this,'hero')">🎯 Hero Slider<br><span style="font-size:9px;opacity:.7">ใหญ่ บน · auto-rotate</span></button>
+              <button class="bn-pos-btn"    data-pos="side" onclick="bnSetPos(this,'side')">📌 Side Card<br><span style="font-size:9px;opacity:.7">เล็ก ขวา</span></button>
+              <button class="bn-pos-btn"    data-pos="promo" onclick="bnSetPos(this,'promo')">🏷️ Promo Row<br><span style="font-size:9px;opacity:.7">3 cards แนวนอน</span></button>
+            </div>
+            <input type="hidden" id="bn-position" value="hero">
+          </div>
+
+          <div class="cp-fg"><label class="cp-lbl">หัวข้อ *</label>
+            <input class="cp-inp" id="bn-title" placeholder="เช่น 5.5 May-Day Sale" maxlength="60"></div>
+
+          <div class="cp-fg"><label class="cp-lbl">คำอธิบาย</label>
+            <input class="cp-inp" id="bn-subtitle" placeholder="ลดสูงสุด 70% · 3 รอบ/วัน" maxlength="120"></div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">รูปภาพ Banner (URL)</label>
+              <input class="cp-inp" id="bn-image" placeholder="https://..." onchange="bnPreviewImg()"></div>
+            <div class="cp-fg"><label class="cp-lbl">หรือสีพื้นหลัง</label>
+              <input class="cp-inp" id="bn-bg" type="color" value="#E63329"></div>
+          </div>
+
+          <!-- Preview -->
+          <div id="bn-preview" style="height:140px;background:#E63329;color:#fff;padding:18px;margin-bottom:14px;display:flex;flex-direction:column;justify-content:flex-end;background-position:center;background-size:cover;position:relative">
+            <div style="position:absolute;top:6px;right:8px;font-size:9px;font-family:'DM Mono',monospace;background:rgba(0,0,0,.4);padding:1px 6px">PREVIEW</div>
+            <div id="bn-prev-title" style="font-size:18px;font-weight:700">หัวข้อ</div>
+            <div id="bn-prev-sub" style="font-size:12px;opacity:.85;margin-top:3px">คำอธิบาย</div>
+          </div>
+
+          <div class="cp-fg"><label class="cp-lbl">ปุ่ม CTA Label</label>
+            <input class="cp-inp" id="bn-cta" placeholder="เช่น ช้อปเลย, ดูดีล" maxlength="20"></div>
+
+          <!-- Link selector -->
+          <div style="margin-bottom:14px">
+            <label class="cp-lbl">เมื่อกดแล้วไปที่ *</label>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px">
+              <button class="bn-link-btn on" data-type="url"        onclick="bnSetLinkType(this,'url')">🔗 URL</button>
+              <button class="bn-link-btn"    data-type="category"   onclick="bnSetLinkType(this,'category')">📁 หมวดสินค้า</button>
+              <button class="bn-link-btn"    data-type="brand"      onclick="bnSetLinkType(this,'brand')">🏷️ แบรนด์</button>
+              <button class="bn-link-btn"    data-type="coupon"     onclick="bnSetLinkType(this,'coupon')">🎟️ คูปอง</button>
+              <button class="bn-link-btn"    data-type="collection" onclick="bnSetLinkType(this,'collection')">📦 Collection</button>
+              <button class="bn-link-btn"    data-type="article"    onclick="bnSetLinkType(this,'article')">📰 บทความ</button>
+            </div>
+            <input type="hidden" id="bn-link-type" value="url">
+          </div>
+
+          <!-- Link value (เปลี่ยนตาม link_type) -->
+          <div class="cp-fg" id="bn-link-value-row">
+            <label class="cp-lbl" id="bn-link-value-lbl">URL ปลายทาง *</label>
+            <input class="cp-inp" id="bn-link-value" placeholder="เช่น /flash-sale.html หรือ https://example.com">
+            <div style="font-size:11px;color:#737373;margin-top:4px" id="bn-link-help">URL จะ redirect เมื่อ user คลิก banner</div>
+          </div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">เริ่มแสดง</label>
+              <input class="cp-inp" id="bn-start" type="datetime-local"></div>
+            <div class="cp-fg"><label class="cp-lbl">หยุดแสดง</label>
+              <input class="cp-inp" id="bn-end" type="datetime-local"></div>
+          </div>
+
+          <div class="cp-fg"><label class="cp-lbl">ลำดับ (น้อย=ก่อน)</label>
+            <input class="cp-inp" id="bn-order" type="number" min="0" value="0" style="max-width:120px"></div>
+
+          <div style="margin:12px 0 18px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="bn-active" checked> เปิดใช้งานทันที
+            </label>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn" style="background:#fff;color:#0A0A0A;border:1px solid #E5E5E5" onclick="closeBannerModal()">ยกเลิก</button>
+            <button class="btn btn-k" onclick="saveBanner()" id="bn-save-btn">💾 บันทึก</button>
           </div>
         </div>
       </div>
@@ -2826,6 +2959,7 @@ window.showPanel = function(name) {
     case 'categories':  loadCats();                    break;
     case 'brands':      loadAdminBrands();             break;
     case 'coupons':     loadAdminCoupons(); loadCpKpis(); break;
+    case 'banners':     loadAdminBanners(); break;
     case 'flash':       loadFlash();                   break;
     case 'sellers':     loadSellers('pending');        break;
     case 'approve':     loadPending('pending_review'); break;
@@ -3418,6 +3552,244 @@ async function loadCampaigns() {
         </div>
       </div>`).join('');
   } catch(e) { list.innerHTML = '<div style="color:#E63329">' + e.message + '</div>'; }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  BANNERS PANEL [PATCH 2026-05-03]
+// ══════════════════════════════════════════════════════════════════════════
+
+let _bnAllBanners = [];
+let _bnCurrentTab = 'all';
+
+function bnSwitchTab(pos, btn) {
+  _bnCurrentTab = pos;
+  document.querySelectorAll('.bn-tab').forEach(t => t.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  bnRenderTable();
+}
+
+async function loadAdminBanners() {
+  const tbody = document.getElementById('bn-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr>';
+  try {
+    const { data, error } = await sb.from('banners').select('*')
+      .order('position').order('sort_order', { ascending: true });
+    if (error) throw error;
+    _bnAllBanners = data || [];
+    
+    // อัปเดต counts
+    document.getElementById('bn-cnt-all').textContent = _bnAllBanners.length;
+    ['hero','side','promo'].forEach(p => {
+      const cnt = _bnAllBanners.filter(b => b.position === p).length;
+      const el = document.getElementById('bn-cnt-' + p);
+      if (el) el.textContent = cnt;
+    });
+    
+    bnRenderTable();
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:24px;text-align:center;color:#E63329">❌ ${e.message}<br><small>รัน BANNERS-SETUP.sql ใน Supabase ก่อน</small></td></tr>`;
+  }
+}
+
+function bnRenderTable() {
+  const tbody = document.getElementById('bn-tbody');
+  if (!tbody) return;
+
+  let list = _bnAllBanners;
+  if (_bnCurrentTab !== 'all') list = list.filter(b => b.position === _bnCurrentTab);
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:32px;text-align:center;color:#737373">
+      <div style="font-size:32px;margin-bottom:8px">🎨</div>
+      <div style="margin-bottom:14px">ยังไม่มี Banner${_bnCurrentTab!=='all'?' ในตำแหน่งนี้':''}</div>
+      <button class="btn btn-k btn-sm" onclick="openBannerModal()">➕ เพิ่ม Banner</button></td></tr>`;
+    return;
+  }
+
+  const linkLabels = {url:'🔗 URL',category:'📁 หมวด',brand:'🏷️ แบรนด์',coupon:'🎟️ คูปอง',collection:'📦 Collection',article:'📰 บทความ'};
+  const posLabels = {hero:'Hero Slider',side:'Side Card',promo:'Promo Row'};
+  
+  tbody.innerHTML = list.map(b => {
+    const expired = b.end_at && new Date(b.end_at) < new Date();
+    const pending = b.start_at && new Date(b.start_at) > new Date();
+    let status;
+    if (!b.is_active) status = '<span style="background:#737373;color:#fff;padding:2px 8px;font-size:10px">⏸ ปิด</span>';
+    else if (expired) status = '<span style="background:#DC2626;color:#fff;padding:2px 8px;font-size:10px">⌛ หมด</span>';
+    else if (pending) status = '<span style="background:#F59E0B;color:#fff;padding:2px 8px;font-size:10px">⏳ รอ</span>';
+    else status = '<span style="background:#16A34A;color:#fff;padding:2px 8px;font-size:10px">✓ ACTIVE</span>';
+
+    const preview = b.image_url
+      ? `<div style="width:60px;height:40px;background:url('${b.image_url}') center/cover, ${b.bg_color||'#0A0A0A'};border:1px solid #E5E5E5"></div>`
+      : `<div style="width:60px;height:40px;background:${b.bg_color||'#0A0A0A'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-family:'DM Mono',monospace">${(b.title||'').slice(0,8)}</div>`;
+
+    return `<tr>
+      <td>${preview}</td>
+      <td>
+        <div style="font-weight:600;font-size:13px">${b.title || '(ไม่มีหัวข้อ)'}</div>
+        <div style="font-size:11px;color:#737373;margin-top:2px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.subtitle || ''}</div>
+      </td>
+      <td><span class="bn-pos-pill ${b.position}">${posLabels[b.position]||b.position}</span></td>
+      <td style="font-size:12px">
+        <div>${linkLabels[b.link_type]||b.link_type}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:#737373;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.link_value||'—'}</div>
+      </td>
+      <td>${status}</td>
+      <td style="font-family:'DM Mono',monospace;text-align:center">${(b.click_count||0).toLocaleString()}</td>
+      <td style="text-align:center;font-family:'DM Mono',monospace">${b.sort_order||0}</td>
+      <td>
+        <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px" onclick="editBanner('${b.id}')">✏️</button>
+        <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="bnToggleActive('${b.id}',${!b.is_active})">${b.is_active?'⏸':'▶️'}</button>
+        <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="deleteBanner('${b.id}','${(b.title||'').replace(/'/g,'')}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function bnToggleActive(id, val) {
+  try {
+    await sb.from('banners').update({ is_active: val }).eq('id', id);
+    await loadAdminBanners();
+  } catch(e) { alert('แก้ไม่สำเร็จ: '+e.message); }
+}
+
+async function deleteBanner(id, name) {
+  if (!confirm(`ลบ Banner "${name||'นี้'}"?`)) return;
+  try {
+    await sb.from('banners').delete().eq('id', id);
+    await loadAdminBanners();
+  } catch(e) { alert('ลบไม่สำเร็จ: '+e.message); }
+}
+
+function bnSetPos(btn, pos) {
+  document.querySelectorAll('.bn-pos-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('bn-position').value = pos;
+}
+
+function bnSetLinkType(btn, type) {
+  document.querySelectorAll('.bn-link-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('bn-link-type').value = type;
+  
+  const lbl = document.getElementById('bn-link-value-lbl');
+  const inp = document.getElementById('bn-link-value');
+  const help = document.getElementById('bn-link-help');
+  
+  const cfg = {
+    url:        ['URL ปลายทาง *',          'เช่น /flash-sale.html หรือ https://example.com',  'URL จะ redirect เมื่อ user คลิก'],
+    category:   ['Category Slug *',         'เช่น electronics, home-furniture',                'จะไปที่ /category.html?slug=...'],
+    brand:      ['ชื่อแบรนด์ *',             'เช่น Samsung, Apple',                              'จะไปที่ /storefront-live.html?brand_name=...'],
+    coupon:     ['Coupon Code *',           'เช่น WELCOME50',                                   'จะไปที่ /coupon-hub.html?code=...'],
+    collection: ['Collection Slug *',       'เช่น summer-2026',                                 'จะไปที่ /category.html?collection=...'],
+    article:    ['Article Slug *',          'เช่น how-to-style-living-room',                    'จะไปที่ /article.html?slug=...']
+  };
+  const c = cfg[type] || cfg.url;
+  lbl.textContent = c[0]; inp.placeholder = c[1]; help.textContent = c[2];
+}
+
+function bnPreviewImg() {
+  const url = document.getElementById('bn-image').value.trim();
+  const bg = document.getElementById('bn-bg').value;
+  const prev = document.getElementById('bn-preview');
+  prev.style.background = url ? `url('${url}') center/cover, ${bg}` : bg;
+  
+  // sync title/sub preview
+  document.getElementById('bn-prev-title').textContent = document.getElementById('bn-title').value || 'หัวข้อ';
+  document.getElementById('bn-prev-sub').textContent = document.getElementById('bn-subtitle').value || 'คำอธิบาย';
+}
+
+function openBannerModal(data) {
+  document.getElementById('bn-modal-title').textContent = data ? '✏️ แก้ไข Banner' : '➕ เพิ่ม Banner';
+  document.getElementById('bn-id').value = data?.id || '';
+  document.getElementById('bn-title').value = data?.title || '';
+  document.getElementById('bn-subtitle').value = data?.subtitle || '';
+  document.getElementById('bn-image').value = data?.image_url || '';
+  document.getElementById('bn-bg').value = data?.bg_color || '#E63329';
+  document.getElementById('bn-cta').value = data?.cta_label || '';
+  document.getElementById('bn-link-value').value = data?.link_value || '';
+  document.getElementById('bn-order').value = data?.sort_order ?? 0;
+  document.getElementById('bn-active').checked = data ? !!data.is_active : true;
+  document.getElementById('bn-start').value = data?.start_at ? new Date(data.start_at).toISOString().slice(0,16) : '';
+  document.getElementById('bn-end').value = data?.end_at ? new Date(data.end_at).toISOString().slice(0,16) : '';
+
+  // set position
+  const pos = data?.position || 'hero';
+  const posBtn = document.querySelector(`.bn-pos-btn[data-pos="${pos}"]`);
+  if (posBtn) bnSetPos(posBtn, pos);
+
+  // set link type
+  const lt = data?.link_type || 'url';
+  const ltBtn = document.querySelector(`.bn-link-btn[data-type="${lt}"]`);
+  if (ltBtn) bnSetLinkType(ltBtn, lt);
+
+  // sync inputs to preview
+  ['bn-title','bn-subtitle','bn-bg'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el._bnHooked) {
+      el.addEventListener('input', bnPreviewImg);
+      el._bnHooked = true;
+    }
+  });
+  bnPreviewImg();
+
+  document.getElementById('bn-modal').style.display = 'flex';
+}
+
+function closeBannerModal() {
+  document.getElementById('bn-modal').style.display = 'none';
+}
+
+async function editBanner(id) {
+  try {
+    const { data, error } = await sb.from('banners').select('*').eq('id', id).maybeSingle();
+    if (error || !data) throw error || new Error('ไม่พบ');
+    openBannerModal(data);
+  } catch(e) { alert('โหลดไม่สำเร็จ: '+e.message); }
+}
+
+async function saveBanner() {
+  const btn = document.getElementById('bn-save-btn');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  try {
+    const id = document.getElementById('bn-id').value;
+    const title = document.getElementById('bn-title').value.trim();
+    if (!title) throw new Error('กรอกหัวข้อ');
+
+    const linkType = document.getElementById('bn-link-type').value;
+    const linkValue = document.getElementById('bn-link-value').value.trim();
+    if (linkType !== 'url' && !linkValue) throw new Error('กรอก '+ document.getElementById('bn-link-value-lbl').textContent.replace(' *',''));
+
+    const payload = {
+      title,
+      subtitle: document.getElementById('bn-subtitle').value.trim() || null,
+      image_url: document.getElementById('bn-image').value.trim() || null,
+      bg_color: document.getElementById('bn-bg').value,
+      text_color: '#FFFFFF',
+      position: document.getElementById('bn-position').value,
+      link_type: linkType,
+      link_value: linkValue || null,
+      cta_label: document.getElementById('bn-cta').value.trim() || null,
+      sort_order: parseInt(document.getElementById('bn-order').value) || 0,
+      is_active: document.getElementById('bn-active').checked,
+      start_at: document.getElementById('bn-start').value || null,
+      end_at: document.getElementById('bn-end').value || null,
+      updated_at: new Date().toISOString()
+    };
+
+    let error;
+    if (id) ({error} = await sb.from('banners').update(payload).eq('id', id));
+    else    ({error} = await sb.from('banners').insert(payload));
+    if (error) throw error;
+
+    closeBannerModal();
+    await loadAdminBanners();
+  } catch(e) {
+    alert('บันทึกไม่สำเร็จ: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 บันทึก';
+  }
 }
 
 
