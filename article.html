@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>บทความ · Thailand Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/[email protected]"></script>
+<style>
+:root{--black:#0A0A0A;--white:#FAFAFA;--red:#E63329;--green:#16A34A;--blue:#2563EB;
+  --g50:#F5F5F5;--g100:#EEEEEE;--g200:#E5E5E5;--g300:#D4D4D4;--g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#262626;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--border:1px solid #E5E5E5;}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{font-family:var(--sans);color:var(--black);background:var(--white);font-size:14px;line-height:1.5}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+
+.tnav{height:60px;border-bottom:var(--border);background:var(--white);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50}
+.tnav-l{display:flex;align-items:center;gap:24px}
+.tnav-logo{font-weight:700;font-size:15px;letter-spacing:-.01em}
+.tnav-logo span{color:var(--red)}
+.tnav-back{background:none;border:none;font-size:13px;color:var(--g600);display:flex;align-items:center;gap:6px}
+.tnav-back:hover{color:var(--red)}
+
+.wrap{max-width:760px;margin:0 auto;padding:48px 24px 96px;background:#fff}
+@media(max-width:780px){.wrap{padding:24px 16px 48px}}
+
+.bc{font-family:var(--mono);font-size:11px;color:var(--g500);letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px;display:flex;gap:8px;align-items:center}
+.bc a:hover{color:var(--red)}
+.bc-sep{color:var(--g300)}
+
+.cat-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--g50);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px;color:var(--red);border:1px solid #FECACA}
+
+.title{font-size:42px;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin-bottom:18px}
+@media(max-width:780px){.title{font-size:28px}}
+.subtitle{font-size:18px;color:var(--g600);line-height:1.55;margin-bottom:32px;font-weight:400}
+
+.meta{display:flex;align-items:center;gap:20px;padding:18px 0;border-top:var(--border);border-bottom:var(--border);margin-bottom:32px;flex-wrap:wrap}
+.meta-author{display:flex;align-items:center;gap:10px}
+.meta-avatar{width:40px;height:40px;background:var(--g100);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;overflow:hidden}
+.meta-avatar img{width:100%;height:100%;object-fit:cover}
+.meta-author-info{display:flex;flex-direction:column}
+.meta-name{font-size:13px;font-weight:600}
+.meta-date{font-family:var(--mono);font-size:10px;color:var(--g500);letter-spacing:.04em}
+.meta-stats{margin-left:auto;display:flex;gap:18px;font-family:var(--mono);font-size:11px;color:var(--g500);letter-spacing:.04em;text-transform:uppercase}
+.meta-stat{display:flex;align-items:center;gap:5px}
+
+.cover{aspect-ratio:16/9;background:var(--g100);margin-bottom:32px;display:flex;align-items:center;justify-content:center;font-size:64px;overflow:hidden}
+.cover img{width:100%;height:100%;object-fit:cover}
+
+.body{font-size:16px;line-height:1.75;color:var(--g700)}
+.body h1{font-size:28px;font-weight:700;letter-spacing:-.01em;margin:36px 0 16px;color:var(--black)}
+.body h2{font-size:22px;font-weight:700;margin:30px 0 14px;color:var(--black)}
+.body h3{font-size:18px;font-weight:600;margin:22px 0 10px;color:var(--black)}
+.body p{margin-bottom:16px}
+.body ul,.body ol{margin:0 0 16px 22px}
+.body li{margin-bottom:6px}
+.body a{color:var(--red);text-decoration:underline;text-underline-offset:2px}
+.body a:hover{color:var(--black)}
+.body img{max-width:100%;height:auto;margin:24px 0;border:var(--border)}
+.body blockquote{border-left:3px solid var(--red);padding:8px 18px;margin:24px 0;color:var(--g600);font-style:italic;background:var(--g50)}
+.body code{background:var(--g100);padding:2px 6px;font-family:var(--mono);font-size:13px}
+.body pre{background:var(--black);color:#fff;padding:18px;overflow-x:auto;margin:24px 0;font-family:var(--mono);font-size:13px}
+.body hr{border:none;border-top:var(--border);margin:32px 0}
+
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:32px 0}
+.tag{padding:4px 10px;background:var(--g50);font-size:11px;font-family:var(--mono);letter-spacing:.04em;color:var(--g600);border:1px solid var(--g200)}
+.tag:hover{background:var(--black);color:#fff;border-color:var(--black)}
+
+.actions{display:flex;align-items:center;gap:14px;padding:24px 0;border-top:var(--border);border-bottom:var(--border);margin-top:32px}
+.like-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;background:#fff;border:var(--border);font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:all .15s}
+.like-btn:hover{border-color:var(--red);color:var(--red)}
+.like-btn.on{background:var(--red);color:#fff;border-color:var(--red)}
+.like-btn .cnt{font-family:var(--mono)}
+.share-btns{margin-left:auto;display:flex;gap:6px}
+.share-btn{width:38px;height:38px;border:var(--border);background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.share-btn:hover{border-color:var(--black)}
+
+/* Related products */
+.related{margin-top:48px}
+.related-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.related-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:780px){.related-grid{grid-template-columns:repeat(2,1fr)}}
+.pr-card{border:var(--border);background:#fff;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;text-decoration:none}
+.pr-card:hover{border-color:var(--black);transform:translateY(-2px)}
+.pr-img{aspect-ratio:1;background:var(--g50);display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden}
+.pr-img img{width:100%;height:100%;object-fit:cover}
+.pr-info{padding:10px 12px;flex:1;display:flex;flex-direction:column;gap:4px}
+.pr-name{font-size:12px;color:var(--g700);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pr-price{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--red);margin-top:auto}
+
+.related-articles{margin-top:48px;padding-top:32px;border-top:var(--border)}
+.ra-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:780px){.ra-grid{grid-template-columns:1fr}}
+.ra-card{border:var(--border);background:#fff;display:flex;flex-direction:column;cursor:pointer;transition:all .15s;text-decoration:none;color:inherit}
+.ra-card:hover{border-color:var(--black);transform:translateY(-2px)}
+.ra-cover{aspect-ratio:16/9;background:var(--g100);display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden}
+.ra-cover img{width:100%;height:100%;object-fit:cover}
+.ra-info{padding:14px 16px}
+.ra-cat{font-family:var(--mono);font-size:9px;color:var(--red);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.ra-title{font-size:14px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.empty{text-align:center;padding:120px 24px;color:var(--g500)}
+.empty-ico{font-size:64px;opacity:.3;margin-bottom:14px}
+.empty-title{font-size:20px;font-weight:600;color:var(--g700);margin-bottom:8px}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--black);color:#fff;padding:10px 18px;font-size:12px;z-index:1000;display:none}
+.toast.on{display:block}
+</style>
+</head>
+<body>
+
+<nav class="tnav">
+  <div class="tnav-l">
+    <a href="index.html" class="tnav-logo">Thailand <span>Market</span></a>
+    <button class="tnav-back" onclick="location.href='articles.html'">← บทความทั้งหมด</button>
+  </div>
+  <div style="font-family:var(--mono);font-size:11px;color:var(--g500);letter-spacing:.06em;text-transform:uppercase">📰 Article</div>
+</nav>
+
+<div class="wrap" id="wrap">
+  <div class="empty"><div class="empty-ico">⏳</div><div>กำลังโหลด...</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const sb = supabase.createClient(
+  'https://qmgyimsptzewwyafvjzk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+);
+
+const slug = new URLSearchParams(location.search).get('slug');
+let _article = null;
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'), 2400);
+}
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+// Simple markdown to HTML (h1-h3, bold, italic, links, lists, paragraphs)
+function md2html(md) {
+  if (!md) return '';
+  let h = escapeHtml(md);
+  // headings
+  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  // bold/italic
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // links [text](url)
+  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // unordered lists
+  h = h.replace(/^- (.+)$/gm, '<li>$1</li>');
+  h = h.replace(/(<li>.*?<\/li>(\n|$))+/gs, m => '<ul>' + m + '</ul>');
+  // hr
+  h = h.replace(/^---$/gm, '<hr>');
+  // paragraphs
+  h = h.split(/\n\n+/).map(p => {
+    if (p.match(/^<(h[1-6]|ul|ol|hr|blockquote|pre)/)) return p;
+    return p.trim() ? '<p>' + p.replace(/\n/g, '<br>') + '</p>' : '';
+  }).join('\n');
+  return h;
+}
+
+async function loadArticle() {
+  if (!slug) {
+    document.getElementById('wrap').innerHTML = `<div class="empty">
+      <div class="empty-ico">⚠️</div>
+      <div class="empty-title">ไม่ได้ระบุบทความ</div>
+      <div>กลับไปดู <a href="articles.html" style="color:var(--red);text-decoration:underline">บทความทั้งหมด</a></div></div>`;
+    return;
+  }
+  try {
+    const { data, error } = await sb.rpc('get_article_by_slug', { p_slug: slug });
+    if (error) throw error;
+    if (!data) throw new Error('not_found');
+    _article = data;
+    render();
+    loadRelatedProducts();
+    loadRelatedArticles();
+  } catch(e) {
+    document.getElementById('wrap').innerHTML = `<div class="empty">
+      <div class="empty-ico">${e.message==='not_found'?'🔎':'⚠️'}</div>
+      <div class="empty-title">${e.message==='not_found'?'ไม่พบบทความ':'เกิดข้อผิดพลาด'}</div>
+      <div>${e.message==='not_found'?'บทความนี้อาจถูกลบหรือยังไม่เผยแพร่':escapeHtml(e.message)}</div>
+      <div style="margin-top:14px"><a href="articles.html" style="color:var(--red);text-decoration:underline">กลับไปดูบทความทั้งหมด</a></div></div>`;
+  }
+}
+
+function render() {
+  const a = _article;
+  document.title = a.title + ' · Thailand Market';
+
+  const dateStr = a.published_at
+    ? new Date(a.published_at).toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' })
+    : '';
+
+  const bodyHtml = a.body_html || md2html(a.body);
+
+  document.getElementById('wrap').innerHTML = `
+    <div class="bc">
+      <a href="index.html">หน้าหลัก</a>
+      <span class="bc-sep">/</span>
+      <a href="articles.html">บทความ</a>
+      ${a.category_slug ? `<span class="bc-sep">/</span><a href="articles.html?cat=${a.category_slug}">${escapeHtml(a.category_name||'')}</a>` : ''}
+    </div>
+
+    ${a.category_slug ? `<div class="cat-pill">${a.category_icon||'📰'} ${escapeHtml(a.category_name||'')}</div>` : ''}
+    <h1 class="title">${escapeHtml(a.title)}</h1>
+    ${a.subtitle ? `<div class="subtitle">${escapeHtml(a.subtitle)}</div>` : ''}
+
+    <div class="meta">
+      <div class="meta-author">
+        <div class="meta-avatar">${a.author_avatar ? `<img src="${a.author_avatar}">` : '✍️'}</div>
+        <div class="meta-author-info">
+          <div class="meta-name">${escapeHtml(a.author_name||'Thailand Market')}</div>
+          <div class="meta-date">${dateStr}</div>
+        </div>
+      </div>
+      <div class="meta-stats">
+        <div class="meta-stat">⏱ ${a.read_minutes||3} min</div>
+        <div class="meta-stat">👁 ${(a.view_count||0).toLocaleString()}</div>
+        <div class="meta-stat">❤️ ${(a.like_count||0).toLocaleString()}</div>
+      </div>
+    </div>
+
+    ${a.cover_image ? `<div class="cover"><img src="${a.cover_image}" alt=""></div>` : '<div class="cover">📰</div>'}
+
+    <div class="body">${bodyHtml}</div>
+
+    ${(a.tags && a.tags.length) ? `<div class="tags">
+      ${a.tags.map(t => `<a href="articles.html?tag=${encodeURIComponent(t)}" class="tag">#${escapeHtml(t)}</a>`).join('')}
+    </div>` : ''}
+
+    <div class="actions">
+      <button class="like-btn ${a.my_liked?'on':''}" id="like-btn" onclick="toggleLike()">
+        ❤️ <span>ถูกใจ</span> <span class="cnt" id="like-cnt">${a.like_count||0}</span>
+      </button>
+      <div class="share-btns">
+        <button class="share-btn" title="คัดลอกลิงก์" onclick="copyLink()">🔗</button>
+        <button class="share-btn" title="แชร์ Facebook" onclick="shareTo('fb')">📘</button>
+        <button class="share-btn" title="แชร์ LINE" onclick="shareTo('line')">💚</button>
+      </div>
+    </div>
+
+    <div id="related-products" style="display:none"></div>
+    <div id="related-articles"></div>
+  `;
+}
+
+async function toggleLike() {
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) { location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search); return; }
+    const { data, error } = await sb.rpc('toggle_article_like', { p_article_id: _article.id });
+    if (error) throw error;
+    const btn = document.getElementById('like-btn');
+    const cnt = document.getElementById('like-cnt');
+    btn.classList.toggle('on', data?.liked);
+    cnt.textContent = parseInt(cnt.textContent) + (data?.liked ? 1 : -1);
+  } catch(e) { toast('ไม่สำเร็จ: ' + e.message); }
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(location.href);
+  toast('คัดลอกลิงก์แล้ว');
+}
+
+function shareTo(net) {
+  const url = encodeURIComponent(location.href);
+  const text = encodeURIComponent(_article.title);
+  if (net === 'fb') window.open(`https://facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  else if (net === 'line') window.open(`https://line.me/R/msg/text/?${text}%20${url}`, '_blank');
+}
+
+async function loadRelatedProducts() {
+  if (!_article.related_products?.length) return;
+  try {
+    const { data } = await sb.from('products')
+      .select('id,name_th,price,thumbnail')
+      .in('id', _article.related_products)
+      .eq('status', 'active')
+      .limit(4);
+    if (!data?.length) return;
+    const wrap = document.getElementById('related-products');
+    wrap.style.display = 'block';
+    wrap.className = 'related';
+    wrap.innerHTML = `
+      <div class="related-title">🛍️ สินค้าที่เกี่ยวข้องในบทความ</div>
+      <div class="related-grid">
+        ${data.map(p => `<a class="pr-card" href="product.html?id=${p.id}">
+          <div class="pr-img">${p.thumbnail ? `<img src="${p.thumbnail}">` : '📦'}</div>
+          <div class="pr-info">
+            <div class="pr-name">${escapeHtml(p.name_th||'')}</div>
+            <div class="pr-price">฿${Number(p.price||0).toLocaleString()}</div>
+          </div>
+        </a>`).join('')}
+      </div>`;
+  } catch(e) { /* silent */ }
+}
+
+async function loadRelatedArticles() {
+  try {
+    const { data } = await sb.rpc('get_articles', {
+      p_category_slug: _article.category_slug,
+      p_featured: null,
+      p_limit: 6
+    });
+    const others = (data||[]).filter(a => a.id !== _article.id).slice(0, 3);
+    if (!others.length) return;
+    document.getElementById('related-articles').innerHTML = `
+      <div class="related-articles">
+        <div class="related-title">📰 บทความที่เกี่ยวข้อง</div>
+        <div class="ra-grid">
+          ${others.map(a => `<a class="ra-card" href="article.html?slug=${a.slug}">
+            <div class="ra-cover">${a.cover_image ? `<img src="${a.cover_image}">` : '📰'}</div>
+            <div class="ra-info">
+              <div class="ra-cat">${a.category_icon||''} ${escapeHtml(a.category_name||'')}</div>
+              <div class="ra-title">${escapeHtml(a.title)}</div>
+            </div>
+          </a>`).join('')}
+        </div>
+      </div>`;
+  } catch(e) { /* silent */ }
+}
+
+loadArticle();
+</script>
+</body>
+</html>

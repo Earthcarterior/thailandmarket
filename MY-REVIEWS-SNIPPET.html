@@ -1,0 +1,191 @@
+<!--
+═══════════════════════════════════════════════════════════════════════
+  MY REVIEWS COMPONENT — Snippet สำหรับ profile.html (user dashboard)
+
+  วิธีใช้:
+  1. paste <style> block ลง <head>
+  2. paste <div id="my-reviews-section"> ในตำแหน่งที่อยากให้ section นี้แสดง
+  3. paste <script> ก่อน </body>
+  4. function loadMyReviews() จะถูกเรียกอัตโนมัติเมื่อ DOM พร้อม
+═══════════════════════════════════════════════════════════════════════
+-->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     STYLE
+═══════════════════════════════════════════════════════════════ -->
+<style>
+.mr-section{background:#fff;border:1px solid #E5E5E5;padding:24px;margin-bottom:18px}
+.mr-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #E5E5E5;flex-wrap:wrap;gap:8px}
+.mr-title{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+.mr-cnt{font-family:'DM Mono',monospace;font-size:11px;color:#737373;letter-spacing:.04em;background:#F5F5F5;padding:3px 8px}
+.mr-list{display:flex;flex-direction:column;gap:14px}
+.mr-card{display:grid;grid-template-columns:80px 1fr;gap:14px;padding:14px;border:1px solid #E5E5E5;background:#FAFAFA;transition:all .15s}
+.mr-card:hover{border-color:#0A0A0A;background:#fff}
+.mr-prod-img{aspect-ratio:1;background:#fff;border:1px solid #E5E5E5;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden}
+.mr-prod-img img{width:100%;height:100%;object-fit:cover}
+.mr-body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mr-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.mr-prod-name{font-size:13px;font-weight:600;line-height:1.4;flex:1;min-width:0}
+.mr-prod-name a{color:#0A0A0A;text-decoration:none}
+.mr-prod-name a:hover{color:#E63329}
+.mr-status{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
+.mr-status.published{background:#DCFCE7;color:#166534}
+.mr-status.hidden{background:#FEE2E2;color:#991B1B}
+.mr-stars{color:#F59E0B;font-size:13px;letter-spacing:1px}
+.mr-text{font-size:12px;color:#525252;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mr-photos{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
+.mr-photo{width:48px;height:48px;background:#F5F5F5;border:1px solid #E5E5E5;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden}
+.mr-photo img{width:100%;height:100%;object-fit:cover}
+.mr-meta{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.mr-meta-l{display:flex;gap:14px;font-family:'DM Mono',monospace;font-size:10px;color:#737373;letter-spacing:.04em}
+.mr-actions{display:flex;gap:6px}
+.mr-btn{padding:5px 10px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.04em;text-transform:uppercase;background:#fff;border:1px solid #E5E5E5;cursor:pointer;color:#525252}
+.mr-btn:hover{border-color:#0A0A0A;color:#0A0A0A}
+.mr-btn.danger:hover{border-color:#DC2626;color:#DC2626}
+.mr-reply{margin-top:8px;padding:8px 12px;background:#F5F5F5;border-left:3px solid #E63329;font-size:11px}
+.mr-reply-from{font-family:'DM Mono',monospace;font-size:9px;color:#E63329;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.mr-reply-text{color:#525252;line-height:1.5}
+.mr-hide-warn{background:#FEE2E2;border-left:3px solid #DC2626;padding:6px 10px;margin-top:6px;font-size:11px;color:#991B1B}
+.mr-empty{text-align:center;padding:40px 16px;color:#737373}
+.mr-empty-ico{font-size:42px;opacity:.3;margin-bottom:8px}
+@media(max-width:580px){.mr-card{grid-template-columns:60px 1fr;padding:10px;gap:10px}.mr-prod-img{font-size:22px}}
+</style>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HTML BLOCK
+═══════════════════════════════════════════════════════════════ -->
+<div class="mr-section" id="my-reviews-section">
+  <div class="mr-hd">
+    <div class="mr-title">⭐ รีวิวของฉัน <span class="mr-cnt" id="mr-count">— รีวิว</span></div>
+    <a href="order-history.html" style="font-size:11px;font-family:'DM Mono',monospace;color:#737373;letter-spacing:.06em;text-transform:uppercase;text-decoration:none">เขียนรีวิวเพิ่ม →</a>
+  </div>
+  <div class="mr-list" id="mr-list">
+    <div class="mr-empty"><div class="mr-empty-ico">⏳</div><div>กำลังโหลด...</div></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCRIPT
+═══════════════════════════════════════════════════════════════ -->
+<script>
+// (ใช้ตัวแปร sb ที่มีอยู่แล้วใน profile.html — ถ้าไม่มี uncomment 4 บรรทัดนี้)
+// const sb = supabase.createClient(
+//   'https://qmgyimsptzewwyafvjzk.supabase.co',
+//   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+// );
+
+function _mrEscape(s){return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function _mrFormatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'2-digit' });
+}
+
+async function loadMyReviews() {
+  const list = document.getElementById('mr-list');
+  const cntEl = document.getElementById('mr-count');
+  if (!list) return;
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) {
+      list.innerHTML = `<div class="mr-empty">
+        <div class="mr-empty-ico">🔒</div>
+        <div style="margin-bottom:10px">กรุณาเข้าสู่ระบบก่อน</div>
+        <a href="login.html?from=profile.html" style="color:#E63329;text-decoration:underline">เข้าสู่ระบบ →</a></div>`;
+      return;
+    }
+
+    const { data, error } = await sb.rpc('get_my_reviews');
+    if (error) throw error;
+
+    cntEl.textContent = (data?.length || 0) + ' รีวิว';
+
+    if (!data?.length) {
+      list.innerHTML = `<div class="mr-empty">
+        <div class="mr-empty-ico">📝</div>
+        <div style="font-size:14px;font-weight:600;color:#525252;margin-bottom:6px">ยังไม่มีรีวิว</div>
+        <div style="font-size:12px;margin-bottom:14px">รีวิวสินค้าที่คุณซื้อเพื่อรับ Coin</div>
+        <a href="order-history.html" style="display:inline-block;padding:8px 16px;background:#0A0A0A;color:#fff;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none">📦 ดูออเดอร์</a></div>`;
+      return;
+    }
+
+    list.innerHTML = data.map(r => {
+      const photos = (typeof r.photos==='string' ? JSON.parse(r.photos||'[]') : r.photos) || [];
+      const stars = '★'.repeat(r.rating) + '☆'.repeat(5-r.rating);
+      const status = r.is_hidden
+        ? '<span class="mr-status hidden">🙈 ถูกซ่อน</span>'
+        : r.is_published
+          ? '<span class="mr-status published">✓ แสดง</span>'
+          : '<span class="mr-status hidden">⏸ ยังไม่เผยแพร่</span>';
+
+      return `<div class="mr-card">
+        <div class="mr-prod-img">${r.product_thumbnail
+          ? `<a href="product.html?id=${r.product_id}"><img src="${r.product_thumbnail}" alt=""></a>`
+          : '📦'}</div>
+        <div class="mr-body">
+          <div class="mr-row1">
+            <div class="mr-prod-name">
+              ${r.product_id
+                ? `<a href="product.html?id=${r.product_id}">${_mrEscape(r.product_name || '(สินค้าถูกลบ)')}</a>`
+                : _mrEscape(r.product_name || '(สินค้าถูกลบ)')}
+            </div>
+            ${status}
+          </div>
+          <div class="mr-stars">${stars}</div>
+          ${r.variant_text ? `<div style="font-size:11px;color:#737373;font-family:'DM Mono',monospace">${_mrEscape(r.variant_text)}</div>` : ''}
+          <div class="mr-text">${_mrEscape(r.comment || '')}</div>
+
+          ${photos.length ? `<div class="mr-photos">${photos.slice(0,4).map(p => `<div class="mr-photo"><img src="${p}" alt="" loading="lazy"></div>`).join('')}${photos.length>4?`<div class="mr-photo" style="background:#0A0A0A;color:#fff;font-family:'DM Mono',monospace;font-size:11px">+${photos.length-4}</div>`:''}</div>` : ''}
+
+          ${r.is_hidden && r.hide_reason ? `<div class="mr-hide-warn">⚠️ รีวิวนี้ถูกซ่อนโดย admin: ${_mrEscape(r.hide_reason)}</div>` : ''}
+
+          ${r.seller_reply ? `<div class="mr-reply">
+            <div class="mr-reply-from">↩ ตอบกลับจากร้านค้า · ${_mrFormatDate(r.seller_reply_at)}</div>
+            <div class="mr-reply-text">${_mrEscape(r.seller_reply)}</div>
+          </div>` : ''}
+
+          <div class="mr-meta">
+            <div class="mr-meta-l">
+              <span>📅 ${_mrFormatDate(r.created_at)}</span>
+              <span>👍 ${r.helpful_count||0}</span>
+            </div>
+            <div class="mr-actions">
+              <button class="mr-btn" onclick="mrEdit('${r.id}','${r.product_id||''}')">✏️ แก้ไข</button>
+              <button class="mr-btn danger" onclick="mrDelete('${r.id}')">🗑️ ลบ</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="mr-empty">
+      <div class="mr-empty-ico">⚠️</div>
+      <div style="color:#DC2626;font-size:12px;margin-bottom:6px">${e.message}</div>
+      <div style="font-size:11px">รัน ARTICLES-AND-REVIEWS-SETUP.sql ใน Supabase</div></div>`;
+  }
+}
+
+function mrEdit(reviewId, productId) {
+  if (productId) location.href = `review-write.html?product=${productId}&review=${reviewId}`;
+  else alert('ไม่พบสินค้านี้แล้ว');
+}
+
+async function mrDelete(reviewId) {
+  if (!confirm('ลบรีวิวนี้? (ไม่สามารถกู้คืนได้)')) return;
+  try {
+    const { error } = await sb.from('reviews').delete().eq('id', reviewId);
+    if (error) throw error;
+    await loadMyReviews();
+  } catch(e) { alert('ลบไม่สำเร็จ: ' + e.message); }
+}
+
+// auto-load when DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadMyReviews);
+} else {
+  loadMyReviews();
+}
+</script>

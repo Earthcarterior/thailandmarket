@@ -486,6 +486,7 @@ nav, .nav {
       <a href="live-shopping.html" class="nav-link">🔴 Live</a>
       <a href="brand-day.html" class="nav-link">Brand Day</a>
       <a href="coupon-hub.html" class="nav-link">Coupon</a>
+      <a href="articles.html" class="nav-link">📰 บทความ</a>
       <a href="loyalty-catalog.html" class="nav-link">Loyalty</a>
       <a href="subscription.html" class="nav-link">TM Plus</a>
       <a href="b2b-portal.html" class="nav-link">B2B</a>
@@ -496,7 +497,12 @@ nav, .nav {
     </div>
     <div class="nav-acts">
       <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
-      <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
+      <button class="nav-btn" onclick="location.href='chat.html'" style="position:relative">
+        <span class="nav-btn-ico">💬<span class="nav-badge" id="chat-badge" style="display:none">0</span></span>Chat
+      </button>
+      <button class="nav-btn" onclick="location.href='notification-center.html'" style="position:relative">
+        <span class="nav-btn-ico">🔔<span class="nav-badge" id="notif-badge" style="display:none">0</span></span>Alerts
+      </button>
       <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
         <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
       </button>
@@ -517,6 +523,14 @@ nav, .nav {
         </a>
         <a href="order-history.html" class="dropdown-item">
           <span class="dropdown-item-ico">📦</span>คำสั่งซื้อ
+        </a>
+        <a href="chat.html" class="dropdown-item" style="position:relative">
+          <span class="dropdown-item-ico">💬</span>แชทของฉัน
+          <span id="dd-chat-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px;font-family:var(--mono);font-weight:600;min-width:22px;text-align:center">0</span>
+        </a>
+        <a href="notification-center.html" class="dropdown-item" style="position:relative">
+          <span class="dropdown-item-ico">🔔</span>การแจ้งเตือน
+          <span id="dd-notif-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px;font-family:var(--mono);font-weight:600;min-width:22px;text-align:center">0</span>
         </a>
         <a href="wishlist.html" class="dropdown-item">
           <span class="dropdown-item-ico">❤️</span>รายการโปรด
@@ -897,7 +911,90 @@ function addCart(id, name, price, img) {
 
 function doSearch() {
   const q = document.getElementById('search-inp')?.value?.trim();
-  if (q) window.location.href = `storefront-live.html?search=${encodeURIComponent(q)}`;
+  if (q) window.location.href = `search-results.html?q=${encodeURIComponent(q)}`;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  SEARCH AUTOCOMPLETE [PATCH 2026-05-03]
+// ════════════════════════════════════════════════════════════════════════
+let _searchTimer = null;
+let _trendingCache = null;
+
+function setupSearchAutocomplete() {
+  const inp = document.getElementById('search-inp');
+  if (!inp) return;
+  const wrap = inp.parentElement;
+  wrap.style.position = 'relative';
+
+  // สร้าง dropdown
+  const dd = document.createElement('div');
+  dd.id = 'search-dd';
+  dd.style.cssText = 'position:absolute;top:100%;left:-1px;right:-1px;background:#fff;border:1px solid #E5E5E5;border-top:none;z-index:200;display:none;max-height:420px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.08)';
+  wrap.appendChild(dd);
+
+  inp.addEventListener('focus', async () => {
+    if (inp.value.trim().length === 0) {
+      // แสดง history + trending
+      await showSearchInitial(dd);
+    }
+  });
+
+  inp.addEventListener('input', () => {
+    clearTimeout(_searchTimer);
+    const v = inp.value.trim();
+    if (v.length === 0) { showSearchInitial(dd); return; }
+    if (v.length < 2) { dd.style.display = 'none'; return; }
+    _searchTimer = setTimeout(() => fetchSearchSuggestions(v, dd), 200);
+  });
+
+  document.addEventListener('click', e => {
+    if (!wrap.contains(e.target)) dd.style.display = 'none';
+  });
+}
+
+async function showSearchInitial(dd) {
+  const html = ['<div style="padding:14px 16px"><div style="font-size:10px;font-family:var(--mono);color:var(--g500);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">🔥 ค้นหายอดนิยม</div><div id="sd-trend" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>'];
+  dd.innerHTML = html.join('');
+  dd.style.display = 'block';
+
+  if (!_trendingCache) {
+    try {
+      const { data } = await sb.rpc('get_trending_searches', { p_limit: 8 });
+      _trendingCache = data || [];
+    } catch(e) { _trendingCache = []; }
+  }
+  const trend = document.getElementById('sd-trend');
+  if (trend) {
+    trend.innerHTML = _trendingCache.length
+      ? _trendingCache.map(t => `<a href="search-results.html?q=${encodeURIComponent(t.query)}" style="display:inline-block;padding:5px 10px;background:var(--g50);font-size:12px;border:1px solid transparent;font-family:var(--mono);transition:all .15s" onmouseover="this.style.borderColor='var(--black)'" onmouseout="this.style.borderColor='transparent'">${escQ(t.query)}</a>`).join('')
+      : '<div style="font-size:12px;color:var(--g400)">ยังไม่มีข้อมูล</div>';
+  }
+}
+
+async function fetchSearchSuggestions(q, dd) {
+  try {
+    const { data } = await sb.from('products')
+      .select('id,name_th,thumbnail,price')
+      .ilike('name_th', '%' + q + '%')
+      .eq('status', 'active')
+      .order('sold_count', { ascending: false })
+      .limit(6);
+
+    let html = '';
+    if (data?.length) {
+      html += '<div style="padding:8px 16px;font-size:10px;font-family:var(--mono);color:var(--g500);letter-spacing:.06em;text-transform:uppercase;background:var(--g50);border-bottom:1px solid #F5F5F5">สินค้าแนะนำ</div>';
+      html += data.map(p => `<a href="product.html?id=${p.id}" style="display:flex;gap:10px;padding:10px 16px;align-items:center;border-bottom:1px solid #F5F5F5;text-decoration:none;color:inherit">
+        <div style="width:36px;height:36px;background:var(--g100);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden">${p.thumbnail?`<img src="${p.thumbnail}" style="width:100%;height:100%;object-fit:cover">`:'📦'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:var(--g700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escQ(p.name_th||'')}</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--red);font-weight:600">฿${Number(p.price||0).toLocaleString()}</div>
+        </div>
+      </a>`).join('');
+    }
+    html += `<a href="search-results.html?q=${encodeURIComponent(q)}" style="display:block;padding:12px 16px;text-align:center;font-size:11px;font-family:var(--mono);color:var(--red);letter-spacing:.06em;text-transform:uppercase;font-weight:600;text-decoration:none;border-top:1px solid #F5F5F5">🔍 ดูผลการค้นหาทั้งหมด →</a>`;
+    dd.innerHTML = html;
+    dd.style.display = 'block';
+  } catch(e) { /* silent */ }
 }
 
 // ── Helpers ────────────────────────────────────────────────
@@ -2484,6 +2581,66 @@ async function loadCouponSections() {
 }
 
 
+// ════════════════════════════════════════════════════════════════════════
+//  CHAT + NOTIFICATION BADGES + REALTIME [PATCH 2026-05-03]
+// ════════════════════════════════════════════════════════════════════════
+
+async function updateChatBadge() {
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    const badge = document.getElementById('chat-badge');
+    const ddBadge = document.getElementById('dd-chat-badge');
+    if (!user) {
+      if (badge) badge.style.display = 'none';
+      if (ddBadge) ddBadge.style.display = 'none';
+      return;
+    }
+    const { data } = await sb.rpc('get_my_chat_threads');
+    const total = (data||[]).reduce((s,t) => s + (t.unread||0), 0);
+    [badge, ddBadge].forEach(b => {
+      if (!b) return;
+      if (total > 0) {
+        b.textContent = total > 99 ? '99+' : total;
+        b.style.display = 'inline-block';
+      } else b.style.display = 'none';
+    });
+  } catch(e) { /* silent */ }
+}
+
+async function updateNotifBadge() {
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    const badge = document.getElementById('notif-badge');
+    const ddBadge = document.getElementById('dd-notif-badge');
+    if (!user) {
+      if (badge) badge.style.display = 'none';
+      if (ddBadge) ddBadge.style.display = 'none';
+      return;
+    }
+    const { data } = await sb.rpc('get_my_notifications', { p_category: 'all', p_limit: 1 });
+    const cnt = data?.counts?.all || 0;
+    [badge, ddBadge].forEach(b => {
+      if (!b) return;
+      if (cnt > 0) {
+        b.textContent = cnt > 99 ? '99+' : cnt;
+        b.style.display = 'inline-block';
+      } else b.style.display = 'none';
+    });
+  } catch(e) { /* silent */ }
+}
+
+async function subscribeRealtime() {
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+    sb.channel('rt-' + user.id)
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'notifications', filter:`user_id=eq.${user.id}` }, () => updateNotifBadge())
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'chat_messages' }, () => updateChatBadge())
+      .subscribe();
+  } catch(e) { /* silent */ }
+}
+
+
 async function init() {
   updateCartUI();
   startTimer();
@@ -2501,6 +2658,12 @@ async function init() {
 
   // [PATCH 2026-05-03] update badge คูปองของฉัน
   updateCouponBadge();
+
+  // [PATCH 2026-05-03] update badge Chat + Notification + setup search autocomplete
+  setupSearchAutocomplete();
+  updateChatBadge();
+  updateNotifBadge();
+  subscribeRealtime();
 
   // [PATCH 2026-05-03] Enter key search
   const csInp = document.getElementById('cs-search-input');

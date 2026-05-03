@@ -345,6 +345,16 @@ nav, .nav {
 
 /* BANNER PANEL [PATCH 2026-05-03] */
 .bn-tab{padding:11px 18px;font-size:13px;border-bottom:2px solid transparent;background:none;cursor:pointer;color:#737373;font-family:inherit}
+.rv-fil{padding:8px 14px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.04em;text-transform:uppercase;background:#fff;border:1px solid #E5E5E5;cursor:pointer;color:#737373;border-right:none}
+.rv-fil:last-of-type{border-right:1px solid #E5E5E5}
+.rv-fil:hover{color:#0A0A0A}
+.rv-fil.on{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+.ar-tab{padding:11px 18px;font-size:13px;border-bottom:2px solid transparent;background:none;cursor:pointer;color:#737373;font-family:inherit}
+.ar-tab.on{color:#0A0A0A;border-bottom-color:#E63329;font-weight:600}
+.ar-status-pill{display:inline-block;padding:2px 8px;font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.04em}
+.ar-status-pill.published{background:#DCFCE7;color:#166534}
+.ar-status-pill.draft{background:#FEF3C7;color:#92400E}
+.ar-status-pill.archived{background:#E5E5E5;color:#525252}
 .bn-tab.on{color:#0A0A0A;border-bottom-color:#E63329;font-weight:600}
 .bn-pos-btn,.bn-link-btn{padding:10px 8px;border:1px solid #E5E5E5;background:#fff;font-size:11px;cursor:pointer;font-family:inherit;letter-spacing:.04em;text-transform:uppercase;line-height:1.5;transition:all .15s;text-align:center}
 .bn-pos-btn:hover,.bn-link-btn:hover{border-color:#0A0A0A}
@@ -533,6 +543,9 @@ nav { display: block !important; height: auto !important; }
       <div class="sb-section-lbl">การตลาด</div>
       <div class="sni" id="nav-coupons" onclick="showPanel('coupons')">
         <span class="sni-ico">🎟️</span> คูปอง
+      </div>
+      <div class="sni" id="nav-articles" onclick="showPanel('articles')">
+        <span class="sni-ico">📰</span> บทความ
       </div>
 
       <div class="sb-section-lbl">ระบบ</div>
@@ -1192,6 +1205,171 @@ nav { display: block !important; height: auto !important; }
     </div>
 
 
+    <!-- ════════════════════════════════════════════════════════════════
+         REVIEWS PANEL [PATCH 2026-05-03]
+         ════════════════════════════════════════════════════════════════ -->
+    <div id="panel-reviews" class="panel admin-only" style="padding:24px;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:18px;font-weight:700">⭐ จัดการรีวิว</div>
+          <div style="font-size:12px;color:#737373;margin-top:2px">ดู / ซ่อน / ลบ รีวิวทั้งระบบ — แก้ปัญหารีวิวที่ไม่เหมาะสม</div>
+        </div>
+        <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="loadAdminReviews();loadReviewStats()">🔄 รีเฟรช</button>
+      </div>
+
+      <!-- Stats cards -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px" id="rv-stats-grid">
+        <div style="padding:14px;border:1px solid #E5E5E5;background:#fff">
+          <div style="font-size:10px;font-family:'DM Mono',monospace;color:#737373;letter-spacing:.06em;text-transform:uppercase">ทั้งหมด</div>
+          <div style="font-size:22px;font-weight:600;font-family:'DM Mono',monospace;margin-top:4px" id="rv-stat-total">—</div>
+        </div>
+        <div style="padding:14px;border:1px solid #E5E5E5;background:#fff">
+          <div style="font-size:10px;font-family:'DM Mono',monospace;color:#737373;letter-spacing:.06em;text-transform:uppercase">คะแนนเฉลี่ย</div>
+          <div style="font-size:22px;font-weight:600;font-family:'DM Mono',monospace;margin-top:4px;color:#F59E0B" id="rv-stat-avg">—</div>
+        </div>
+        <div style="padding:14px;border:1px solid #E5E5E5;background:#fff">
+          <div style="font-size:10px;font-family:'DM Mono',monospace;color:#737373;letter-spacing:.06em;text-transform:uppercase">มีรูปประกอบ</div>
+          <div style="font-size:22px;font-weight:600;font-family:'DM Mono',monospace;margin-top:4px;color:#16A34A" id="rv-stat-photo">—</div>
+        </div>
+        <div style="padding:14px;border:1px solid #E5E5E5;background:#fff">
+          <div style="font-size:10px;font-family:'DM Mono',monospace;color:#737373;letter-spacing:.06em;text-transform:uppercase">ถูกซ่อน</div>
+          <div style="font-size:22px;font-weight:600;font-family:'DM Mono',monospace;margin-top:4px;color:#DC2626" id="rv-stat-hidden">—</div>
+        </div>
+        <div style="padding:14px;border:1px solid #E5E5E5;background:#fff">
+          <div style="font-size:10px;font-family:'DM Mono',monospace;color:#737373;letter-spacing:.06em;text-transform:uppercase">7 วันล่าสุด</div>
+          <div style="font-size:22px;font-weight:600;font-family:'DM Mono',monospace;margin-top:4px;color:#2563EB" id="rv-stat-7d">—</div>
+        </div>
+      </div>
+
+      <!-- Filters + Search -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;gap:0">
+          <button class="rv-fil on" data-f="all"         onclick="rvSwitchFilter('all',this)">📋 ทั้งหมด</button>
+          <button class="rv-fil"    data-f="hidden"      onclick="rvSwitchFilter('hidden',this)">🙈 ถูกซ่อน</button>
+          <button class="rv-fil"    data-f="low_rating"  onclick="rvSwitchFilter('low_rating',this)">⚠️ คะแนนต่ำ</button>
+          <button class="rv-fil"    data-f="with_photo"  onclick="rvSwitchFilter('with_photo',this)">📷 มีรูป</button>
+          <button class="rv-fil"    data-f="no_reply"    onclick="rvSwitchFilter('no_reply',this)">💬 ยังไม่ตอบ</button>
+        </div>
+        <input id="rv-search" placeholder="ค้นหา: ชื่อสินค้า / ข้อความรีวิว..." style="flex:1;min-width:220px;border:1px solid #E5E5E5;padding:8px 12px;font-family:inherit;font-size:13px;outline:none">
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:60px">รูป</th>
+            <th>สินค้า / รีวิว</th>
+            <th>ผู้รีวิว</th>
+            <th style="width:80px">คะแนน</th>
+            <th>การตอบกลับ</th>
+            <th>สถานะ</th>
+            <th style="width:100px"></th>
+          </tr></thead>
+          <tbody id="rv-tbody"><tr><td colspan="7"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════════════════
+         ARTICLES PANEL [PATCH 2026-05-03]
+         ════════════════════════════════════════════════════════════════ -->
+    <div id="panel-articles" class="panel admin-only" style="padding:24px;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:18px;font-weight:700">📰 จัดการบทความ</div>
+          <div style="font-size:12px;color:#737373;margin-top:2px">เขียน / แก้ไข / เผยแพร่ บทความและ blog ทั้งระบบ</div>
+        </div>
+        <button class="btn btn-k btn-sm" onclick="openArticleModal()">➕ เขียนบทความใหม่</button>
+      </div>
+
+      <!-- Tabs status -->
+      <div style="display:flex;gap:0;border-bottom:1px solid #E5E5E5;margin-bottom:18px;flex-wrap:wrap">
+        <button class="ar-tab on" data-st="all"       onclick="arSwitchTab('all',this)">📋 ทั้งหมด <span id="ar-cnt-all" style="background:#0A0A0A;color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;font-family:'DM Mono',monospace">0</span></button>
+        <button class="ar-tab"    data-st="published" onclick="arSwitchTab('published',this)">✅ เผยแพร่ <span id="ar-cnt-published" style="background:#16A34A;color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;font-family:'DM Mono',monospace">0</span></button>
+        <button class="ar-tab"    data-st="draft"     onclick="arSwitchTab('draft',this)">📝 ร่าง <span id="ar-cnt-draft" style="background:#F59E0B;color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;font-family:'DM Mono',monospace">0</span></button>
+        <button class="ar-tab"    data-st="archived"  onclick="arSwitchTab('archived',this)">📦 เก็บ <span id="ar-cnt-archived" style="background:#737373;color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;font-family:'DM Mono',monospace">0</span></button>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:80px">Cover</th>
+            <th>หัวข้อ / Slug</th>
+            <th>หมวด</th>
+            <th>สถานะ</th>
+            <th style="width:100px">สถิติ</th>
+            <th>เผยแพร่</th>
+            <th style="width:130px"></th>
+          </tr></thead>
+          <tbody id="ar-tbody"><tr><td colspan="7"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- ARTICLE EDITOR MODAL -->
+      <div id="ar-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center;padding:20px;overflow:auto">
+        <div style="background:#fff;width:780px;max-width:100%;max-height:94vh;overflow-y:auto;padding:28px;position:relative">
+          <button onclick="closeArticleModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+          <div style="font-size:18px;font-weight:600;margin-bottom:6px" id="ar-modal-title">เขียนบทความใหม่</div>
+          <div style="font-size:12px;color:#737373;margin-bottom:20px">เขียนเป็น Markdown ก็ได้ (#, ##, ###, **bold**, *italic*, [link](url), - list)</div>
+          <input type="hidden" id="ar-id">
+
+          <div class="cp-fg"><label class="cp-lbl">หัวข้อ *</label>
+            <input class="cp-inp" id="ar-title" placeholder="เช่น 5 เคล็ดลับช้อปออนไลน์อย่างชาญฉลาด" maxlength="120"></div>
+
+          <div class="cp-fg"><label class="cp-lbl">Slug (URL) — ปล่อยว่างจะสร้างอัตโนมัติ</label>
+            <input class="cp-inp" id="ar-slug" placeholder="how-to-shop-online" pattern="[a-z0-9-]+" style="font-family:'DM Mono',monospace"></div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">หมวดหมู่</label>
+              <select class="cp-inp" id="ar-cat"><option value="">—</option></select></div>
+            <div class="cp-fg"><label class="cp-lbl">Read time (นาที)</label>
+              <input class="cp-inp" id="ar-read" type="number" value="3" min="1"></div>
+          </div>
+
+          <div class="cp-fg"><label class="cp-lbl">คำโปรยสั้น (subtitle)</label>
+            <input class="cp-inp" id="ar-subtitle" placeholder="คำอธิบายใต้หัวข้อ" maxlength="200"></div>
+
+          <div class="cp-fg"><label class="cp-lbl">Excerpt (สรุปย่อ — แสดงในหน้า list)</label>
+            <textarea class="cp-inp" id="ar-excerpt" rows="2" placeholder="2-3 ประโยคสรุปบทความ"></textarea></div>
+
+          <div class="cp-fg"><label class="cp-lbl">รูป Cover (URL)</label>
+            <input class="cp-inp" id="ar-cover" placeholder="https://..."></div>
+
+          <div class="cp-fg"><label class="cp-lbl">เนื้อหาบทความ * (Markdown)</label>
+            <textarea class="cp-inp" id="ar-body" rows="12" placeholder="## หัวข้อย่อย\n\nเขียนเนื้อหาตรงนี้...\n\n## หัวข้อถัดไป\n\n- ข้อ 1\n- ข้อ 2" style="font-family:'DM Mono',monospace;font-size:12px;line-height:1.6"></textarea></div>
+
+          <div class="cp-form-grid">
+            <div class="cp-fg"><label class="cp-lbl">Tags (คั่นด้วย ,)</label>
+              <input class="cp-inp" id="ar-tags" placeholder="โซฟา, เฟอร์นิเจอร์, ห้องนั่งเล่น"></div>
+            <div class="cp-fg"><label class="cp-lbl">ผู้เขียน</label>
+              <input class="cp-inp" id="ar-author" placeholder="Thailand Market Editor"></div>
+          </div>
+
+          <div class="cp-fg"><label class="cp-lbl">Related Products IDs (UUID, คั่นด้วย ,)</label>
+            <input class="cp-inp" id="ar-related" placeholder="uuid1, uuid2, uuid3" style="font-family:'DM Mono',monospace;font-size:12px"></div>
+
+          <div class="cp-form-grid" style="margin-top:14px">
+            <div class="cp-fg"><label class="cp-lbl">สถานะ *</label>
+              <select class="cp-inp" id="ar-status">
+                <option value="draft">📝 ร่าง (ยังไม่เผยแพร่)</option>
+                <option value="published">✅ เผยแพร่ทันที</option>
+                <option value="archived">📦 เก็บถาวร</option>
+              </select></div>
+            <div class="cp-fg"><label class="cp-lbl">บทความเด่น (Featured)</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:9px 12px;border:1px solid #E5E5E5">
+                <input type="checkbox" id="ar-featured"> ⭐ ใช้เป็น Featured
+              </label></div>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+            <button class="btn" style="background:#fff;color:#0A0A0A;border:1px solid #E5E5E5" onclick="closeArticleModal()">ยกเลิก</button>
+            <button class="btn btn-k" onclick="saveArticle()" id="ar-save-btn">💾 บันทึก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- ── SETTINGS: Stats + Trust ── -->
     
     <!-- ── SELLERS PANEL ── -->
@@ -1665,7 +1843,7 @@ function showApp(user, role) {
     el.style.display = role === 'admin' ? '' : 'none';
   });
   ['nav-approve','nav-users','nav-categories','nav-brands',
-   'nav-reviews','nav-coupons','nav-banners'].forEach(id => {
+   'nav-reviews','nav-coupons','nav-banners','nav-articles'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = role === 'admin' ? 'flex' : 'none';
   });
@@ -2960,6 +3138,8 @@ window.showPanel = function(name) {
     case 'brands':      loadAdminBrands();             break;
     case 'coupons':     loadAdminCoupons(); loadCpKpis(); break;
     case 'banners':     loadAdminBanners(); break;
+    case 'reviews':     loadAdminReviews(); loadReviewStats(); break;
+    case 'articles':    loadAdminArticles(); break;
     case 'flash':       loadFlash();                   break;
     case 'sellers':     loadSellers('pending');        break;
     case 'approve':     loadPending('pending_review'); break;
@@ -3794,6 +3974,311 @@ async function saveBanner() {
   } finally {
     btn.disabled = false; btn.textContent = '💾 บันทึก';
   }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  REVIEWS PANEL [PATCH 2026-05-03]
+// ══════════════════════════════════════════════════════════════════════════
+
+let _rvCurrentFilter = 'all';
+
+function rvSwitchFilter(f, btn) {
+  _rvCurrentFilter = f;
+  document.querySelectorAll('.rv-fil').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  loadAdminReviews();
+}
+
+async function loadReviewStats() {
+  try {
+    const { data, error } = await sb.rpc('admin_review_stats');
+    if (error) throw error;
+    const s = data || {};
+    document.getElementById('rv-stat-total').textContent = (s.total||0).toLocaleString();
+    document.getElementById('rv-stat-avg').textContent = (s.avg_rating||0) + ' ★';
+    document.getElementById('rv-stat-photo').textContent = (s.with_photos||0).toLocaleString();
+    document.getElementById('rv-stat-hidden').textContent = (s.hidden||0).toLocaleString();
+    document.getElementById('rv-stat-7d').textContent = '+' + (s.last_7d||0).toLocaleString();
+  } catch(e) {
+    console.warn('loadReviewStats:', e.message);
+  }
+}
+
+async function loadAdminReviews() {
+  const tbody = document.getElementById('rv-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr>';
+  try {
+    const search = document.getElementById('rv-search')?.value?.trim() || null;
+    const { data, error } = await sb.rpc('admin_list_reviews', {
+      p_filter: _rvCurrentFilter,
+      p_search: search,
+      p_limit: 100
+    });
+    if (error) throw error;
+
+    if (!data?.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="padding:32px;text-align:center;color:#737373">
+        <div style="font-size:32px;margin-bottom:8px">⭐</div>
+        <div>ไม่พบรีวิวที่ตรงเงื่อนไข</div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(r => {
+      const stars = '★'.repeat(r.rating) + '☆'.repeat(5-r.rating);
+      const dateStr = new Date(r.created_at).toLocaleDateString('th-TH', { day:'2-digit', month:'short', year:'2-digit' });
+      const photos = (typeof r.photos==='string' ? JSON.parse(r.photos||'[]') : r.photos) || [];
+      let status;
+      if (r.is_hidden) status = '<span style="background:#DC2626;color:#fff;padding:2px 7px;font-size:10px">🙈 ถูกซ่อน</span>';
+      else if (!r.is_published) status = '<span style="background:#737373;color:#fff;padding:2px 7px;font-size:10px">⏸ ยังไม่เผยแพร่</span>';
+      else status = '<span style="background:#16A34A;color:#fff;padding:2px 7px;font-size:10px">✓ แสดง</span>';
+      const verifyBadge = r.verified_purchase
+        ? '<span style="font-family:\'DM Mono\',monospace;font-size:9px;background:#DCFCE7;color:#166534;padding:1px 5px;letter-spacing:.04em;text-transform:uppercase;margin-left:4px">✓ซื้อจริง</span>' : '';
+
+      return `<tr>
+        <td>${r.product_thumbnail
+          ? `<img src="${r.product_thumbnail}" style="width:50px;height:50px;object-fit:cover;border:1px solid #E5E5E5">`
+          : `<div style="width:50px;height:50px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:20px">📦</div>`}
+        </td>
+        <td style="max-width:320px">
+          <div style="font-weight:600;font-size:12px;color:#0A0A0A;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(r.product_name || '(สินค้าถูกลบ)')}</div>
+          <div style="font-size:12px;color:#525252;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${escapeHtml(r.comment || '')}</div>
+          ${photos.length ? `<div style="margin-top:4px"><span style="font-size:10px;color:#737373;font-family:'DM Mono',monospace">📷 ${photos.length} รูป</span></div>` : ''}
+        </td>
+        <td style="font-size:12px">
+          <div style="font-weight:500">${escapeHtml(r.reviewer_name || 'ผู้ใช้')}${verifyBadge}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:#737373;margin-top:2px">${escapeHtml(r.reviewer_email || '')}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:#A3A3A3;margin-top:2px">${dateStr}</div>
+        </td>
+        <td>
+          <div style="font-size:14px;color:#F59E0B;letter-spacing:1px">${stars}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:#737373;margin-top:2px">${r.rating}/5</div>
+        </td>
+        <td style="font-size:12px">
+          ${r.seller_reply
+            ? `<div style="color:#16A34A;font-size:11px;font-family:'DM Mono',monospace">✓ ตอบแล้ว</div><div style="font-size:11px;color:#525252;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:160px">${escapeHtml(r.seller_reply)}</div>`
+            : '<span style="color:#A3A3A3;font-size:11px">ยังไม่ตอบ</span>'}
+        </td>
+        <td>${status}${r.hide_reason?`<div style="font-size:10px;color:#DC2626;margin-top:3px">${escapeHtml(r.hide_reason)}</div>`:''}</td>
+        <td>
+          ${r.is_hidden
+            ? `<button class="btn btn-sm" style="border:1px solid #16A34A;background:#fff;color:#16A34A;margin-right:4px" onclick="rvUnhide('${r.id}')">👁 แสดง</button>`
+            : `<button class="btn btn-sm" style="border:1px solid #DC2626;background:#fff;color:#DC2626;margin-right:4px" onclick="rvHide('${r.id}')">🙈 ซ่อน</button>`}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:24px;text-align:center;color:#E63329">❌ ${e.message}<br><small style="color:#737373">รัน ARTICLES-AND-REVIEWS-SETUP.sql ใน Supabase ก่อน</small></td></tr>`;
+  }
+}
+
+async function rvHide(id) {
+  const reason = prompt('เหตุผลที่ซ่อน (เช่น เนื้อหาไม่เหมาะสม, สแปม):');
+  if (reason === null) return;
+  try {
+    await sb.rpc('admin_toggle_review_hide', { p_id: id, p_hide: true, p_reason: reason || 'admin hidden' });
+    loadAdminReviews(); loadReviewStats();
+  } catch(e) { alert('ไม่สำเร็จ: '+e.message); }
+}
+
+async function rvUnhide(id) {
+  if (!confirm('แสดงรีวิวนี้อีกครั้ง?')) return;
+  try {
+    await sb.rpc('admin_toggle_review_hide', { p_id: id, p_hide: false });
+    loadAdminReviews(); loadReviewStats();
+  } catch(e) { alert('ไม่สำเร็จ: '+e.message); }
+}
+
+// hook search input
+document.addEventListener('DOMContentLoaded', () => {
+  const s = document.getElementById('rv-search');
+  if (s) {
+    let t;
+    s.addEventListener('input', () => { clearTimeout(t); t = setTimeout(loadAdminReviews, 400); });
+  }
+});
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  ARTICLES PANEL [PATCH 2026-05-03]
+// ══════════════════════════════════════════════════════════════════════════
+
+let _arAllArticles = [];
+let _arCurrentTab = 'all';
+let _arCats = [];
+
+function arSwitchTab(st, btn) {
+  _arCurrentTab = st;
+  document.querySelectorAll('.ar-tab').forEach(t => t.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  arRenderTable();
+}
+
+async function loadAdminArticles() {
+  const tbody = document.getElementById('ar-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-ico">⏳</div></div></td></tr>';
+  try {
+    // load categories first
+    if (!_arCats.length) {
+      const { data: cats } = await sb.from('article_categories').select('*').order('sort_order');
+      _arCats = cats || [];
+    }
+    const { data, error } = await sb.from('articles')
+      .select('*, article_categories(name, icon, slug)')
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    _arAllArticles = data || [];
+
+    // counts
+    document.getElementById('ar-cnt-all').textContent = _arAllArticles.length;
+    ['published','draft','archived'].forEach(s => {
+      const cnt = _arAllArticles.filter(a => a.status === s).length;
+      const el = document.getElementById('ar-cnt-' + s);
+      if (el) el.textContent = cnt;
+    });
+
+    arRenderTable();
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:24px;text-align:center;color:#E63329">❌ ${e.message}<br><small style="color:#737373">รัน ARTICLES-AND-REVIEWS-SETUP.sql ใน Supabase</small></td></tr>`;
+  }
+}
+
+function arRenderTable() {
+  const tbody = document.getElementById('ar-tbody');
+  if (!tbody) return;
+  let list = _arAllArticles;
+  if (_arCurrentTab !== 'all') list = list.filter(a => a.status === _arCurrentTab);
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:32px;text-align:center;color:#737373">
+      <div style="font-size:32px;margin-bottom:8px">📰</div>
+      <div style="margin-bottom:14px">ยังไม่มีบทความ${_arCurrentTab!=='all'?' ในสถานะนี้':''}</div>
+      <button class="btn btn-k btn-sm" onclick="openArticleModal()">➕ เขียนบทความใหม่</button></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(a => {
+    const cat = a.article_categories;
+    const dateStr = a.published_at
+      ? new Date(a.published_at).toLocaleDateString('th-TH', { day:'2-digit', month:'short', year:'2-digit' })
+      : '<span style="color:#A3A3A3">—</span>';
+    const featBadge = a.is_featured
+      ? '<span style="background:#FBBF24;color:#fff;padding:1px 6px;font-size:9px;font-family:\'DM Mono\',monospace;letter-spacing:.04em;margin-left:4px">⭐FEAT</span>' : '';
+
+    return `<tr>
+      <td>${a.cover_image
+        ? `<img src="${a.cover_image}" style="width:70px;height:48px;object-fit:cover;border:1px solid #E5E5E5">`
+        : `<div style="width:70px;height:48px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:24px">📰</div>`}
+      </td>
+      <td style="max-width:380px">
+        <div style="font-weight:600;font-size:13px">${escapeHtml(a.title || '')}${featBadge}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:#737373;margin-top:3px">${escapeHtml(a.slug || '')}</div>
+        ${a.subtitle ? `<div style="font-size:11px;color:#525252;margin-top:3px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden">${escapeHtml(a.subtitle)}</div>` : ''}
+      </td>
+      <td>${cat ? `<span style="font-size:11px">${cat.icon||'📰'} ${escapeHtml(cat.name)}</span>` : '<span style="color:#A3A3A3;font-size:11px">—</span>'}</td>
+      <td><span class="ar-status-pill ${a.status}">${a.status==='published'?'✅ เผยแพร่':a.status==='draft'?'📝 ร่าง':'📦 เก็บ'}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:#525252">
+        <div>👁 ${(a.view_count||0).toLocaleString()}</div>
+        <div>❤️ ${(a.like_count||0).toLocaleString()}</div>
+      </td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:#737373">${dateStr}</td>
+      <td>
+        ${a.status==='published'?`<a href="../article.html?slug=${a.slug}" target="_blank" class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px;text-decoration:none">👁</a>`:''}
+        <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px" onclick="editArticle('${a.id}')">✏️</button>
+        <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="deleteArticle('${a.id}','${(a.title||'').replace(/'/g,'')}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openArticleModal(data) {
+  document.getElementById('ar-modal-title').textContent = data ? '✏️ แก้ไขบทความ' : '➕ เขียนบทความใหม่';
+  document.getElementById('ar-id').value = data?.id || '';
+  document.getElementById('ar-title').value = data?.title || '';
+  document.getElementById('ar-slug').value = data?.slug || '';
+  document.getElementById('ar-subtitle').value = data?.subtitle || '';
+  document.getElementById('ar-excerpt').value = data?.excerpt || '';
+  document.getElementById('ar-cover').value = data?.cover_image || '';
+  document.getElementById('ar-body').value = data?.body || '';
+  document.getElementById('ar-tags').value = (data?.tags || []).join(', ');
+  document.getElementById('ar-author').value = data?.author_name || 'Thailand Market Editor';
+  document.getElementById('ar-related').value = (data?.related_products || []).join(', ');
+  document.getElementById('ar-read').value = data?.read_minutes || 3;
+  document.getElementById('ar-status').value = data?.status || 'draft';
+  document.getElementById('ar-featured').checked = !!data?.is_featured;
+
+  // populate cats select
+  const catSel = document.getElementById('ar-cat');
+  catSel.innerHTML = '<option value="">— เลือกหมวด —</option>' +
+    _arCats.map(c => `<option value="${c.id}" ${data?.category_id===c.id?'selected':''}>${c.icon||''} ${c.name}</option>`).join('');
+
+  document.getElementById('ar-modal').style.display = 'flex';
+}
+
+function closeArticleModal() {
+  document.getElementById('ar-modal').style.display = 'none';
+}
+
+async function editArticle(id) {
+  try {
+    const { data, error } = await sb.from('articles').select('*').eq('id', id).maybeSingle();
+    if (error || !data) throw error || new Error('ไม่พบบทความ');
+    openArticleModal(data);
+  } catch(e) { alert('โหลดไม่สำเร็จ: '+e.message); }
+}
+
+async function saveArticle() {
+  const btn = document.getElementById('ar-save-btn');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  try {
+    const id = document.getElementById('ar-id').value;
+    const title = document.getElementById('ar-title').value.trim();
+    const body = document.getElementById('ar-body').value.trim();
+    if (!title) throw new Error('กรอกหัวข้อ');
+    if (!body) throw new Error('กรอกเนื้อหา');
+
+    const tagsStr = document.getElementById('ar-tags').value.trim();
+    const relatedStr = document.getElementById('ar-related').value.trim();
+
+    const payload = {
+      title,
+      slug: document.getElementById('ar-slug').value.trim() || null,
+      subtitle: document.getElementById('ar-subtitle').value.trim() || null,
+      excerpt: document.getElementById('ar-excerpt').value.trim() || null,
+      cover_image: document.getElementById('ar-cover').value.trim() || null,
+      body,
+      category_id: document.getElementById('ar-cat').value || null,
+      tags: tagsStr ? tagsStr.split(',').map(t=>t.trim()).filter(Boolean) : null,
+      author_name: document.getElementById('ar-author').value.trim() || null,
+      related_products: relatedStr ? relatedStr.split(',').map(t=>t.trim()).filter(Boolean) : null,
+      read_minutes: parseInt(document.getElementById('ar-read').value) || 3,
+      status: document.getElementById('ar-status').value,
+      is_featured: document.getElementById('ar-featured').checked,
+      updated_at: new Date().toISOString()
+    };
+
+    let error;
+    if (id) ({error} = await sb.from('articles').update(payload).eq('id', id));
+    else    ({error} = await sb.from('articles').insert(payload));
+    if (error) throw error;
+
+    closeArticleModal();
+    await loadAdminArticles();
+  } catch(e) {
+    alert('บันทึกไม่สำเร็จ: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 บันทึก';
+  }
+}
+
+async function deleteArticle(id, title) {
+  if (!confirm(`ลบบทความ "${title||'นี้'}"? (ไม่สามารถกู้คืนได้)`)) return;
+  try {
+    await sb.from('articles').delete().eq('id', id);
+    await loadAdminArticles();
+  } catch(e) { alert('ลบไม่สำเร็จ: '+e.message); }
 }
 
 
