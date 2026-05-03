@@ -151,15 +151,46 @@ input,select{font-family:var(--font)}
 .coupon-strip{border:var(--border);padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:32px;flex-wrap:wrap}
 .coupon-icon{font-size:28px;flex-shrink:0}
 .coupon-text{flex:1;min-width:140px}
-.coupon-label{font-size:13px;font-weight:500;margin-bottom:2px}
+.coupon-label{font-size:13px;font-weight:500;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.coupon-label .more{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--red);cursor:pointer}
+.coupon-label .more:hover{text-decoration:underline}
 .coupon-sub{font-size:11px;color:var(--g500)}
 .coupon-codes{display:flex;gap:8px;flex-wrap:wrap}
-.coupon-code{border:1px dashed var(--g300);padding:8px 14px;cursor:pointer;transition:all .15s;text-align:center}
-.coupon-code:hover{border-color:var(--black)}
+.coupon-code{border:1px dashed var(--g300);padding:8px 14px;cursor:pointer;transition:all .15s;text-align:center;position:relative;min-width:90px}
+.coupon-code:hover{border-color:var(--black);transform:translateY(-1px)}
 .coupon-code.free{border-color:var(--green);background:#F0FDF4}
+.coupon-code.claimed{border-color:var(--green);background:#F0FDF4;border-style:solid}
+.coupon-code.claimed::before{content:'✓';position:absolute;top:-6px;right:-6px;background:var(--green);color:#fff;width:18px;height:18px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:var(--mono)}
+.coupon-code.expired{opacity:.4;cursor:not-allowed}
 .cc-val{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--black)}
 .cc-min{font-size:10px;color:var(--g500);margin-top:2px;font-family:var(--mono)}
 .coupon-strip-loading{color:var(--g400);font-size:13px}
+
+/* ── COUPON MODAL ── */
+.cm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+.cm-overlay.on{display:flex}
+.cm-card{background:#fff;width:380px;max-width:100%;animation:cmIn .25s cubic-bezier(.25,1.5,.5,1);position:relative}
+@keyframes cmIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.cm-close{position:absolute;top:10px;right:10px;width:32px;height:32px;background:none;border:none;font-size:18px;cursor:pointer;color:#fff;z-index:2}
+.cm-banner{padding:24px 20px;color:#fff;text-align:center;position:relative}
+.cm-icon{font-size:42px;line-height:1;margin-bottom:6px}
+.cm-val{font-size:36px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em;line-height:1}
+.cm-val-sub{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin-top:4px}
+.cm-body{padding:20px}
+.cm-name{font-size:16px;font-weight:600;margin-bottom:6px;text-align:center}
+.cm-desc{font-size:12px;color:var(--g500);text-align:center;margin-bottom:16px;line-height:1.5}
+.cm-info{background:var(--g50);padding:12px;margin-bottom:16px;font-size:11px;font-family:var(--mono)}
+.cm-info-row{display:flex;justify-content:space-between;padding:3px 0;color:var(--g600)}
+.cm-info-row strong{color:var(--black);text-align:right}
+.cm-code-box{background:var(--g100);border:1px dashed var(--g300);padding:10px;text-align:center;margin-bottom:14px;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all .15s}
+.cm-code-box:hover{border-style:solid;border-color:var(--black)}
+.cm-code-box-lbl{font-size:9px;color:var(--g500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;font-weight:400}
+.cm-actions{display:flex;gap:8px}
+.cm-btn{flex:1;padding:11px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--black);background:#fff;color:var(--black);cursor:pointer;font-family:inherit;transition:all .15s}
+.cm-btn:hover{background:var(--black);color:#fff}
+.cm-btn.primary{background:var(--black);color:#fff}
+.cm-btn.primary:hover{background:var(--red);border-color:var(--red)}
+.cm-btn:disabled{opacity:.5;cursor:not-allowed}
 
 /* ── PRODUCTS ── */
 .products-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--g200);margin-bottom:32px;border:var(--border)}
@@ -475,11 +506,44 @@ nav, .nav {
   <div class="coupon-strip" id="coupon-strip">
     <div class="coupon-icon">🎟️</div>
     <div class="coupon-text">
-      <div class="coupon-label">คูปองพิเศษประจำวัน</div>
-      <div class="coupon-sub">เก็บก่อนหมด · ใช้ได้ทุกหมวดหมู่</div>
+      <div class="coupon-label">
+        คูปองพิเศษประจำวัน
+        <a href="coupon-hub.html" class="more">ดูทั้งหมด →</a>
+      </div>
+      <div class="coupon-sub">เก็บก่อนหมด · ใช้ได้ทุกหมวดหมู่ · กดเพื่อเก็บ</div>
     </div>
     <div class="coupon-codes" id="coupon-codes">
       <div class="coupon-strip-loading">กำลังโหลด...</div>
+    </div>
+  </div>
+
+  <!-- COUPON DETAIL MODAL -->
+  <div class="cm-overlay" id="cm-overlay" onclick="if(event.target===this)closeCouponModal()">
+    <div class="cm-card" id="cm-card">
+      <button class="cm-close" onclick="closeCouponModal()">✕</button>
+      <div class="cm-banner" id="cm-banner">
+        <div class="cm-icon" id="cm-icon">🎟️</div>
+        <div class="cm-val" id="cm-val">-</div>
+        <div class="cm-val-sub" id="cm-val-sub"></div>
+      </div>
+      <div class="cm-body">
+        <div class="cm-name" id="cm-name">คูปอง</div>
+        <div class="cm-desc" id="cm-desc"></div>
+
+        <div class="cm-info" id="cm-info">
+          <div class="cm-info-row"><span>ยอดขั้นต่ำ</span><strong id="cm-min">—</strong></div>
+          <div class="cm-info-row"><span>ส่วนลดสูงสุด</span><strong id="cm-max">—</strong></div>
+          <div class="cm-info-row"><span>หมดอายุ</span><strong id="cm-end">—</strong></div>
+          <div class="cm-info-row"><span>คงเหลือ</span><strong id="cm-left">—</strong></div>
+        </div>
+
+        <div class="cm-code-box" id="cm-code-box" onclick="cmCopyCode()">
+          <div class="cm-code-box-lbl">โค้ดคูปอง · กดเพื่อคัดลอก</div>
+          <div id="cm-code">—</div>
+        </div>
+
+        <div class="cm-actions" id="cm-actions"></div>
+      </div>
     </div>
   </div>
 
@@ -515,20 +579,11 @@ nav, .nav {
 
   <!-- BRANDS -->
   <div class="section-hd">
-    <div>
-      <div class="section-title">แบรนด์ชั้นนำ</div>
-      <div id="brands-sub" style="font-size:12px;color:var(--g500);margin-top:3px">เรียงตามความนิยม</div>
-    </div>
+    <div class="section-title">แบรนด์ชั้นนำ</div>
     <a href="storefront-live.html" class="see-all">ดูทั้งหมด →</a>
   </div>
   <div class="brands-grid" id="brands-grid">
     <!-- Loaded from Supabase -->
-  </div>
-  <div id="brands-actions" style="text-align:center;margin-top:-16px;margin-bottom:32px;display:none">
-    <button id="brands-more-btn" onclick="showMoreBrands()"
-            style="padding:10px 24px;background:#fff;color:#0A0A0A;border:1px solid #0A0A0A;font-family:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s">
-      ดูเพิ่มเติม <span id="brands-more-cnt" style="color:#737373"></span>
-    </button>
   </div>
 
 </main>
@@ -937,103 +992,32 @@ function renderCatSections() {
 }
 
 // ── Brands ─────────────────────────────────────────────────
-// [PATCH 2026-05-02] โหลดแบรนด์เรียงตามความนิยม + pagination
-const BRAND_INITIAL = 16;     // จำนวนเริ่มต้น (2 แถว 8 ใบ)
-const BRAND_MAX     = 50;     // จำนวนสูงสุด
-let _allBrands = [];          // เก็บไว้เผื่อ "ดูเพิ่ม"
-let _brandsShown = 0;
-
 async function loadBrands() {
   const el = document.getElementById('brands-grid');
   if (!el) return;
-  try {
-    // ดึงแบรนด์ active ทั้งหมด (เรียงตาม view_count → is_featured → sort_order)
-    const { data, error } = await sb.from('brands')
-      .select('id,name,icon,logo_url,view_count,is_featured,sort_order')
-      .eq('is_active', true)
-      .order('view_count', { ascending: false, nullsFirst: false })
-      .order('is_featured', { ascending: false })
-      .order('sort_order', { ascending: true })
-      .limit(BRAND_MAX);
+  const { data } = await sb.from('brands').select('*').eq('is_active',true).eq('is_featured',true).order('sort_order').limit(8);
+  const brands = data || [];
 
-    if (error) throw error;
-    _allBrands = data || [];
-  } catch(e) {
-    console.warn('loadBrands:', e.message);
-    // fallback: default brands ถ้าตาราง brands ยังไม่มี
-    _allBrands = [
-      {id:'def-1',icon:'📱',name:'Samsung'},   {id:'def-2',icon:'🍎',name:'Apple'},
-      {id:'def-3',icon:'📺',name:'LG'},        {id:'def-4',icon:'🛋️',name:'IKEA'},
-      {id:'def-5',icon:'❄️',name:'Panasonic'},  {id:'def-6',icon:'👟',name:'Nike'},
-      {id:'def-7',icon:'💄',name:"L'Oreal"},   {id:'def-8',icon:'🐾',name:'Royal Canin'},
+  if (!brands.length) {
+    // Default brands
+    const def = [
+      {icon:'📱',name:'Samsung'},{icon:'🍎',name:'Apple'},{icon:'📺',name:'LG'},
+      {icon:'🛋️',name:'IKEA'},{icon:'❄️',name:'Panasonic'},{icon:'👟',name:'Nike'},
+      {icon:'💄',name:"L'Oreal"},{icon:'🐾',name:'Royal Canin'},
     ];
-  }
-
-  if (!_allBrands.length) {
-    el.innerHTML = `<div style="grid-column:1/-1;padding:32px;text-align:center;color:var(--g500);font-size:13px">
-      ยังไม่มีแบรนด์ในระบบ
-    </div>`;
-    document.getElementById('brands-actions').style.display = 'none';
+    el.innerHTML = def.map(b => `
+      <div class="brand-card" onclick="location.href='storefront-live.html'">
+        <div class="brand-ico">${b.icon}</div>
+        <div class="brand-name">${b.name}</div>
+      </div>`).join('');
     return;
   }
-
-  // แสดง BRAND_INITIAL ก่อน
-  _brandsShown = Math.min(BRAND_INITIAL, _allBrands.length);
-  renderBrandCards(_allBrands.slice(0, _brandsShown));
-  updateBrandsMoreBtn();
-}
-
-function renderBrandCards(brands) {
-  const el = document.getElementById('brands-grid');
-  if (!el) return;
   el.innerHTML = brands.map(b => `
-    <div class="brand-card" onclick="goBrand('${b.id}','${escQ(b.name)}')">
-      ${b.logo_url
-        ? `<img src="${b.logo_url}" alt="${escQ(b.name)}" style="width:36px;height:36px;object-fit:contain" loading="lazy">`
-        : `<div class="brand-ico" style="font-size:28px">${b.icon || '🏷️'}</div>`}
-      <div class="brand-name">${escQ(b.name)}</div>
+    <div class="brand-card" onclick="location.href='storefront-live.html'">
+      <div class="brand-ico">${b.icon || '🏷️'}</div>
+      <div class="brand-name">${b.name}</div>
     </div>`).join('');
 }
-
-function updateBrandsMoreBtn() {
-  const wrap = document.getElementById('brands-actions');
-  const cnt  = document.getElementById('brands-more-cnt');
-  if (!wrap) return;
-  const remaining = _allBrands.length - _brandsShown;
-  if (remaining <= 0) {
-    wrap.style.display = 'none';
-  } else {
-    wrap.style.display = 'block';
-    if (cnt) cnt.textContent = `(เหลืออีก ${remaining})`;
-  }
-}
-
-function showMoreBrands() {
-  const next = Math.min(_brandsShown + BRAND_INITIAL, _allBrands.length, BRAND_MAX);
-  _brandsShown = next;
-  renderBrandCards(_allBrands.slice(0, _brandsShown));
-  updateBrandsMoreBtn();
-}
-
-// คลิกที่แบรนด์ → track view + ไปหน้า storefront filter
-async function goBrand(brandId, brandName) {
-  // Track view (ใช้ RPC ถ้ามี — ไม่ต้องรอผล)
-  if (brandId && !brandId.startsWith('def-')) {
-    sb.rpc('increment_brand_view', { p_brand_id: brandId })
-      .then(() => {})
-      .catch(() => { /* table หรือ function ยังไม่มี — ignore */ });
-  }
-  // เก็บ guest tracking ใน localStorage ด้วย
-  try {
-    const v = JSON.parse(localStorage.getItem('tm_brand_views') || '{}');
-    v[brandId] = (v[brandId] || 0) + 1;
-    localStorage.setItem('tm_brand_views', JSON.stringify(v));
-  } catch(e) {}
-  // ไปหน้า storefront filter ด้วย brand
-  location.href = `storefront-live.html?brand=${encodeURIComponent(brandId)}&brand_name=${encodeURIComponent(brandName)}`;
-}
-
-function escQ(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
 // ── Timer (syncs with flash_sale_events table) ────────────
 async function startTimer() {
@@ -1638,10 +1622,12 @@ async function loadBanners() {
   const el = document.getElementById('banners');
   if (!el) return;
   try {
+    // ลองดึงจากตาราง banners (ถ้ามี)
     const { data, error } = await sb.from('banners')
       .select('*').eq('is_active', true)
       .order('sort_order', { ascending: true }).limit(3);
     const banners = (!error && data?.length) ? data : null;
+
     if (banners) {
       el.innerHTML = banners.map(b => `
         <a class="banner-card" href="${b.link_url || 'storefront-live.html'}">
@@ -1650,7 +1636,8 @@ async function loadBanners() {
         </a>`).join('');
       return;
     }
-  } catch(e) {}
+  } catch(e) { /* table ไม่มี — ใช้ default */ }
+
   // Fallback: default banners
   const defaults = [
     { ico:'🔥', title:'Flash Sale ทุกวัน', sub:'ลดสูงสุด 70% · 3 รอบ/วัน', bg:'#0A0A0A', link:'flash-sale.html' },
@@ -1665,46 +1652,241 @@ async function loadBanners() {
     </a>`).join('');
 }
 
+// ════════════════════════════════════════════════════════════════════════
+//  COUPON STRIP — โหลดคูปองจริง + กดเก็บได้ [PATCH 2026-05-03]
+// ════════════════════════════════════════════════════════════════════════
+let _couponCache = [];          // เก็บคูปองที่โหลดมา
+let _claimedIds = new Set();    // id คูปองที่ user เก็บแล้ว
+let _currentCoupon = null;      // คูปองที่กำลังเปิด modal
+
 async function loadCoupons() {
   const el = document.getElementById('coupon-codes');
   if (!el) return;
+
   try {
+    // ดึงคูปอง active เรียงตาม priority แล้วเอาแค่ 4 ใบแรก
     const { data, error } = await sb.from('coupons')
-      .select('code,name,type,value')
+      .select('id,code,name,description,type,value,min_order,max_discount,icon,banner_color,end_at,usage_limit,used_count,coin_cost,priority,is_active,start_at,visibility')
       .eq('is_active', true)
-      .order('created_at', { ascending: false }).limit(4);
-    const coupons = (!error && data?.length) ? data : null;
-    if (coupons) {
-      el.innerHTML = coupons.map(c => {
-        const label = c.type === 'shipping' ? 'ส่งฟรี'
-                    : c.type === 'fixed'    ? `-฿${Number(c.value).toLocaleString()}`
-                    : `-${Number(c.value)}%`;
-        const cls = c.type === 'shipping' ? 'coupon-code free' : 'coupon-code';
-        return `<div class="${cls}" onclick="copyCoupon('${c.code}')">
-                  <div style="font-weight:700;font-size:13px">${label}</div>
-                  <div style="font-size:10px;color:var(--g500);margin-top:2px">${c.code}</div>
-                </div>`;
-      }).join('');
+      .order('priority', { ascending: false })
+      .order('end_at',   { ascending: true })
+      .limit(8); // เผื่อกรอง
+
+    if (error) throw error;
+
+    // กรอง: ยังไม่หมดอายุ + ยังไม่เริ่ม + ยังไม่ครบยอดใช้
+    const now = new Date();
+    const usable = (data || []).filter(c => {
+      if (c.start_at && new Date(c.start_at) > now) return false;
+      if (c.end_at && new Date(c.end_at) < now) return false;
+      if (c.usage_limit && c.used_count >= c.usage_limit) return false;
+      if (c.visibility && c.visibility !== 'public' && c.visibility !== 'targeted') return false;
+      return true;
+    }).slice(0, 4);
+
+    _couponCache = usable;
+
+    // โหลด list คูปองที่ user เก็บแล้ว (ถ้า login)
+    await refreshClaimedIds();
+
+    if (!usable.length) {
+      el.innerHTML = '<div style="color:var(--g500);font-size:12px">ไม่มีคูปองในขณะนี้</div>';
       return;
     }
-  } catch(e) {}
-  // Fallback
-  const defaults = [
-    { code:'WELCOME50', label:'-฿50',  cls:'coupon-code' },
-    { code:'NEW100',    label:'-฿100', cls:'coupon-code' },
-    { code:'FREESHIP',  label:'ส่งฟรี', cls:'coupon-code free' },
-  ];
-  el.innerHTML = defaults.map(c => `
-    <div class="${c.cls}" onclick="copyCoupon('${c.code}')">
-      <div style="font-weight:700;font-size:13px">${c.label}</div>
-      <div style="font-size:10px;color:var(--g500);margin-top:2px">${c.code}</div>
-    </div>`).join('');
+
+    el.innerHTML = usable.map(c => couponChipHTML(c)).join('');
+  } catch(e) {
+    console.warn('loadCoupons:', e.message);
+    // fallback แสดง loading หาย
+    el.innerHTML = `<a href="coupon-hub.html" style="color:var(--red);font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;text-decoration:none">ดูคูปองทั้งหมด →</a>`;
+  }
 }
 
+function couponChipHTML(c) {
+  const label = c.type === 'shipping' ? 'ส่งฟรี'
+              : c.type === 'percent'  ? `-${Number(c.value)}%`
+              : c.type === 'cashback' ? `+${c.value}%`
+              : `-฿${Number(c.value).toLocaleString()}`;
+  let cls = 'coupon-code';
+  if (c.type === 'shipping') cls += ' free';
+  if (_claimedIds.has(c.id))  cls += ' claimed';
+
+  return `<div class="${cls}" onclick="openCouponModal('${c.id}')" data-id="${c.id}" title="${c.name||''}">
+            <div class="cc-val">${label}</div>
+            <div class="cc-min">${c.code}</div>
+          </div>`;
+}
+
+async function refreshClaimedIds() {
+  _claimedIds = new Set();
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data } = await sb.from('user_coupons')
+      .select('coupon_id').eq('user_id', user.id).is('used_at', null);
+    if (data) data.forEach(x => _claimedIds.add(x.coupon_id));
+  } catch(e) { /* silent */ }
+}
+
+// ── เปิด modal คูปอง
+async function openCouponModal(couponId) {
+  const c = _couponCache.find(x => x.id === couponId);
+  if (!c) return;
+  _currentCoupon = c;
+
+  // banner
+  document.getElementById('cm-banner').style.background = c.banner_color || '#E63329';
+  document.getElementById('cm-icon').textContent = c.icon || '🎟️';
+  const valStr = c.type === 'percent'  ? `${c.value}%`
+               : c.type === 'shipping' ? 'ส่งฟรี'
+               : c.type === 'cashback' ? `${c.value}%`
+               : `฿${Number(c.value).toLocaleString()}`;
+  const valSub = c.type === 'percent'  ? 'OFF'
+               : c.type === 'cashback' ? 'CASHBACK'
+               : c.type === 'shipping' ? '' : 'OFF';
+  document.getElementById('cm-val').textContent = valStr;
+  document.getElementById('cm-val-sub').textContent = valSub;
+
+  // body
+  document.getElementById('cm-name').textContent = c.name || 'คูปอง';
+  document.getElementById('cm-desc').textContent = c.description || '';
+
+  // info rows
+  document.getElementById('cm-min').textContent = c.min_order ? `฿${Number(c.min_order).toLocaleString()}` : 'ไม่มี';
+  document.getElementById('cm-max').textContent = c.max_discount ? `฿${Number(c.max_discount).toLocaleString()}` : 'ไม่จำกัด';
+  if (c.end_at) {
+    const dt = new Date(c.end_at);
+    const dl = Math.ceil((dt - new Date())/86400000);
+    document.getElementById('cm-end').textContent =
+      dl <= 0 ? 'หมดวันนี้' :
+      dl <= 3 ? `เหลือ ${dl} วัน` :
+      dt.toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'2-digit'});
+  } else {
+    document.getElementById('cm-end').textContent = 'ไม่จำกัด';
+  }
+  if (c.usage_limit) {
+    const left = Math.max(0, c.usage_limit - (c.used_count||0));
+    document.getElementById('cm-left').textContent = `${left.toLocaleString()} / ${c.usage_limit.toLocaleString()} ใบ`;
+  } else {
+    document.getElementById('cm-left').textContent = 'ไม่จำกัด';
+  }
+
+  // code
+  document.getElementById('cm-code').textContent = c.code;
+
+  // actions
+  await renderCouponModalActions(c);
+
+  document.getElementById('cm-overlay').classList.add('on');
+}
+
+async function renderCouponModalActions(c) {
+  const wrap = document.getElementById('cm-actions');
+  const { data: { user } } = await sb.auth.getUser();
+
+  if (!user) {
+    wrap.innerHTML = `
+      <button class="cm-btn" onclick="cmCopyCode()">📋 คัดลอกโค้ด</button>
+      <button class="cm-btn primary" onclick="location.href='login.html?from='+encodeURIComponent(location.pathname)">🔒 เข้าสู่ระบบเพื่อเก็บ</button>`;
+    return;
+  }
+
+  const claimed = _claimedIds.has(c.id);
+
+  if (claimed) {
+    wrap.innerHTML = `
+      <button class="cm-btn" onclick="cmCopyCode()">📋 Copy</button>
+      <button class="cm-btn primary" onclick="cmGoUse()">🛒 ใช้เลย</button>`;
+  } else {
+    const coinTxt = (c.coin_cost > 0) ? `🪙 แลก ${c.coin_cost} Coin` : '+ เก็บคูปอง';
+    wrap.innerHTML = `
+      <button class="cm-btn" onclick="cmCopyCode()">📋 Copy</button>
+      <button class="cm-btn primary" onclick="cmClaim()" id="cm-claim-btn">${coinTxt}</button>`;
+  }
+}
+
+function closeCouponModal() {
+  document.getElementById('cm-overlay').classList.remove('on');
+  _currentCoupon = null;
+}
+
+function cmCopyCode() {
+  if (!_currentCoupon) return;
+  const code = _currentCoupon.code;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(() => toast('📋 คัดลอกโค้ด ' + code, true));
+  } else {
+    const ta = document.createElement('textarea'); ta.value = code; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove();
+    toast('📋 คัดลอกโค้ด ' + code, true);
+  }
+}
+
+function cmGoUse() {
+  if (!_currentCoupon) return;
+  location.href = 'checkout.html?coupon=' + encodeURIComponent(_currentCoupon.code);
+}
+
+async function cmClaim() {
+  if (!_currentCoupon) return;
+  const btn = document.getElementById('cm-claim-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังเก็บ...'; }
+
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) {
+      location.href = 'login.html?from=' + encodeURIComponent(location.pathname);
+      return;
+    }
+
+    // ลอง RPC ก่อน
+    let success = false, reason = '';
+    try {
+      const { data, error } = await sb.rpc('claim_coupon', { p_coupon_id: _currentCoupon.id });
+      if (!error && data?.success) { success = true; }
+      else if (data?.reason) { reason = data.reason; }
+      else if (error) throw error;
+    } catch(rpcErr) {
+      // fallback: insert ตรง — กรณี RPC ยังไม่พร้อม
+      const { error: insErr } = await sb.from('user_coupons').insert({
+        user_id: user.id,
+        coupon_id: _currentCoupon.id,
+        source: 'claim'
+      });
+      if (!insErr) success = true;
+      else if (insErr.code === '23505') reason = 'คุณเก็บคูปองนี้ไว้แล้ว';
+      else reason = insErr.message;
+    }
+
+    if (!success) {
+      toast(reason || 'เก็บไม่สำเร็จ', false);
+      if (btn) { btn.disabled = false; btn.textContent = '+ เก็บคูปอง'; }
+      return;
+    }
+
+    toast(`✅ เก็บคูปอง "${_currentCoupon.name}" สำเร็จ`, true);
+    _claimedIds.add(_currentCoupon.id);
+
+    // อัปเดต chip ใน strip
+    const chip = document.querySelector(`.coupon-code[data-id="${_currentCoupon.id}"]`);
+    if (chip) chip.classList.add('claimed');
+
+    // อัปเดต action ใน modal
+    await renderCouponModalActions(_currentCoupon);
+
+  } catch(e) {
+    toast('เกิดข้อผิดพลาด: ' + e.message, false);
+    if (btn) { btn.disabled = false; btn.textContent = '+ เก็บคูปอง'; }
+  }
+}
+
+// เก็บไว้รองรับโค้ดเก่า (ถ้ามีที่เรียก)
 function copyCoupon(code) {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(code).then(() => toast('📋 คัดลอกโค้ด ' + code + ' แล้ว', true));
-  } else { toast('โค้ด: ' + code, true); }
+  } else {
+    toast('โค้ด: ' + code, true);
+  }
 }
 
 
@@ -1712,7 +1894,8 @@ async function init() {
   updateCartUI();
   startTimer();
   loadSiteSettings();
-  // [PATCH] allSettled กันลากกันพัง
+
+  // [PATCH] ใช้ allSettled — ถ้า section ใดพังจะไม่ลากส่วนอื่นพังตาม
   await Promise.allSettled([
     loadCats(),
     loadFlash(),
@@ -1720,12 +1903,16 @@ async function init() {
     loadCoupons(),
     loadBrands(),
   ]);
-  // [PATCH] แยก try-catch
+
+  // [PATCH] แยก try-catch รอบ loadPersonalized เพื่อให้แสดงสินค้าให้ได้แม้ session error
   try {
     await loadPersonalized();
   } catch(e) {
     console.error('[TM] loadPersonalized failed:', e);
-    try { await loadMixedProducts(); } catch(e2) {}
+    // fallback: แสดงสินค้าคละหมวดอย่างน้อย
+    const sub = document.getElementById('rec-sub');
+    if (sub) sub.textContent = 'สินค้าน่าสนใจ';
+    try { await loadMixedProducts(); } catch(e2) { console.error('[TM] loadMixedProducts failed:', e2); }
   }
 }
 
