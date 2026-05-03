@@ -586,6 +586,35 @@ nav, .nav {
     <!-- Loaded from Supabase -->
   </div>
 
+  <!-- ════════════════════════════════════════════════════════════════════
+       RECOMMENDED PRODUCTS — ลำดับ 2 (หลังหมวดหมู่) [PATCH 2026-05-03]
+       ════════════════════════════════════════════════════════════════════ -->
+  <div class="section-hd" style="flex-direction:column;align-items:flex-start;gap:8px;margin-top:32px">
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+      <div>
+        <div class="section-title rec-section-title" id="rec-title">✨ แนะนำสำหรับคุณ</div>
+        <div id="rec-sub" style="font-size:12px;color:var(--g500);margin-top:3px">
+          กำลังโหลดสินค้าที่เหมาะกับคุณ...
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <select class="sort-sel" onchange="sortProds(this.value)">
+          <option value="new">สินค้าใหม่</option>
+          <option value="pop">ยอดนิยม</option>
+          <option value="price-asc">ราคาต่ำ→สูง</option>
+          <option value="price-desc">ราคาสูง→ต่ำ</option>
+          <option value="rating">คะแนนสูงสุด</option>
+        </select>
+        <a href="storefront-live.html" class="see-all">ดูทั้งหมด →</a>
+      </div>
+    </div>
+    <!-- Category interest tags (แสดงเมื่อ login) -->
+    <div id="rec-cat-tags" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+  <div class="products-grid" id="products-grid">
+    <!-- Loaded from Supabase — personalized per user -->
+  </div>
+
   <!-- BANNERS -->
   <div class="banners" id="banners">
     <a class="banner-main bn-skel" id="hero-banner" style="background:#0A0A0A"></a>
@@ -682,33 +711,6 @@ nav, .nav {
       <a href="coupon-hub.html" class="cs-more">ดูทั้งหมด →</a>
     </div>
     <div class="cs-grid" id="cs-store-list"></div>
-  </div>
-
-  <!-- RECOMMENDED PRODUCTS — Personalized -->
-  <div class="section-hd" style="flex-direction:column;align-items:flex-start;gap:8px">
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-      <div>
-        <div class="section-title rec-section-title" id="rec-title">✨ แนะนำสำหรับคุณ</div>
-        <div id="rec-sub" style="font-size:12px;color:var(--g500);margin-top:3px">
-          กำลังโหลดสินค้าที่เหมาะกับคุณ...
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <select class="sort-sel" onchange="sortProds(this.value)">
-          <option value="new">สินค้าใหม่</option>
-          <option value="pop">ยอดนิยม</option>
-          <option value="price-asc">ราคาต่ำ→สูง</option>
-          <option value="price-desc">ราคาสูง→ต่ำ</option>
-          <option value="rating">คะแนนสูงสุด</option>
-        </select>
-        <a href="storefront-live.html" class="see-all">ดูทั้งหมด →</a>
-      </div>
-    </div>
-    <!-- Category interest tags (แสดงเมื่อ login) -->
-    <div id="rec-cat-tags" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-  </div>
-  <div class="products-grid" id="products-grid">
-    <!-- Loaded from Supabase — personalized per user -->
   </div>
 
   <!-- CATEGORY SECTIONS -->
