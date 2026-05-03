@@ -14,198 +14,445 @@
 </script>
 <style>
 :root{
-  --black:#0A0A0A; --white:#fff; --red:#E63329;
-  --g50:#FAFAFA; --g100:#F2F2F2; --g200:#E5E5E5; --g400:#A3A3A3; --g500:#737373; --g600:#525252; --g800:#262626;
-  --green:#16A34A; --gold:#FBBF24; --purple:#7C3AED;
+  --black:#0A0A0A; --white:#fff; --red:#E63329; --red-dk:#c41f25;
+  --g50:#FAFAFA; --g100:#F2F2F2; --g200:#E5E5E5; --g300:#D4D4D4;
+  --g400:#A3A3A3; --g500:#737373; --g600:#525252; --g800:#262626;
+  --green:#16A34A; --gold:#FBBF24; --purple:#7C3AED; --blue:#2563EB;
+  --orange:#F59E0B; --pink:#EC4899;
   --font:"DM Sans",system-ui,sans-serif; --mono:"DM Mono",monospace;
-  --border:1px solid #E5E5E5; --border-dark:1px solid #0A0A0A;
+  --border:1px solid #E5E5E5;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font);background:var(--g50);color:var(--black);min-height:100vh}
+body{font-family:var(--font);background:var(--g50);color:var(--black);min-height:100vh;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer;border:none;background:none}
 
-/* ── HEADER ── */
-.hdr{background:var(--black);color:var(--white);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
-.hdr-logo{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+/* ─────────  ANNOUNCEMENT BAR  ───────── */
+.announce{background:var(--black);color:#fff;padding:6px 0;overflow:hidden;font-size:11px;font-family:var(--mono);letter-spacing:.04em}
+.announce-track{display:flex;gap:48px;animation:scroll 30s linear infinite;white-space:nowrap}
+.announce-item{display:flex;align-items:center;gap:6px}
+.announce-item::before{content:'⚡';color:var(--red)}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ─────────  HEADER  ───────── */
+.hdr{background:#fff;border-bottom:var(--border);padding:14px 20px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.hdr-back{font-size:14px;color:var(--g500);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.hdr-back:hover{color:var(--black)}
+.hdr-logo{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
 .hdr-logo .dot{color:var(--red)}
-.hdr-back{font-size:13px;display:flex;align-items:center;gap:8px}
+.hdr-actions{display:flex;align-items:center;gap:14px;flex-shrink:0}
+.hdr-icon{font-size:18px;color:var(--g600)}
+.hdr-icon:hover{color:var(--black)}
 
-/* ── HERO with coin balance + check-in ── */
-.hero{background:linear-gradient(135deg,#0A0A0A 0%,#1a1a2e 100%);color:#fff;padding:32px 20px}
-.hero-inner{max-width:900px;margin:0 auto}
-.hero-title{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase;font-family:var(--mono)}
-.hero-h1{font-size:28px;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:10px}
-.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.hero-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:18px}
-.hero-card-lbl{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-family:var(--mono)}
-.hero-card-val{font-size:28px;font-weight:700;display:flex;align-items:baseline;gap:6px}
-.hero-card-val .unit{font-size:14px;font-weight:400;color:rgba(255,255,255,.6)}
-.hero-card-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:6px}
-.btn-checkin{margin-top:10px;padding:8px 16px;background:var(--red);color:#fff;font-size:12px;letter-spacing:.06em;text-transform:uppercase;width:100%;transition:background .15s}
-.btn-checkin:hover{background:#c41f25}
-.btn-checkin:disabled{background:#525252;cursor:not-allowed;opacity:.6}
-@media(max-width:560px){.hero-grid{grid-template-columns:1fr}.hero-h1{font-size:22px}}
+/* ─────────  HERO  ───────── */
+.hero{background:linear-gradient(135deg,#0A0A0A 0%,#1a1a2e 50%,#0A0A0A 100%);color:#fff;padding:40px 20px 64px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(230,51,41,.25) 0%,transparent 65%);pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:-100px;left:-10%;width:400px;height:400px;background:radial-gradient(circle,rgba(124,58,237,.15) 0%,transparent 65%);pointer-events:none}
+.hero-inner{max-width:1100px;margin:0 auto;position:relative;z-index:1}
+.hero-eyebrow{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.12em;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px}
+.hero-h1{font-size:42px;font-weight:700;line-height:1.1;letter-spacing:-.02em;margin-bottom:10px}
+.hero-h1 .accent{color:var(--red)}
+.hero-sub{font-size:15px;color:rgba(255,255,255,.7);margin-bottom:32px;max-width:600px}
+@media(max-width:640px){.hero-h1{font-size:30px}}
 
-/* ── SPIN WHEEL ── */
-.spin-section{background:#fff;padding:24px 20px;border-bottom:var(--border)}
-.spin-inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:24px}
-.spin-info h2{font-size:18px;margin-bottom:4px}
-.spin-info p{font-size:12px;color:var(--g500);margin-bottom:14px}
-.btn-spin{padding:14px 28px;background:linear-gradient(135deg,#E63329,#FF6B35);color:#fff;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:0;box-shadow:0 4px 12px rgba(230,51,41,.3)}
-.btn-spin:disabled{background:var(--g400);box-shadow:none;cursor:not-allowed}
-.spin-wheel-vis{width:140px;height:140px;border-radius:50%;background:conic-gradient(#FBBF24 0 30%,#16A34A 30% 50%,#E63329 50% 60%,#7C3AED 60% 70%,#0A0A0A 70% 100%);position:relative;flex-shrink:0;border:6px solid #0A0A0A;animation:spin 8s linear infinite paused;transition:filter .3s}
-.spin-wheel-vis.spinning{animation-play-state:running;animation-duration:0.6s}
-.spin-wheel-vis::after{content:'🎁';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;background:#fff;border-radius:50%;width:50px;height:50px;margin:auto}
-@keyframes spin{to{transform:rotate(1080deg)}}
-@media(max-width:560px){.spin-inner{flex-direction:column;text-align:center}}
+/* Search bar */
+.search-wrap{display:flex;align-items:center;background:#fff;padding:6px;max-width:520px;margin-bottom:32px}
+.search-wrap input{flex:1;border:none;outline:none;padding:10px 14px;font-size:14px;font-family:inherit;color:var(--black);background:transparent}
+.search-wrap input::placeholder{color:var(--g400);font-family:var(--mono);font-size:13px}
+.search-wrap button{padding:10px 22px;background:var(--black);color:#fff;font-size:13px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.search-wrap button:hover{background:var(--red)}
 
-/* ── TABS ── */
-.tabs-wrap{background:#fff;border-bottom:var(--border);position:sticky;top:0;z-index:10}
-.tabs{max-width:900px;margin:0 auto;display:flex;overflow-x:auto;padding:0 20px}
-.tab{padding:14px 20px;font-size:13px;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap;color:var(--g500);transition:all .15s}
-.tab.on{color:var(--black);border-bottom-color:var(--red)}
-.tab .badge{display:inline-block;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;margin-left:4px;border-radius:8px;font-family:var(--mono);font-weight:500}
+/* Stats grid */
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.1);max-width:720px}
+.hero-stat{background:rgba(0,0,0,.4);padding:18px 20px;backdrop-filter:blur(10px)}
+.hero-stat-num{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em;color:#fff;line-height:1;margin-bottom:5px}
+.hero-stat-num .unit{font-size:13px;font-weight:400;color:rgba(255,255,255,.5);margin-left:3px}
+.hero-stat-lbl{font-size:11px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono)}
+@media(max-width:640px){.hero-stats{grid-template-columns:repeat(3,1fr)}.hero-stat{padding:12px 8px}.hero-stat-num{font-size:18px}}
 
-/* ── COUPON GRID ── */
-.main{max-width:900px;margin:0 auto;padding:20px;min-height:50vh}
-.section-hd{display:flex;align-items:baseline;justify-content:space-between;margin:20px 0 14px}
-.section-title{font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-family:var(--mono)}
-.section-sub{font-size:11px;color:var(--g500)}
+/* ─────────  USER STATUS BAR (coin / check-in / my coupons)  ───────── */
+.userbar{background:#fff;border-bottom:var(--border);padding:14px 20px;margin-top:-32px;position:relative;z-index:2;border-radius:0;max-width:1100px;margin-left:auto;margin-right:auto;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.userbar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--g200)}
+.userbar-cell{background:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .15s}
+.userbar-cell:hover{background:var(--g50)}
+.userbar-icon{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--g100);flex-shrink:0}
+.userbar-icon.gold{background:#FEF3C7;color:#92400E}
+.userbar-icon.green{background:#D1FAE5;color:#065F46}
+.userbar-icon.red{background:#FEE2E2;color:#991B1B}
+.userbar-icon.purple{background:#EDE9FE;color:#5B21B6}
+.userbar-info{min-width:0}
+.userbar-num{font-size:18px;font-weight:700;font-family:var(--mono);line-height:1.1}
+.userbar-lbl{font-size:11px;color:var(--g500);text-transform:uppercase;letter-spacing:.04em;font-family:var(--mono);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:720px){.userbar-grid{grid-template-columns:repeat(2,1fr)}.userbar{margin-top:-24px}}
 
-.coupon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.coupon-card{background:#fff;border:var(--border);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;display:flex;min-height:120px}
-.coupon-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
-.coupon-card.expired{opacity:.5}
-.coupon-card.used{opacity:.4}
-.cc-left{width:90px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:14px 6px;text-align:center;position:relative}
-.cc-left::after{content:'';position:absolute;top:0;right:-1px;bottom:0;width:2px;background:repeating-linear-gradient(0deg,var(--g100) 0 4px,transparent 4px 8px)}
-.cc-icon{font-size:28px;margin-bottom:6px}
-.cc-value{font-size:22px;font-weight:700;line-height:1;font-family:var(--mono)}
-.cc-value-unit{font-size:11px;font-weight:500;margin-top:2px;opacity:.85}
-.cc-right{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between}
-.cc-name{font-size:13px;font-weight:600;margin-bottom:3px;line-height:1.3}
-.cc-desc{font-size:11px;color:var(--g500);margin-bottom:8px;line-height:1.4}
-.cc-meta{font-size:10px;color:var(--g500);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
-.cc-meta .urgent{color:var(--red)}
-.cc-actions{display:flex;gap:6px}
-.cc-btn{flex:1;padding:8px 12px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--black);background:#fff;color:var(--black);transition:all .15s}
-.cc-btn:hover{background:var(--black);color:#fff}
-.cc-btn.primary{background:var(--black);color:#fff}
-.cc-btn.primary:hover{background:var(--red);border-color:var(--red)}
-.cc-btn:disabled{background:var(--g100);color:var(--g400);border-color:var(--g200);cursor:not-allowed}
-.cc-code{display:inline-flex;align-items:center;gap:6px;background:var(--g100);padding:5px 10px;font-family:var(--mono);font-size:11px;font-weight:500;border:1px dashed var(--g400);cursor:pointer}
-.cc-code:hover{border-color:var(--black);background:#fff}
+/* ─────────  CATEGORIES PILL  ───────── */
+.cats-wrap{background:#fff;border-bottom:var(--border);padding:14px 0;position:sticky;top:60px;z-index:30}
+.cats{max-width:1100px;margin:0 auto;display:flex;gap:8px;overflow-x:auto;padding:0 20px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat-pill{padding:8px 16px;font-size:13px;font-weight:500;border:1px solid var(--g200);background:#fff;white-space:nowrap;color:var(--g600);transition:all .15s;flex-shrink:0;font-family:inherit}
+.cat-pill:hover{border-color:var(--black);color:var(--black)}
+.cat-pill.on{background:var(--black);color:#fff;border-color:var(--black)}
 
-/* coin badge */
-.cc-coin-badge{position:absolute;top:8px;right:8px;background:var(--gold);color:#000;font-size:10px;font-weight:600;padding:2px 7px;font-family:var(--mono);letter-spacing:.04em}
+/* ─────────  MAIN  ───────── */
+.main{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
 
-.empty{padding:60px 20px;text-align:center;color:var(--g500)}
-.empty-ico{font-size:48px;margin-bottom:12px;opacity:.4}
-.empty-title{font-size:15px;font-weight:600;margin-bottom:6px;color:var(--black)}
-.empty-sub{font-size:13px}
+.section{margin-bottom:42px}
+.section-hd{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap}
+.section-title-wrap{flex:1;min-width:0}
+.section-title{font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1.1;display:flex;align-items:center;gap:10px}
+.section-title .ico{font-size:20px}
+.section-sub{font-size:13px;color:var(--g500);margin-top:4px}
+.section-link{font-size:12px;color:var(--g500);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
+.section-link:hover{color:var(--red)}
 
-.skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#fafafa 50%,#f0f0f0 75%);background-size:200% 100%;animation:sk 1.4s infinite}
+/* ─────────  COUPON CARD GRID  ───────── */
+.coup-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.coup-grid.sm{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+
+/* COUPON CARD */
+.coup{position:relative;background:#fff;border:var(--border);overflow:hidden;display:flex;min-height:130px;transition:all .2s;cursor:pointer}
+.coup:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.08);border-color:var(--g300)}
+.coup.expired{opacity:.45;cursor:default}
+.coup.expired:hover{transform:none;box-shadow:none}
+
+/* Left side (perforated) */
+.coup-l{width:108px;flex-shrink:0;background:var(--red);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 8px;position:relative;text-align:center}
+.coup-l::before,.coup-l::after{content:'';position:absolute;width:14px;height:14px;background:var(--g50);border-radius:50%;right:-7px}
+.coup-l::before{top:-7px}
+.coup-l::after{bottom:-7px}
+.coup-l-icon{font-size:24px;margin-bottom:4px;line-height:1}
+.coup-l-val{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em;line-height:1}
+.coup-l-unit{font-size:10px;font-weight:500;margin-top:3px;opacity:.85;text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono)}
+.coup-l-min{font-size:10px;margin-top:6px;opacity:.7;font-family:var(--mono);text-align:center;line-height:1.3}
+
+/* Right side */
+.coup-r{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between;min-width:0;border-left:2px dashed var(--g200)}
+.coup-name{font-size:14px;font-weight:600;line-height:1.3;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.coup-desc{font-size:11px;color:var(--g500);line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.coup-meta{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--g500);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;flex-wrap:wrap}
+.coup-meta .urgent{color:var(--red);font-weight:600}
+.coup-meta .qty{color:var(--orange);font-weight:600}
+.coup-actions{display:flex;gap:6px;align-items:center}
+.coup-btn{flex:1;padding:9px 12px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--black);background:#fff;color:var(--black);transition:all .15s;font-family:inherit}
+.coup-btn:hover{background:var(--black);color:#fff}
+.coup-btn.primary{background:var(--black);color:#fff}
+.coup-btn.primary:hover{background:var(--red);border-color:var(--red)}
+.coup-btn.claimed{background:var(--g100);color:var(--g500);border-color:var(--g200);cursor:default}
+.coup-btn.claimed:hover{background:var(--g100);color:var(--g500)}
+
+/* Badges */
+.coup-badge{position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:9px;padding:2px 7px;font-family:var(--mono);font-weight:600;letter-spacing:.04em;text-transform:uppercase;z-index:2}
+.coup-badge.hot{background:linear-gradient(135deg,#E63329,#FF6B35)}
+.coup-badge.limited{background:#7C3AED}
+.coup-badge.new{background:#16A34A}
+.coup-badge.exclusive{background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#451a03}
+
+/* Coin badge */
+.coup-coin{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.85);color:#FBBF24;font-size:9px;padding:2px 6px;font-family:var(--mono);font-weight:500;backdrop-filter:blur(4px);z-index:2}
+
+/* ─────────  STORE COUPON (วาง horizontal scroll)  ───────── */
+.coup-h-scroll{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:var(--g300) transparent}
+.coup-h-scroll::-webkit-scrollbar{height:6px}
+.coup-h-scroll::-webkit-scrollbar-track{background:transparent}
+.coup-h-scroll::-webkit-scrollbar-thumb{background:var(--g300)}
+.coup-h-scroll .coup{min-width:300px;scroll-snap-align:start;flex-shrink:0}
+
+/* Store name above coupon */
+.coup-store{position:absolute;top:-1px;left:108px;background:var(--black);color:#fff;font-size:9px;padding:3px 10px;font-family:var(--mono);font-weight:500;letter-spacing:.06em;text-transform:uppercase;z-index:2}
+
+/* ─────────  EMPTY STATE  ───────── */
+.empty{padding:48px 20px;text-align:center;color:var(--g500);background:#fff;border:1px dashed var(--g200)}
+.empty-ico{font-size:42px;margin-bottom:10px;opacity:.4}
+.empty-title{font-size:14px;font-weight:600;color:var(--black);margin-bottom:4px}
+.empty-sub{font-size:12px}
+
+/* Skeleton */
+.skel{background:linear-gradient(90deg,#f0f0f0 25%,#fafafa 50%,#f0f0f0 75%);background-size:200% 100%;animation:sk 1.4s infinite}
 @keyframes sk{to{background-position:-200% 0}}
 
-/* TOAST */
-.toast-wrap{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;flex-direction:column;gap:8px}
-.toast{background:var(--black);color:#fff;padding:12px 18px;font-size:13px;animation:slideDown .3s ease-out;max-width:90vw;box-shadow:0 8px 20px rgba(0,0,0,.2)}
+/* ─────────  TOAST  ───────── */
+.toast-wrap{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--black);color:#fff;padding:12px 20px;font-size:13px;animation:slideDown .3s ease-out;max-width:90vw;box-shadow:0 8px 20px rgba(0,0,0,.25);pointer-events:auto;font-weight:500}
 .toast.ok{background:var(--green)}
 .toast.err{background:var(--red)}
 @keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
 
-/* SPIN MODAL */
+/* ─────────  MODAL (Spin / Coupon detail)  ───────── */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.on{display:flex}
-.modal-card{background:#fff;max-width:380px;width:100%;padding:32px 24px;text-align:center;animation:popIn .4s cubic-bezier(.25,1.5,.5,1)}
-@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
-.modal-prize-icon{font-size:64px;margin-bottom:12px}
-.modal-prize-label{font-size:24px;font-weight:700;margin-bottom:6px}
+.modal-card{background:#fff;max-width:400px;width:100%;animation:popIn .4s cubic-bezier(.25,1.5,.5,1)}
+@keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-body{padding:32px 24px;text-align:center}
+.modal-prize-icon{font-size:64px;margin-bottom:12px;line-height:1}
+.modal-prize-label{font-size:24px;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
 .modal-prize-sub{font-size:13px;color:var(--g500);margin-bottom:24px}
-.modal-btn{padding:14px 32px;background:var(--black);color:#fff;font-size:13px;letter-spacing:.06em;text-transform:uppercase;width:100%}
+.modal-btn{padding:14px 32px;background:var(--black);color:#fff;font-size:13px;letter-spacing:.06em;text-transform:uppercase;width:100%;font-weight:600}
 .modal-btn:hover{background:var(--red)}
+.modal-close{position:absolute;top:14px;right:14px;background:none;color:#fff;font-size:24px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+
+/* ─────────  SPIN WHEEL FLOAT  ───────── */
+.spin-fab{position:fixed;bottom:24px;right:24px;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#E63329,#FF6B35);box-shadow:0 8px 24px rgba(230,51,41,.4);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;z-index:99;animation:wobble 3s ease-in-out infinite;border:3px solid #fff}
+.spin-fab:hover{transform:scale(1.1)}
+.spin-fab .pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--red);animation:pulse 2s ease-out infinite;pointer-events:none}
+@keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+@keyframes pulse{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.4)}}
+
+/* spin wheel modal vis */
+.wheel-vis{width:200px;height:200px;border-radius:50%;background:conic-gradient(#FBBF24 0 30%,#16A34A 30% 50%,#E63329 50% 60%,#7C3AED 60% 70%,#0A0A0A 70% 80%,#06B6D4 80% 90%,#EC4899 90% 100%);position:relative;margin:0 auto 16px;border:8px solid #0A0A0A;box-shadow:0 0 0 4px #fff,0 8px 24px rgba(0,0,0,.2)}
+.wheel-vis.spinning{animation:spinW .8s ease-out forwards}
+@keyframes spinW{to{transform:rotate(1800deg)}}
+.wheel-vis::after{content:'🎁';position:absolute;inset:0;margin:auto;width:50px;height:50px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;border:3px solid #0A0A0A}
+.wheel-vis::before{content:'▼';position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:20px;color:#E63329;text-shadow:0 0 8px #fff}
+
+/* checkin modal */
+.checkin-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:16px 0}
+.checkin-day{background:var(--g50);border:1px solid var(--g200);padding:10px 4px;text-align:center;font-size:10px;font-family:var(--mono);position:relative}
+.checkin-day.done{background:var(--green);color:#fff;border-color:var(--green)}
+.checkin-day.today{background:var(--red);color:#fff;border-color:var(--red);animation:bouncey 1s infinite}
+@keyframes bouncey{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.checkin-day-num{font-size:14px;font-weight:700;margin-bottom:2px}
+.checkin-day-coin{font-size:9px;opacity:.8}
 </style>
 </head>
 <body>
+
 <div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- ANNOUNCEMENT -->
+<div class="announce">
+  <div class="announce-track" id="ann-track">
+    <div class="announce-item">ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500</div>
+    <div class="announce-item">Flash Sale ทุกวัน 10:00 / 14:00 / 20:00</div>
+    <div class="announce-item">รับคูปองใหม่ทุกวัน</div>
+    <div class="announce-item">เช็คอินรายวันรับ Coin ฟรี</div>
+    <div class="announce-item">หมุนวงล้อชิงรางวัลฟรี 1 ครั้ง/วัน</div>
+    <!-- duplicate for seamless loop -->
+    <div class="announce-item">ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500</div>
+    <div class="announce-item">Flash Sale ทุกวัน 10:00 / 14:00 / 20:00</div>
+    <div class="announce-item">รับคูปองใหม่ทุกวัน</div>
+    <div class="announce-item">เช็คอินรายวันรับ Coin ฟรี</div>
+    <div class="announce-item">หมุนวงล้อชิงรางวัลฟรี 1 ครั้ง/วัน</div>
+  </div>
+</div>
 
 <!-- HEADER -->
 <div class="hdr">
-  <a href="index.html" class="hdr-back">← กลับ</a>
+  <a href="index.html" class="hdr-back">← กลับหน้าหลัก</a>
   <a href="index.html" class="hdr-logo">Thailand<span class="dot">.</span>Market</a>
-  <a href="profile.html" class="hdr-back" style="font-size:18px">👤</a>
+  <div class="hdr-actions">
+    <a href="cart.html" class="hdr-icon">🛒</a>
+    <a href="profile.html" class="hdr-icon">👤</a>
+  </div>
 </div>
 
-<!-- HERO with coin + check-in -->
+<!-- HERO -->
 <div class="hero">
   <div class="hero-inner">
-    <div class="hero-title">Coupon Hub</div>
-    <h1 class="hero-h1">🎟️ ศูนย์รวมคูปอง</h1>
-    <div class="hero-grid">
-      <div class="hero-card">
-        <div class="hero-card-lbl">Coin คงเหลือ</div>
-        <div class="hero-card-val"><span id="coin-balance">—</span><span class="unit">🪙</span></div>
-        <div class="hero-card-sub" id="coin-tier">รับ coin ฟรีจาก check-in รายวัน</div>
+    <div class="hero-eyebrow">🎟️ Coupon Hub</div>
+    <h1 class="hero-h1">เก็บคูปอง<br><span class="accent">ประหยัดทุกวัน</span></h1>
+    <div class="hero-sub">คูปองส่วนลด ฟรีค่าส่ง แคชแบ็ก รอคุณอยู่ทุกวัน · เก็บฟรี ไม่จำกัด</div>
+
+    <div class="search-wrap">
+      <input type="text" id="search-input" placeholder="ค้นหา code คูปอง เช่น WELCOME50" maxlength="40">
+      <button onclick="searchCoupon()">ค้นหา</button>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num" id="stat-coupons">—</div>
+        <div class="hero-stat-lbl">คูปองวันนี้</div>
       </div>
-      <div class="hero-card">
-        <div class="hero-card-lbl">เช็คอินรายวัน</div>
-        <div class="hero-card-val"><span id="streak">0</span><span class="unit">วันต่อเนื่อง</span></div>
-        <button class="btn-checkin" id="btn-checkin" onclick="doCheckin()">📅 เช็คอินวันนี้</button>
+      <div class="hero-stat">
+        <div class="hero-stat-num" id="stat-savings">— <span class="unit">฿</span></div>
+        <div class="hero-stat-lbl">ส่วนลดรวม</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num" id="stat-claims">—</div>
+        <div class="hero-stat-lbl">คนเก็บแล้ว</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SPIN WHEEL -->
-<div class="spin-section">
-  <div class="spin-inner">
-    <div class="spin-wheel-vis" id="spin-wheel"></div>
-    <div class="spin-info" style="flex:1">
-      <h2>🎰 หมุนวงล้อรับรางวัล</h2>
-      <p>ฟรี 1 ครั้งต่อวัน · มีโอกาสได้คูปองสูงสุด ฿100 หรือ Coin ฟรี</p>
-      <button class="btn-spin" id="btn-spin" onclick="doSpin()">🎲 หมุนวงล้อเลย!</button>
+<!-- USER STATUS BAR -->
+<div class="userbar">
+  <div class="userbar-grid">
+    <div class="userbar-cell" onclick="openCheckinModal()">
+      <div class="userbar-icon green">📅</div>
+      <div class="userbar-info">
+        <div class="userbar-num" id="ub-streak">0</div>
+        <div class="userbar-lbl">เช็คอินรายวัน</div>
+      </div>
+    </div>
+    <div class="userbar-cell" onclick="location.href='profile.html#coins'">
+      <div class="userbar-icon gold">🪙</div>
+      <div class="userbar-info">
+        <div class="userbar-num" id="ub-coins">0</div>
+        <div class="userbar-lbl">Coin คงเหลือ</div>
+      </div>
+    </div>
+    <div class="userbar-cell" onclick="scrollToSection('my')">
+      <div class="userbar-icon red">🎟️</div>
+      <div class="userbar-info">
+        <div class="userbar-num" id="ub-mine">0</div>
+        <div class="userbar-lbl">คูปองของฉัน</div>
+      </div>
+    </div>
+    <div class="userbar-cell" onclick="openSpinModal()">
+      <div class="userbar-icon purple">🎰</div>
+      <div class="userbar-info">
+        <div class="userbar-num" id="ub-spin">หมุน</div>
+        <div class="userbar-lbl">วงล้อชิงโชค</div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- TABS -->
-<div class="tabs-wrap">
-  <div class="tabs">
-    <button class="tab on" data-tab="available" onclick="switchTab('available')">เก็บได้ <span class="badge" id="b-available">—</span></button>
-    <button class="tab" data-tab="mine" onclick="switchTab('mine')">ของฉัน <span class="badge" id="b-mine">—</span></button>
-    <button class="tab" data-tab="expiring" onclick="switchTab('expiring')">ใกล้หมดอายุ</button>
-    <button class="tab" data-tab="used" onclick="switchTab('used')">ใช้ไปแล้ว</button>
+<!-- CATEGORIES -->
+<div class="cats-wrap">
+  <div class="cats" id="cats">
+    <button class="cat-pill on" data-cat="all" onclick="filterCat('all', this)">ทั้งหมด</button>
+    <button class="cat-pill" data-cat="platform" onclick="filterCat('platform', this)">Thailand Market คูปอง</button>
+    <button class="cat-pill" data-cat="shipping" onclick="filterCat('shipping', this)">🚚 ฟรีค่าส่ง</button>
+    <button class="cat-pill" data-cat="cashback" onclick="filterCat('cashback', this)">💰 แคชแบ็ก</button>
+    <button class="cat-pill" data-cat="home" onclick="filterCat('home', this)">🏠 บ้านและเฟอร์นิเจอร์</button>
+    <button class="cat-pill" data-cat="fashion" onclick="filterCat('fashion', this)">👗 แฟชั่น</button>
+    <button class="cat-pill" data-cat="tech" onclick="filterCat('tech', this)">📱 เทคโนโลยี</button>
+    <button class="cat-pill" data-cat="beauty" onclick="filterCat('beauty', this)">💄 Beauty</button>
+    <button class="cat-pill" data-cat="fmcg" onclick="filterCat('fmcg', this)">🛍 FMCG</button>
+    <button class="cat-pill" data-cat="pet" onclick="filterCat('pet', this)">🐾 สัตว์เลี้ยง</button>
   </div>
 </div>
 
-<!-- MAIN -->
+<!-- MAIN CONTENT -->
 <div class="main">
-  <div id="content">
-    <div class="coupon-grid" id="grid">
-      <div class="coupon-card skeleton" style="height:120px"></div>
-      <div class="coupon-card skeleton" style="height:120px"></div>
-      <div class="coupon-card skeleton" style="height:120px"></div>
+
+  <!-- 1. คูปองของฉัน (เฉพาะ login) -->
+  <div class="section" id="sec-my" style="display:none">
+    <div class="section-hd">
+      <div class="section-title-wrap">
+        <div class="section-title"><span class="ico">⭐</span> คูปองของฉัน</div>
+        <div class="section-sub">เก็บไว้แล้ว · ใช้ได้ตอน checkout</div>
+      </div>
+      <a class="section-link" href="#" onclick="loadMine();return false">ดูทั้งหมด →</a>
+    </div>
+    <div class="coup-h-scroll" id="my-list"></div>
+  </div>
+
+  <!-- 2. คูปองประจำวัน -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-title-wrap">
+        <div class="section-title"><span class="ico">⚡</span> คูปองประจำวัน</div>
+        <div class="section-sub">รีเฟรชทุกวัน · เก็บก่อนหมด</div>
+      </div>
+      <span class="section-link" id="daily-counter">— คูปอง</span>
+    </div>
+    <div class="coup-grid" id="daily-list">
+      <div class="coup skel" style="height:130px"></div>
+      <div class="coup skel" style="height:130px"></div>
+      <div class="coup skel" style="height:130px"></div>
+    </div>
+  </div>
+
+  <!-- 3. คูปองยอดนิยม -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-title-wrap">
+        <div class="section-title"><span class="ico">🔥</span> คูปองยอดนิยม</div>
+        <div class="section-sub">ที่คนเก็บเยอะที่สุด</div>
+      </div>
+    </div>
+    <div class="coup-grid" id="popular-list">
+      <div class="coup skel" style="height:130px"></div>
+      <div class="coup skel" style="height:130px"></div>
+      <div class="coup skel" style="height:130px"></div>
+    </div>
+  </div>
+
+  <!-- 4. คูปองตามหมวดหมู่ -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-title-wrap">
+        <div class="section-title"><span class="ico">🏷️</span> คูปองตามหมวดหมู่</div>
+        <div class="section-sub">เลือกตามที่คุณชอบ</div>
+      </div>
+    </div>
+    <div class="coup-grid" id="category-list">
+      <div class="coup skel" style="height:130px"></div>
+      <div class="coup skel" style="height:130px"></div>
+      <div class="coup skel" style="height:130px"></div>
+    </div>
+  </div>
+
+  <!-- 5. คูปองร้านค้า -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-title-wrap">
+        <div class="section-title"><span class="ico">🏪</span> คูปองร้านค้า</div>
+        <div class="section-sub">Official Stores · แบรนด์ชั้นนำ</div>
+      </div>
+    </div>
+    <div class="coup-h-scroll" id="store-list">
+      <div class="coup skel" style="height:130px;min-width:300px"></div>
+      <div class="coup skel" style="height:130px;min-width:300px"></div>
+      <div class="coup skel" style="height:130px;min-width:300px"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SPIN FAB -->
+<div class="spin-fab" onclick="openSpinModal()" title="หมุนวงล้อชิงโชค">
+  🎰
+  <div class="pulse"></div>
+</div>
+
+<!-- SPIN MODAL -->
+<div class="modal" id="spin-modal">
+  <div class="modal-card" style="max-width:340px;position:relative">
+    <button class="modal-close" onclick="closeSpinModal()" style="color:var(--black)">✕</button>
+    <div class="modal-body">
+      <div id="spin-stage-1">
+        <div class="wheel-vis" id="wheel-vis"></div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:6px">🎰 หมุนวงล้อชิงรางวัล</div>
+        <div style="font-size:12px;color:var(--g500);margin-bottom:18px">ฟรี 1 ครั้ง/วัน · มีโอกาสได้คูปอง ฿100 หรือ Coin ฟรี</div>
+        <button class="modal-btn" id="btn-spin" onclick="doSpin()">🎲 หมุนเลย!</button>
+      </div>
+      <div id="spin-stage-2" style="display:none">
+        <div class="modal-prize-icon" id="prize-icon">🎁</div>
+        <div class="modal-prize-label" id="prize-label">ยินดีด้วย!</div>
+        <div class="modal-prize-sub" id="prize-sub">คุณได้รางวัลพิเศษ</div>
+        <button class="modal-btn" onclick="closeSpinModal()">เยี่ยม! 🎉</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- SPIN RESULT MODAL -->
-<div class="modal" id="spin-modal">
-  <div class="modal-card">
-    <div class="modal-prize-icon" id="prize-icon">🎁</div>
-    <div class="modal-prize-label" id="prize-label">ยินดีด้วย!</div>
-    <div class="modal-prize-sub" id="prize-sub">คุณได้รางวัลพิเศษ</div>
-    <button class="modal-btn" onclick="closeSpinModal()">เยี่ยม! 🎉</button>
+<!-- CHECKIN MODAL -->
+<div class="modal" id="checkin-modal">
+  <div class="modal-card" style="position:relative">
+    <button class="modal-close" onclick="closeCheckinModal()" style="color:var(--black)">✕</button>
+    <div class="modal-body">
+      <div class="modal-prize-icon">📅</div>
+      <div class="modal-prize-label">เช็คอินรายวัน</div>
+      <div class="modal-prize-sub">เช็คอินติดต่อกัน 7 วัน รับ Coin เพิ่มขึ้นเรื่อยๆ</div>
+      <div class="checkin-grid" id="checkin-grid"></div>
+      <button class="modal-btn" id="btn-checkin" onclick="doCheckin()">📅 เช็คอินวันนี้</button>
+    </div>
   </div>
 </div>
 
 <script>
 const sb = window._sb;
-let currentTab = 'available';
-let allCoupons = [];
+let allCoupons = [];     // เก็บคูปองทั้งหมด
+let myCoupons = [];      // คูปองของฉัน
+let currentCat = 'all';
+let currentUser = null;
 
-// ── Toast ─────────────────────────────────────────
+// ════════════════════════════════════════════════
+//  TOAST + UTIL
+// ════════════════════════════════════════════════
 function toast(msg, type='') {
   const w = document.getElementById('toast-wrap');
   const t = document.createElement('div');
@@ -215,265 +462,324 @@ function toast(msg, type='') {
   setTimeout(() => t.remove(), 3500);
 }
 
-// ── Auth check ────────────────────────────────────
-async function ensureAuth() {
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) {
-    location.href = 'login.html?from=' + encodeURIComponent(location.pathname);
-    return null;
-  }
-  return user;
+function fmtThaiDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('th-TH', {day:'numeric',month:'short'});
 }
 
-// ── โหลด coin balance + check-in status ──────────
-async function loadHero() {
+// ════════════════════════════════════════════════
+//  AUTH + INIT
+// ════════════════════════════════════════════════
+async function init() {
   try {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) {
-      document.getElementById('coin-balance').textContent = '—';
-      document.getElementById('streak').textContent = '0';
-      document.getElementById('btn-checkin').disabled = true;
-      document.getElementById('btn-checkin').textContent = '🔒 เข้าสู่ระบบก่อน';
-      document.getElementById('btn-spin').disabled = true;
+    const { data } = await sb.auth.getUser();
+    currentUser = data?.user || null;
+  } catch(e) { currentUser = null; }
+
+  // โหลดทุกอย่างพร้อมกัน — ใช้ allSettled กันพัง
+  await Promise.allSettled([
+    loadStats(),
+    loadCoupons(),
+    loadUserStatus(),
+    loadMine()
+  ]);
+}
+
+// ════════════════════════════════════════════════
+//  STATS HERO
+// ════════════════════════════════════════════════
+async function loadStats() {
+  try {
+    // ลองดึง analytics ก่อน — ถ้าไม่ได้ค่อย query ตรง
+    const { data: a } = await sb.rpc('get_coupon_analytics');
+    if (a) {
+      document.getElementById('stat-coupons').textContent = a.active_coupons || 0;
+      document.getElementById('stat-claims').textContent =
+        ((a.total_claims || 0)/1000).toFixed(1) + 'K';
+      const sav = a.total_savings || 0;
+      document.getElementById('stat-savings').innerHTML = sav >= 1000000
+        ? (sav/1000000).toFixed(1) + 'M <span class="unit">฿</span>'
+        : sav >= 1000 ? (sav/1000).toFixed(0) + 'K <span class="unit">฿</span>'
+        : sav.toLocaleString() + ' <span class="unit">฿</span>';
       return;
     }
+  } catch(e) {}
 
+  // fallback: count คูปอง active
+  try {
+    const { count } = await sb.from('coupons').select('id', { count:'exact', head:true })
+      .eq('is_active', true);
+    document.getElementById('stat-coupons').textContent = count || 0;
+    document.getElementById('stat-claims').textContent = '—';
+    document.getElementById('stat-savings').innerHTML = '—';
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════
+//  USER STATUS (coin / streak / mine count)
+// ════════════════════════════════════════════════
+async function loadUserStatus() {
+  if (!currentUser) {
+    document.getElementById('ub-streak').textContent = '—';
+    document.getElementById('ub-coins').textContent = '—';
+    document.getElementById('ub-mine').textContent = '—';
+    return;
+  }
+  try {
     // coin
     const { data: coins } = await sb.from('user_coins')
-      .select('balance,tier,total_earned').eq('user_id', user.id).maybeSingle();
-    document.getElementById('coin-balance').textContent = (coins?.balance || 0).toLocaleString();
-    const tier = coins?.tier || 'bronze';
-    const tierMap = {bronze:'🥉 Bronze',silver:'🥈 Silver',gold:'🥇 Gold',platinum:'💎 Platinum'};
-    document.getElementById('coin-tier').textContent = `Tier: ${tierMap[tier]} · ทั้งหมดที่เคยได้: ${(coins?.total_earned||0).toLocaleString()}`;
+      .select('balance').eq('user_id', currentUser.id).maybeSingle();
+    document.getElementById('ub-coins').textContent = (coins?.balance || 0).toLocaleString();
 
-    // streak (เช็คอินล่าสุดวันไหน)
-    const { data: lastCheckin } = await sb.from('daily_checkins')
-      .select('streak_day,checkin_date').eq('user_id', user.id)
+    // streak
+    const { data: lc } = await sb.from('daily_checkins')
+      .select('streak_day,checkin_date').eq('user_id', currentUser.id)
       .order('checkin_date', { ascending: false }).limit(1).maybeSingle();
-
-    const today = new Date().toISOString().slice(0,10);
-    const checkedToday = lastCheckin?.checkin_date === today;
-
-    document.getElementById('streak').textContent = lastCheckin?.streak_day || 0;
-    const btn = document.getElementById('btn-checkin');
-    if (checkedToday) {
-      btn.disabled = true;
-      btn.textContent = '✅ เช็คอินแล้ว · กลับมาพรุ่งนี้';
-    }
-
-    // เช็คว่าหมุน spin วันนี้แล้วยัง
-    const { count: spinToday } = await sb.from('spin_history')
-      .select('id', { count:'exact', head:true })
-      .eq('user_id', user.id)
-      .gte('spin_at', today + 'T00:00:00');
-    if (spinToday > 0) {
-      const sb2 = document.getElementById('btn-spin');
-      sb2.disabled = true;
-      sb2.textContent = '🔒 พรุ่งนี้ค่อยมาใหม่';
-    }
-
-  } catch(e) { console.error('loadHero:', e); }
-}
-
-// ── Daily Check-in ────────────────────────────────
-async function doCheckin() {
-  const user = await ensureAuth(); if (!user) return;
-  const btn = document.getElementById('btn-checkin');
-  btn.disabled = true; btn.textContent = '⏳ กำลังเช็คอิน...';
-  try {
-    const { data, error } = await sb.rpc('daily_checkin');
-    if (error) throw error;
-    if (!data.success) {
-      toast(data.reason || 'เช็คอินไม่สำเร็จ', 'err');
-      return;
-    }
-    toast(`✅ +${data.coins_earned} Coin · streak ${data.streak} วัน`, 'ok');
-    await loadHero();
+    document.getElementById('ub-streak').textContent = lc?.streak_day || 0;
   } catch(e) {
-    toast('เกิดข้อผิดพลาด: ' + e.message, 'err');
-  } finally {
-    if (!btn.disabled) { btn.disabled = false; btn.textContent = '📅 เช็คอินวันนี้'; }
+    console.warn('loadUserStatus:', e.message);
   }
 }
 
-// ── Spin Wheel ────────────────────────────────────
-async function doSpin() {
-  const user = await ensureAuth(); if (!user) return;
-  const btn = document.getElementById('btn-spin');
-  const wheel = document.getElementById('spin-wheel');
-  btn.disabled = true; btn.textContent = '⏳ กำลังหมุน...';
-  wheel.classList.add('spinning');
-
+// ════════════════════════════════════════════════
+//  LOAD COUPONS — แบ่งกลุ่ม Daily / Popular / Category / Store
+// ════════════════════════════════════════════════
+async function loadCoupons() {
   try {
-    const { data, error } = await sb.rpc('spin_wheel');
-    // รอ animation ขั้นต่ำ 2 วินาที
-    await new Promise(r => setTimeout(r, 2000));
-    wheel.classList.remove('spinning');
-
-    if (error) throw error;
-    if (!data.success) {
-      toast(data.reason || 'หมุนไม่สำเร็จ', 'err');
-      return;
-    }
-
-    // แสดงผลรางวัล
-    document.getElementById('prize-icon').textContent = data.icon || '🎁';
-    document.getElementById('prize-label').textContent = data.label;
-    document.getElementById('prize-sub').textContent =
-      data.type === 'coupon' ? '✓ คูปองถูกเก็บเข้าคลังของคุณแล้ว' :
-      data.type === 'coin'   ? `✓ +${data.coin_amount} Coin ถูกเพิ่มเข้าบัญชี` :
-      'โอกาสหน้าค่อยลองใหม่นะ!';
-    document.getElementById('spin-modal').classList.add('on');
-
-    await loadHero();
-  } catch(e) {
-    wheel.classList.remove('spinning');
-    toast('เกิดข้อผิดพลาด: ' + e.message, 'err');
-  }
-}
-function closeSpinModal() {
-  document.getElementById('spin-modal').classList.remove('on');
-  loadCoupons(currentTab);
-}
-
-// ── Switch Tab ────────────────────────────────────
-function switchTab(name) {
-  currentTab = name;
-  document.querySelectorAll('.tab').forEach(t => {
-    t.classList.toggle('on', t.dataset.tab === name);
-  });
-  loadCoupons(name);
-}
-
-// ── Load Coupons ──────────────────────────────────
-async function loadCoupons(tab) {
-  const grid = document.getElementById('grid');
-  grid.innerHTML = `<div class="coupon-card skeleton" style="height:120px"></div>
-    <div class="coupon-card skeleton" style="height:120px"></div>
-    <div class="coupon-card skeleton" style="height:120px"></div>`;
-
-  try {
-    let coupons = [];
-    const { data: { user } } = await sb.auth.getUser();
-
-    if (tab === 'available') {
-      // คูปองที่ยังไม่ได้เก็บ + เก็บได้
+    // ลอง RPC ก่อน
+    let coupons = null;
+    try {
       const { data, error } = await sb.rpc('get_available_coupons', { p_cart_total: 0 });
+      if (!error && data) coupons = data;
+    } catch(e) {}
+
+    // fallback: query ตรงเข้าตาราง
+    if (!coupons) {
+      const { data, error } = await sb.from('coupons').select('*')
+        .eq('is_active', true)
+        .order('priority', { ascending: false })
+        .order('end_at', { ascending: true });
       if (error) throw error;
-      coupons = (data || []).filter(c => !c.claimed);
-      document.getElementById('b-available').textContent = coupons.length;
-    } else if (tab === 'mine') {
-      if (!user) { renderEmpty(grid, '🔒', 'ต้องเข้าสู่ระบบก่อน', 'เข้าสู่ระบบเพื่อดูคูปองของคุณ', 'login.html'); return; }
-      const { data, error } = await sb.rpc('get_my_coupons', { p_filter: 'unused' });
-      if (error) throw error;
-      coupons = data || [];
-      document.getElementById('b-mine').textContent = coupons.length;
-    } else if (tab === 'expiring') {
-      if (!user) { renderEmpty(grid, '🔒', 'ต้องเข้าสู่ระบบก่อน', 'เข้าสู่ระบบเพื่อดูคูปองของคุณ', 'login.html'); return; }
-      const { data, error } = await sb.rpc('get_my_coupons', { p_filter: 'unused' });
-      if (error) throw error;
-      coupons = (data || []).filter(c => c.days_left !== null && c.days_left <= 3);
-    } else if (tab === 'used') {
-      if (!user) { renderEmpty(grid, '🔒', 'ต้องเข้าสู่ระบบก่อน', 'เข้าสู่ระบบเพื่อดูประวัติ', 'login.html'); return; }
-      const { data, error } = await sb.rpc('get_my_coupons', { p_filter: 'used' });
-      if (error) throw error;
-      coupons = data || [];
+      coupons = (data || []).map(c => ({
+        ...c,
+        claimed: false,
+        estimated_discount: c.type === 'percent' ? c.value :
+                            c.type === 'shipping' ? 50 : c.value
+      }));
     }
 
-    allCoupons = coupons;
-    renderCoupons(coupons, tab);
+    allCoupons = coupons || [];
+    document.getElementById('daily-counter').textContent = allCoupons.length + ' คูปอง';
 
+    renderSections();
   } catch(e) {
     console.error('loadCoupons:', e);
-    grid.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div>
-      <div class="empty-title">โหลดข้อมูลไม่สำเร็จ</div>
-      <div class="empty-sub">${e.message}</div></div>`;
+    ['daily-list','popular-list','category-list','store-list'].forEach(id => {
+      document.getElementById(id).innerHTML = `<div class="empty" style="grid-column:1/-1">
+        <div class="empty-ico">⚠️</div>
+        <div class="empty-title">โหลดข้อมูลไม่ได้</div>
+        <div class="empty-sub">${e.message}</div>
+      </div>`;
+    });
   }
 }
 
-function renderEmpty(grid, ico, title, sub, link) {
-  grid.innerHTML = `<div style="grid-column:1/-1" class="empty">
-    <div class="empty-ico">${ico}</div>
-    <div class="empty-title">${title}</div>
-    <div class="empty-sub">${sub}</div>
-    ${link ? `<a href="${link}" style="display:inline-block;margin-top:14px;padding:10px 20px;background:var(--black);color:#fff;font-size:12px;letter-spacing:.06em;text-transform:uppercase">เข้าสู่ระบบ →</a>` : ''}
+function renderSections() {
+  // กรองตามหมวดหมู่
+  const filtered = currentCat === 'all' ? allCoupons : allCoupons.filter(c => matchCat(c, currentCat));
+
+  // แบ่งกลุ่ม
+  const daily = filtered.slice(0, 4);
+  const popular = [...filtered].sort((a,b) => (b.claim_count||0) - (a.claim_count||0)).slice(0, 6);
+  const category = filtered.filter(c => c.type !== 'shipping' && c.type !== 'cashback').slice(0, 6);
+  const store = filtered.filter(c => c.seller_id || c.brand_id).slice(0, 8);
+
+  renderCouponList('daily-list',    daily,    'platform');
+  renderCouponList('popular-list',  popular,  'popular');
+  renderCouponList('category-list', category, 'category');
+  renderCouponList('store-list',    store,    'store');
+}
+
+function matchCat(c, cat) {
+  if (cat === 'shipping') return c.type === 'shipping';
+  if (cat === 'cashback') return c.type === 'cashback';
+  if (cat === 'platform') return !c.seller_id && !c.brand_id;
+  // หมวดสินค้า — match จากชื่อหรือ description (best-effort เพราะ schema ยังไม่ได้ tag)
+  const keywords = {
+    home: ['บ้าน','เฟอร์','ติดตั้ง','home'],
+    fashion: ['แฟชั่น','เสื้อผ้า','รองเท้า','fashion'],
+    tech: ['tech','gadget','iphone','samsung','apple','โทรศัพท์','คอม'],
+    beauty: ['beauty','skin','ผิว','เครื่องสำอาง','health'],
+    fmcg: ['fmcg','ของชำ','อาหาร'],
+    pet: ['สัตว์','pet','อาหารสัตว์']
+  }[cat] || [];
+  const txt = (c.name + ' ' + (c.description||'') + ' ' + (c.code||'')).toLowerCase();
+  return keywords.some(k => txt.includes(k.toLowerCase()));
+}
+
+function filterCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('on'));
+  btn.classList.add('on');
+  renderSections();
+}
+
+function renderCouponList(targetId, list, kind) {
+  const el = document.getElementById(targetId);
+  if (!list.length) {
+    el.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <div class="empty-ico">${kind==='store'?'🏪':'🎟️'}</div>
+      <div class="empty-title">ไม่มีคูปองในหมวดนี้</div>
+      <div class="empty-sub">ลองเลือกหมวดอื่น หรือดูคูปองทั้งหมด</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(c => couponCardHTML(c, kind)).join('');
+}
+
+function couponCardHTML(c, kind) {
+  const valStr = c.type === 'percent'  ? `${c.value}%`
+               : c.type === 'shipping' ? 'ส่งฟรี'
+               : c.type === 'cashback' ? `${c.value}%`
+               : `฿${Number(c.value||0).toLocaleString()}`;
+  const valUnit = c.type === 'percent'  ? 'OFF'
+                : c.type === 'cashback' ? 'CASHBACK'
+                : c.type === 'shipping' ? '' : 'OFF';
+  const minTxt = c.min_order > 0 ? `ขั้นต่ำ ฿${Number(c.min_order).toLocaleString()}` : 'ไม่มีขั้นต่ำ';
+
+  // หมดอายุ
+  const endDate = c.end_at;
+  const dl = endDate ? Math.ceil((new Date(endDate) - new Date()) / 86400000) : null;
+  const expired = dl !== null && dl < 0;
+  const dlTxt = endDate
+    ? (dl <= 0 ? 'หมดวันนี้' : dl <= 3 ? `เหลือ ${dl} วัน` : fmtThaiDate(endDate))
+    : '';
+  const dlClass = (dl !== null && dl <= 3) ? 'urgent' : '';
+
+  // remaining quota
+  const left = c.usage_limit ? Math.max(0, c.usage_limit - (c.used_count||0)) : null;
+  const qtyTxt = (left !== null && left <= 100) ? `เหลือ ${left} ใบ` : '';
+
+  // badge
+  let badge = '';
+  if (c.priority >= 90) badge = '<div class="coup-badge hot">🔥 HOT</div>';
+  else if (c.usage_limit && c.usage_limit <= 200) badge = '<div class="coup-badge limited">⚡ LIMITED</div>';
+  else if ((Date.now() - new Date(c.created_at).getTime()) < 7*86400000) badge = '<div class="coup-badge new">NEW</div>';
+  else if (c.user_segment === 'vip') badge = '<div class="coup-badge exclusive">👑 VIP</div>';
+
+  // coin cost
+  const coinBadge = (c.coin_cost && c.coin_cost > 0)
+    ? `<div class="coup-coin">🪙 ${c.coin_cost} Coin</div>` : '';
+
+  // store name
+  const storeBadge = (kind === 'store' && (c.brand_id || c.seller_id))
+    ? `<div class="coup-store">${c.brand_id ? '🏷️ Brand' : '🏪 Seller'}</div>` : '';
+
+  // action button
+  const claimed = c.claimed === true;
+  const actionBtn = expired
+    ? '<button class="coup-btn" disabled style="opacity:.5">หมดอายุ</button>'
+    : claimed
+    ? `<button class="coup-btn claimed" disabled>✓ เก็บแล้ว</button>
+       <button class="coup-btn primary" onclick="event.stopPropagation();useCoupon('${c.code}')">ใช้เลย</button>`
+    : `<button class="coup-btn primary" onclick="event.stopPropagation();claimCoupon('${c.id}','${(c.name||'').replace(/'/g,'')}')">+ เก็บคูปอง</button>
+       <button class="coup-btn" onclick="event.stopPropagation();copyCode('${c.code}')" title="คัดลอก code">📋</button>`;
+
+  const bgColor = c.banner_color || '#E63329';
+
+  return `<div class="coup ${expired?'expired':''}" data-id="${c.id}">
+    ${storeBadge}
+    ${badge}
+    ${coinBadge}
+    <div class="coup-l" style="background:${bgColor}">
+      <div class="coup-l-icon">${c.icon || '🎟️'}</div>
+      <div class="coup-l-val">${valStr}</div>
+      ${valUnit ? `<div class="coup-l-unit">${valUnit}</div>` : ''}
+      ${c.max_discount ? `<div class="coup-l-min">สูงสุด ฿${c.max_discount}</div>` : ''}
+    </div>
+    <div class="coup-r">
+      <div>
+        <div class="coup-name">${c.name || 'คูปอง'}</div>
+        ${c.description ? `<div class="coup-desc">${c.description}</div>` : ''}
+        <div class="coup-meta">
+          <span>${minTxt}</span>
+          ${dlTxt ? `<span class="${dlClass}">· ${dlTxt}</span>` : ''}
+          ${qtyTxt ? `<span class="qty">· ${qtyTxt}</span>` : ''}
+        </div>
+      </div>
+      <div class="coup-actions">${actionBtn}</div>
+    </div>
   </div>`;
 }
 
-function renderCoupons(coupons, tab) {
-  const grid = document.getElementById('grid');
-  if (!coupons.length) {
-    const messages = {
-      available: ['🎟️','ยังไม่มีคูปองให้เก็บ','รอรอบใหม่ที่จะปล่อยเร็วๆ นี้'],
-      mine: ['📭','ยังไม่มีคูปองในคลัง','ไปเก็บคูปองในแท็บ "เก็บได้" กันก่อน!'],
-      expiring: ['⏰','ไม่มีคูปองใกล้หมดอายุ','คูปองทั้งหมดยังใช้ได้ปกติ'],
-      used: ['📜','ยังไม่เคยใช้คูปอง','คูปองที่ใช้ไปแล้วจะแสดงที่นี่']
-    };
-    const [ico,title,sub] = messages[tab] || messages.available;
-    renderEmpty(grid, ico, title, sub);
+// ════════════════════════════════════════════════
+//  MY COUPONS
+// ════════════════════════════════════════════════
+async function loadMine() {
+  if (!currentUser) {
+    document.getElementById('sec-my').style.display = 'none';
+    document.getElementById('ub-mine').textContent = '—';
     return;
   }
+  try {
+    let mine = null;
+    try {
+      const { data, error } = await sb.rpc('get_my_coupons', { p_filter:'unused' });
+      if (!error) mine = data;
+    } catch(e) {}
 
-  grid.innerHTML = coupons.map(c => {
-    const valStr = c.type === 'percent'  ? `${c.value}%` :
-                   c.type === 'shipping' ? 'ส่งฟรี'      :
-                   c.type === 'cashback' ? `+${c.value}%` :
-                   `฿${Number(c.value).toLocaleString()}`;
-    const valUnit = c.type === 'percent' ? 'OFF' :
-                    c.type === 'cashback' ? 'CASHBACK' :
-                    c.type === 'shipping' ? '' : 'OFF';
-    const minOrderTxt = c.min_order > 0 ? `ขั้นต่ำ ฿${c.min_order}` : 'ไม่มีขั้นต่ำ';
-    const dl = c.days_left;
-    const dlTxt = dl === null ? '' : (dl <= 0 ? 'หมดวันนี้' : dl <= 3 ? `เหลือ ${dl} วัน` : `${dl} วัน`);
-    const dlClass = (dl !== null && dl <= 3) ? 'urgent' : '';
-
-    let actions = '';
-    if (tab === 'available') {
-      const coinCost = c.coin_cost || 0;
-      const claimLabel = coinCost > 0 ? `🪙 แลก ${coinCost}` : '+ เก็บ';
-      actions = `<button class="cc-btn primary" onclick="claimCoupon('${c.id}','${c.name.replace(/'/g,"\\'")}')">${claimLabel}</button>
-                 <button class="cc-btn" onclick="copyCode('${c.code}')">📋 ${c.code}</button>`;
-    } else if (tab === 'mine' || tab === 'expiring') {
-      actions = `<button class="cc-btn primary" onclick="useCoupon('${c.code}')">🛒 ไปใช้</button>
-                 <button class="cc-btn" onclick="copyCode('${c.code}')">📋 Copy</button>`;
-    } else if (tab === 'used') {
-      actions = `<button class="cc-btn" disabled>✓ ใช้ไปแล้ว</button>`;
+    if (!mine) {
+      // fallback
+      const { data } = await sb.from('user_coupons')
+        .select('id,coupon_id,claimed_at,used_at,coupons(*)')
+        .eq('user_id', currentUser.id)
+        .is('used_at', null);
+      mine = (data || []).map(uc => ({
+        ...uc.coupons,
+        claimed: true,
+        claimed_at: uc.claimed_at
+      }));
     }
 
-    return `<div class="coupon-card ${tab==='used'?'used':''} ${dl !== null && dl < 0 ? 'expired' : ''}">
-      <div class="cc-left" style="background:${c.banner_color||'#E63329'}">
-        <div class="cc-icon">${c.icon || '🎟️'}</div>
-        <div class="cc-value">${valStr}</div>
-        ${valUnit ? `<div class="cc-value-unit">${valUnit}</div>` : ''}
-      </div>
-      <div class="cc-right">
-        <div>
-          <div class="cc-name">${c.name}</div>
-          ${c.description ? `<div class="cc-desc">${c.description}</div>` : ''}
-          <div class="cc-meta">${minOrderTxt} ${dlTxt ? '· <span class="'+dlClass+'">'+dlTxt+'</span>' : ''}</div>
-        </div>
-        <div class="cc-actions">${actions}</div>
-      </div>
-    </div>`;
-  }).join('');
+    myCoupons = mine || [];
+    document.getElementById('ub-mine').textContent = myCoupons.length;
+
+    if (myCoupons.length > 0) {
+      document.getElementById('sec-my').style.display = 'block';
+      document.getElementById('my-list').innerHTML = myCoupons.slice(0, 6)
+        .map(c => couponCardHTML(c, 'mine')).join('');
+    } else {
+      document.getElementById('sec-my').style.display = 'none';
+    }
+  } catch(e) {
+    console.warn('loadMine:', e.message);
+    document.getElementById('ub-mine').textContent = '0';
+  }
 }
 
-// ── Claim coupon ──────────────────────────────────
+// ════════════════════════════════════════════════
+//  CLAIM / USE / COPY
+// ════════════════════════════════════════════════
 async function claimCoupon(couponId, name) {
-  const user = await ensureAuth(); if (!user) return;
+  if (!currentUser) {
+    if (confirm('ต้องเข้าสู่ระบบก่อน · ไปหน้า login?')) {
+      location.href = 'login.html?from=' + encodeURIComponent(location.pathname);
+    }
+    return;
+  }
   try {
     const { data, error } = await sb.rpc('claim_coupon', { p_coupon_id: couponId });
     if (error) throw error;
-    if (!data.success) {
-      toast(data.reason || 'เก็บไม่สำเร็จ', 'err');
-      return;
-    }
+    if (!data?.success) { toast(data?.reason || 'เก็บไม่สำเร็จ', 'err'); return; }
     toast(`✅ เก็บคูปอง "${name}" สำเร็จ`, 'ok');
-    await loadHero();
-    await loadCoupons(currentTab);
+    await Promise.allSettled([loadCoupons(), loadMine(), loadUserStatus()]);
   } catch(e) {
     toast('เกิดข้อผิดพลาด: ' + e.message, 'err');
   }
+}
+
+function useCoupon(code) {
+  location.href = `checkout.html?coupon=${encodeURIComponent(code)}`;
 }
 
 function copyCode(code) {
@@ -486,16 +792,166 @@ function copyCode(code) {
   }
 }
 
-function useCoupon(code) {
-  // ไป checkout พร้อม pre-fill code
-  location.href = `checkout.html?coupon=${encodeURIComponent(code)}`;
+// ════════════════════════════════════════════════
+//  SEARCH
+// ════════════════════════════════════════════════
+async function searchCoupon() {
+  const code = document.getElementById('search-input').value.trim().toUpperCase();
+  if (!code) return;
+  try {
+    const { data, error } = await sb.rpc('validate_coupon', {
+      p_code: code, p_user_id: currentUser?.id || null, p_cart_total: 0
+    });
+    if (error) throw error;
+    if (!data?.valid) { toast(data?.reason || 'ไม่พบโค้ด', 'err'); return; }
+    toast(`✅ พบคูปอง "${data.name}" — กำลังเก็บ...`, 'ok');
+    if (data.coupon_id) await claimCoupon(data.coupon_id, data.name);
+  } catch(e) {
+    // fallback: ลอง query ตรง
+    try {
+      const { data: c } = await sb.from('coupons').select('*')
+        .ilike('code', code).eq('is_active', true).limit(1).maybeSingle();
+      if (!c) { toast('ไม่พบโค้ด ' + code, 'err'); return; }
+      await claimCoupon(c.id, c.name);
+    } catch(e2) { toast('ไม่พบโค้ด', 'err'); }
+  }
 }
 
-// ── INIT ──────────────────────────────────────────
-(async function init() {
-  await loadHero();
-  await loadCoupons('available');
-})();
+// ════════════════════════════════════════════════
+//  SPIN WHEEL
+// ════════════════════════════════════════════════
+function openSpinModal() {
+  if (!currentUser) {
+    if (confirm('ต้องเข้าสู่ระบบก่อน · ไปหน้า login?')) {
+      location.href = 'login.html?from=' + encodeURIComponent(location.pathname);
+    }
+    return;
+  }
+  document.getElementById('spin-stage-1').style.display = 'block';
+  document.getElementById('spin-stage-2').style.display = 'none';
+  document.getElementById('btn-spin').disabled = false;
+  document.getElementById('btn-spin').textContent = '🎲 หมุนเลย!';
+  document.getElementById('wheel-vis').classList.remove('spinning');
+  document.getElementById('spin-modal').classList.add('on');
+}
+function closeSpinModal() { document.getElementById('spin-modal').classList.remove('on'); loadCoupons(); loadMine(); loadUserStatus(); }
+
+async function doSpin() {
+  const btn = document.getElementById('btn-spin');
+  const wheel = document.getElementById('wheel-vis');
+  btn.disabled = true; btn.textContent = '⏳ กำลังหมุน...';
+  wheel.classList.add('spinning');
+
+  try {
+    const { data, error } = await sb.rpc('spin_wheel');
+    await new Promise(r => setTimeout(r, 1500));
+
+    if (error) throw error;
+    if (!data?.success) {
+      wheel.classList.remove('spinning');
+      btn.disabled = false; btn.textContent = '🎲 หมุนเลย!';
+      toast(data?.reason || 'หมุนไม่สำเร็จ', 'err');
+      return;
+    }
+
+    document.getElementById('prize-icon').textContent = data.icon || '🎁';
+    document.getElementById('prize-label').textContent = data.label;
+    document.getElementById('prize-sub').textContent =
+      data.type === 'coupon' ? '✓ คูปองถูกเก็บเข้าคลังของคุณแล้ว' :
+      data.type === 'coin'   ? `✓ +${data.coin_amount} Coin ถูกเพิ่มเข้าบัญชี` :
+      'โอกาสหน้าค่อยลองใหม่นะ!';
+    document.getElementById('spin-stage-1').style.display = 'none';
+    document.getElementById('spin-stage-2').style.display = 'block';
+  } catch(e) {
+    wheel.classList.remove('spinning');
+    btn.disabled = false; btn.textContent = '🎲 หมุนเลย!';
+    toast('เกิดข้อผิดพลาด: ' + e.message, 'err');
+  }
+}
+
+// ════════════════════════════════════════════════
+//  DAILY CHECK-IN
+// ════════════════════════════════════════════════
+async function openCheckinModal() {
+  if (!currentUser) {
+    if (confirm('ต้องเข้าสู่ระบบก่อน · ไปหน้า login?')) {
+      location.href = 'login.html?from=' + encodeURIComponent(location.pathname);
+    }
+    return;
+  }
+
+  // โหลดข้อมูล streak
+  let streak = 0, checkedToday = false;
+  try {
+    const { data: lc } = await sb.from('daily_checkins')
+      .select('streak_day,checkin_date').eq('user_id', currentUser.id)
+      .order('checkin_date', { ascending: false }).limit(1).maybeSingle();
+    if (lc) {
+      const today = new Date().toISOString().slice(0,10);
+      checkedToday = lc.checkin_date === today;
+      streak = lc.streak_day || 0;
+    }
+  } catch(e) {}
+
+  // render 7 วัน
+  const coins = [1, 2, 3, 5, 8, 13, 30];
+  const grid = document.getElementById('checkin-grid');
+  grid.innerHTML = coins.map((c, i) => {
+    const day = i + 1;
+    const cls = day < streak || (day === streak && checkedToday) ? 'done'
+              : day === (streak + (checkedToday ? 0 : 1)) ? 'today'
+              : '';
+    return `<div class="checkin-day ${cls}">
+      <div class="checkin-day-num">D${day}</div>
+      <div class="checkin-day-coin">🪙 ${c}</div>
+    </div>`;
+  }).join('');
+
+  const btn = document.getElementById('btn-checkin');
+  if (checkedToday) {
+    btn.disabled = true;
+    btn.textContent = '✅ เช็คอินวันนี้แล้ว';
+  } else {
+    btn.disabled = false;
+    btn.textContent = '📅 เช็คอินวันนี้';
+  }
+  document.getElementById('checkin-modal').classList.add('on');
+}
+
+function closeCheckinModal() { document.getElementById('checkin-modal').classList.remove('on'); }
+
+async function doCheckin() {
+  const btn = document.getElementById('btn-checkin');
+  btn.disabled = true; btn.textContent = '⏳ กำลังเช็คอิน...';
+  try {
+    const { data, error } = await sb.rpc('daily_checkin');
+    if (error) throw error;
+    if (!data?.success) { toast(data?.reason || 'เช็คอินไม่สำเร็จ', 'err'); btn.disabled = false; btn.textContent = '📅 เช็คอินวันนี้'; return; }
+    toast(`🎉 +${data.coins_earned} Coin · streak ${data.streak} วัน`, 'ok');
+    btn.textContent = '✅ เช็คอินวันนี้แล้ว';
+    setTimeout(() => closeCheckinModal(), 1200);
+    loadUserStatus();
+  } catch(e) {
+    toast('เกิดข้อผิดพลาด: ' + e.message, 'err');
+    btn.disabled = false; btn.textContent = '📅 เช็คอินวันนี้';
+  }
+}
+
+// ════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════
+function scrollToSection(id) {
+  const el = document.getElementById('sec-' + id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Search on Enter
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchCoupon();
+});
+
+// INIT
+init();
 </script>
 </body>
 </html>
