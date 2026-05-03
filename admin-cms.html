@@ -1636,6 +1636,216 @@ nav { display: block !important; height: auto !important; }
       </div>
     </div>
 
+    <!-- ════════════════════════════════════════════════════════════
+         🎯 HIGHLIGHTS — จุดเด่นสินค้า (4-6 bullet points)
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head">
+        <div class="form-section-title">🎯 จุดเด่นสินค้า (Highlights)</div>
+        <span style="font-size:11px;color:var(--g400)">แสดงในแท็บ "รายละเอียดสินค้า"</span>
+      </div>
+      <div class="form-section-body">
+        <div id="highlights-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addHighlight()" style="border:1px dashed var(--g300)">+ เพิ่มจุดเด่น</button>
+        <div class="hint">ตัวอย่าง: 🎯 Quantum HDR 1500 — ความสว่างที่แท้จริง</div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         📋 SPECIFICATIONS — สเปคสินค้า (key-value)
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head">
+        <div class="form-section-title">📋 สเปคสินค้า (Specifications)</div>
+        <span style="font-size:11px;color:var(--g400)">แสดงในแท็บ "สเปค"</span>
+      </div>
+      <div class="form-section-body">
+        <div id="specs-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addSpec()" style="border:1px dashed var(--g300)">+ เพิ่มสเปค</button>
+        <div class="hint">ตัวอย่าง: ขนาดหน้าจอ → 55 นิ้ว · ความละเอียด → 4K Ultra HD</div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         🎨 VARIANTS — ตัวเลือก เช่น สี/ขนาด
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head">
+        <div class="form-section-title">🎨 ตัวเลือกสินค้า (Variants)</div>
+        <span style="font-size:11px;color:var(--g400)">เช่น สี · ขนาด · รุ่น</span>
+      </div>
+      <div class="form-section-body">
+        <div id="variants-list" style="display:flex;flex-direction:column;gap:14px;margin-bottom:10px"></div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addVariantOption()" style="border:1px dashed var(--g300)">+ เพิ่มตัวเลือก (สี / ขนาด ...)</button>
+        <div class="hint">ใส่ค่าทุกตัวคั่นด้วย , (จุลภาค) เช่น Titan Black, Silver, White</div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         🚚 SHIPPING — ค่าส่ง / ระยะเวลา / ที่ตั้ง
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head"><div class="form-section-title">🚚 การจัดส่ง</div></div>
+      <div class="form-section-body">
+        <div style="margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+            <input type="checkbox" id="f-free-shipping" style="accent-color:var(--red)"> 🎁 <strong>ส่งฟรี</strong> (ไม่คิดค่าจัดส่ง)
+          </label>
+        </div>
+        <div class="form-grid-3">
+          <div class="fg"><label class="lbl">ค่าจัดส่ง (฿)</label><input class="inp" type="number" id="f-shipping-fee" placeholder="0" min="0" step="0.01"></div>
+          <div class="fg"><label class="lbl">ระยะเวลาจัดส่ง</label><input class="inp" type="text" id="f-shipping-days" placeholder="1-3 วัน"></div>
+          <div class="fg"><label class="lbl">จัดส่งจาก</label><input class="inp" type="text" id="f-ships-from" placeholder="กรุงเทพ"></div>
+        </div>
+        <div class="form-grid-3" style="margin-top:14px">
+          <div class="fg"><label class="lbl">กว้าง (ซม.)</label><input class="inp" type="number" id="f-dim-w" placeholder="0" min="0" step="0.1"></div>
+          <div class="fg"><label class="lbl">สูง (ซม.)</label><input class="inp" type="number" id="f-dim-h" placeholder="0" min="0" step="0.1"></div>
+          <div class="fg"><label class="lbl">ลึก (ซม.)</label><input class="inp" type="number" id="f-dim-d" placeholder="0" min="0" step="0.1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         🛡️ WARRANTY & RETURN — ประกัน / คืนสินค้า
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head"><div class="form-section-title">🛡️ ประกัน & คืนสินค้า</div></div>
+      <div class="form-section-body">
+        <div class="form-grid-3">
+          <div class="fg"><label class="lbl">ระยะประกัน</label><input class="inp" type="text" id="f-warranty-period" placeholder="3 ปี / 1 ปี / ไม่มี"></div>
+          <div class="fg"><label class="lbl">ประเภทการรับประกัน</label>
+            <select class="sel" id="f-warranty-type">
+              <option value="">— ไม่ระบุ —</option>
+              <option value="manufacturer">ศูนย์ผู้ผลิต</option>
+              <option value="local">ศูนย์ไทย</option>
+              <option value="shop">ร้านค้า</option>
+              <option value="none">ไม่มีการรับประกัน</option>
+            </select>
+          </div>
+          <div class="fg"><label class="lbl">ประกันโดย</label><input class="inp" type="text" id="f-warranty-by" placeholder="ศูนย์ Samsung ทั่วไทย"></div>
+        </div>
+        <div class="form-grid" style="margin-top:14px">
+          <div class="fg"><label class="lbl">คืนได้ภายใน (วัน)</label><input class="inp" type="number" id="f-return-days" placeholder="30" min="0"></div>
+          <div class="fg">
+            <label class="lbl">เก็บเงินปลายทาง (COD)</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:9px 12px;border:var(--border)">
+              <input type="checkbox" id="f-cod" style="accent-color:var(--red)" checked> ✅ รองรับ COD
+            </label>
+          </div>
+        </div>
+        <div class="fg" style="margin-top:14px">
+          <label class="lbl">เงื่อนไขการคืนสินค้า</label>
+          <textarea class="ta" id="f-return-policy" rows="2" placeholder="เงื่อนไขการคืนสินค้าและคืนเงิน..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         🔧 INSTALL SERVICE — บริการติดตั้ง
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head"><div class="form-section-title">🔧 บริการติดตั้ง</div></div>
+      <div class="form-section-body">
+        <div style="margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+            <input type="checkbox" id="f-install-available" style="accent-color:var(--red)" onchange="document.getElementById('install-detail').style.display=this.checked?'grid':'none'"> 🔧 มีบริการติดตั้ง
+          </label>
+        </div>
+        <div class="form-grid" id="install-detail" style="display:none">
+          <div class="fg"><label class="lbl">ค่าติดตั้ง (฿)</label><input class="inp" type="number" id="f-install-fee" placeholder="290" min="0"></div>
+          <div class="fg"><label class="lbl">หมายเหตุ</label><input class="inp" type="text" id="f-install-note" placeholder="ติดตั้งโดยช่างผู้เชี่ยวชาญ"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         💳 INSTALLMENT — ผ่อน 0%
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head"><div class="form-section-title">💳 ผ่อนชำระ</div></div>
+      <div class="form-section-body">
+        <div style="margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+            <input type="checkbox" id="f-installment-available" style="accent-color:var(--red)" onchange="document.getElementById('installment-detail').style.display=this.checked?'grid':'none'"> 💳 รองรับการผ่อนชำระ
+          </label>
+        </div>
+        <div class="form-grid" id="installment-detail" style="display:none">
+          <div class="fg"><label class="lbl">ผ่อนนาน (เดือน)</label>
+            <select class="sel" id="f-installment-months">
+              <option value="3">3 เดือน</option>
+              <option value="6">6 เดือน</option>
+              <option value="10">10 เดือน</option>
+              <option value="12" selected>12 เดือน</option>
+              <option value="24">24 เดือน</option>
+              <option value="36">36 เดือน</option>
+            </select>
+          </div>
+          <div class="fg"><label class="lbl">ดอกเบี้ย (%)</label><input class="inp" type="number" id="f-installment-rate" placeholder="0" min="0" step="0.01"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         ⭐ AUTHENTIC + BADGE
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head"><div class="form-section-title">⭐ ของแท้ + ป้ายพิเศษ</div></div>
+      <div class="form-section-body">
+        <div style="margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+            <input type="checkbox" id="f-is-authentic" style="accent-color:var(--red)"> ✓ <strong>ของแท้ 100%</strong> (แสดง badge บนหน้าสินค้า)
+          </label>
+        </div>
+        <div class="form-grid">
+          <div class="fg"><label class="lbl">ป้ายข้อความพิเศษ</label><input class="inp" type="text" id="f-badge-text" placeholder="เช่น NEW · BEST SELLER · LIMITED" maxlength="20"></div>
+          <div class="fg"><label class="lbl">สี Badge</label>
+            <select class="sel" id="f-badge-color">
+              <option value="">— ไม่ใช้ Badge —</option>
+              <option value="#E63329">🔴 แดง</option>
+              <option value="#16A34A">🟢 เขียว</option>
+              <option value="#2563EB">🔵 น้ำเงิน</option>
+              <option value="#F59E0B">🟠 ส้ม</option>
+              <option value="#7C3AED">🟣 ม่วง</option>
+              <option value="#0A0A0A">⚫ ดำ</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         🎬 VIDEO + 🔗 RELATED PRODUCTS
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head"><div class="form-section-title">🎬 วิดีโอ & สินค้าที่เกี่ยวข้อง</div></div>
+      <div class="form-section-body">
+        <div class="fg" style="margin-bottom:14px">
+          <label class="lbl">วิดีโอสินค้า (YouTube URL)</label>
+          <input class="inp" type="url" id="f-video-url" placeholder="https://www.youtube.com/watch?v=...">
+          <div class="hint">รองรับ YouTube link · จะแสดงในแท็บรายละเอียด</div>
+        </div>
+        <div class="fg">
+          <label class="lbl">สินค้าที่เกี่ยวข้อง <span style="color:var(--g400);font-size:9px">UUID คั่นด้วย , — ใช้ในแท็บ "สินค้าที่เกี่ยวข้อง"</span></label>
+          <input class="inp" type="text" id="f-related-products" placeholder="uuid1, uuid2, uuid3" style="font-family:'DM Mono',monospace;font-size:11px">
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         🔍 SEO (Optional - collapsible)
+         ════════════════════════════════════════════════════════════ -->
+    <div class="form-section">
+      <div class="form-section-head" style="cursor:pointer" onclick="document.getElementById('seo-body').style.display=document.getElementById('seo-body').style.display==='none'?'block':'none';this.querySelector('.seo-toggle').textContent=this.querySelector('.seo-toggle').textContent==='▼'?'▶':'▼'">
+        <div class="form-section-title">🔍 SEO (ตัวเลือกขั้นสูง) <span class="seo-toggle" style="font-size:10px;color:var(--g400);margin-left:4px">▶</span></div>
+        <span style="font-size:11px;color:var(--g400)">คลิกเพื่อแสดง</span>
+      </div>
+      <div class="form-section-body" id="seo-body" style="display:none">
+        <div class="fg" style="margin-bottom:14px"><label class="lbl">SEO Title</label><input class="inp" type="text" id="f-seo-title" placeholder="ชื่อที่แสดงใน Google" maxlength="80"></div>
+        <div class="fg" style="margin-bottom:14px"><label class="lbl">SEO Description</label><textarea class="ta" id="f-seo-description" rows="2" placeholder="คำโปรย 150-160 ตัวอักษร" maxlength="200"></textarea></div>
+        <div class="fg"><label class="lbl">Keywords <span style="color:var(--g400);font-size:9px">คั่นด้วย ,</span></label><input class="inp" type="text" id="f-seo-keywords" placeholder="ทีวี samsung, qled, smart tv"></div>
+      </div>
+    </div>
+
     <!-- Publish Status -->
     <div class="form-section">
       <div class="form-section-head"><div class="form-section-title">🚀 การเผยแพร่</div></div>
@@ -2095,6 +2305,81 @@ function debouncedSearch() { clearTimeout(searchTimer); searchTimer = setTimeout
 function filterByStatus(s) { document.getElementById('prod-status-filter').value = s; loadProducts(); }
 
 // ── Open Product Modal ────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════
+//  DYNAMIC ROW HELPERS [PATCH 2026-05-04] — highlights/specs/variants
+// ════════════════════════════════════════════════════════════════════════
+
+const COMMON_ICONS = ['🎯','🎮','📺','🔊','✨','⚡','💎','🏆','🎨','📷','🔋','📶','🚀','💪','🎁','⭐','💡','🔥','✅','🌟'];
+
+function addHighlight(data) {
+  const list = document.getElementById('highlights-list');
+  if (!list) return;
+  const idx = list.children.length;
+  const row = document.createElement('div');
+  row.className = 'hl-row';
+  row.style.cssText = 'display:grid;grid-template-columns:60px 1fr 2fr 32px;gap:6px;align-items:center';
+  row.innerHTML = `
+    <input class="inp hl-icon" type="text" placeholder="🎯" maxlength="2" style="text-align:center;font-size:18px;padding:6px" value="${data?.icon||COMMON_ICONS[idx%COMMON_ICONS.length]}">
+    <input class="inp hl-title" type="text" placeholder="หัวข้อ" maxlength="40" value="${(data?.title||'').replace(/"/g,'&quot;')}">
+    <input class="inp hl-desc" type="text" placeholder="คำอธิบายสั้นๆ" maxlength="120" value="${(data?.desc||'').replace(/"/g,'&quot;')}">
+    <button type="button" onclick="this.parentElement.remove()" style="background:none;border:1px solid var(--g300);color:var(--g500);font-size:14px;cursor:pointer;padding:6px;height:36px" title="ลบ">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function addSpec(data) {
+  const list = document.getElementById('specs-list');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.className = 'sp-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 2fr 32px;gap:6px;align-items:center';
+  row.innerHTML = `
+    <input class="inp sp-key" type="text" placeholder="หัวข้อ (เช่น ขนาดหน้าจอ)" maxlength="40" value="${(data?.key||'').replace(/"/g,'&quot;')}">
+    <input class="inp sp-value" type="text" placeholder="ค่า (เช่น 55 นิ้ว)" maxlength="100" value="${(data?.value||'').replace(/"/g,'&quot;')}">
+    <button type="button" onclick="this.parentElement.remove()" style="background:none;border:1px solid var(--g300);color:var(--g500);font-size:14px;cursor:pointer;padding:6px;height:36px" title="ลบ">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function addVariantOption(data) {
+  const list = document.getElementById('variants-list');
+  if (!list) return;
+  const row = document.createElement('div');
+  row.className = 'vo-row';
+  row.style.cssText = 'display:grid;grid-template-columns:200px 1fr 32px;gap:8px;align-items:center;padding:10px;border:var(--border);background:var(--g50)';
+  const valuesStr = (data?.values || []).join(', ');
+  row.innerHTML = `
+    <input class="inp vo-name" type="text" placeholder="ชื่อตัวเลือก เช่น สี" maxlength="20" value="${(data?.name||'').replace(/"/g,'&quot;')}">
+    <input class="inp vo-values" type="text" placeholder="ค่าทุกตัว คั่นด้วย ,  เช่น Titan Black, Silver" value="${valuesStr.replace(/"/g,'&quot;')}">
+    <button type="button" onclick="this.parentElement.remove()" style="background:none;border:1px solid var(--g300);color:var(--g500);font-size:14px;cursor:pointer;padding:6px;height:36px" title="ลบ">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function collectHighlights() {
+  return [...document.querySelectorAll('#highlights-list .hl-row')].map(r => ({
+    icon: r.querySelector('.hl-icon').value.trim() || '✨',
+    title: r.querySelector('.hl-title').value.trim(),
+    desc: r.querySelector('.hl-desc').value.trim()
+  })).filter(h => h.title);
+}
+
+function collectSpecs() {
+  return [...document.querySelectorAll('#specs-list .sp-row')].map(r => ({
+    key: r.querySelector('.sp-key').value.trim(),
+    value: r.querySelector('.sp-value').value.trim()
+  })).filter(s => s.key && s.value);
+}
+
+function collectVariants() {
+  const opts = [...document.querySelectorAll('#variants-list .vo-row')].map(r => ({
+    name: r.querySelector('.vo-name').value.trim(),
+    values: r.querySelector('.vo-values').value.split(',').map(v => v.trim()).filter(Boolean)
+  })).filter(o => o.name && o.values.length);
+  return { options: opts };
+}
+
+
 function openProductModal(data) {
   editingProductId = data?.id || null;
   uploadedImages = [];
@@ -2103,8 +2388,31 @@ function openProductModal(data) {
   document.getElementById('save-btn-text').textContent = editingProductId ? '💾 บันทึก' : '📤 บันทึกและเผยแพร่';
 
   // Reset form
-  const fields = ['f-name-th','f-name-en','f-desc','f-price','f-compare','f-stock','f-sku','f-weight','f-tags'];
+  const fields = ['f-name-th','f-name-en','f-desc','f-price','f-compare','f-stock','f-sku','f-weight','f-tags',
+                  'f-shipping-fee','f-shipping-days','f-ships-from',
+                  'f-dim-w','f-dim-h','f-dim-d',
+                  'f-warranty-period','f-warranty-by','f-return-days','f-return-policy',
+                  'f-install-fee','f-install-note','f-installment-rate',
+                  'f-badge-text','f-video-url','f-related-products',
+                  'f-seo-title','f-seo-description','f-seo-keywords'];
   fields.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  // checkboxes
+  ['f-free-shipping','f-cod','f-install-available','f-installment-available','f-is-authentic']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.checked = (id==='f-cod'); });
+  // selects
+  ['f-warranty-type','f-badge-color'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  const inMonths = document.getElementById('f-installment-months'); if (inMonths) inMonths.value = '12';
+
+  // hide collapsed details
+  ['install-detail','installment-detail','seo-body'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+
+  // clear dynamic lists
+  ['highlights-list','specs-list','variants-list'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.innerHTML = '';
+  });
+
   document.getElementById('f-discount').textContent = '—';
   document.getElementById('f-discount').style.color = 'var(--g500)';
   document.getElementById('f-category').value = '';
@@ -2140,6 +2448,62 @@ function openProductModal(data) {
     }
     calcDiscount();
     updateDescCount();
+
+    // ── [PATCH 2026-05-04] populate extended fields ──
+    // Highlights
+    const hl = (typeof data.highlights === 'string') ? JSON.parse(data.highlights||'[]') : (data.highlights || []);
+    (hl||[]).forEach(h => addHighlight(h));
+    // Specifications
+    const sp = (typeof data.specifications === 'string') ? JSON.parse(data.specifications||'[]') : (data.specifications || []);
+    (sp||[]).forEach(s => addSpec(s));
+    // Variants
+    const vo = (typeof data.variant_options === 'string') ? JSON.parse(data.variant_options||'{}') : (data.variant_options || {});
+    (vo?.options||[]).forEach(o => addVariantOption(o));
+
+    // Shipping
+    document.getElementById('f-free-shipping').checked = !!data.free_shipping;
+    document.getElementById('f-shipping-fee').value = data.shipping_fee ?? '';
+    document.getElementById('f-shipping-days').value = data.shipping_days || '';
+    document.getElementById('f-ships-from').value = data.ships_from || '';
+    document.getElementById('f-dim-w').value = data.dim_width_cm ?? '';
+    document.getElementById('f-dim-h').value = data.dim_height_cm ?? '';
+    document.getElementById('f-dim-d').value = data.dim_depth_cm ?? '';
+
+    // Warranty / Return
+    document.getElementById('f-warranty-period').value = data.warranty_period || '';
+    document.getElementById('f-warranty-type').value = data.warranty_type || '';
+    document.getElementById('f-warranty-by').value = data.warranty_by || '';
+    document.getElementById('f-return-days').value = data.return_days ?? '';
+    document.getElementById('f-return-policy').value = data.return_policy || '';
+    document.getElementById('f-cod').checked = data.cod_available !== false;
+
+    // Install
+    const installEl = document.getElementById('f-install-available');
+    installEl.checked = !!data.install_available;
+    document.getElementById('install-detail').style.display = installEl.checked ? 'grid' : 'none';
+    document.getElementById('f-install-fee').value = data.install_fee ?? '';
+    document.getElementById('f-install-note').value = data.install_note || '';
+
+    // Installment
+    const instElEl = document.getElementById('f-installment-available');
+    instElEl.checked = !!data.installment_available;
+    document.getElementById('installment-detail').style.display = instElEl.checked ? 'grid' : 'none';
+    document.getElementById('f-installment-months').value = data.installment_months || '12';
+    document.getElementById('f-installment-rate').value = data.installment_rate ?? 0;
+
+    // Badge / authentic
+    document.getElementById('f-is-authentic').checked = !!data.is_authentic;
+    document.getElementById('f-badge-text').value = data.badge_text || '';
+    document.getElementById('f-badge-color').value = data.badge_color || '';
+
+    // Video / related
+    document.getElementById('f-video-url').value = data.video_url || '';
+    document.getElementById('f-related-products').value = (data.related_products||[]).join(', ');
+
+    // SEO
+    document.getElementById('f-seo-title').value = data.seo_title || '';
+    document.getElementById('f-seo-description').value = data.seo_description || '';
+    document.getElementById('f-seo-keywords').value = data.seo_keywords || '';
   }
 
   document.getElementById('product-modal').classList.add('on');
@@ -2211,6 +2575,49 @@ async function saveProduct(forceStatus) {
       images: imgs,
       thumbnail: imgs[0] || null,
       status,
+
+      // ── [PATCH 2026-05-04] Extended product fields ──
+      highlights: collectHighlights(),
+      specifications: collectSpecs(),
+      variant_options: collectVariants(),
+
+      free_shipping: document.getElementById('f-free-shipping').checked,
+      shipping_fee: parseFloat(document.getElementById('f-shipping-fee').value) || 0,
+      shipping_days: document.getElementById('f-shipping-days').value.trim() || null,
+      ships_from: document.getElementById('f-ships-from').value.trim() || null,
+
+      dim_width_cm: parseFloat(document.getElementById('f-dim-w').value) || null,
+      dim_height_cm: parseFloat(document.getElementById('f-dim-h').value) || null,
+      dim_depth_cm: parseFloat(document.getElementById('f-dim-d').value) || null,
+
+      warranty_period: document.getElementById('f-warranty-period').value.trim() || null,
+      warranty_type: document.getElementById('f-warranty-type').value || null,
+      warranty_by: document.getElementById('f-warranty-by').value.trim() || null,
+
+      return_days: parseInt(document.getElementById('f-return-days').value) || null,
+      return_policy: document.getElementById('f-return-policy').value.trim() || null,
+      cod_available: document.getElementById('f-cod').checked,
+
+      install_available: document.getElementById('f-install-available').checked,
+      install_fee: parseFloat(document.getElementById('f-install-fee').value) || null,
+      install_note: document.getElementById('f-install-note').value.trim() || null,
+
+      installment_available: document.getElementById('f-installment-available').checked,
+      installment_months: parseInt(document.getElementById('f-installment-months').value) || null,
+      installment_rate: parseFloat(document.getElementById('f-installment-rate').value) || 0,
+
+      is_authentic: document.getElementById('f-is-authentic').checked,
+      badge_text: document.getElementById('f-badge-text').value.trim() || null,
+      badge_color: document.getElementById('f-badge-color').value || null,
+
+      video_url: document.getElementById('f-video-url').value.trim() || null,
+      related_products: document.getElementById('f-related-products').value
+                          .split(',').map(t=>t.trim()).filter(Boolean) || null,
+
+      seo_title: document.getElementById('f-seo-title').value.trim() || null,
+      seo_description: document.getElementById('f-seo-description').value.trim() || null,
+      seo_keywords: document.getElementById('f-seo-keywords').value.trim() || null,
+
       updated_at: new Date().toISOString(),
     };
 
