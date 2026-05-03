@@ -1945,8 +1945,9 @@ async function loadCoupons() {
 
   try {
     // ดึงคูปอง active เรียงตาม priority แล้วเอาแค่ 4 ใบแรก
+    // [PATCH 2026-05-03] ใช้ select('*') เพื่อให้รองรับ schema ที่อาจมีคอลัมน์ไม่ครบ
     const { data, error } = await sb.from('coupons')
-      .select('id,code,name,description,type,value,min_order,max_discount,icon,banner_color,end_at,usage_limit,used_count,coin_cost,priority,is_active,start_at,visibility')
+      .select('*')
       .eq('is_active', true)
       .order('priority', { ascending: false })
       .order('end_at',   { ascending: true })
@@ -1962,7 +1963,19 @@ async function loadCoupons() {
       if (c.usage_limit && c.used_count >= c.usage_limit) return false;
       if (c.visibility && c.visibility !== 'public' && c.visibility !== 'targeted') return false;
       return true;
-    }).slice(0, 4);
+    }).slice(0, 4)
+      // [PATCH 2026-05-03] normalize: ใช้ code แทน name ถ้า name หาย, default ทุกอย่าง
+      .map(c => ({
+        ...c,
+        name: c.name || c.title || c.code || 'คูปอง',
+        description: c.description || '',
+        icon: c.icon || '🎟️',
+        banner_color: c.banner_color || '#E63329',
+        type: c.type || 'fixed',
+        value: c.value || 0,
+        priority: c.priority ?? 50,
+        stackable: c.stackable !== false,
+      }));
 
     _couponCache = usable;
 
@@ -2381,6 +2394,7 @@ async function updateCouponBadge() {
 
 
 async function loadCouponSections() {
+  const popSec = document.getElementById('cs-popular-section');
   const catSec = document.getElementById('cs-category-section');
   const stoSec = document.getElementById('cs-store-section');
   if (!popSec && !catSec && !stoSec) return;
@@ -2392,9 +2406,9 @@ async function loadCouponSections() {
   });
 
   try {
-    // ดึงคูปอง active ทั้งหมด
+    // ดึงคูปอง active ทั้งหมด — ใช้ select('*') เพื่อความปลอดภัย
     const { data, error } = await sb.from('coupons')
-      .select('id,code,name,description,type,value,min_order,max_discount,icon,banner_color,end_at,start_at,usage_limit,used_count,coin_cost,priority,is_active,visibility,seller_id,brand_id,category_id,claim_count,created_at')
+      .select('*')
       .eq('is_active', true)
       .order('priority', { ascending: false })
       .limit(60);
@@ -2408,7 +2422,21 @@ async function loadCouponSections() {
       if (c.usage_limit && c.used_count >= c.usage_limit) return false;
       if (c.visibility && c.visibility !== 'public' && c.visibility !== 'targeted') return false;
       return true;
-    });
+    })
+    // [PATCH 2026-05-03] normalize: fallback ค่าที่อาจหายไป
+    .map(c => ({
+      ...c,
+      name: c.name || c.title || c.code || 'คูปอง',
+      description: c.description || '',
+      icon: c.icon || '🎟️',
+      banner_color: c.banner_color || '#E63329',
+      type: c.type || 'fixed',
+      value: c.value || 0,
+      priority: c.priority ?? 50,
+      claim_count: c.claim_count || 0,
+      used_count: c.used_count || 0,
+      stackable: c.stackable !== false,
+    }));
 
     // อัปเดต cache สำหรับ modal
     usable.forEach(c => {

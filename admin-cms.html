@@ -3178,10 +3178,10 @@ async function loadAdminCoupons() {
       return `<tr>
         <td style="font-size:24px;text-align:center">${c.icon || '🎟️'}</td>
         <td>
-          <div style="font-weight:600;font-size:13px">${c.name}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:11px;color:#737373">${c.code}</div>
+          <div style="font-weight:600;font-size:13px">${c.name || c.title || c.code || 'คูปอง'}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:#737373">${c.code || '—'}</div>
         </td>
-        <td><span class="cp-type-pill ${c.type}">${typeLabels[c.type] || c.type}</span></td>
+        <td><span class="cp-type-pill ${c.type||'fixed'}">${typeLabels[c.type] || c.type || 'fixed'}</span></td>
         <td style="font-family:'DM Mono',monospace;font-weight:600">${valStr}</td>
         <td style="font-family:'DM Mono',monospace;font-size:12px">
           <span style="color:#16A34A">${c.claim_count || 0}</span> / 
@@ -3192,7 +3192,7 @@ async function loadAdminCoupons() {
         <td>
           <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px" onclick="editCoupon('${c.id}')">✏️</button>
           <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="cpToggleActive('${c.id}',${!c.is_active})">${c.is_active?'⏸':'▶️'}</button>
-          <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="deleteCoupon('${c.id}','${(c.name||'').replace(/'/g,'')}')">🗑️</button>
+          <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="deleteCoupon('${c.id}','${((c.name||c.code||'').replace(/'/g,''))}')">🗑️</button>
         </td>
       </tr>`;
     }).join('');
@@ -3452,8 +3452,12 @@ async function openSpinPrizeModal(data) {
   // โหลดคูปองมาใส่ dropdown
   const sel = document.getElementById('sp-coupon');
   try {
-    const { data: cps } = await sb.from('coupons').select('id,code,name').eq('is_active', true).order('name');
-    sel.innerHTML = '<option value="">— เลือกคูปอง —</option>' + (cps||[]).map(c => `<option value="${c.id}">${c.code} · ${c.name}</option>`).join('');
+    // [PATCH 2026-05-03] select('*') ปลอดภัยกว่า
+    const { data: cps } = await sb.from('coupons').select('*').eq('is_active', true).order('code');
+    sel.innerHTML = '<option value="">— เลือกคูปอง —</option>' + (cps||[]).map(c => {
+      const name = c.name || c.title || c.code || 'คูปอง';
+      return `<option value="${c.id}">${c.code} · ${name}</option>`;
+    }).join('');
   } catch(e) {}
 
   document.getElementById('spin-modal-title').textContent = data ? 'แก้ไขรางวัล' : 'เพิ่มรางวัล Spin Wheel';

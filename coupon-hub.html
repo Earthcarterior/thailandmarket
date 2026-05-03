@@ -563,9 +563,26 @@ async function loadCoupons() {
       if (error) throw error;
       coupons = (data || []).map(c => ({
         ...c,
+        // [PATCH 2026-05-03] normalize fallback name/description/icon
+        name: c.name || c.title || c.code || 'คูปอง',
+        description: c.description || '',
+        icon: c.icon || '🎟️',
+        banner_color: c.banner_color || '#E63329',
+        type: c.type || 'fixed',
+        value: c.value || 0,
+        priority: c.priority ?? 50,
         claimed: false,
         estimated_discount: c.type === 'percent' ? c.value :
                             c.type === 'shipping' ? 50 : c.value
+      }));
+    } else {
+      // RPC return ก็ normalize ด้วย เผื่อ RPC คืน undefined
+      coupons = (coupons || []).map(c => ({
+        ...c,
+        name: c.name || c.code || 'คูปอง',
+        description: c.description || '',
+        icon: c.icon || '🎟️',
+        banner_color: c.banner_color || '#E63329',
       }));
     }
 
