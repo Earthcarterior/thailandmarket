@@ -1567,7 +1567,7 @@ nav { display: block !important; height: auto !important; }
 
     <!-- Images -->
     <div class="form-section">
-      <div class="form-section-head"><div class="form-section-title">📷 รูปภาพสินค้า</div><span style="font-size:11px;color:var(--g400)">สูงสุด 8 รูป · JPG PNG WebP · 10MB</span></div>
+      <div class="form-section-head"><div class="form-section-title">📷 รูปภาพสินค้า</div><span style="font-size:11px;color:var(--g400)">1-5 รูป · JPG PNG WebP · 10MB · รูปแรกใช้เป็น Thumbnail</span></div>
       <div class="form-section-body">
         <div class="img-drop" id="img-drop"
           ondragover="event.preventDefault();this.classList.add('over')"
@@ -2938,7 +2938,7 @@ async function sendInvite() {
 // ── Image Upload ──────────────────────────────────────────
 async function handleFileSelect(files) {
   if (!files?.length) return;
-  if (uploadedImages.length + files.length > 8) { toast('สูงสุด 8 รูปต่อสินค้า', 'error'); return; }
+  if (uploadedImages.length + files.length > 5) { toast('สูงสุด 5 รูปต่อสินค้า', 'error'); return; }
   await uploadImages(Array.from(files));
 }
 
