@@ -865,26 +865,47 @@ async function loadProduct() {
   }
 
   try {
-    // Fetch product + seller + category + brand in 1 query (left joins)
-    const { data, error } = await sb
+    // ── Step 1: ดึงข้อมูล product เปล่าก่อน (ไม่ join — กันพังจาก schema mismatch)
+    let { data, error } = await sb
       .from('products')
-      .select(`
-        *,
-        sellers ( id, shop_name, logo_url, is_verified, rating ),
-        categories ( id, name_th, slug ),
-        brands ( id, name, logo_url )
-      `)
+      .select('*')
       .eq('id', productId)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      console.error('loadProduct (products query):', error.message, error);
+      throw new Error('Query products: ' + (error.message || 'unknown'));
+    }
     if (!data) {
       showError('ไม่พบสินค้านี้', 'สินค้าอาจถูกลบหรือไม่มีอยู่ในระบบ');
       return;
     }
     if (data.status && data.status !== 'active') {
-      showError('สินค้าไม่พร้อมขาย', 'สินค้านี้ถูกระงับการขายชั่วคราว');
+      showError('สินค้าไม่พร้อมขาย', 'สินค้านี้ถูกระงับการขายชั่วคราว · status=' + data.status);
       return;
+    }
+
+    // ── Step 2: ดึง seller / category / brand แยก (ถ้าพังตัวใดตัวหนึ่ง — อันอื่นยังทำงาน)
+    if (data.seller_id) {
+      try {
+        const { data: s } = await sb.from('sellers')
+          .select('*').eq('id', data.seller_id).maybeSingle();
+        if (s) data.sellers = s;
+      } catch(e) { console.warn('seller fetch:', e.message); }
+    }
+    if (data.category_id) {
+      try {
+        const { data: c } = await sb.from('categories')
+          .select('*').eq('id', data.category_id).maybeSingle();
+        if (c) data.categories = c;
+      } catch(e) { console.warn('category fetch:', e.message); }
+    }
+    if (data.brand_id) {
+      try {
+        const { data: b } = await sb.from('brands')
+          .select('*').eq('id', data.brand_id).maybeSingle();
+        if (b) data.brands = b;
+      } catch(e) { console.warn('brand fetch:', e.message); }
     }
 
     _product = data;
@@ -900,8 +921,8 @@ async function loadProduct() {
       updateCartBadge(),
     ]);
   } catch (e) {
-    console.error('loadProduct:', e);
-    showError('เกิดข้อผิดพลาด', e.message || 'ไม่สามารถโหลดสินค้าได้');
+    console.error('loadProduct catch:', e?.message || e, e);
+    showError('เกิดข้อผิดพลาด', (e && e.message) || 'ไม่สามารถโหลดสินค้าได้ · เปิด DevTools (F12) ดู console error');
   }
 }
 
