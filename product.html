@@ -626,89 +626,85 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
 <!-- NAV -->
 
 
+
+<!-- ════════════════════════════════════════════════════════════════
+     PRODUCT PAGE — Live data from Supabase [REWRITE 2026-05-04]
+     ════════════════════════════════════════════════════════════════ -->
+
 <!-- BREADCRUMB -->
-<div class="breadcrumb">
-  <a class="bc-link" href="index.html">🏠 หน้าแรก</a><span class="bc-sep">›</span>
-  <span class="bc-link">Tech & Gadgets</span><span class="bc-sep">›</span>
-  <span class="bc-link">โทรทัศน์</span><span class="bc-sep">›</span>
-  <span class="bc-cur">ทีวี Samsung 55" 4K QLED</span>
+<div class="breadcrumb" id="breadcrumb">
+  <a href="index.html">🏠 หน้าแรก</a>
+  <span>›</span>
+  <a href="category.html" id="bc-cat">หมวดหมู่</a>
+  <span>›</span>
+  <span id="bc-name">กำลังโหลด...</span>
 </div>
 
-<!-- PRODUCT MAIN -->
-<div class="prod-layout">
+<!-- LOADING / ERROR -->
+<div id="loading-state" style="text-align:center;padding:120px 24px">
+  <div style="font-size:48px;margin-bottom:16px;opacity:.4">📦</div>
+  <div style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--g500);text-transform:uppercase">กำลังโหลดสินค้า...</div>
+</div>
 
+<div id="error-state" style="display:none;text-align:center;padding:120px 24px">
+  <div style="font-size:64px;margin-bottom:16px;opacity:.4">😕</div>
+  <div style="font-size:18px;font-weight:600;color:var(--g700);margin-bottom:8px" id="err-title">ไม่พบสินค้านี้</div>
+  <div style="font-size:13px;color:var(--g500);margin-bottom:24px" id="err-msg">สินค้าที่คุณค้นหาอาจถูกลบหรือไม่มีอยู่</div>
+  <a href="index.html" style="display:inline-block;background:var(--accent);color:#fff;padding:10px 24px;text-decoration:none;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase">← กลับหน้าหลัก</a>
+</div>
+
+<!-- PRODUCT MAIN — hidden until loaded -->
+<div id="product-wrap" style="display:none">
+<div class="product-main">
   <!-- GALLERY -->
   <div class="gallery">
     <div class="gallery-main" id="main-img">
-      <div class="gallery-badge">
-        <span class="g-badge gb-sale">⚡ FLASH SALE</span>
-        <span class="g-badge" style="background:#EFF6FF;color:#1D4ED8;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;display:block;width:fit-content">ของแท้ 100%</span>
-      </div>
-      <span id="main-img-ico" style="font-size:100px">📺</span>
-      <div class="gallery-zoom-hint">🔍 ขยาย</div>
+      <span class="discount-tag" id="discount-tag" style="display:none"></span>
+      <span class="flash-tag-img" id="flash-tag-img" style="display:none">⚡ FLASH SALE</span>
+      <span class="authentic-tag" id="authentic-tag" style="display:none">✓ ของแท้ 100%</span>
+      <span class="badge-custom" id="badge-custom" style="display:none"></span>
+      <img id="main-img-el" style="max-width:100%;max-height:100%;object-fit:contain" alt="">
+      <span id="main-img-fallback" style="font-size:100px;display:none">📦</span>
     </div>
-    <div class="gallery-thumbs">
-      <div class="thumb active" onclick="selThumb(this,'📺')">📺</div>
-      <div class="thumb" onclick="selThumb(this,'🖥️')">🖥️</div>
-      <div class="thumb" onclick="selThumb(this,'📡')">📡</div>
-      <div class="thumb" onclick="selThumb(this,'🔌')">🔌</div>
-      <div class="thumb" onclick="selThumb(this,'📦')">📦</div>
-    </div>
+    <div class="thumbs" id="thumbs"></div>
   </div>
 
   <!-- PRODUCT INFO -->
   <div class="prod-info">
-    <div class="shop-row">
-      <div class="shop-av">SS</div>
-      <span class="shop-name">Samsung Official Store</span>
-      <span class="shop-badge">✓ ยืนยันแล้ว</span>
+    <div class="shop-row" id="shop-row">
+      <div class="shop-av" id="shop-av">SS</div>
+      <span class="shop-name" id="shop-name">ร้านค้า</span>
+      <span class="shop-badge" id="shop-badge" style="display:none">✓ ยืนยันแล้ว</span>
+      <a href="#" id="visit-shop" style="margin-left:auto;font-size:11px;font-family:'DM Mono',monospace;color:var(--g500);letter-spacing:.06em;text-transform:uppercase;text-decoration:none">เยี่ยมร้าน →</a>
     </div>
 
-    <div class="prod-title">ทีวี Samsung 55" 4K QLED Smart TV Crystal UHD 2026 รุ่น QN55Q80CAFXZT</div>
+    <div class="prod-title" id="prod-title">กำลังโหลด...</div>
 
     <div class="rating-row">
-      <span class="stars">★★★★★</span>
-      <span class="rating-num">4.8</span>
-      <span class="rating-cnt">(2,847 รีวิว)</span>
-      <span class="sold-cnt">ขายแล้ว 12,489 เครื่อง</span>
+      <span class="stars" id="stars">★★★★★</span>
+      <span class="rating-num" id="rating-num">—</span>
+      <span class="rating-cnt" id="rating-cnt">(0 รีวิว)</span>
+      <span class="sold-cnt" id="sold-cnt">ขายแล้ว 0 ชิ้น</span>
     </div>
 
     <div class="price-box">
       <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px">
-        <span class="price-main">฿12,900</span>
-        <span class="price-old">฿22,900</span>
-        <span class="price-save">ประหยัด ฿10,000</span>
+        <span class="price-main" id="price-main">฿0</span>
+        <span class="price-old" id="price-old" style="display:none"></span>
+        <span class="price-save" id="price-save" style="display:none"></span>
       </div>
-      <div class="installment-row">
-        💳 ผ่อน <span class="ins-badge">0% 12 เดือน</span> เพียง <strong>฿1,075/เดือน</strong>
+      <div class="installment-row" id="installment-row" style="display:none">
+        💳 ผ่อน <span class="ins-badge" id="ins-badge">0% 12 เดือน</span> เพียง <strong id="ins-monthly">฿0/เดือน</strong>
       </div>
-      <div class="flash-row">
+      <div class="flash-row" id="flash-row" style="display:none">
         <span class="flash-tag">⚡ Flash Sale</span>
-        <div class="flash-bar-wrap"><div class="flash-bar-fill" style="width:72%"></div></div>
-        <span class="flash-left">เหลือ 18 ชิ้น</span>
+        <div class="flash-bar-wrap"><div class="flash-bar-fill" id="flash-bar-fill" style="width:0%"></div></div>
+        <span class="flash-left" id="flash-left">เหลือ 0 ชิ้น</span>
       </div>
     </div>
 
-    <!-- COLOR -->
-    <div class="option-section">
-      <div class="opt-label">🎨 สี: <span style="color:var(--g400);font-weight:400">Titan Black</span></div>
-      <div class="opt-chips">
-        <div class="opt-chip active" onclick="selOpt(this)">Titan Black</div>
-        <div class="opt-chip" onclick="selOpt(this)">Silver</div>
-      </div>
-    </div>
-
-    <!-- SIZE -->
-    <div class="option-section">
-      <div class="opt-label">📐 ขนาด: <span style="color:var(--g400);font-weight:400">55 นิ้ว</span></div>
-      <div class="opt-chips">
-        <div class="opt-chip disabled">43"</div>
-        <div class="opt-chip" onclick="selOpt(this)">50"</div>
-        <div class="opt-chip active" onclick="selOpt(this)">55"</div>
-        <div class="opt-chip" onclick="selOpt(this)">65"</div>
-        <div class="opt-chip" onclick="selOpt(this)">75"</div>
-      </div>
-    </div>
+    <!-- VARIANT OPTIONS (loaded dynamically) -->
+    <div id="variants-wrap"></div>
 
     <!-- QTY -->
     <div class="qty-row">
@@ -718,31 +714,26 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
         <div class="qty-val" id="qty-val">1</div>
         <button class="qty-btn" onclick="changeQty(1)">+</button>
       </div>
-      <span class="qty-stock">มีสินค้า 18 ชิ้น</span>
+      <span class="qty-stock" id="qty-stock">มีสินค้า 0 ชิ้น</span>
     </div>
 
     <!-- ACTIONS -->
     <div class="action-btns">
-      <button class="btn-buy" onclick="toast('🎉 สั่งซื้อสำเร็จ! กำลังไปยังหน้าชำระเงิน');setTimeout(()=>window.location.href='checkout.html',1200)">⚡ ซื้อเลย (Flash Price)</button>
-      <button class="btn-cart" onclick="toast('🛒 เพิ่มลงตะกร้าแล้ว!')">🛒 เพิ่มลงตะกร้า</button>
+      <button class="btn-buy" id="btn-buy" onclick="buyNow()">⚡ ซื้อเลย</button>
+      <button class="btn-cart" onclick="addToCart()">🛒 เพิ่มลงตะกร้า</button>
       <button class="btn-wishlist" id="wl-btn" onclick="toggleWishlist()">❤️ บันทึกเป็น Wishlist</button>
     </div>
 
-    <!-- SERVICES -->
-    <div class="service-row">
-      <div class="svc"><div class="svc-ico">🚚</div><div><div class="svc-t">ส่งฟรี</div><div class="svc-s">ถึงวันที่ 1 พ.ค.</div></div></div>
-      <div class="svc"><div class="svc-ico">🛡️</div><div><div class="svc-t">ประกัน 3 ปี</div><div class="svc-s">ศูนย์ Samsung ทั่วไทย</div></div></div>
-      <div class="svc"><div class="svc-ico">↩️</div><div><div class="svc-t">คืนได้ 30 วัน</div><div class="svc-s">ไม่มีคำถาม</div></div></div>
-      <div class="svc"><div class="svc-ico">🔧</div><div><div class="svc-t">บริการติดตั้ง</div><div class="svc-s">เพิ่ม ฿290</div></div></div>
-    </div>
+    <!-- SERVICES (dynamic) -->
+    <div class="service-row" id="service-row"></div>
 
     <!-- SHARE -->
     <div class="share-row">
       <span>แชร์:</span>
-      <div class="share-btn" onclick="toast('📘 แชร์ไปยัง Facebook')">📘</div>
-      <div class="share-btn" onclick="toast('🐦 แชร์ไปยัง X')">🐦</div>
-      <div class="share-btn" onclick="toast('💬 แชร์ใน LINE')">💬</div>
-      <div class="share-btn" onclick="toast('🔗 คัดลอกลิงก์แล้ว!')">🔗</div>
+      <div class="share-btn" onclick="shareTo('fb')" title="Facebook">📘</div>
+      <div class="share-btn" onclick="shareTo('x')" title="X / Twitter">🐦</div>
+      <div class="share-btn" onclick="shareTo('line')" title="LINE">💬</div>
+      <div class="share-btn" onclick="copyLink()" title="คัดลอกลิงก์">🔗</div>
     </div>
   </div>
 </div>
@@ -752,20 +743,21 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
   <div class="tab-nav">
     <div class="tnav active" onclick="swTab('desc',this)">รายละเอียดสินค้า</div>
     <div class="tnav" onclick="swTab('spec',this)">สเปค</div>
-    <div class="tnav" onclick="swTab('review',this)">รีวิว (2,847)</div>
-    <div class="tnav" onclick="swTab('qa',this)">Q&A (128)</div>
+    <div class="tnav" onclick="swTab('review',this)">รีวิว <span id="tab-rev-cnt">(0)</span></div>
+    <div class="tnav" onclick="swTab('qa',this)">Q&amp;A <span id="tab-qa-cnt">(0)</span></div>
     <div class="tnav" onclick="swTab('related',this)">สินค้าที่เกี่ยวข้อง</div>
   </div>
 
   <!-- DESC -->
   <div class="tab-content active" id="tab-desc">
-    <div style="background:#fff;border-radius:4px;padding:24px;border:1px solid var(--g200);line-height:1.9;color:var(--g700);font-size:14px">
-      <p style="margin-bottom:12px"><strong style="color:var(--g900)">Samsung 55" QLED 4K Smart TV</strong> นำเสนอประสบการณ์การรับชมระดับพรีเมียมด้วยเทคโนโลยี Quantum Dot ที่ให้สีสันสดวิว และความสว่างสูงสุด 1,500 nits</p>
-      <p style="margin-bottom:12px">🎯 <strong>Quantum HDR 1500</strong> — ความสว่างที่แท้จริง ทั้งในที่สว่างและมืด</p>
-      <p style="margin-bottom:12px">🎮 <strong>Gaming Hub</strong> — เชื่อมต่อคอนโซลได้ทันที Xbox, PlayStation, Switch</p>
-      <p style="margin-bottom:12px">🤖 <strong>Tizen OS</strong> — Smart TV ที่ใช้งานง่าย รองรับ Netflix, YouTube, Disney+, AIS Play</p>
-      <p>🔊 <strong>Object Tracking Sound (OTS)</strong> — เสียงตาม Action บนหน้าจอ</p>
+    <!-- Highlights cards -->
+    <div id="highlights-wrap" style="display:none;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px" id="highlights-grid"></div>
     </div>
+    <!-- Description body -->
+    <div style="background:#fff;border-radius:4px;padding:24px;border:1px solid var(--g200);line-height:1.9;color:var(--g700);font-size:14px;white-space:pre-line" id="desc-body">—</div>
+    <!-- Video embed -->
+    <div id="video-wrap" style="display:none;margin-top:14px"></div>
   </div>
 
   <!-- SPEC -->
@@ -779,15 +771,16 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
   <div class="tab-content" id="tab-review">
     <div class="rev-summary">
       <div class="rev-big">
-        <div class="rev-score">4.8</div>
-        <div class="rev-stars">★★★★★</div>
-        <div class="rev-total">จาก 2,847 รีวิว</div>
+        <div class="rev-score" id="rev-score">—</div>
+        <div class="rev-stars" id="rev-stars-summary">★★★★★</div>
+        <div class="rev-total" id="rev-total">จาก 0 รีวิว</div>
       </div>
       <div class="rev-bars" id="rev-bars"></div>
     </div>
     <div id="reviews-list"></div>
-    <div style="text-align:center;margin-top:20px">
-      <button style="padding:10px 28px;border:1.5px solid var(--accent);color:var(--accent);background:#fff;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer" onclick="toast('📋 โหลดรีวิวเพิ่มเติม...')">ดูรีวิวทั้งหมด →</button>
+    <div id="reviews-empty" style="display:none;text-align:center;padding:40px;color:var(--g500)">
+      <div style="font-size:32px;margin-bottom:8px;opacity:.4">📝</div>
+      <div style="font-size:13px">ยังไม่มีรีวิว — เป็นคนแรกที่รีวิวสินค้านี้</div>
     </div>
   </div>
 
@@ -796,265 +789,742 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
     <div style="background:#fff;border-radius:4px;border:1px solid var(--g200);padding:20px;margin-bottom:14px">
       <div style="font-weight:600;margin-bottom:10px;font-size:14px">ถามคำถามเกี่ยวกับสินค้า</div>
       <div style="display:flex;gap:8px">
-        <input style="flex:1;padding:10px 14px;border:1.5px solid var(--g200);border-radius:2px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none" placeholder="พิมพ์คำถาม...">
-        <button style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer" onclick="toast('✅ ส่งคำถามแล้ว!')">ถาม</button>
+        <input id="qa-input" style="flex:1;padding:10px 14px;border:1.5px solid var(--g200);border-radius:2px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none" placeholder="พิมพ์คำถาม...">
+        <button style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer" onclick="askQuestion()">ถาม</button>
       </div>
     </div>
     <div style="background:#fff;border-radius:4px;border:1px solid var(--g200);padding:20px">
       <div id="qa-list"></div>
+      <div id="qa-empty" style="display:none;text-align:center;padding:30px;color:var(--g500)">
+        <div style="font-size:32px;margin-bottom:8px;opacity:.4">💬</div>
+        <div style="font-size:13px">ยังไม่มีคำถาม</div>
+      </div>
     </div>
   </div>
 
   <!-- RELATED -->
   <div class="tab-content" id="tab-related">
     <div class="related-grid" id="related-grid"></div>
+    <div id="related-empty" style="display:none;text-align:center;padding:40px;color:var(--g500)">
+      <div style="font-size:32px;margin-bottom:8px;opacity:.4">🔗</div>
+      <div style="font-size:13px">ไม่มีสินค้าที่เกี่ยวข้อง</div>
+    </div>
   </div>
 </div>
+</div><!-- /product-wrap -->
 
 <div class="toast-wrap" id="tw"></div>
 
-<script>
-const SPECS=[
-  ['ยี่ห้อ','Samsung'],['รุ่น','QN55Q80CAFXZT'],['ขนาดหน้าจอ','55 นิ้ว'],['ความละเอียด','4K UHD (3840×2160)'],
-  ['เทคโนโลยีจอ','QLED Quantum Dot'],['ความสว่าง','1,500 nits (HDR)'],['อัตราการรีเฟรช','120Hz'],
-  ['HDR','Quantum HDR 1500, HDR10+'],['ระบบปฏิบัติการ','Tizen OS 8.0'],['Voice Assistant','Bixby, Google Assistant, Alexa'],
-  ['WiFi','Wi-Fi 5 (802.11ac)'],['Bluetooth','5.2'],['HDMI','4 พอร์ต (HDMI 2.1 × 2)'],['USB','2 พอร์ต'],
-  ['น้ำหนัก (ไม่มีขาตั้ง)','16.9 กก.'],['ขนาด (ก×ย×ส)','122.8 × 70.7 × 2.6 ซม.'],['ประกัน','3 ปี ศูนย์ Samsung'],
-];
-const REVIEWS=[
-  {name:'สมชาย ว.',stars:5,date:'20 เม.ย. 69',variant:'55" Titan Black',text:'ภาพสวยมากครับ สีชัด คมมาก ดู Netflix แล้วรู้สึกเหมือนดูในโรงหนัง เสียงดีมาก ส่งเร็ว แพ็คดีมากมาในกล่องใหญ่ป้องกันดี ประทับใจมากครับ!',imgs:['📺','🌟','📦'],helpful:48},
-  {name:'ณัฐสุดา ก.',stars:5,date:'18 เม.ย. 69',variant:'55" Titan Black',text:'ตั้งค่าง่ายมาก เชื่อม WiFi ได้ทันที Tizen OS ใช้งานลื่นมาก Netflix, YouTube ชัดมาก คุ้มมากกับราคานี้',imgs:['📺','✨'],helpful:32},
-  {name:'อดิศร บ.',stars:4,date:'15 เม.ย. 69',variant:'55" Silver',text:'สินค้าดีมาก ภาพสวย แต่การติดตั้งขาตั้งนิดหน่อยยาก ต้องขอให้คนช่วย โดยรวมพอใจครับ ราคา Flash Sale คุ้มมาก',imgs:[],helpful:17},
-];
-const QAS=[
-  {q:'รองรับ Apple AirPlay 2 ไหมครับ?',a:'รองรับครับ! Samsung Smart TV รุ่นนี้รองรับ Apple AirPlay 2 และ HomeKit สามารถ Mirror จาก iPhone/iPad/Mac ได้เลย'},
-  {q:'HDMI eARC อยู่พอร์ตไหนครับ?',a:'HDMI 3 ครับ สำหรับต่อ Soundbar หรือ Home Theater ที่รองรับ eARC'},
-  {q:'ดู LINE TV ได้ไหมครับ?',a:'ได้ครับ รองรับ LINE TV, Netflix, YouTube, Disney+, AIS Play, True ID และ App อื่นๆ อีกมากผ่าน Samsung App Store'},
-];
-const RELATED=[
-  {icon:'🖥️',name:'มอนิเตอร์ Samsung 27" 144Hz',price:'฿6,490',bg:'#EEF2FF'},
-  {icon:'🔊',name:'Soundbar Samsung HW-B550',price:'฿4,990',bg:'#F0FFF9'},
-  {icon:'📡',name:'Samsung One Connect Box',price:'฿2,490',bg:'#FFF5F0'},
-  {icon:'🎮',name:'PS5 Slim + 2 เกม Bundle',price:'฿18,900',bg:'#F0F4FF'},
-  {icon:'📺',name:'ทีวี LG 55" OLED evo',price:'฿19,900',bg:'#FFF0F5'},
-  {icon:'🔌',name:'HDMI 2.1 Cable 2m Ultra HD',price:'฿590',bg:'#F5FFF0'},
-];
-const REV_DIST=[{pct:78,cnt:2220},{pct:14,cnt:399},{pct:5,cnt:142},{pct:2,cnt:57},{pct:1,cnt:29}];
+<style>
+.discount-tag,.flash-tag-img,.authentic-tag,.badge-custom{
+  position:absolute;font-family:'DM Mono',monospace;font-size:10px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:#fff;padding:4px 8px;z-index:2
+}
+.discount-tag{top:14px;left:14px;background:var(--accent)}
+.flash-tag-img{top:14px;right:14px;background:#F59E0B}
+.authentic-tag{top:14px;left:14px;background:#16A34A}
+.badge-custom{bottom:14px;left:14px}
+.gallery-main{position:relative}
+</style>
 
-function selThumb(el,ico){document.querySelectorAll('.thumb').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('main-img-ico').textContent=ico;}
-function selOpt(el){el.closest('.opt-chips').querySelectorAll('.opt-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
-let qty=1;
-function changeQty(d){qty=Math.max(1,Math.min(18,qty+d));document.getElementById('qty-val').textContent=qty;}
-let wl=false;
-function toggleWishlist(){wl=!wl;const btn=document.getElementById('wl-btn');btn.textContent=wl?'❤️ บันทึกแล้ว':'❤️ บันทึกเป็น Wishlist';btn.style.borderColor=wl?'var(--accent)':'var(--g200)';btn.style.color=wl?'var(--accent)':'var(--g700)';toast(wl?'❤️ เพิ่มใน Wishlist แล้ว!':'💔 ลบออกจาก Wishlist');}
-function swTab(id,el){
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tnav').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
+<script src="https://cdn.jsdelivr.net/npm/@supabase/[email protected]"></script>
+<script>
+// ════════════════════════════════════════════════════════════════════
+// PRODUCT.HTML — Live Supabase Integration [REWRITE 2026-05-04]
+// ════════════════════════════════════════════════════════════════════
+
+const sb = supabase.createClient(
+  'https://qmgyimsptzewwyafvjzk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+);
+
+const productId = new URLSearchParams(location.search).get('id');
+let _product = null;
+let _selectedVariants = {};
+let qty = 1;
+let wishlisted = false;
+
+function escapeHtml(s){return (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toBaht(n){return '฿' + Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0})}
+function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),2800)}
+function showError(title, msg){
+  document.getElementById('loading-state').style.display='none';
+  document.getElementById('product-wrap').style.display='none';
+  document.getElementById('error-state').style.display='block';
+  if (title) document.getElementById('err-title').textContent = title;
+  if (msg) document.getElementById('err-msg').textContent = msg;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// LOAD PRODUCT DATA
+// ════════════════════════════════════════════════════════════════════
+async function loadProduct() {
+  if (!productId) {
+    showError('ไม่ได้ระบุสินค้า', 'กรุณาเลือกสินค้าจากหน้ารายการ');
+    return;
+  }
+
+  try {
+    // Fetch product + seller + category + brand in 1 query (left joins)
+    const { data, error } = await sb
+      .from('products')
+      .select(`
+        *,
+        sellers ( id, shop_name, logo_url, is_verified, rating ),
+        categories ( id, name_th, slug ),
+        brands ( id, name, logo_url )
+      `)
+      .eq('id', productId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      showError('ไม่พบสินค้านี้', 'สินค้าอาจถูกลบหรือไม่มีอยู่ในระบบ');
+      return;
+    }
+    if (data.status && data.status !== 'active') {
+      showError('สินค้าไม่พร้อมขาย', 'สินค้านี้ถูกระงับการขายชั่วคราว');
+      return;
+    }
+
+    _product = data;
+    renderProduct();
+
+    // Load secondary in parallel (don't block main render)
+    Promise.allSettled([
+      loadReviews(),
+      loadQuestions(),
+      loadRelated(),
+      checkWishlistState(),
+      trackView(),
+      updateCartBadge(),
+    ]);
+  } catch (e) {
+    console.error('loadProduct:', e);
+    showError('เกิดข้อผิดพลาด', e.message || 'ไม่สามารถโหลดสินค้าได้');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// RENDER PRODUCT
+// ════════════════════════════════════════════════════════════════════
+function renderProduct() {
+  const p = _product;
+
+  // hide loading, show product
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('product-wrap').style.display = 'block';
+
+  // page title
+  document.title = (p.name_th || p.name_en || 'สินค้า') + ' · Thailand Market';
+
+  // Breadcrumb
+  if (p.categories) {
+    document.getElementById('bc-cat').textContent = p.categories.name_th || 'หมวด';
+    document.getElementById('bc-cat').href = 'category.html?cat=' + p.categories.slug;
+  }
+  document.getElementById('bc-name').textContent = p.name_th || p.name_en || 'สินค้า';
+
+  // Gallery main image
+  const imgs = (Array.isArray(p.images) ? p.images : []);
+  const mainEl = document.getElementById('main-img-el');
+  const fallback = document.getElementById('main-img-fallback');
+  const firstImg = imgs[0] || p.thumbnail;
+  if (firstImg) {
+    mainEl.src = firstImg;
+    mainEl.onerror = ()=>{ mainEl.style.display='none'; fallback.style.display='block' };
+  } else {
+    mainEl.style.display = 'none';
+    fallback.style.display = 'block';
+  }
+
+  // Thumbnails
+  if (imgs.length > 1) {
+    document.getElementById('thumbs').innerHTML = imgs.slice(0,5).map((url, i) => `
+      <div class="thumb ${i===0?'active':''}" onclick="selThumb(this, '${escapeHtml(url)}')">
+        <img src="${escapeHtml(url)}" style="width:100%;height:100%;object-fit:cover" alt="">
+      </div>`).join('');
+  }
+
+  // Discount/Flash badges
+  if (p.compare_price && p.compare_price > p.price) {
+    const pct = Math.round((1 - p.price/p.compare_price) * 100);
+    const dt = document.getElementById('discount-tag');
+    dt.textContent = '-' + pct + '%';
+    dt.style.display = 'block';
+  }
+  if (p.is_flash_sale) {
+    document.getElementById('flash-tag-img').style.display = 'block';
+  } else if (p.is_authentic) {
+    document.getElementById('authentic-tag').style.display = 'block';
+  }
+  if (p.badge_text) {
+    const bc = document.getElementById('badge-custom');
+    bc.textContent = p.badge_text;
+    bc.style.background = p.badge_color || 'var(--accent)';
+    bc.style.display = 'block';
+  }
+
+  // Shop info
+  if (p.sellers) {
+    document.getElementById('shop-name').textContent = p.sellers.shop_name || 'ร้านค้า';
+    document.getElementById('shop-av').textContent = (p.sellers.shop_name || 'SS').substring(0,2).toUpperCase();
+    if (p.sellers.is_verified) document.getElementById('shop-badge').style.display = 'inline-flex';
+    document.getElementById('visit-shop').href = 'storefront.html?seller=' + p.sellers.id;
+  } else {
+    document.getElementById('shop-row').style.display = 'none';
+  }
+
+  // Title
+  document.getElementById('prod-title').textContent = p.name_th || p.name_en || '';
+
+  // Rating + Sold
+  const rating = Number(p.rating_avg || 0);
+  document.getElementById('rating-num').textContent = rating.toFixed(1);
+  document.getElementById('rating-cnt').textContent = '(' + (p.review_count||0).toLocaleString() + ' รีวิว)';
+  document.getElementById('sold-cnt').textContent = 'ขายแล้ว ' + (p.sold_count||0).toLocaleString() + ' ชิ้น';
+  // Stars colored by rating
+  const filledStars = Math.round(rating);
+  document.getElementById('stars').innerHTML = '★'.repeat(filledStars) + '<span style="color:#D4D4D4">' + '★'.repeat(5-filledStars) + '</span>';
+
+  // Price
+  document.getElementById('price-main').textContent = toBaht(p.price);
+  if (p.compare_price && p.compare_price > p.price) {
+    document.getElementById('price-old').textContent = toBaht(p.compare_price);
+    document.getElementById('price-old').style.display = 'inline';
+    document.getElementById('price-save').textContent = 'ประหยัด ' + toBaht(p.compare_price - p.price);
+    document.getElementById('price-save').style.display = 'inline';
+  }
+
+  // Installment
+  if (p.installment_available && p.installment_months) {
+    const monthly = Math.ceil(p.price / p.installment_months);
+    document.getElementById('ins-badge').textContent =
+      (Number(p.installment_rate||0) === 0 ? '0% ' : (p.installment_rate + '% ')) +
+      p.installment_months + ' เดือน';
+    document.getElementById('ins-monthly').textContent = toBaht(monthly) + '/เดือน';
+    document.getElementById('installment-row').style.display = 'flex';
+  }
+
+  // Flash sale stock bar
+  if (p.is_flash_sale && p.stock_quantity && p.sold_target) {
+    const sold = p.sold_count || 0;
+    const pct = Math.min(100, (sold / p.sold_target) * 100);
+    document.getElementById('flash-bar-fill').style.width = pct + '%';
+    document.getElementById('flash-left').textContent = 'เหลือ ' + p.stock_quantity + ' ชิ้น';
+    document.getElementById('flash-row').style.display = 'flex';
+  }
+
+  // Variants
+  renderVariants(p.variant_options);
+
+  // Stock
+  document.getElementById('qty-stock').textContent =
+    p.stock_quantity > 0 ? 'มีสินค้า ' + p.stock_quantity + ' ชิ้น' : 'สินค้าหมด';
+  if (p.stock_quantity <= 0) {
+    document.getElementById('btn-buy').disabled = true;
+    document.getElementById('btn-buy').textContent = '😔 สินค้าหมด';
+    document.getElementById('btn-buy').style.opacity = '.5';
+  } else if (p.is_flash_sale) {
+    document.getElementById('btn-buy').textContent = '⚡ ซื้อเลย (Flash Price)';
+  }
+
+  // Service grid (dynamic based on what data exists)
+  renderServices(p);
+
+  // Description body + highlights + video
+  renderDescription(p);
+
+  // Specs
+  renderSpecs(p.specifications);
+}
+
+function renderVariants(vo) {
+  const wrap = document.getElementById('variants-wrap');
+  wrap.innerHTML = '';
+  const opts = (vo && typeof vo === 'object' && vo.options) ? vo.options : [];
+  opts.forEach((opt, idx) => {
+    if (!opt.values || !opt.values.length) return;
+    const firstVal = opt.values[0];
+    _selectedVariants[opt.name] = firstVal;
+    const section = document.createElement('div');
+    section.className = 'option-section';
+    section.innerHTML = `
+      <div class="opt-label">🎨 ${escapeHtml(opt.name)}: <span style="color:var(--g400);font-weight:400" id="vo-sel-${idx}">${escapeHtml(firstVal)}</span></div>
+      <div class="opt-chips" data-opt="${escapeHtml(opt.name)}" data-idx="${idx}">
+        ${opt.values.map((v, i) => `<div class="opt-chip ${i===0?'active':''}" onclick="selVariant(this, '${escapeHtml(opt.name)}', '${escapeHtml(v)}', ${idx})">${escapeHtml(v)}</div>`).join('')}
+      </div>`;
+    wrap.appendChild(section);
+  });
+}
+
+function selVariant(el, optName, value, idx) {
+  el.parentElement.querySelectorAll('.opt-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  _selectedVariants[optName] = value;
+  const sel = document.getElementById('vo-sel-' + idx);
+  if (sel) sel.textContent = value;
+}
+
+function renderServices(p) {
+  const services = [];
+
+  if (p.free_shipping) {
+    const ship = p.shipping_days ? `ภายใน ${p.shipping_days}` : 'ส่งฟรีถึงหน้าบ้าน';
+    services.push({ ico: '🚚', title: 'ส่งฟรี', sub: ship });
+  } else if (p.shipping_fee && p.shipping_fee > 0) {
+    services.push({ ico: '🚚', title: `ค่าส่ง ${toBaht(p.shipping_fee)}`, sub: p.shipping_days || '2-5 วัน' });
+  } else {
+    services.push({ ico: '🚚', title: 'ค่าจัดส่ง', sub: 'ตามระยะทาง' });
+  }
+
+  if (p.warranty_period) {
+    services.push({ ico: '🛡️', title: 'ประกัน ' + p.warranty_period, sub: p.warranty_by || 'ผู้ผลิต' });
+  }
+
+  if (p.return_days && p.return_days > 0) {
+    services.push({ ico: '↩️', title: 'คืนได้ ' + p.return_days + ' วัน', sub: 'ตามเงื่อนไข' });
+  }
+
+  if (p.install_available) {
+    services.push({ ico: '🔧', title: 'บริการติดตั้ง', sub: p.install_fee ? 'เพิ่ม ' + toBaht(p.install_fee) : (p.install_note || 'ฟรี') });
+  } else if (p.cod_available) {
+    services.push({ ico: '💰', title: 'COD', sub: 'เก็บเงินปลายทาง' });
+  }
+
+  document.getElementById('service-row').innerHTML = services.slice(0,4).map(s => `
+    <div class="svc"><div class="svc-ico">${s.ico}</div>
+      <div><div class="svc-t">${escapeHtml(s.title)}</div><div class="svc-s">${escapeHtml(s.sub)}</div></div>
+    </div>`).join('');
+}
+
+function renderDescription(p) {
+  // Highlights (cards)
+  const highlights = (Array.isArray(p.highlights) ? p.highlights :
+    (typeof p.highlights === 'string' ? JSON.parse(p.highlights||'[]') : []));
+  if (highlights.length) {
+    document.getElementById('highlights-wrap').style.display = 'block';
+    document.getElementById('highlights-grid').innerHTML = highlights.map(h => `
+      <div style="background:#fff;border:1px solid var(--g200);padding:14px;border-radius:4px;display:flex;gap:10px;align-items:flex-start">
+        <div style="font-size:24px;line-height:1;flex-shrink:0">${escapeHtml(h.icon||'✨')}</div>
+        <div>
+          <div style="font-weight:600;font-size:13px;color:var(--g900);margin-bottom:3px">${escapeHtml(h.title||'')}</div>
+          <div style="font-size:12px;color:var(--g600);line-height:1.5">${escapeHtml(h.desc||'')}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  // Description body
+  const desc = p.description || '';
+  document.getElementById('desc-body').textContent = desc || '— ไม่มีคำอธิบายสินค้า —';
+
+  // Video (YouTube)
+  if (p.video_url) {
+    const vid = extractYouTubeId(p.video_url);
+    if (vid) {
+      document.getElementById('video-wrap').style.display = 'block';
+      document.getElementById('video-wrap').innerHTML = `
+        <div style="background:#000;border-radius:4px;overflow:hidden;aspect-ratio:16/9;max-width:800px">
+          <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${vid}" 
+            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>`;
+    }
+  }
+}
+
+function extractYouTubeId(url) {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([^&?\/]+)/);
+  return m ? m[1] : null;
+}
+
+function renderSpecs(specs) {
+  const specsArr = (Array.isArray(specs) ? specs :
+    (typeof specs === 'string' ? JSON.parse(specs||'[]') : []));
+  if (!specsArr.length) {
+    document.getElementById('spec-list').innerHTML = `
+      <div style="padding:40px;text-align:center;color:var(--g500)">
+        <div style="font-size:32px;margin-bottom:8px;opacity:.4">📋</div>
+        <div style="font-size:13px">ผู้ขายยังไม่ได้ระบุสเปคสินค้า</div>
+      </div>`;
+    return;
+  }
+  document.getElementById('spec-list').innerHTML = specsArr.map(s =>
+    `<div class="spec-row"><div class="spec-key">${escapeHtml(s.key||'')}</div><div class="spec-val">${escapeHtml(s.value||'')}</div></div>`
+  ).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// REVIEWS (with fallback if RPC missing)
+// ════════════════════════════════════════════════════════════════════
+async function loadReviews() {
+  try {
+    let reviews;
+    // ลอง RPC ก่อน
+    const rpcRes = await sb.rpc('get_product_reviews', { p_product_id: productId, p_limit: 10 });
+    if (!rpcRes.error && rpcRes.data) {
+      reviews = rpcRes.data;
+    } else {
+      // fallback raw query
+      const { data } = await sb.from('reviews')
+        .select('id, rating, comment, photos, created_at, variant_text, helpful_count, seller_reply, seller_reply_at, user_id')
+        .eq('product_id', productId)
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      reviews = data || [];
+    }
+
+    document.getElementById('tab-rev-cnt').textContent = `(${reviews.length})`;
+
+    // Update summary
+    const total = _product.review_count || reviews.length;
+    document.getElementById('rev-total').textContent = `จาก ${total.toLocaleString()} รีวิว`;
+    const avg = Number(_product.rating_avg || 0).toFixed(1);
+    document.getElementById('rev-score').textContent = avg;
+    const filled = Math.round(_product.rating_avg || 0);
+    document.getElementById('rev-stars-summary').innerHTML = '★'.repeat(filled) + '<span style="color:#D4D4D4">' + '★'.repeat(5-filled) + '</span>';
+
+    // Distribution bars
+    const dist = [0,0,0,0,0]; // 5,4,3,2,1
+    reviews.forEach(r => { if (r.rating >= 1 && r.rating <= 5) dist[5-r.rating]++; });
+    const max = Math.max(1, ...dist);
+    document.getElementById('rev-bars').innerHTML = [5,4,3,2,1].map((star,i) => `
+      <div class="rev-bar-row">
+        <div class="rev-star-lbl">${star}★</div>
+        <div class="rev-bar-track"><div class="rev-bar-fill" style="width:${(dist[i]/max)*100}%"></div></div>
+        <div class="rev-bar-cnt">${dist[i]}</div>
+      </div>`).join('');
+
+    // Reviews list
+    if (!reviews.length) {
+      document.getElementById('reviews-empty').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('reviews-list').innerHTML = reviews.map(r => {
+      const photos = (typeof r.photos === 'string' ? JSON.parse(r.photos||'[]') : (r.photos || []));
+      const date = new Date(r.created_at).toLocaleDateString('th-TH', { day:'2-digit', month:'short', year:'2-digit' });
+      const name = r.user_name || 'ผู้ใช้';
+      return `<div class="review-item">
+        <div class="rev-head">
+          <div class="rev-av">${escapeHtml(name.charAt(0))}</div>
+          <div>
+            <div class="rev-name">${escapeHtml(name)}</div>
+            <div class="rev-meta">${date}${r.variant_text?' · '+escapeHtml(r.variant_text):''}</div>
+          </div>
+          <div class="rev-stars">${'★'.repeat(r.rating)}<span style="color:#D4D4D4">${'★'.repeat(5-r.rating)}</span></div>
+        </div>
+        <div class="rev-body">${escapeHtml(r.comment||'')}</div>
+        ${photos.length ? `<div class="rev-imgs">${photos.slice(0,5).map(p =>
+          `<div class="rev-img" style="background-image:url('${escapeHtml(p)}');background-size:cover;background-position:center"></div>`
+        ).join('')}</div>` : ''}
+        ${r.seller_reply ? `<div style="background:var(--g50);padding:10px 14px;margin-top:10px;border-left:3px solid var(--accent);font-size:12px">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">↩ ตอบกลับจากร้านค้า</div>
+          <div style="color:var(--g700);line-height:1.5">${escapeHtml(r.seller_reply)}</div>
+        </div>` : ''}
+        <div class="rev-helpful">
+          <button class="helpful-btn" onclick="toast('👍 ขอบคุณ!')">👍 มีประโยชน์ (${r.helpful_count||0})</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    console.warn('loadReviews:', e.message);
+    document.getElementById('reviews-empty').style.display = 'block';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Q&A
+// ════════════════════════════════════════════════════════════════════
+async function loadQuestions() {
+  try {
+    const { data, error } = await sb.from('product_questions')
+      .select('*')
+      .eq('product_id', productId)
+      .or('is_published.is.null,is_published.eq.true')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    const qas = data || [];
+    document.getElementById('tab-qa-cnt').textContent = `(${qas.length})`;
+
+    if (!qas.length) {
+      document.getElementById('qa-empty').style.display = 'block';
+      return;
+    }
+    document.getElementById('qa-list').innerHTML = qas.map(q => `
+      <div class="qa-item">
+        <div class="qa-q"><span class="qa-q-icon">Q</span>${escapeHtml(q.question)}</div>
+        ${q.answer ? `<div class="qa-a"><span class="qa-a-icon">A</span>${escapeHtml(q.answer)}</div>` :
+          '<div style="color:var(--g500);font-size:12px;font-style:italic;margin-top:6px;margin-left:30px">รอผู้ขายตอบ...</div>'}
+      </div>`).join('');
+  } catch(e) {
+    console.warn('loadQuestions:', e.message);
+    document.getElementById('qa-empty').style.display = 'block';
+  }
+}
+
+async function askQuestion() {
+  const inp = document.getElementById('qa-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  if (txt.length < 5) { toast('คำถามสั้นเกินไป'); return; }
+
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) {
+      toast('กรุณาเข้าสู่ระบบก่อนถาม');
+      setTimeout(()=>location.href='login.html?from='+encodeURIComponent(location.pathname+location.search), 1500);
+      return;
+    }
+    const { error } = await sb.from('product_questions').insert({
+      product_id: productId,
+      user_id: user.id,
+      user_name: (user.user_metadata?.name || user.email?.split('@')[0] || 'ผู้ใช้'),
+      question: txt
+    });
+    if (error) throw error;
+    inp.value = '';
+    toast('✅ ส่งคำถามแล้ว!');
+    loadQuestions();
+  } catch(e) {
+    toast('ไม่สำเร็จ: ' + e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// RELATED PRODUCTS
+// ════════════════════════════════════════════════════════════════════
+async function loadRelated() {
+  try {
+    let rel = [];
+    // ถ้า admin ระบุ related_products มา ใช้ของนั้น
+    if (_product.related_products && _product.related_products.length) {
+      const { data } = await sb.from('products')
+        .select('id, name_th, price, compare_price, thumbnail, images')
+        .in('id', _product.related_products)
+        .eq('status', 'active')
+        .limit(6);
+      rel = data || [];
+    }
+    // ถ้าไม่มี ดึงจาก category เดียวกัน
+    if (!rel.length && _product.category_id) {
+      const { data } = await sb.from('products')
+        .select('id, name_th, price, compare_price, thumbnail, images')
+        .eq('category_id', _product.category_id)
+        .eq('status', 'active')
+        .neq('id', productId)
+        .limit(6);
+      rel = data || [];
+    }
+    if (!rel.length) {
+      document.getElementById('related-empty').style.display = 'block';
+      return;
+    }
+    document.getElementById('related-grid').innerHTML = rel.map(p => {
+      const img = p.thumbnail || (Array.isArray(p.images) && p.images[0]);
+      return `<a class="prod-card" href="product.html?id=${p.id}" style="text-decoration:none;color:inherit">
+        <div class="prod-img" style="background:var(--g50)">${img
+          ? `<img src="${escapeHtml(img)}" style="width:100%;height:100%;object-fit:cover" alt="">`
+          : '📦'}</div>
+        <div class="prod-info-card">
+          <div class="prod-name-s">${escapeHtml(p.name_th||'')}</div>
+          <div class="prod-price-s">${toBaht(p.price)}</div>
+        </div>
+      </a>`;
+    }).join('');
+  } catch(e) {
+    console.warn('loadRelated:', e.message);
+    document.getElementById('related-empty').style.display = 'block';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// CART + WISHLIST
+// ════════════════════════════════════════════════════════════════════
+async function addToCart() {
+  if (!_product) return;
+  if (_product.stock_quantity <= 0) { toast('😔 สินค้าหมด'); return; }
+
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    if (user) {
+      // Save to cart_items table
+      const variantText = Object.entries(_selectedVariants).map(([k,v])=>`${k}:${v}`).join(', ');
+      const { error } = await sb.from('cart_items').upsert({
+        user_id: user.id,
+        product_id: productId,
+        quantity: qty,
+        variant_text: variantText || null,
+        added_at: new Date().toISOString()
+      }, { onConflict: 'user_id,product_id' });
+      if (error && error.code !== 'PGRST116') throw error;
+    } else {
+      // Guest cart in localStorage
+      const cart = JSON.parse(localStorage.getItem('tm_cart_guest') || '[]');
+      const existing = cart.find(c => c.product_id === productId);
+      if (existing) existing.quantity += qty;
+      else cart.push({
+        product_id: productId, quantity: qty,
+        name: _product.name_th, price: _product.price,
+        thumbnail: _product.thumbnail || (_product.images||[])[0],
+        variants: _selectedVariants
+      });
+      localStorage.setItem('tm_cart_guest', JSON.stringify(cart));
+    }
+    toast('🛒 เพิ่มลงตะกร้าแล้ว!');
+    updateCartBadge();
+  } catch(e) {
+    console.error(e);
+    toast('ไม่สามารถเพิ่มลงตะกร้าได้');
+  }
+}
+
+async function buyNow() {
+  if (!_product || _product.stock_quantity <= 0) { toast('😔 สินค้าหมด'); return; }
+  await addToCart();
+  setTimeout(()=>location.href='checkout.html?direct='+productId, 800);
+}
+
+async function checkWishlistState() {
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) return;
+    const { data } = await sb.from('wishlist')
+      .select('id').eq('user_id', user.id).eq('product_id', productId).maybeSingle();
+    if (data) {
+      wishlisted = true;
+      const btn = document.getElementById('wl-btn');
+      btn.textContent = '❤️ บันทึกแล้ว';
+      btn.style.borderColor = 'var(--accent)';
+      btn.style.color = 'var(--accent)';
+    }
+  } catch(e) { /* silent */ }
+}
+
+async function toggleWishlist() {
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    if (!user) {
+      toast('กรุณาเข้าสู่ระบบ');
+      setTimeout(()=>location.href='login.html?from='+encodeURIComponent(location.pathname+location.search), 1500);
+      return;
+    }
+    const btn = document.getElementById('wl-btn');
+    if (wishlisted) {
+      await sb.from('wishlist').delete().eq('user_id', user.id).eq('product_id', productId);
+      wishlisted = false;
+      btn.textContent = '❤️ บันทึกเป็น Wishlist';
+      btn.style.borderColor = 'var(--g200)';
+      btn.style.color = 'var(--g700)';
+      toast('💔 ลบออกจาก Wishlist');
+    } else {
+      await sb.from('wishlist').upsert({ user_id: user.id, product_id: productId });
+      wishlisted = true;
+      btn.textContent = '❤️ บันทึกแล้ว';
+      btn.style.borderColor = 'var(--accent)';
+      btn.style.color = 'var(--accent)';
+      toast('❤️ เพิ่มใน Wishlist!');
+    }
+  } catch(e) {
+    toast('ไม่สำเร็จ: ' + e.message);
+  }
+}
+
+async function updateCartBadge() {
+  try {
+    const badge = document.getElementById('cart-badge');
+    if (!badge) return;
+    const { data:{ user } } = await sb.auth.getUser();
+    if (user) {
+      const { count } = await sb.from('cart_items')
+        .select('*', { count:'exact', head:true })
+        .eq('user_id', user.id);
+      badge.textContent = count || 0;
+    } else {
+      const cart = JSON.parse(localStorage.getItem('tm_cart_guest') || '[]');
+      badge.textContent = cart.reduce((s,c)=>s+c.quantity, 0);
+    }
+  } catch(e) { /* silent */ }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// TRACKING
+// ════════════════════════════════════════════════════════════════════
+async function trackView() {
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    await sb.from('product_views').insert({
+      product_id: productId,
+      user_id: user?.id || null,
+      session_id: localStorage.getItem('tm_session') || null,
+      viewed_at: new Date().toISOString()
+    });
+  } catch(e) { /* silent — table อาจยังไม่มี */ }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// UI UTILS
+// ════════════════════════════════════════════════════════════════════
+function selThumb(el, url) {
+  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('main-img-el').src = url;
+  document.getElementById('main-img-el').style.display = 'block';
+  document.getElementById('main-img-fallback').style.display = 'none';
+}
+
+function changeQty(d) {
+  const max = _product?.stock_quantity || 99;
+  qty = Math.max(1, Math.min(max, qty + d));
+  document.getElementById('qty-val').textContent = qty;
+}
+
+function swTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tnav').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
   el.classList.add('active');
 }
 
-document.getElementById('spec-list').innerHTML=SPECS.map(([k,v])=>`<div class="spec-row"><div class="spec-key">${k}</div><div class="spec-val">${v}</div></div>`).join('');
-document.getElementById('rev-bars').innerHTML=[5,4,3,2,1].map((star,i)=>`<div class="rev-bar-row">
-  <div class="rev-star-lbl">${star}★</div>
-  <div class="rev-bar-track"><div class="rev-bar-fill" style="width:${REV_DIST[i].pct*1.3}%"></div></div>
-  <div class="rev-bar-cnt">${REV_DIST[i].cnt}</div>
-</div>`).join('');
-
-document.getElementById('reviews-list').innerHTML=REVIEWS.map(r=>`<div class="review-item">
-  <div class="rev-head">
-    <div class="rev-av">${r.name.charAt(0)}</div>
-    <div><div class="rev-name">${r.name}</div><div class="rev-meta">${r.date} · ${r.variant}</div></div>
-    <div class="rev-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
-  </div>
-  <div class="rev-body">${r.text}</div>
-  ${r.imgs.length?`<div class="rev-imgs">${r.imgs.map(i=>`<div class="rev-img">${i}</div>`).join('')}</div>`:''}
-  <div class="rev-helpful"><button class="helpful-btn" onclick="toast('👍 ขอบคุณ!')">👍 มีประโยชน์ (${r.helpful})</button></div>
-</div>`).join('');
-
-document.getElementById('qa-list').innerHTML=QAS.map(q=>`<div class="qa-item">
-  <div class="qa-q"><span class="qa-q-icon">Q</span>${q.q}</div>
-  <div class="qa-a"><span class="qa-a-icon">A</span>${q.a}</div>
-</div>`).join('');
-
-document.getElementById('related-grid').innerHTML=RELATED.map(p=>`<div class="prod-card" onclick="toast('🛒 ${p.name}')">
-  <div class="prod-img" style="background:${p.bg}">${p.icon}</div>
-  <div class="prod-info-card">
-    <div class="prod-name-s">${p.name}</div>
-    <div class="prod-price-s">${p.price}</div>
-  </div>
-</div>`).join('');
-
-function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),2800);}
-</script>
-
-
-
-
-
-<div class="tm-toast-wrap" id="tmToastWrap"></div>
-<script>
-function tmToast(msg){
-  var w=document.getElementById('tmToastWrap');
-  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
-  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
-  w.appendChild(t);setTimeout(function(){t.remove()},2600);
+function shareTo(net) {
+  const url = encodeURIComponent(location.href);
+  const text = encodeURIComponent(_product?.name_th || 'สินค้า');
+  const urls = {
+    fb: `https://facebook.com/sharer/sharer.php?u=${url}`,
+    x: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+    line: `https://line.me/R/msg/text/?${text}%20${url}`
+  };
+  if (urls[net]) window.open(urls[net], '_blank', 'width=600,height=500');
 }
-</script>
-<footer id="tm-footer">
-  <div class="tf-inner">
-    <div class="tf-grid">
-      <div>
-        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
-        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
-      </div>
-      <div>
-        <div class="tf-title">ช้อปปิ้ง</div>
-        <a href="index.html" class="tf-link">หน้าแรก</a>
-        <a href="category.html" class="tf-link">หมวดหมู่</a>
-        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
-        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
-        <a href="brand-day.html" class="tf-link">Brand Day</a>
-        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
-      </div>
-      <div>
-        <div class="tf-title">บัญชีของฉัน</div>
-        <a href="profile.html" class="tf-link">โปรไฟล์</a>
-        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
-        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
-        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
-        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
-        <a href="returns.html" class="tf-link">คืนสินค้า</a>
-      </div>
-      <div>
-        <div class="tf-title">ผู้ขาย</div>
-        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
-        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
-        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
-        <a href="seller-analytics.html" class="tf-link">Analytics</a>
-        <a href="b2b-portal.html" class="tf-link">B2B</a>
-        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
-      </div>
-      <div>
-        <div class="tf-title">ช่วยเหลือ</div>
-        <a href="help-center.html" class="tf-link">Help Center</a>
-        <a href="chat.html" class="tf-link">แชทกับเรา</a>
-        <a href="subscription.html" class="tf-link">TM Plus</a>
-        <a href="gift-card.html" class="tf-link">Gift Card</a>
-        <a href="sitemap.html" class="tf-link">Site Map</a>
-        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
-      </div>
-    </div>
-    <div class="tf-bottom">
-      <span>© 2026 Thailand Market · All rights reserved</span>
-      <span>TH · EN · 🔒 SSL · PCI DSS</span>
-    </div>
-  </div>
-</footer>
-<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
-<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
 
-<script>
-(function loadProductFromCMS(){
-  const params=new URLSearchParams(location.search);
-  const id=params.get('id');
-  if(!id) return;
-  try{
-    const prods=JSON.parse(localStorage.getItem('tm_products')||'[]');
-    const p=prods.find(pr=>pr.id===id);
-    if(!p) return;
+function copyLink() {
+  navigator.clipboard.writeText(location.href).then(()=>toast('🔗 คัดลอกลิงก์แล้ว!'));
+}
 
-    // Update page title
-    document.title='Thailand Market — '+p.nameTh;
+function doSearch() {
+  const q = document.getElementById('search-inp')?.value?.trim();
+  if (q) location.href = 'search.html?q=' + encodeURIComponent(q);
+}
 
-    const CATS={home:'🏠 Home & Furniture',fashion:'👗 แฟชั่น',beauty:'💄 Beauty & Health',
-      fmcg:'🛒 FMCG',tech:'💻 Tech & Gadgets',auto:'🚗 ยานยนต์',
-      pets:'🐾 สัตว์เลี้ยง',edu:'📚 การศึกษา',sport:'⚽ กีฬา',travel:'✈️ ท่องเที่ยว',service:'🔧 บริการ'};
-    const disc=p.comparePrice&&p.comparePrice>p.price?Math.round((1-p.price/p.comparePrice)*100):0;
-    const emojiMap={home:'🏠',fashion:'👗',beauty:'💄',fmcg:'🛒',tech:'💻',auto:'🚗',pets:'🐾',edu:'📚',sport:'⚽',travel:'✈️',service:'🔧'};
+// ════════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════════
+loadProduct();
 
-    // Create full product page overlay
-    const nav=document.getElementById('tm-nav')||document.querySelector('nav');
-    const section=document.createElement('div');
-    section.style.cssText='max-width:1280px;margin:0 auto;padding:32px 24px 60px';
-    section.innerHTML=`
-      <div style="display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.04em;text-transform:uppercase;margin-bottom:24px">
-        <a href="index.html" style="color:var(--g400);text-decoration:none" onmouseover="this.style.color='var(--black)'" onmouseout="this.style.color='var(--g400)'">Home</a>
-        <span>›</span><span>${CATS[p.category]||'สินค้า'}</span>
-        <span>›</span><span style="color:var(--black)">${p.nameTh}</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 420px;gap:40px;align-items:start">
-        <div>
-          ${p.images&&p.images.length>0
-            ?`<div style="border:var(--border);overflow:hidden;margin-bottom:12px"><img id="cms-main-img" src="${p.images[0]}" style="width:100%;max-height:500px;object-fit:contain;display:block"></div>
-              ${p.images.length>1?`<div style="display:flex;gap:8px;flex-wrap:wrap">${p.images.map((src,i)=>`<img src="${src}" style="width:72px;height:72px;object-fit:cover;border:${i===0?'var(--border-dark)':'var(--border)'};cursor:pointer" onclick="document.getElementById('cms-main-img').src='${src}';document.querySelectorAll('.cms-thumb').forEach(t=>t.style.borderColor='var(--g200)');this.style.borderColor='var(--black)'" class="cms-thumb">`).join('')}</div>`:''}`
-            :`<div style="width:100%;height:400px;background:var(--g100);display:flex;align-items:center;justify-content:center;font-size:100px;border:var(--border)">${emojiMap[p.category]||'📦'}</div>`}
-        </div>
-        <div>
-          ${disc>0?`<div style="font-family:var(--mono);font-size:11px;color:var(--red);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">🔥 ลดราคา -${disc}%</div>`:''}
-          <h1 style="font-size:26px;font-weight:300;letter-spacing:-.01em;margin-bottom:6px;line-height:1.3">${p.nameTh}</h1>
-          ${p.nameEn?`<div style="font-family:var(--mono);font-size:12px;color:var(--g400);margin-bottom:16px">${p.nameEn}</div>`:''}
-          <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px">
-            <div style="font-family:var(--mono);font-size:34px;font-weight:500">฿${Number(p.price).toLocaleString()}</div>
-            ${disc>0?`<div style="font-family:var(--mono);font-size:16px;color:var(--g400);text-decoration:line-through">฿${Number(p.comparePrice).toLocaleString()}</div>`:''}
-          </div>
-          <div style="background:var(--g50);border:var(--border);padding:16px;margin-bottom:20px">
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:var(--border);font-size:13px"><span style="color:var(--g500)">หมวดหมู่</span><span style="font-weight:500">${CATS[p.category]||'—'}</span></div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:var(--border);font-size:13px"><span style="color:var(--g500)">สต็อก</span><span style="font-family:var(--mono);font-weight:500;${p.stock<5?'color:var(--red)':''}">${p.stock} ชิ้น${p.stock<5?' (ใกล้หมด)':''}</span></div>
-            ${p.sku?`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:var(--border);font-size:13px"><span style="color:var(--g500)">SKU</span><span style="font-family:var(--mono)">${p.sku}</span></div>`:''}
-            ${p.weight?`<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px"><span style="color:var(--g500)">น้ำหนัก</span><span>${p.weight}g</span></div>`:''}
-          </div>
-          ${p.tags&&p.tags.length?`<div style="margin-bottom:20px">${p.tags.map(t=>`<span style="display:inline-flex;align-items:center;padding:3px 10px;border:var(--border);font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;margin:2px 4px 2px 0;color:var(--g500)">${t}</span>`).join('')}</div>`:''}
-          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
-            <button onclick="alert('ฟีเจอร์นี้ต้องการ backend จริง — ดู BACKEND-SETUP.html')" style="width:100%;padding:14px;background:var(--black);color:var(--white);border:none;font-family:var(--font);font-size:14px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#262626'" onmouseout="this.style.background='var(--black)'">🛒 เพิ่มใส่ตะกร้า</button>
-            <button onclick="alert('ฟีเจอร์นี้ต้องการ backend จริง')" style="width:100%;padding:14px;background:var(--white);color:var(--black);border:var(--border-dark);font-family:var(--font);font-size:14px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--black)';this.style.color='var(--white)'" onmouseout="this.style.background='var(--white)';this.style.color='var(--black)'">⚡ ซื้อทันที</button>
-          </div>
-          ${p.desc?`<div style="margin-top:24px"><div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:10px;padding-bottom:8px;border-bottom:var(--border)">รายละเอียดสินค้า</div><div style="font-size:13px;color:var(--g600);line-height:1.8">${p.desc.replace(/\n/g,'<br>')}</div></div>`:''}
-        </div>
-      </div>
-    `;
-
-    // Hide existing product content and show CMS content
-    if(nav&&nav.parentNode){
-      nav.parentNode.insertBefore(section, nav.nextSibling);
+// Account dropdown (existing logic unchanged)
+(async function initAccountDropdown() {
+  try {
+    const { data:{ user } } = await sb.auth.getUser();
+    if (user) {
+      const ddName = document.getElementById('dd-name');
+      const ddEmail = document.getElementById('dd-email');
+      if (ddName) ddName.textContent = user.user_metadata?.name || user.email?.split('@')[0] || 'ผู้ใช้';
+      if (ddEmail) ddEmail.textContent = user.email || '';
     }
-  } catch(e){ console.error('loadProductFromCMS:', e); }
+  } catch(e) {}
 })();
 </script>
-<script>
-// ── Account Nav (shared) ─────────────────────────────────
-(async function initAccountNav() {
-  const sb  = (window._sb) || supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
-  window._sb = sb;
-  const btn  = document.getElementById('account-nav-btn');
-  const drop = document.getElementById('account-dropdown');
-  if (!btn || !drop) return;
-  const { data:{ session } } = await sb.auth.getSession();
-  if (!session) {
-    btn.onclick = () => location.href='login.html?from='+encodeURIComponent(location.pathname);
-    return;
-  }
-  const email = session.user.email;
-  const { data:user } = await sb.from('users').select('display_name,role,avatar_url').eq('email',email).maybeSingle();
-  const name = user?.display_name || email.split('@')[0];
-  const role = user?.role || 'buyer';
-  const ini  = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-  const ico = document.getElementById('account-ico');
-  const lbl = document.getElementById('account-lbl');
-  if (ico) ico.innerHTML = `<div style="width:22px;height:22px;border-radius:50%;background:var(--black);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">${ini}</div>`;
-  if (lbl) lbl.textContent = name.split(' ')[0];
-  ['dd-name','dd-email'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=id==='dd-name'?name:email; });
-  const dr=document.getElementById('dd-role');
-  if(dr){ dr.textContent=role==='admin'?'Admin':role==='seller'?'Seller':'Member'; dr.className='account-dropdown-role '+role; }
-  const da=document.getElementById('dd-admin'); if(da) da.style.display=role==='admin'?'flex':'none';
-  const ds=document.getElementById('dd-seller'); if(ds) ds.style.display=(role==='seller'||role==='admin')?'flex':'none';
-  btn.onclick=e=>{ e.stopPropagation(); drop.classList.toggle('open'); };
-  document.addEventListener('click',()=>drop.classList.remove('open'));
-  document.getElementById('dd-logout')?.addEventListener('click',async()=>{
-    await sb.auth.signOut();
-    location.href='index.html';
-  });
-})();
-</script>
+
 </body>
 </html>
