@@ -465,24 +465,19 @@ nav, .nav {
 
 </style>
 <!-- ═══════════════════════════════════════════════════════════════
-     PRODUCT BADGES — UNIFIED COMPACT STYLE (2026-05-04 v2)
-     บังคับให้ทุก badge บนรูปสินค้าเป็นแถบเล็กๆ ขนาดเดียวกัน
-     ครอบคลุม: FLASH SALE, ของแท้ 100%, ส่วนลด, custom badges
+     PRODUCT BADGES — UNIFIED COMPACT STYLE (2026-05-04 v3)
+     แก้ปัญหา v2 ที่ override display ทำให้ทุก badge โผล่หมด
+     v3: ใช้ :not([style*="display:none"]) + ไม่ override display
 ═══════════════════════════════════════════════════════════════ -->
 <style id="tm-product-badges-fix">
-/* ── Master rule: ทุก badge บนรูปสินค้า = แถบเล็ก uniform ── */
+/* ── Master rule: ทุก badge บนรูปสินค้า = แถบเล็ก uniform ── 
+   หมายเหตุ: ไม่ override display เพื่อให้ inline style display:none ทำงาน */
 .flash-tag-img,
 .authentic-tag,
 .discount-tag,
 .badge-custom,
-.flash-tag,
-.flash-badge,
-[class*="flash-tag"],
-[class*="-tag-img"],
-[class*="badge-custom"]{
-  display:inline-flex !important;
-  align-items:center !important;
-  gap:3px !important;
+.flash-tag{
+  /* Sizing - แถบเล็ก */
   font-family:'DM Mono',monospace !important;
   font-size:10px !important;
   font-weight:700 !important;
@@ -499,67 +494,47 @@ nav, .nav {
   white-space:nowrap !important;
   z-index:5 !important;
   box-shadow:0 1px 2px rgba(0,0,0,.15) !important;
+  /* ห้าม set display เพื่อให้ JS toggle ได้ */
+  align-items:center;
+  gap:3px;
 }
 
-/* ── Background colors ── */
+/* ── Background colors per type ── */
 .flash-tag-img,
-.flash-tag,
-[class*="flash-tag"]{ background:#E63329 !important; }      /* flash = red */
+.flash-tag{ background:#E63329 !important; }      /* flash = red */
+.authentic-tag{ background:#16A34A !important; }   /* authentic = green */
+.discount-tag{ background:#0A0A0A !important; }    /* discount = black */
+.badge-custom{ background:#F59E0B !important; }    /* custom = orange */
 
-.authentic-tag{ background:#16A34A !important; }              /* authentic = green */
-
-.discount-tag{ background:#0A0A0A !important; }               /* discount = black */
-
-.badge-custom{ background:#F59E0B !important; }               /* custom = orange (default) */
-
-/* ── Position: absolute when inside gallery/product image ── */
-.gallery-main .flash-tag-img,
-.gallery-main .flash-tag,
-.gallery-main [class*="flash-tag"],
-.prod-img .flash-tag-img,
-.prod-img [class*="flash-tag"]{
+/* ── Position absolute when JS shows them (display becomes block/inline-flex) ── */
+.gallery-main .flash-tag-img{
   position:absolute !important;
-  top:10px !important;
-  left:10px !important;
-  right:auto !important;
-  bottom:auto !important;
+  top:10px !important; left:10px !important;
+  right:auto !important; bottom:auto !important;
+}
+.gallery-main .authentic-tag{
+  position:absolute !important;
+  top:10px !important; right:10px !important;
+  left:auto !important; bottom:auto !important;
+}
+.gallery-main .discount-tag{
+  position:absolute !important;
+  top:38px !important; left:10px !important;
+  right:auto !important; bottom:auto !important;
+}
+.gallery-main .badge-custom{
+  position:absolute !important;
+  bottom:10px !important; left:10px !important;
+  top:auto !important; right:auto !important;
 }
 
-.gallery-main .authentic-tag,
-.prod-img .authentic-tag{
-  position:absolute !important;
-  top:10px !important;
-  left:auto !important;
-  right:10px !important;
-  bottom:auto !important;
-}
-
-.gallery-main .discount-tag,
-.prod-img .discount-tag{
-  position:absolute !important;
-  top:38px !important;
-  left:10px !important;
-  right:auto !important;
-  bottom:auto !important;
-}
-
-.gallery-main .badge-custom,
-.prod-img .badge-custom{
-  position:absolute !important;
-  bottom:10px !important;
-  left:10px !important;
-  top:auto !important;
-  right:auto !important;
-}
-
-/* ── When badge is inline (in price-box / flash-row) — no positioning ── */
+/* ── Inline badges in flash-row / price-box ── */
 .flash-row .flash-tag,
-.price-box .flash-tag,
-.price-box .price-save{
+.price-box .flash-tag{
   position:static !important;
 }
 
-/* ── price-save (ประหยัด) keeps subtle gray style — exclude from forced colors ── */
+/* ── price-save = subtle gray, exclude from forced colors ── */
 .price-save{
   background:transparent !important;
   color:var(--g600,#525252) !important;
@@ -569,30 +544,19 @@ nav, .nav {
   box-shadow:none !important;
   font-family:'DM Sans',sans-serif !important;
   letter-spacing:0 !important;
+  font-weight:500 !important;
 }
 
 /* ── Children of badges keep parent font-size ── */
 .flash-tag-img *,
 .authentic-tag *,
 .discount-tag *,
-.badge-custom *,
-[class*="flash-tag"] *{
+.badge-custom *{
   font-size:inherit !important;
   line-height:inherit !important;
   background:none !important;
   padding:0 !important;
-}
-
-/* ── Old gallery-badge wrapper (in case it's still used) ── */
-.gallery-badge,
-.gallery-badge > span{
-  font-size:10px !important;
-  font-weight:700 !important;
-  padding:3px 8px !important;
-  width:auto !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  line-height:1.2 !important;
+  margin:0 !important;
 }
 </style>
 </head>
