@@ -321,14 +321,26 @@ a{text-decoration:none;color:inherit}
 .bc-cur{color:var(--g700);font-weight:500}
 
 /* PRODUCT LAYOUT */
-.prod-layout{max-width:1280px;margin:0 auto;padding:0 16px 24px;display:grid;grid-template-columns:1fr 420px;gap:24px}
+.prod-layout{max-width:1280px;margin:0 auto;padding:0 16px 24px;display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px;align-items:start}
+@media (max-width:980px){
+  .prod-layout{grid-template-columns:1fr}
+  .gallery{position:static !important}
+  .gallery-main{max-height:420px}
+}
+@media (max-width:560px){
+  .gallery-main{max-height:360px}
+  .thumb{width:60px;height:60px}
+}
 
 /* GALLERY */
 .gallery{position:sticky;top:60px}
-.gallery-main{background:#fff;border-radius:4px;border:1px solid var(--g200);aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:100px;margin-bottom:10px;position:relative;overflow:hidden;cursor:zoom-in}
+.gallery-main{background:#fff;border-radius:4px;border:1px solid var(--g200);width:100%;aspect-ratio:1;max-height:480px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative;overflow:hidden;cursor:zoom-in}
+.gallery-main > img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
+.gallery-main > span{font-size:96px;line-height:1}
 .gallery-zoom-hint{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:10px;padding:4px 9px;border-radius:20px}
-.gallery-thumbs{display:flex;gap:8px}
-.thumb{width:64px;height:64px;background:#fff;border:2px solid var(--g200);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:all 0.15s;flex-shrink:0}
+.gallery-thumbs,.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{width:72px;height:72px;background:#fff;border:2px solid var(--g200);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:all 0.15s;flex-shrink:0;overflow:hidden}
+.thumb > img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb:hover,.thumb.active{border-color:var(--accent)}
 .gallery-badge{position:absolute;top:12px;left:12px}
 .g-badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;margin-bottom:4px;display:block;width:fit-content}
