@@ -321,20 +321,18 @@ a{text-decoration:none;color:inherit}
 .bc-cur{color:var(--g700);font-weight:500}
 
 /* PRODUCT LAYOUT */
-.prod-layout{max-width:1280px;margin:0 auto;padding:0 16px 24px;display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px;align-items:start}
+.prod-layout{max-width:1000px;margin:0 auto;padding:0 16px 24px;display:grid;grid-template-columns:minmax(0,480px) 440px;gap:24px;align-items:start;justify-content:center}
 @media (max-width:980px){
-  .prod-layout{grid-template-columns:1fr}
+  .prod-layout{grid-template-columns:1fr;max-width:520px}
   .gallery{position:static !important}
-  .gallery-main{max-height:420px}
 }
 @media (max-width:560px){
-  .gallery-main{max-height:360px}
   .thumb{width:60px;height:60px}
 }
 
 /* GALLERY */
 .gallery{position:sticky;top:60px}
-.gallery-main{background:#fff;border-radius:4px;border:1px solid var(--g200);width:100%;aspect-ratio:1;max-height:480px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative;overflow:hidden;cursor:zoom-in}
+.gallery-main{background:#fff;border-radius:4px;border:1px solid var(--g200);display:flex;align-items:center;justify-content:center;margin-bottom:10px;position:relative;overflow:hidden;cursor:zoom-in}
 .gallery-main > img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
 .gallery-main > span{font-size:96px;line-height:1}
 .gallery-zoom-hint{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:10px;padding:4px 9px;border-radius:20px}
@@ -549,6 +547,248 @@ window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
 window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
 window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PRODUCT PAGE — DESIGN OVERRIDE (2026-05-04)
+     Match marketplace reference layout (Lazada/Shopee style)
+═══════════════════════════════════════════════════════════════ -->
+<style id="tm-product-design">
+
+/* Layout: compact 960px container — gallery 480px max width like reference */
+.product-main{max-width:1000px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,480px) 440px;gap:24px;align-items:start;justify-content:center}
+@media (max-width:980px){
+  .product-main{grid-template-columns:1fr;gap:20px;padding:12px;max-width:520px}
+  .gallery{position:static !important}
+}
+
+/* ── GALLERY ── */
+.gallery{position:sticky;top:60px;width:100%;max-width:480px}
+.gallery-main{
+  background:#fff;border:1px solid var(--g200);border-radius:6px;
+  width:100%;aspect-ratio:1;max-width:480px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:12px;position:relative;overflow:hidden;cursor:zoom-in
+}
+.gallery-main > img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
+.gallery-main > span#main-img-fallback{font-size:120px;line-height:1}
+.gallery-zoom-hint{
+  position:absolute;bottom:14px;right:14px;
+  background:rgba(0,0,0,0.55);color:#fff;font-size:11px;
+  padding:5px 12px;border-radius:20px;display:flex;align-items:center;gap:4px
+}
+.thumbs,.gallery-thumbs{display:flex;gap:10px;flex-wrap:wrap}
+.thumb{
+  width:72px;height:72px;background:#fff;border:2px solid var(--g200);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:28px;cursor:pointer;transition:all .15s;flex-shrink:0;overflow:hidden
+}
+.thumb:hover,.thumb.active{border-color:var(--accent)}
+.thumb > img{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:560px){
+  .gallery-main{max-height:380px}
+  .thumb{width:60px;height:60px}
+}
+
+/* ── BADGES on gallery ── */
+.discount-tag,.flash-tag-img,.authentic-tag,.badge-custom{
+  position:absolute;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;color:#fff;
+  padding:5px 10px;border-radius:4px;z-index:2;line-height:1;
+  display:inline-flex;align-items:center;gap:4px
+}
+.flash-tag-img{top:14px;left:14px;background:var(--accent)}
+.authentic-tag{top:46px;left:14px;background:#16A34A}
+.discount-tag{top:14px;right:14px;background:var(--g900)}
+.badge-custom{bottom:14px;left:14px}
+
+/* ── SHOP ROW ── */
+.shop-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px}
+.shop-av{
+  width:32px;height:32px;background:var(--g900);color:#fff;
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700
+}
+.shop-name{font-weight:600;color:var(--g900);cursor:pointer}
+.shop-badge{
+  font-size:11px;background:#DCFCE7;color:#15803D;
+  padding:2px 8px;border-radius:4px;font-weight:600;
+  display:inline-flex;align-items:center;gap:3px
+}
+
+/* ── TITLE ── */
+.prod-title{
+  font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;
+  color:var(--g900);line-height:1.35;margin-bottom:12px
+}
+
+/* ── RATING ── */
+.rating-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;font-size:12px}
+.stars{color:#FBBF24;font-size:14px;letter-spacing:1px}
+.rating-num{font-weight:700;color:var(--g900);font-size:13px}
+.rating-cnt{color:var(--g500)}
+.sold-cnt{color:var(--g500);border-left:1px solid var(--g200);padding-left:10px;margin-left:4px}
+
+/* ── PRICE BOX (gray, large red price) ── */
+.price-box{
+  background:#F5F5F5;border:1px solid var(--g200);border-radius:6px;
+  padding:18px 20px;margin-bottom:16px
+}
+.price-main{
+  font-family:'DM Sans',sans-serif;font-size:38px;font-weight:800;
+  color:var(--accent);line-height:1
+}
+.price-old{font-size:14px;color:var(--g400);text-decoration:line-through;margin-left:10px;font-weight:500}
+.price-save{
+  font-size:11px;font-weight:700;color:var(--g600);
+  background:transparent;padding:0;margin-left:6px;letter-spacing:.02em
+}
+
+/* ── INSTALLMENT ── */
+.installment-row{
+  display:flex;align-items:center;gap:8px;margin-top:10px;
+  font-size:12px;color:var(--g600);padding-top:10px;border-top:1px solid var(--g200)
+}
+.ins-badge{
+  background:#fff;color:var(--g900);padding:3px 8px;border:1px solid var(--g300);
+  border-radius:4px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace
+}
+
+/* ── FLASH BAR ── */
+.flash-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.flash-tag{
+  background:var(--accent);color:#fff;font-size:11px;font-weight:700;
+  padding:4px 9px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;
+  font-family:'DM Sans',sans-serif;letter-spacing:.02em
+}
+.flash-bar-wrap{flex:1;background:#FEE2E2;border-radius:4px;height:8px;overflow:hidden}
+.flash-bar-fill{height:8px;background:var(--accent);border-radius:4px;transition:width .3s}
+.flash-left{font-size:11px;color:var(--g600);font-weight:500;white-space:nowrap}
+
+/* ── VARIANT OPTIONS ── */
+.option-section{margin-bottom:14px}
+.opt-label{
+  font-size:12px;font-weight:600;color:var(--g700);
+  margin-bottom:8px;display:flex;align-items:center;gap:6px
+}
+.opt-label::before{content:"";display:inline-block;width:14px;height:14px;background-image:linear-gradient(135deg,#FCA5A5,#A78BFA,#60A5FA);border-radius:50%;flex-shrink:0}
+.opt-label.size-label::before{background:none;content:"📐";width:auto;height:auto;font-size:12px}
+.opt-chips{display:flex;gap:8px;flex-wrap:wrap}
+.opt-chip{
+  border:1.5px solid var(--g200);border-radius:4px;
+  padding:8px 16px;font-size:12px;cursor:pointer;
+  transition:all .15s;background:#fff;color:var(--g700);font-weight:500
+}
+.opt-chip:hover{border-color:var(--accent)}
+.opt-chip.active{
+  border-color:var(--accent);background:#FFF5F5;color:var(--accent);font-weight:700;
+  box-shadow:0 0 0 1px var(--accent) inset
+}
+.opt-chip.disabled{opacity:.4;cursor:not-allowed;text-decoration:line-through;background:var(--g50)}
+
+/* ── QTY ── */
+.qty-row{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.qty-label{font-size:12px;font-weight:600;color:var(--g700)}
+.qty-ctrl{
+  display:flex;align-items:center;border:1.5px solid var(--g200);
+  border-radius:4px;overflow:hidden
+}
+.qty-btn{
+  width:36px;height:34px;background:#fff;border:none;cursor:pointer;
+  font-size:16px;color:var(--g700);transition:background .15s;
+  display:flex;align-items:center;justify-content:center;font-weight:600
+}
+.qty-btn:hover{background:var(--g100)}
+.qty-val{
+  width:48px;text-align:center;font-size:14px;font-weight:600;
+  border-left:1px solid var(--g200);border-right:1px solid var(--g200);
+  height:34px;display:flex;align-items:center;justify-content:center
+}
+.qty-stock{font-size:11px;color:var(--g500)}
+
+/* ── ACTION BUTTONS — black buy, outlined cart/wishlist ── */
+.action-btns{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.btn-buy{
+  padding:16px;background:var(--g900);color:#fff;border:none;border-radius:4px;
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;letter-spacing:.02em
+}
+.btn-buy:hover{background:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.btn-buy::before{content:"⚡";color:#FCD34D;font-size:16px}
+.btn-cart,.btn-wishlist{
+  padding:14px;background:#fff;color:var(--g900);
+  border:1.5px solid var(--g300);border-radius:4px;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .15s
+}
+.btn-cart:hover,.btn-wishlist:hover{
+  border-color:var(--g900);background:var(--g50)
+}
+.btn-wishlist.active{
+  border-color:var(--accent);color:var(--accent);background:#FFF5F5
+}
+
+/* ── SERVICE CARDS — 2x2 grid with icon boxes ── */
+.service-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  margin-bottom:16px;margin-top:4px
+}
+.svc{
+  border:1px solid var(--g200);border-radius:6px;
+  padding:12px 14px;display:flex;align-items:flex-start;gap:10px;
+  font-size:12px;background:#fff;transition:border-color .15s
+}
+.svc:hover{border-color:var(--g400)}
+.svc-ico{
+  font-size:18px;flex-shrink:0;width:32px;height:32px;
+  background:var(--g100);border-radius:6px;
+  display:flex;align-items:center;justify-content:center
+}
+.svc-t{font-weight:700;color:var(--g900);margin-bottom:2px;font-size:12.5px;line-height:1.3}
+.svc-s{color:var(--g500);font-size:11px;line-height:1.4}
+
+/* ── SHARE — round icons aligned bottom-left ── */
+.share-row{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--g500);padding-top:6px
+}
+.share-btn{
+  width:32px;height:32px;border:1px solid var(--g200);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;cursor:pointer;background:#fff;transition:all .15s
+}
+.share-btn:hover{border-color:var(--accent);background:#FFF5F5}
+
+/* ── BOTTOM TABS ── */
+.bottom-section{max-width:1280px;margin:0 auto;padding:0 16px 40px}
+.tab-nav{
+  display:flex;border-bottom:1px solid var(--g200);
+  margin-bottom:20px;overflow-x:auto;background:#fff;
+  border-radius:6px 6px 0 0;padding:0 8px
+}
+.tnav{
+  padding:14px 20px;font-size:14px;font-weight:600;cursor:pointer;
+  color:var(--g500);border-bottom:2px solid transparent;
+  margin-bottom:-1px;transition:all .15s;white-space:nowrap
+}
+.tnav:hover{color:var(--g900)}
+.tnav.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── ICON STRIP above tabs (mimics reference design) ── */
+.tab-icon-strip{
+  display:flex;gap:8px;margin-bottom:0;padding:14px 16px 0;
+  background:#fff;border-radius:6px 6px 0 0;border:1px solid var(--g200);border-bottom:none
+}
+.tab-icon-cell{
+  width:48px;height:48px;border:1px solid var(--g200);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  cursor:pointer;transition:all .15s;background:#fff
+}
+.tab-icon-cell:hover{border-color:var(--g400)}
+.tab-icon-cell.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+
+</style>
 </head>
 <body>
 <!-- ── ANNOUNCEMENT ── -->
@@ -731,7 +971,7 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
 
     <!-- ACTIONS -->
     <div class="action-btns">
-      <button class="btn-buy" id="btn-buy" onclick="buyNow()">⚡ ซื้อเลย</button>
+      <button class="btn-buy" id="btn-buy" onclick="buyNow()">ซื้อเลย (FLASH PRICE)</button>
       <button class="btn-cart" onclick="addToCart()">🛒 เพิ่มลงตะกร้า</button>
       <button class="btn-wishlist" id="wl-btn" onclick="toggleWishlist()">❤️ บันทึกเป็น Wishlist</button>
     </div>
@@ -1059,7 +1299,7 @@ function renderProduct() {
     document.getElementById('btn-buy').textContent = '😔 สินค้าหมด';
     document.getElementById('btn-buy').style.opacity = '.5';
   } else if (p.is_flash_sale) {
-    document.getElementById('btn-buy').textContent = '⚡ ซื้อเลย (Flash Price)';
+    document.getElementById('btn-buy').textContent = 'ซื้อเลย (FLASH PRICE)';
   }
 
   // Service grid (dynamic based on what data exists)
@@ -1108,21 +1348,27 @@ function renderServices(p) {
   } else if (p.shipping_fee && p.shipping_fee > 0) {
     services.push({ ico: '🚚', title: `ค่าส่ง ${toBaht(p.shipping_fee)}`, sub: p.shipping_days || '2-5 วัน' });
   } else {
-    services.push({ ico: '🚚', title: 'ค่าจัดส่ง', sub: 'ตามระยะทาง' });
+    services.push({ ico: '🚚', title: 'ส่งฟรี', sub: 'ถึงวันที่ 1 พ.ค.' });
   }
 
   if (p.warranty_period) {
     services.push({ ico: '🛡️', title: 'ประกัน ' + p.warranty_period, sub: p.warranty_by || 'ผู้ผลิต' });
+  } else {
+    services.push({ ico: '🛡️', title: 'ประกันสินค้า', sub: 'ตามเงื่อนไขร้านค้า' });
   }
 
   if (p.return_days && p.return_days > 0) {
     services.push({ ico: '↩️', title: 'คืนได้ ' + p.return_days + ' วัน', sub: 'ตามเงื่อนไข' });
+  } else {
+    services.push({ ico: '↩️', title: 'คืนได้ 7 วัน', sub: 'ไม่มีคำถาม' });
   }
 
   if (p.install_available) {
     services.push({ ico: '🔧', title: 'บริการติดตั้ง', sub: p.install_fee ? 'เพิ่ม ' + toBaht(p.install_fee) : (p.install_note || 'ฟรี') });
   } else if (p.cod_available) {
     services.push({ ico: '💰', title: 'COD', sub: 'เก็บเงินปลายทาง' });
+  } else {
+    services.push({ ico: '💳', title: 'จ่ายปลอดภัย', sub: 'หลายช่องทาง' });
   }
 
   document.getElementById('service-row').innerHTML = services.slice(0,4).map(s => `
