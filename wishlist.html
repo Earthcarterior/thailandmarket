@@ -601,7 +601,7 @@ nav, .nav {
   <!-- HEADER -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">❤️ รายการโปรด <span>(28)</span></h1>
+      <h1 class="page-title">❤️ รายการโปรด <span id="wl-count">(0)</span></h1>
       <div style="font-size:12.5px;color:var(--gray400);margin-top:4px">3 คอลเลกชัน · อัปเดตล่าสุด วันนี้</div>
     </div>
     <div class="header-actions">
@@ -613,16 +613,16 @@ nav, .nav {
   <!-- COLLECTIONS -->
   <div class="collections-bar">
     <div class="col-chip active">
-      <span class="col-chip-ico">❤️</span> ทั้งหมด <span class="col-count">28</span>
+      <span class="col-chip-ico">❤️</span> ทั้งหมด <span class="col-count" id="col-count-all">0</span>
     </div>
     <div class="col-chip">
-      <span class="col-chip-ico">🏠</span> เฟอร์นิเจอร์บ้าน <span class="col-count" style="background:var(--gray100);color:var(--gray600)">12</span>
+      <span class="col-chip-ico">🏠</span> เฟอร์นิเจอร์บ้าน <span class="col-count" style="background:var(--gray100);color:var(--gray600)" id="col-count-home">0</span>
     </div>
     <div class="col-chip">
-      <span class="col-chip-ico">💻</span> Tech & Gadgets <span class="col-count" style="background:var(--gray100);color:var(--gray600)">9</span>
+      <span class="col-chip-ico">💻</span> Tech & Gadgets <span class="col-count" style="background:var(--gray100);color:var(--gray600)" id="col-count-tech">0</span>
     </div>
     <div class="col-chip">
-      <span class="col-chip-ico">👗</span> แฟชั่น <span class="col-count" style="background:var(--gray100);color:var(--gray600)">7</span>
+      <span class="col-chip-ico">👗</span> แฟชั่น <span class="col-count" style="background:var(--gray100);color:var(--gray600)" id="col-count-fashion">0</span>
     </div>
     <div class="col-chip" style="border-style:dashed;color:var(--gray400)" onclick="openModal()">
       ➕ เพิ่มคอลเลกชัน

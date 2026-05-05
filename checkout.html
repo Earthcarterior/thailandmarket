@@ -555,7 +555,7 @@ img{max-width:100%;height:auto}
 
     <!-- CART ITEMS -->
     <div class="card" id="cart-section">
-      <div class="sec-title">🛒 ตะกร้าสินค้า <span style="font-size:13px;color:var(--g400);font-weight:400">(3 รายการ)</span></div>
+      <div class="sec-title">🛒 ตะกร้าสินค้า <span id="cart-count-label" style="font-size:13px;color:var(--g400);font-weight:400">(0 รายการ)</span></div>
       <div id="cart-items"></div>
     </div>
 
@@ -643,13 +643,13 @@ img{max-width:100%;height:auto}
   <div>
     <div class="sum-card">
       <div style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px">สรุปคำสั่งซื้อ</div>
-      <div class="sum-row"><span class="sum-lbl">ราคาสินค้ารวม</span><span class="sum-val">฿14,788</span></div>
-      <div class="sum-row"><span class="sum-lbl">ส่วนลดสินค้า</span><span class="sum-discount">-฿1,798</span></div>
+      <div class="sum-row"><span class="sum-lbl">ราคาสินค้ารวม</span><span class="sum-val" id="subtotal-val">฿0</span></div>
+      <div class="sum-row" id="discount-row" style="display:none"><span class="sum-lbl">ส่วนลดสินค้า</span><span class="sum-discount" id="discount-val">-฿0</span></div>
       <div class="sum-row"><span class="sum-lbl">ค่าจัดส่ง</span><span class="sum-val" id="ship-val">฿0 <span style="font-size:10px;background:#D1FAE5;color:#065F46;padding:1px 6px;border-radius:3px;font-weight:600">ฟรี</span></span></div>
       <div class="sum-row" id="coup-row" style="display:none"><span class="sum-lbl">ส่วนลดคูปอง</span><span class="sum-discount" id="coup-disc">-฿0</span></div>
       <div class="sum-total-row">
         <span class="sum-total-lbl">ยอดรวม</span>
-        <span class="sum-total-val" id="total-val">฿12,990</span>
+        <span class="sum-total-val" id="total-val">฿0</span>
       </div>
       <button class="btn-checkout" onclick="doCheckout()">🔐 ยืนยันคำสั่งซื้อ</button>
       <div style="text-align:center;font-size:11px;color:var(--g400)">คุณสามารถยกเลิกก่อนการจัดส่ง</div>
@@ -901,11 +901,35 @@ function renderAppliedCoupons() {
   }
 }
 
-// override updateTotal เพื่อให้รวม coupon discount
+// override updateTotal เพื่อให้รวม coupon discount + update ทุก field ของ summary
 function updateTotal(){
   const sub = CART.reduce((s,it) => s + it.price * it.qty, 0);
+  const oldSub = CART.reduce((s,it) => s + (it.old||it.price) * it.qty, 0);
+  const productDisc = Math.max(0, oldSub - sub);
   const couponDisc = _appliedCoupons.reduce((s,c) => s + (c.discount||0), 0);
   const total = Math.max(0, sub - couponDisc);
+
+  // Cart count label
+  const countEl = document.getElementById('cart-count-label');
+  if (countEl) countEl.textContent = `(${CART.length} รายการ)`;
+
+  // Subtotal (showing old/full price so the discount line makes sense)
+  const subEl = document.getElementById('subtotal-val');
+  if (subEl) subEl.textContent = '฿' + oldSub.toLocaleString();
+
+  // Product discount row — only show when there is a discount
+  const discRow = document.getElementById('discount-row');
+  const discVal = document.getElementById('discount-val');
+  if (discRow && discVal) {
+    if (productDisc > 0) {
+      discRow.style.display = '';
+      discVal.textContent = '-฿' + productDisc.toLocaleString();
+    } else {
+      discRow.style.display = 'none';
+    }
+  }
+
+  // Total
   const totalEl = document.getElementById('total-val');
   if (totalEl) totalEl.textContent = '฿' + total.toLocaleString();
 }

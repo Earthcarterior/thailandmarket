@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Thailand Market — General Marketplace ไทย ครบทุกหมวด 500,000+ รายการ ส่งฟรีทั่วประเทศ">
+<meta property="og:title" content="Thailand Market — ช้อปปิ้งออนไลน์ครบทุกหมวด">
+<meta property="og:description" content="General Marketplace ไทย ครบทุกหมวดหมู่ ส่งฟรีทั่วประเทศ เปิดร้านฟรี">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.thailandmarket.com">
+<link rel="canonical" href="https://www.thailandmarket.com/">
+<meta name="theme-color" content="#0A0A0A">
+<title>Thailand Market — คืนสินค้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
+window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
+window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
+</script>
+<style>
+/* ════════════════════════════════════════════════
+   DESIGN SYSTEM — Nothing.tech Minimal
+   Pure Black · White · Red Accent
+   DM Sans + DM Mono
+════════════════════════════════════════════════ */
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
+  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
+  --green:#16A34A;--amber:#D97706;
+  --font:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;
+  --border-dark:1px solid #0A0A0A;
+  --max:1280px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+img{display:block;max-width:100%}
+button{font-family:var(--font);cursor:pointer}
+input,select{font-family:var(--font)}
+
+/* ── ANNOUNCEMENT BAR ── */
+.ann{background:var(--black);color:var(--white);text-align:center;padding:8px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
+.ann-dot{color:var(--red);font-size:16px;line-height:0}
+
+/* ── NAV ── */
+.nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:999}
+.nav-top{max-width:var(--max);margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;gap:16px}
+.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);flex-shrink:0;margin-right:8px}
+.nav-logo .dot{color:var(--red)}
+.nav-links{display:flex;gap:0;align-items:center;overflow-x:auto;scrollbar-width:none;flex:1}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-link{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:0 14px;height:56px;display:flex;align-items:center;white-space:nowrap;transition:color .15s;border-bottom:2px solid transparent}
+.nav-link:hover{color:var(--black)}.nav-link.hot{color:var(--red)}
+.nav-search{display:flex;align-items:center;border:var(--border);background:var(--g50);flex:1;max-width:360px;margin:0 8px}
+.nav-search input{flex:1;padding:8px 14px;border:none;background:none;font-size:13px;outline:none}
+.nav-search button{padding:8px 14px;background:var(--black);color:var(--white);border:none;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;transition:background .15s}
+.nav-search button:hover{background:var(--g800)}
+.nav-acts{display:flex;gap:0;flex-shrink:0}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);border:none;background:none;transition:color .15s;position:relative;white-space:nowrap}
+.nav-btn:hover{color:var(--black)}.nav-btn.sell{color:var(--red)}
+.nav-btn-ico{font-size:16px;line-height:1}
+.nav-badge{position:absolute;top:4px;right:8px;background:var(--red);color:var(--white);font-size:8px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+/* Category bar */
+.catbar{border-top:var(--border);overflow:hidden;position:relative}
+/* ── scroll fade edges ── */
+.catbar::before,.catbar::after{content:'';position:absolute;top:0;bottom:0;width:40px;z-index:2;pointer-events:none}
+.catbar::before{left:0;background:linear-gradient(to right,var(--white),transparent)}
+.catbar::after{right:80px;background:linear-gradient(to left,var(--white),transparent)}
+.catbar-inner{max-width:100%;padding:0 24px;display:flex;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
+.catbar-inner::-webkit-scrollbar{display:none}
+.catbar-item{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);padding:8px 14px;white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;flex-shrink:0;background:none;border-left:none;border-right:none;border-top:none}
+.catbar-item:hover{color:var(--black)}.catbar-item.on{color:var(--black);border-bottom-color:var(--red)}
+/* ── marquee loop container ── */
+.catbar-track{display:flex;gap:0;animation:catscroll 30s linear infinite}
+.catbar-track:hover{animation-play-state:paused}
+@keyframes catscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+/* ── see all button ── */
+.catbar-seeall{position:absolute;right:0;top:0;bottom:0;display:flex;align-items:center;padding:0 16px;background:var(--white);border-left:var(--border);z-index:3;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);white-space:nowrap;transition:all .15s}
+.catbar-seeall:hover{color:var(--black);background:var(--g50)}
+
+/* ── FLASH SALE ── */
+.flash{background:var(--black);color:var(--white);padding:20px 0}
+.flash-inner{max-width:var(--max);margin:0 auto;padding:0 24px}
+.flash-head{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.flash-title{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.flash-live{background:var(--red);color:var(--white);font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:3px 8px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.flash-timer{display:flex;align-items:center;gap:6px;margin-left:auto;font-family:var(--mono);font-size:12px}
+.timer-lbl{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.05em;text-transform:uppercase}
+.timer-box{background:rgba(255,255,255,.1);color:var(--white);padding:4px 8px;font-family:var(--mono);font-size:18px;font-weight:500;min-width:36px;text-align:center}
+.timer-sep{color:rgba(255,255,255,.4);font-size:18px}
+.flash-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
+.flash-card{background:rgba(255,255,255,.04);cursor:pointer;transition:background .15s;overflow:hidden}
+.flash-card:hover{background:rgba(255,255,255,.08)}
+.flash-img{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;background:rgba(255,255,255,.06);overflow:hidden}
+.flash-img img{width:100%;height:100%;object-fit:cover}
+.flash-disc{position:absolute;top:6px;left:6px;background:var(--red);color:var(--white);font-family:var(--mono);font-size:10px;font-weight:500;padding:2px 7px}
+.flash-info{padding:8px 10px}
+.flash-name{font-size:11px;color:rgba(255,255,255,.7);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flash-price{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--white)}
+.flash-old{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);text-decoration:line-through;margin-left:4px}
+.flash-bar{height:2px;background:rgba(255,255,255,.1);margin-top:6px;overflow:hidden}
+.flash-bar-fill{height:2px;background:var(--red);transition:width .3s}
+.flash-sold{font-size:10px;color:rgba(255,255,255,.35);margin-top:3px;font-family:var(--mono)}
+.flash-viewall{display:flex;align-items:center;justify-content:center}
+.flash-viewall a{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.15);padding:8px 24px;transition:all .15s}
+.flash-viewall a:hover{color:var(--white);border-color:rgba(255,255,255,.4)}
+
+/* ── MAIN ── */
+.main{max-width:var(--max);margin:0 auto;padding:28px 24px}
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--black)}
+.see-all{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g400);cursor:pointer;transition:color .15s;text-decoration:none}
+.see-all:hover{color:var(--black)}
+
+/* ── CATEGORIES GRID ── */
+.cats-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:32px}
+.cat-tile{border:var(--border);padding:14px 10px;text-align:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.cat-tile:hover{border-color:var(--black)}
+.cat-tile.on{border-color:var(--black);background:var(--black);color:var(--white)}
+.cat-tile-bar{position:absolute;top:0;left:0;right:0;height:2px}
+.cat-ico{font-size:24px;margin-bottom:6px;display:block}
+.cat-name{font-size:11px;font-weight:500;line-height:1.3;margin-bottom:3px}
+.cat-count{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--g400)}
+.cat-tile.on .cat-count{color:rgba(255,255,255,.4)}
+
+/* ── BANNERS ── */
+.banners{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:32px}
+.banner-main{padding:28px 24px;color:var(--white);position:relative;overflow:hidden;cursor:pointer;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none}
+.banner-main::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.8) 0%,rgba(0,0,0,.2) 100%);pointer-events:none}
+.banner-content{position:relative;z-index:1}
+.banner-title{font-size:22px;font-weight:700;line-height:1.2;margin-bottom:6px}
+.banner-sub{font-size:13px;color:rgba(255,255,255,.65);margin-bottom:16px;line-height:1.6}
+.banner-disc{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.5);letter-spacing:.04em;position:relative;z-index:1}
+.banner-cta{background:var(--white);color:var(--black);border:none;padding:10px 20px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;align-self:flex-start;text-decoration:none}
+.banner-cta:hover{background:var(--red);color:var(--white)}
+.banner-sm{padding:20px;cursor:pointer;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;border:var(--border);transition:border-color .15s;text-decoration:none}
+.banner-sm:hover{border-color:var(--black)}
+.banner-sm-title{font-size:15px;font-weight:700;line-height:1.3}
+.banner-sm-sub{font-size:11px;margin-top:4px;opacity:.7}
+.banner-sm-disc{font-family:var(--mono);font-size:24px;font-weight:700;margin-top:auto}
+
+/* HERO SLIDER (auto-rotating) [PATCH 2026-05-03] */
+.banner-main.slide-anim{animation:slideFade .6s ease-out}
+@keyframes slideFade{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.hero-slide-dots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:3}
+.hero-slide-dot{width:24px;height:3px;background:rgba(255,255,255,.35);transition:background .15s;cursor:pointer}
+.hero-slide-dot.active{background:#fff}
+
+/* PROMO ROW — 3 cards แบบ HomePro [PATCH 2026-05-03] */
+.promo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px}
+@media(max-width:880px){.promo-row{grid-template-columns:1fr;gap:10px}}
+.promo-card{position:relative;overflow:hidden;cursor:pointer;text-decoration:none;color:#fff;min-height:160px;display:flex;flex-direction:column;justify-content:flex-end;padding:20px 22px;transition:transform .2s,box-shadow .2s}
+.promo-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.15)}
+.promo-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 60%,transparent 100%);pointer-events:none}
+.promo-card-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.promo-card-content{position:relative;z-index:1}
+.promo-card-title{font-size:20px;font-weight:700;line-height:1.2;margin-bottom:5px;letter-spacing:-.01em}
+.promo-card-sub{font-size:12px;line-height:1.5;color:rgba(255,255,255,.85);margin-bottom:12px}
+.promo-card-cta{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:rgba(255,255,255,.92);color:#0A0A0A;padding:7px 14px;align-self:flex-start;width:fit-content;transition:all .15s}
+.promo-card:hover .promo-card-cta{background:#fff;transform:translateX(2px)}
+
+/* Skeleton สำหรับ banners */
+.bn-skel{background:linear-gradient(90deg,#f5f5f5 25%,#fafafa 50%,#f5f5f5 75%);background-size:200% 100%;animation:bnskel 1.4s infinite;min-height:200px}
+.bn-skel-sm{min-height:96px}
+.bn-skel-promo{min-height:160px}
+@keyframes bnskel{to{background-position:-200% 0}}
+
+/* ── COUPON STRIP ── */
+.coupon-strip{border:var(--border);padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:32px;flex-wrap:wrap}
+.coupon-icon{font-size:28px;flex-shrink:0}
+.coupon-text{flex:1;min-width:140px}
+.coupon-label{font-size:13px;font-weight:500;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.coupon-label .more{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--red);cursor:pointer}
+.coupon-label .more:hover{text-decoration:underline}
+.coupon-sub{font-size:11px;color:var(--g500)}
+.coupon-codes{display:flex;gap:8px;flex-wrap:wrap}
+.coupon-code{border:1px dashed var(--g300);padding:8px 14px;cursor:pointer;transition:all .15s;text-align:center;position:relative;min-width:90px}
+.coupon-code:hover{border-color:var(--black);transform:translateY(-1px)}
+.coupon-code.free{border-color:var(--green);background:#F0FDF4}
+.coupon-code.claimed{border-color:var(--green);background:#F0FDF4;border-style:solid}
+.coupon-code.claimed::before{content:'✓';position:absolute;top:-6px;right:-6px;background:var(--green);color:#fff;width:18px;height:18px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:var(--mono)}
+.coupon-code.expired{opacity:.4;cursor:not-allowed}
+.cc-val{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--black)}
+.cc-min{font-size:10px;color:var(--g500);margin-top:2px;font-family:var(--mono)}
+.coupon-strip-loading{color:var(--g400);font-size:13px}
+
+/* ── COUPON MODAL ── */
+.cm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+.cm-overlay.on{display:flex}
+.cm-card{background:#fff;width:380px;max-width:100%;animation:cmIn .25s cubic-bezier(.25,1.5,.5,1);position:relative}
+@keyframes cmIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.cm-close{position:absolute;top:10px;right:10px;width:32px;height:32px;background:none;border:none;font-size:18px;cursor:pointer;color:#fff;z-index:2}
+.cm-banner{padding:24px 20px;color:#fff;text-align:center;position:relative}
+.cm-icon{font-size:42px;line-height:1;margin-bottom:6px}
+.cm-val{font-size:36px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em;line-height:1}
+.cm-val-sub{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin-top:4px}
+.cm-body{padding:20px}
+.cm-name{font-size:16px;font-weight:600;margin-bottom:6px;text-align:center}
+.cm-desc{font-size:12px;color:var(--g500);text-align:center;margin-bottom:16px;line-height:1.5}
+.cm-info{background:var(--g50);padding:12px;margin-bottom:16px;font-size:11px;font-family:var(--mono)}
+.cm-info-row{display:flex;justify-content:space-between;padding:3px 0;color:var(--g600)}
+.cm-info-row strong{color:var(--black);text-align:right}
+.cm-code-box{background:var(--g100);border:1px dashed var(--g300);padding:10px;text-align:center;margin-bottom:14px;font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all .15s}
+.cm-code-box:hover{border-style:solid;border-color:var(--black)}
+.cm-code-box-lbl{font-size:9px;color:var(--g500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;font-weight:400}
+.cm-actions{display:flex;gap:8px}
+.cm-btn{flex:1;padding:11px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--black);background:#fff;color:var(--black);cursor:pointer;font-family:inherit;transition:all .15s}
+.cm-btn:hover{background:var(--black);color:#fff}
+.cm-btn.primary{background:var(--black);color:#fff}
+.cm-btn.primary:hover{background:var(--red);border-color:var(--red)}
+.cm-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ═══════════════════════════════════════════════════════════
+   COUPON SECTIONS (Category / Store / Popular) [PATCH 2026-05-03]
+   ═══════════════════════════════════════════════════════════ */
+.cs-section{margin-bottom:32px}
+.cs-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cs-title{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.cs-more{font-size:11px;color:var(--g500);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;text-decoration:none}
+.cs-more:hover{color:var(--red)}
+.cs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:1024px){.cs-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.cs-grid{grid-template-columns:1fr}}
+
+/* COUPON CARD (Category / Store style — horizontal) */
+.cs-card{background:#fff;border:var(--border);display:flex;min-height:120px;position:relative;overflow:hidden;transition:all .15s;cursor:pointer}
+.cs-card:hover{border-color:var(--black);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.cs-card.expired{opacity:.5;cursor:not-allowed}
+.cs-card.expired:hover{transform:none;box-shadow:none}
+
+.cs-card-l{width:96px;flex-shrink:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px;text-align:center;position:relative;font-size:11px;font-weight:600;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;line-height:1.3}
+.cs-card-l-ico{font-size:28px;margin-bottom:4px}
+
+.cs-card-r{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;min-width:0}
+.cs-card-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.cs-card-disc{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.01em;line-height:1.1;flex-shrink:0}
+.cs-card-name{font-size:12px;color:var(--g600);line-height:1.4;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cs-card-meta{font-size:10px;color:var(--g500);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;line-height:1.5}
+.cs-card-meta-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.cs-card-meta .urgent{color:var(--red);font-weight:600}
+.cs-card-meta .left{color:var(--orange,#F59E0B);font-weight:600}
+
+.cs-card-btn{padding:6px 12px;font-size:10px;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.04em;border:1px dashed var(--g300);background:#fff;color:var(--g600);cursor:pointer;flex-shrink:0;transition:all .15s}
+.cs-card-btn:hover{border-color:var(--red);color:var(--red);border-style:solid}
+.cs-card-btn.claimed{background:#F0FDF4;border-color:var(--green);color:var(--green);border-style:solid;cursor:default}
+.cs-card-btn.claimed:hover{border-color:var(--green);color:var(--green)}
+.cs-card-btn.primary{background:var(--red);color:#fff;border-color:var(--red);border-style:solid}
+.cs-card-btn.primary:hover{background:var(--black);border-color:var(--black);color:#fff}
+
+/* Badge */
+.cs-card-badge{position:absolute;top:8px;right:8px;background:#FEE2E2;color:#991B1B;font-size:9px;padding:2px 7px;font-family:var(--mono);font-weight:600;letter-spacing:.04em;text-transform:uppercase;z-index:2}
+.cs-card-badge.hot{background:linear-gradient(135deg,#E63329,#FF6B35);color:#fff}
+.cs-card-badge.limited{background:#7C3AED;color:#fff}
+.cs-card-badge.new{background:#16A34A;color:#fff}
+
+/* Progress bar (popular section) */
+.cs-progress{height:3px;background:var(--g100);position:relative;overflow:hidden;margin-top:6px}
+.cs-progress-fill{height:100%;background:linear-gradient(90deg,#E63329,#FF6B35);transition:width .4s}
+.cs-progress.urgent .cs-progress-fill{background:linear-gradient(90deg,#DC2626,#F59E0B)}
+
+/* Skeleton */
+.cs-skeleton{background:#fff;border:var(--border);height:120px;animation:csskel 1.4s infinite;background:linear-gradient(90deg,#f5f5f5 25%,#fafafa 50%,#f5f5f5 75%);background-size:200% 100%}
+@keyframes csskel{to{background-position:-200% 0}}
+
+/* SEARCH BAR */
+.cs-searchbar{display:flex;align-items:center;border:var(--border);background:#fff;padding:6px 6px 6px 18px;margin-bottom:14px;gap:10px;transition:border-color .15s}
+.cs-searchbar:focus-within{border-color:var(--black)}
+.cs-searchbar-icon{font-size:16px;flex-shrink:0;opacity:.5}
+.cs-searchbar input{flex:1;border:none;outline:none;padding:10px 0;font-size:13px;font-family:var(--mono);letter-spacing:.04em;color:var(--black);background:transparent;text-transform:uppercase}
+.cs-searchbar input::placeholder{color:var(--g400);text-transform:none;font-family:inherit;font-size:13px;letter-spacing:0}
+.cs-searchbar-btn{padding:10px 18px;background:var(--black);color:#fff;font-size:11px;letter-spacing:.07em;text-transform:uppercase;border:none;cursor:pointer;font-weight:600;font-family:var(--mono);transition:background .15s}
+.cs-searchbar-btn:hover{background:var(--red)}
+.cs-searchbar-btn:disabled{background:var(--g400);cursor:not-allowed}
+
+/* ── PRODUCTS ── */
+.products-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--g200);margin-bottom:32px;border:var(--border)}
+.prod-card{background:var(--white);cursor:pointer;transition:background .15s;overflow:hidden;display:flex;flex-direction:column}
+.prod-card:hover{background:var(--g50)}
+.prod-img{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--g50);position:relative;overflow:hidden}
+.prod-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.prod-card:hover .prod-img img{transform:scale(1.04)}
+.prod-badge{position:absolute;top:8px;left:8px;color:var(--white);font-family:var(--mono);font-size:9px;font-weight:500;padding:2px 7px;letter-spacing:.04em;text-transform:uppercase}
+.prod-wish{position:absolute;top:8px;right:8px;background:var(--white);border:var(--border);width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:all .15s;opacity:0}
+.prod-card:hover .prod-wish{opacity:1}
+.prod-wish:hover{background:var(--black);color:var(--white)}
+.prod-info{padding:12px;flex:1;display:flex;flex-direction:column;gap:4px}
+.prod-cat{font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--g400)}
+.prod-name{font-size:13px;font-weight:500;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;flex:1}
+.prod-rating{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--g500)}
+.stars{color:var(--amber);font-size:10px;letter-spacing:-1px}
+.rating-count{color:var(--g400);font-family:var(--mono)}
+.prod-price-row{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.prod-price{font-family:var(--mono);font-size:16px;font-weight:500}
+.prod-old{font-family:var(--mono);font-size:11px;color:var(--g400);text-decoration:line-through}
+.prod-save{font-family:var(--mono);font-size:10px;color:var(--red)}
+.prod-shop{font-size:11px;color:var(--g500);display:flex;align-items:center;gap:4px}
+.verified{color:var(--green);font-size:10px;font-family:var(--mono)}
+.prod-actions{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:6px}
+.btn-cart{background:var(--white);color:var(--black);border:var(--border-dark);padding:9px 6px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+.btn-cart:hover{background:var(--black);color:var(--white)}
+.btn-buy{background:var(--black);color:var(--white);border:none;padding:9px 6px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center}
+.btn-buy:hover{background:var(--red)}
+
+/* ── CATEGORY SECTIONS ── */
+.cat-section{margin-bottom:32px}
+.cat-section-hd{display:flex;align-items:center;gap:12px;padding:14px 18px;margin-bottom:0;color:var(--white)}
+.cat-section-hd .csh-ico{font-size:22px}
+.cat-section-hd .csh-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.cat-section-hd .csh-sub{font-size:11px;opacity:.6;margin-top:1px}
+.cat-section-hd a{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);transition:color .15s}
+.cat-section-hd a:hover{color:var(--white)}
+.cat-section-body{border:var(--border);border-top:none;padding:14px}
+.cat-prods{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--g200)}
+.cat-prod{background:var(--white);padding:12px;cursor:pointer;transition:background .15s}
+.cat-prod:hover{background:var(--g50)}
+.cat-prod-img{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--g50);font-size:36px;margin-bottom:8px;overflow:hidden}
+.cat-prod-img img{width:100%;height:100%;object-fit:cover}
+.cat-prod-name{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px}
+.cat-prod-price{font-family:var(--mono);font-size:13px;font-weight:500}
+.cat-prod-old{font-family:var(--mono);font-size:10px;color:var(--g400);text-decoration:line-through;margin-left:4px}
+.cat-btn{width:100%;margin-top:8px;background:var(--white);color:var(--black);border:var(--border-dark);padding:7px;font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.cat-btn:hover{background:var(--black);color:var(--white)}
+
+/* ── BRANDS ── */
+.brands-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:0;border:var(--border);margin-bottom:32px}
+
+/* ── ARTICLES SECTION (HomePro-style) [PATCH 2026-05-03] ── */
+.articles-section{margin-bottom:48px;margin-top:8px}
+.articles-hd{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;gap:18px;flex-wrap:wrap}
+.articles-hd-l h2{font-size:24px;font-weight:700;letter-spacing:-.01em;line-height:1.1;display:flex;align-items:center;gap:8px}
+.articles-hd-sub{font-size:12px;color:var(--g500);margin-top:6px;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase}
+.articles-cats-strip{display:flex;gap:6px;flex-wrap:wrap}
+.art-cat-pill{padding:6px 12px;font-size:11px;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;background:#fff;border:var(--border);color:var(--g600);cursor:pointer;transition:all .15s;text-decoration:none}
+.art-cat-pill:hover{border-color:var(--black);color:var(--black)}
+
+.articles-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:14px}
+@media(max-width:1100px){.articles-grid{grid-template-columns:repeat(2,1fr)}.articles-grid > a:first-child{grid-column:1/-1}}
+@media(max-width:580px){.articles-grid{grid-template-columns:1fr}.articles-grid > a:first-child{grid-column:auto}}
+
+.art-card{display:flex;flex-direction:column;background:#fff;border:var(--border);text-decoration:none;color:inherit;transition:all .2s;cursor:pointer;overflow:hidden}
+.art-card:hover{border-color:var(--black);transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.08)}
+.art-card-img{aspect-ratio:16/10;background:var(--g100);display:flex;align-items:center;justify-content:center;font-size:42px;overflow:hidden;position:relative}
+.art-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.art-card:hover .art-card-img img{transform:scale(1.05)}
+.art-card-cat{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.95);padding:3px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--g700)}
+.art-card-feat-badge{position:absolute;top:10px;right:10px;background:var(--red);color:#fff;padding:3px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.art-card-info{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:6px}
+.art-card-title{font-size:14px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--black)}
+.art-card:first-child .art-card-title{font-size:18px;-webkit-line-clamp:3}
+.art-card-excerpt{font-size:12px;color:var(--g600);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.art-card:first-child .art-card-excerpt{-webkit-line-clamp:3}
+.art-card-meta{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g500);letter-spacing:.04em;padding-top:10px;border-top:1px solid #F5F5F5;margin-top:auto}
+.art-empty{padding:40px;text-align:center;color:var(--g500);grid-column:1/-1;background:#fff;border:1px dashed var(--g300)}
+
+.art-skel{aspect-ratio:16/10;background:linear-gradient(90deg,#f5f5f5 25%,#fafafa 50%,#f5f5f5 75%);background-size:200% 100%;animation:artskel 1.4s infinite;border:var(--border)}
+@keyframes artskel{to{background-position:-200% 0}}
+.brand-card{padding:16px 10px;text-align:center;cursor:pointer;transition:all .15s;border-right:var(--border);display:flex;flex-direction:column;align-items:center;gap:6px}
+.brand-card:last-child{border-right:none}
+.brand-card:hover{background:var(--black);color:var(--white)}
+.brand-ico{font-size:22px}
+.brand-name{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--g600);transition:color .15s}
+.brand-card:hover .brand-name{color:rgba(255,255,255,.7)}
+
+/* ── EMPTY STATES ── */
+.empty{grid-column:1/-1;text-align:center;padding:64px 24px;color:var(--g400)}
+.empty-ico{font-size:48px;margin-bottom:14px}
+.empty-title{font-size:16px;font-weight:500;color:var(--g600);margin-bottom:6px}
+.empty-sub{font-size:13px;margin-bottom:24px;line-height:1.6}
+.empty-cta{display:inline-block;padding:11px 24px;background:var(--black);color:var(--white);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;transition:background .15s}
+.empty-cta:hover{background:var(--red)}
+
+/* ── SKELETON ── */
+.skeleton{background:linear-gradient(90deg,var(--g100) 25%,var(--g50) 50%,var(--g100) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── FOOTER ── */
+footer{background:var(--black);padding:40px 24px 28px;margin-top:16px}
+.tf-inner{max-width:var(--max);margin:0 auto}
+.tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:32px;margin-bottom:32px}
+.tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--white);margin-bottom:12px}.tf-logo .dot{color:var(--red)}
+.tf-about{font-size:12px;color:rgba(255,255,255,.35);line-height:1.7;max-width:260px}
+.tf-col-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:12px}
+.tf-link{display:block;font-size:12px;color:rgba(255,255,255,.4);margin-bottom:7px;transition:color .15s}.tf-link:hover{color:var(--white)}
+.tf-bottom{border-top:1px solid rgba(255,255,255,.08);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.04em;flex-wrap:wrap;gap:8px}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999;pointer-events:none}
+.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tIn .2s ease;min-width:260px;pointer-events:all}
+.toast.ok{border-left-color:var(--green)}
+@keyframes tIn{from{transform:translateX(8px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── CART FLOAT ── */
+.cart-float{position:fixed;bottom:24px;left:24px;background:var(--black);color:var(--white);padding:12px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .2s;display:none;align-items:center;gap:10px;border-left:3px solid var(--green);z-index:9998}
+.cart-float.show{display:flex}
+.cart-float:hover{background:var(--green)}
+
+/* ── SORT SELECT ── */
+.sort-sel{padding:7px 10px;border:var(--border);font-size:12px;font-family:var(--mono);background:var(--white);outline:none;cursor:pointer;letter-spacing:.03em}
+
+
+/* ── STATS BAR ── */
+.stats-bar{border-bottom:var(--border);background:var(--white)}
+.stats-bar-inner{max-width:var(--max);margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr)}
+.stat-item{padding:20px 24px;border-right:var(--border);display:flex;flex-direction:column;gap:6px}
+.stat-item:last-child{border-right:none}
+.stat-num{font-family:var(--mono);font-size:28px;font-weight:500;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.stat-num .star{color:var(--black);font-size:22px}
+.stat-lbl{font-size:12px;color:var(--g500);letter-spacing:.02em}
+
+/* ── TRUST BAR ── */
+.trust-bar{border-bottom:var(--border);background:var(--white)}
+.trust-bar-inner{max-width:var(--max);margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr)}
+.trust-item{padding:18px 24px;border-right:var(--border);display:flex;align-items:center;gap:14px}
+.trust-item:last-child{border-right:none}
+.trust-ico{font-size:28px;flex-shrink:0}
+.trust-text{}
+.trust-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.trust-sub{font-size:11px;color:var(--g500);line-height:1.5}
+
+@media(max-width:768px){
+  .stats-bar-inner{grid-template-columns:1fr 1fr}
+  .trust-bar-inner{grid-template-columns:1fr 1fr}
+  .stat-item,.trust-item{padding:14px 16px}
+}
+@media(max-width:480px){
+  .stats-bar-inner,.trust-bar-inner{grid-template-columns:1fr 1fr}
+}
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){.cats-grid{grid-template-columns:repeat(4,1fr)}.brands-grid{grid-template-columns:repeat(4,1fr)}.brands-grid .brand-card:nth-child(4){border-right:none}.products-grid{grid-template-columns:repeat(4,1fr)}.cat-prods{grid-template-columns:repeat(4,1fr)}.tf-grid{grid-template-columns:1fr 1fr 1fr;gap:24px}}
+@media(max-width:768px){.flash-grid{grid-template-columns:repeat(3,1fr)!important}.cats-grid{grid-template-columns:repeat(4,1fr)}.banners{grid-template-columns:1fr}.products-grid{grid-template-columns:repeat(2,1fr)}.cat-prods{grid-template-columns:repeat(2,1fr)}.brands-grid{grid-template-columns:repeat(4,1fr)}.tf-grid{grid-template-columns:1fr 1fr}.nav-links{display:none}.catbar-item{font-size:9px;padding:7px 10px}}
+@media(max-width:480px){.flash-grid{grid-template-columns:repeat(2,1fr)!important}.cats-grid{grid-template-columns:repeat(2,1fr)}.brands-grid{grid-template-columns:repeat(4,1fr)}.tf-grid{grid-template-columns:1fr}.nav-search{max-width:200px}}
+
+/* ── Account Nav Button & Dropdown ── */
+.nav-btn.account-btn{position:relative}
+.account-dropdown{
+  position:absolute;top:calc(100% + 4px);right:0;
+  background:var(--white);border:1px solid var(--black);
+  min-width:200px;z-index:9999;
+  display:none;flex-direction:column;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+}
+.account-dropdown.open{display:flex}
+.account-dropdown-header{
+  padding:14px 16px;border-bottom:1px solid var(--g200);
+  background:var(--g50);
+}
+.account-dropdown-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px}
+.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
+.account-dropdown-role{
+  display:inline-block;margin-top:5px;
+  padding:2px 8px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.06em;text-transform:uppercase;
+  background:var(--black);color:var(--white);
+}
+.account-dropdown-role.admin{background:var(--red)}
+.account-dropdown-role.seller{background:#2563EB}
+.dropdown-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 16px;font-size:13px;color:var(--g600);
+  cursor:pointer;transition:all .12s;text-decoration:none;border:none;
+  background:none;font-family:var(--font);width:100%;text-align:left;
+}
+.dropdown-item:hover{background:var(--g50);color:var(--black)}
+.dropdown-item.logout{color:var(--red);border-top:1px solid var(--g200)}
+.dropdown-item.logout:hover{background:#FFF5F5}
+.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
+/* Nav account avatar */
+.nav-avatar{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--black);color:var(--white);
+  font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+
+
+/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
+.ann {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  flex-direction: row !important;
+}
+nav, .nav {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+</style>
+<!-- ═══════════════════════════════════════════════════════════════
+     PRODUCT BADGES — UNIFIED COMPACT STYLE (2026-05-04 v3)
+     แก้ปัญหา v2 ที่ override display ทำให้ทุก badge โผล่หมด
+     v3: ใช้ :not([style*="display:none"]) + ไม่ override display
+═══════════════════════════════════════════════════════════════ -->
+<style id="tm-product-badges-fix">
+/* ── Master rule: ทุก badge บนรูปสินค้า = แถบเล็ก uniform ── 
+   หมายเหตุ: ไม่ override display เพื่อให้ inline style display:none ทำงาน */
+.flash-tag-img,
+.authentic-tag,
+.discount-tag,
+.badge-custom,
+.flash-tag{
+  /* Sizing - แถบเล็ก */
+  font-family:'DM Mono',monospace !important;
+  font-size:10px !important;
+  font-weight:700 !important;
+  letter-spacing:.04em !important;
+  text-transform:uppercase !important;
+  color:#fff !important;
+  padding:3px 8px !important;
+  border-radius:3px !important;
+  line-height:1.2 !important;
+  width:auto !important;
+  height:auto !important;
+  max-width:fit-content !important;
+  min-width:0 !important;
+  white-space:nowrap !important;
+  z-index:5 !important;
+  box-shadow:0 1px 2px rgba(0,0,0,.15) !important;
+  /* ห้าม set display เพื่อให้ JS toggle ได้ */
+  align-items:center;
+  gap:3px;
+}
+
+/* ── Background colors per type ── */
+.flash-tag-img,
+.flash-tag{ background:#E63329 !important; }      /* flash = red */
+.authentic-tag{ background:#16A34A !important; }   /* authentic = green */
+.discount-tag{ background:#0A0A0A !important; }    /* discount = black */
+.badge-custom{ background:#F59E0B !important; }    /* custom = orange */
+
+/* ── Position absolute when JS shows them (display becomes block/inline-flex) ── */
+.gallery-main .flash-tag-img{
+  position:absolute !important;
+  top:10px !important; left:10px !important;
+  right:auto !important; bottom:auto !important;
+}
+.gallery-main .authentic-tag{
+  position:absolute !important;
+  top:10px !important; right:10px !important;
+  left:auto !important; bottom:auto !important;
+}
+.gallery-main .discount-tag{
+  position:absolute !important;
+  top:38px !important; left:10px !important;
+  right:auto !important; bottom:auto !important;
+}
+.gallery-main .badge-custom{
+  position:absolute !important;
+  bottom:10px !important; left:10px !important;
+  top:auto !important; right:auto !important;
+}
+
+/* ── Inline badges in flash-row / price-box ── */
+.flash-row .flash-tag,
+.price-box .flash-tag{
+  position:static !important;
+}
+
+/* ── price-save = subtle gray, exclude from forced colors ── */
+.price-save{
+  background:transparent !important;
+  color:var(--g600,#525252) !important;
+  font-size:11px !important;
+  text-transform:none !important;
+  padding:0 !important;
+  box-shadow:none !important;
+  font-family:'DM Sans',sans-serif !important;
+  letter-spacing:0 !important;
+  font-weight:500 !important;
+}
+
+/* ── Children of badges keep parent font-size ── */
+.flash-tag-img *,
+.authentic-tag *,
+.discount-tag *,
+.badge-custom *{
+  font-size:inherit !important;
+  line-height:inherit !important;
+  background:none !important;
+  padding:0 !important;
+  margin:0 !important;
+}
+</style>
+</head>
+<body>
+
+<!-- ── ANNOUNCEMENT ── -->
+<div class="ann">
+  <span><span class="ann-dot">·</span> ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500</span>
+  <span><span class="ann-dot">·</span> Flash Sale ทุกวัน 10:00 / 14:00 / 20:00</span>
+  <span><span class="ann-dot">·</span> รับคูปองใหม่ทุกวัน</span>
+</div>
+
+
+<!-- ── NAVIGATION ── -->
+<nav class="nav" style="position:relative">
+  <div class="nav-top">
+    <a href="index.html" class="nav-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="nav-links" id="nav-links">
+      <a href="flash-sale.html" class="nav-link hot">⚡ Flash Sale</a>
+      <a href="live-shopping.html" class="nav-link">🔴 Live</a>
+      <a href="brand-day.html" class="nav-link">Brand Day</a>
+      <a href="coupon-hub.html" class="nav-link">Coupon</a>
+      <a href="articles.html" class="nav-link">📰 บทความ</a>
+      <a href="loyalty-catalog.html" class="nav-link">Loyalty</a>
+      <a href="subscription.html" class="nav-link">TM Plus</a>
+      <a href="b2b-portal.html" class="nav-link">B2B</a>
+    </div>
+    <div class="nav-search">
+      <input type="text" id="search-inp" placeholder="ค้นหาสินค้า แบรนด์ หรือร้านค้า..." onkeydown="if(event.key==='Enter')doSearch()">
+      <button onclick="doSearch()">ค้นหา</button>
+    </div>
+    <div class="nav-acts">
+      <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
+      <button class="nav-btn" onclick="location.href='chat.html'" style="position:relative">
+        <span class="nav-btn-ico">💬<span class="nav-badge" id="chat-badge" style="display:none">0</span></span>Chat
+      </button>
+      <button class="nav-btn" onclick="location.href='notification-center.html'" style="position:relative">
+        <span class="nav-btn-ico">🔔<span class="nav-badge" id="notif-badge" style="display:none">0</span></span>Alerts
+      </button>
+      <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
+        <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
+      </button>
+      <div style="position:relative">
+      <button class="nav-btn account-btn" id="account-nav-btn" style="flex-direction:column;gap:2px;padding:6px 12px">
+        <span class="nav-btn-ico" id="account-ico">👤</span>
+        <span class="nav-btn-lbl" style="font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500)">Account</span>
+      </button>
+      <!-- Dropdown -->
+      <div class="account-dropdown" id="account-dropdown">
+        <div class="account-dropdown-header">
+          <div class="account-dropdown-name" id="dd-name">กำลังโหลด...</div>
+          <div class="account-dropdown-email" id="dd-email"></div>
+          <span class="account-dropdown-role" id="dd-role">Member</span>
+        </div>
+        <a href="profile.html" class="dropdown-item">
+          <span class="dropdown-item-ico">👤</span>โปรไฟล์ของฉัน
+        </a>
+        <a href="order-history.html" class="dropdown-item">
+          <span class="dropdown-item-ico">📦</span>คำสั่งซื้อ
+        </a>
+        <a href="chat.html" class="dropdown-item" style="position:relative">
+          <span class="dropdown-item-ico">💬</span>แชทของฉัน
+          <span id="dd-chat-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px;font-family:var(--mono);font-weight:600;min-width:22px;text-align:center">0</span>
+        </a>
+        <a href="notification-center.html" class="dropdown-item" style="position:relative">
+          <span class="dropdown-item-ico">🔔</span>การแจ้งเตือน
+          <span id="dd-notif-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px;font-family:var(--mono);font-weight:600;min-width:22px;text-align:center">0</span>
+        </a>
+        <a href="wishlist.html" class="dropdown-item">
+          <span class="dropdown-item-ico">❤️</span>รายการโปรด
+        </a>
+        <a href="coupon-hub.html" class="dropdown-item" style="position:relative">
+          <span class="dropdown-item-ico">🎟️</span>คูปองของฉัน
+          <span id="dd-coupon-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px;font-family:var(--mono);font-weight:600;min-width:22px;text-align:center">0</span>
+        </a>
+        <a href="seller-portal.html" class="dropdown-item" id="dd-seller" style="display:none">
+          <span class="dropdown-item-ico">🏪</span>Seller Portal
+        </a>
+        <a href="admin-cms.html" class="dropdown-item" id="dd-admin" style="display:none;background:var(--g50)">
+          <span class="dropdown-item-ico">⚙️</span>Admin CMS
+        </a>
+        <button class="dropdown-item logout" id="dd-logout">
+          <span class="dropdown-item-ico">🚪</span>ออกจากระบบ
+        </button>
+      </div>
+    </div>
+      <button class="nav-btn sell" onclick="location.href='seller-portal.html'"><span class="nav-btn-ico">🏪</span>Sell</button>
+    </div>
+  </div>
+  <div class="catbar" id="catbar-wrap">
+    <div class="catbar-inner" id="catbar-scroll">
+      <div class="catbar-track" id="catbar-track">
+        <!-- filled by JS -->
+      </div>
+    </div>
+    <button class="catbar-seeall" onclick="showAllCats()">ดูทั้งหมด ▸</button>
+  </div>
+  <!-- cats dropdown (hidden by default) -->
+  <div id="cats-dropdown" style="display:none;position:absolute;left:0;right:0;background:var(--white);border-bottom:var(--border);z-index:998;padding:16px 24px;box-shadow:0 8px 24px rgba(0,0,0,.08)">
+    <div id="cats-dropdown-grid" style="max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px"></div>
+  </div>
+</nav>
+<section class="tm-section" style="padding:48px 16px;max-width:900px;margin:0 auto">
+  <div style="margin-bottom:8px;font-size:12px;color:var(--g500)">
+    <a href="index.html" style="color:var(--g500);text-decoration:none">หน้าแรก</a> › คืนสินค้า
+  </div>
+  <h1 style="font-family:'DM Sans',sans-serif;font-size:32px;font-weight:700;margin-bottom:8px">↩️ คืนสินค้า</h1>
+  <p style="font-size:14px;color:var(--g500);margin-bottom:32px">คืนได้ภายใน 7-30 วัน ตามนโยบายของแต่ละสินค้า</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px">
+    <div style="background:#fff;border:1px solid var(--g200);border-radius:6px;padding:24px">
+      <div style="font-size:32px;margin-bottom:12px">📋</div>
+      <div style="font-weight:700;margin-bottom:6px">ขอคืนสินค้า</div>
+      <div style="font-size:13px;color:var(--g500);margin-bottom:16px;line-height:1.6">เลือกออเดอร์ที่ต้องการคืน แล้วกรอกเหตุผล</div>
+      <a href="order-history.html" style="display:inline-block;padding:10px 16px;background:var(--black);color:#fff;border-radius:4px;text-decoration:none;font-size:13px;font-weight:600">เลือกออเดอร์ →</a>
+    </div>
+    <div style="background:#fff;border:1px solid var(--g200);border-radius:6px;padding:24px">
+      <div style="font-size:32px;margin-bottom:12px">📦</div>
+      <div style="font-weight:700;margin-bottom:6px">ติดตามสถานะการคืน</div>
+      <div style="font-size:13px;color:var(--g500);margin-bottom:16px;line-height:1.6">ดูความคืบหน้าและสถานะการคืนเงิน</div>
+      <a href="order-history.html?tab=returns" style="display:inline-block;padding:10px 16px;background:#fff;color:var(--black);border:1.5px solid var(--g300);border-radius:4px;text-decoration:none;font-size:13px;font-weight:600">ดูสถานะ →</a>
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid var(--g200);border-radius:6px;padding:32px">
+    <h2 style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;margin-bottom:20px">📜 นโยบายคืนสินค้า</h2>
+    <div style="display:grid;gap:18px">
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">⏱️ ระยะเวลา</div>
+        <div style="font-size:13px;color:var(--g600);line-height:1.7">คืนได้ภายใน 7 วันสำหรับสินค้า FMCG, 15 วันสำหรับเสื้อผ้า/แฟชั่น, 30 วันสำหรับเครื่องใช้ไฟฟ้า/อิเล็กทรอนิกส์</div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">✅ เงื่อนไขสินค้า</div>
+        <div style="font-size:13px;color:var(--g600);line-height:1.7">สินค้าต้องอยู่ในสภาพเดิม ไม่ใช้งาน ไม่เสียหาย พร้อมบรรจุภัณฑ์/ป้ายราคาครบ</div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">💰 การคืนเงิน</div>
+        <div style="font-size:13px;color:var(--g600);line-height:1.7">คืนเข้าวิธีจ่ายเดิมภายใน 3-7 วันทำการ หรือเป็น Thailand Market Credit ใช้ได้ทันที</div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">🚚 ค่าจัดส่งคืน</div>
+        <div style="font-size:13px;color:var(--g600);line-height:1.7">ฟรีหากเป็นความผิดพลาดของผู้ขาย/สินค้าชำรุด · ผู้ซื้อจ่ายเองหากเปลี่ยนใจ</div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">⛔ สินค้าที่คืนไม่ได้</div>
+        <div style="font-size:13px;color:var(--g600);line-height:1.7">อาหารสด ยารักษาโรค สินค้า hygiene ที่เปิดใช้งานแล้ว ของลดราคา Final Sale</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;padding:20px;background:#FFF8F5;border:1px solid #FED7AA;border-radius:6px;text-align:center">
+    <div style="font-size:13px;color:var(--g700);margin-bottom:8px">มีคำถาม?</div>
+    <a href="help-center.html" style="font-size:14px;font-weight:600;color:var(--red);text-decoration:none">💬 ติดต่อทีม Support →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="tf-inner">
+    <div class="tf-grid">
+      <div>
+        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
+        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ ส่งฟรีทั่วประเทศ เปิดร้านฟรี</div>
+      </div>
+      <div>
+        <div class="tf-col-title">ช้อปปิ้ง</div>
+        <a href="index.html" class="tf-link">หน้าแรก</a>
+        <a href="storefront-live.html" class="tf-link">สินค้าทั้งหมด</a>
+        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
+        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
+        <a href="brand-day.html" class="tf-link">Brand Day</a>
+        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
+      </div>
+      <div>
+        <div class="tf-col-title">บัญชีของฉัน</div>
+        <a href="profile.html" class="tf-link">โปรไฟล์</a>
+        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
+        <a href="order-history.html" class="tf-link">ประวัติคำสั่งซื้อ</a>
+        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
+        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
+        <a href="returns.html" class="tf-link">คืนสินค้า</a>
+      </div>
+      <div>
+        <div class="tf-col-title">ผู้ขาย</div>
+        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
+        <a href="admin-cms.html" class="tf-link">Admin CMS</a>
+        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
+        <a href="seller-analytics.html" class="tf-link">Analytics</a>
+        <a href="b2b-portal.html" class="tf-link">B2B</a>
+        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
+      </div>
+      <div>
+        <div class="tf-col-title">ช่วยเหลือ</div>
+        <a href="help-center.html" class="tf-link">Help Center</a>
+        <a href="chat.html" class="tf-link">แชทกับเรา</a>
+        <a href="subscription.html" class="tf-link">TM Plus</a>
+        <a href="gift-card.html" class="tf-link">Gift Card</a>
+        <a href="sitemap.html" class="tf-link">Site Map</a>
+        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
+      </div>
+    </div>
+    <div class="tf-bottom">
+      <span>© 2026 Thailand Market · All rights reserved</span>
+      <span>TH · 🔒 SSL Secured · PCI DSS Compliant</span>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

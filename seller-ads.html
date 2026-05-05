@@ -187,7 +187,13 @@ tbody tr:hover td{background:var(--g50)!important}
 
 :root{--primary:#0A0A0A;--accent:#E63329;--teal:#404040;--gold:#F2F2F2;--orange:#D4D4D4;--green:#22C55E;--bg:#F7F7F5;--white:#FFFFFF;--gray50:#F9F9F9;--gray100:#F0F0EF;--gray200:#E2E2E0;--gray400:#9A9A95;--gray600:#5A5A55;--gray900:#1A1A18;--r8:8px;--r12:12px;--r16:16px;--shadow:0 2px 8px rgba(0,0,0,0.08);--shadow-md:0 4px 16px rgba(0,0,0,0.12)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--gray900);font-size:14px;display:flex;min-height:100vh}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--gray900);font-size:14px;display:block;min-height:100vh}
+.seller-ads-shell{display:flex;min-height:calc(100vh - 120px)}
+.seller-ads-shell .sidebar{position:sticky;top:0;height:calc(100vh - 120px)}
+@media (max-width:768px){
+  .seller-ads-shell{flex-direction:column}
+  .seller-ads-shell .sidebar{width:100%;height:auto;position:static}
+}
 a{text-decoration:none;color:inherit}
 
 /* SIDEBAR */
@@ -407,6 +413,7 @@ img{max-width:100%;height:auto}
 
 
 <!-- SIDEBAR -->
+<div class="seller-ads-shell">
 <aside class="sidebar">
   <div class="sidebar-logo">Thailand<span class="dot">.</span>Market<br><span class="sidebar-sub">Seller Center</span></div>
   <div class="sidebar-section">
@@ -722,6 +729,7 @@ img{max-width:100%;height:auto}
     </div>
   </div>
 </div>
+</div><!-- /seller-ads-shell -->
 
 <!-- CREATE CAMPAIGN MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">

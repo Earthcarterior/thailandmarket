@@ -947,7 +947,7 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
 
     <!-- ACTIONS -->
     <div class="action-btns">
-      <button class="btn-buy" id="btn-buy" onclick="buyNow()">⚡ ซื้อเลย</button>
+      <button class="btn-buy" id="btn-buy" onclick="buyNow()">ซื้อเลย</button>
       <button class="btn-cart" onclick="addToCart()">🛒 เพิ่มลงตะกร้า</button>
       <button class="btn-wishlist" id="wl-btn" onclick="toggleWishlist()">❤️ บันทึกเป็น Wishlist</button>
     </div>
@@ -1266,7 +1266,7 @@ function renderProduct() {
     document.getElementById('btn-buy').textContent = '😔 สินค้าหมด';
     document.getElementById('btn-buy').style.opacity = '.5';
   } else if (p.is_flash_sale) {
-    document.getElementById('btn-buy').textContent = '⚡ ซื้อเลย (Flash Price)';
+    document.getElementById('btn-buy').textContent = 'ซื้อเลย (Flash Price)';
   }
 
   // Service grid (dynamic based on what data exists)
