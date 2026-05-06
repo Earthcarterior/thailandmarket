@@ -1962,6 +1962,13 @@ nav { display: block !important; height: auto !important; }
 <script>
 "use strict";
 
+// ── Global Helpers ────────────────────────────────────────
+function escapeHtml(s) {
+  return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
 // ── Supabase Init ─────────────────────────────────────────
 let sb = null;
 let currentUser = null;
