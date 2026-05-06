@@ -680,15 +680,9 @@ img{max-width:100%;height:auto}
 <div class="toast-wrap" id="tw"></div>
 
 <script>
-const CART=[
-  {icon:'📺',name:'ทีวี Samsung 55" 4K QLED',var:'55" Titan Black',shop:'Samsung Official',price:12900,old:22900,qty:1},
-  {icon:'🔊',name:'Soundbar Samsung HW-B550 2.1ch',var:'สีดำ',shop:'Samsung Official',price:4990,old:7900,qty:1},
-  {icon:'🔌',name:'HDMI 2.1 Cable 2m Ultra HD',var:'2 เมตร',shop:'TechCables Store',price:590,old:890,qty:2},
-];
-const ADDRS=[
-  {name:'สมชาย ใจดี  |  081-234-5678',detail:'123/45 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพ 10110',tag:'บ้าน',sel:true},
-  {name:'สมชาย ใจดี  |  081-234-5678',detail:'456/78 ถ.พระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพ 10310',tag:'ที่ทำงาน',sel:false},
-];
+// ── DATA — populated from Supabase by loadCheckoutData() ──
+const CART = [];
+const ADDRS = [];
 const PAYS=[
   {ico:'💳',name:'บัตรเครดิต/เดบิต',sub:'Visa, Mastercard, JCB',id:'credit'},
   {ico:'📱',name:'QR PromptPay',sub:'สแกนจ่ายได้เลย',id:'qr'},
@@ -1035,9 +1029,8 @@ function doCheckout(){
 
 function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
 
-buildCart();buildAddrs();buildPays();
 document.getElementById('card-form').style.display='block';
-updateTotal();
+// Initial render handled by loadCheckoutData() in DOMContentLoaded
 </script>
 
 
@@ -1156,59 +1149,158 @@ function toast(msg, type) {
 })();
 
 
-// ── Load cart from localStorage ───────────────────────────
-function loadCartItems() {
-  const cart = JSON.parse(localStorage.getItem('tm_cart')||'[]');
-  const cartEl = document.getElementById('cart-items') || document.querySelector('[id*="cart"], [class*="cart-item"]');
-  const totalEl = document.getElementById('cart-total') || document.querySelector('[id*="total"]');
-  
-  if (!cart.length) {
-    if (cartEl) cartEl.innerHTML = `<div style="text-align:center;padding:48px;color:#737373">
-      <div style="font-size:48px;margin-bottom:12px">🛒</div>
-      <div style="font-size:16px;font-weight:500;margin-bottom:8px">ตะกร้าว่างเปล่า</div>
-      <a href="storefront-live.html" style="color:#E63329;font-size:13px">เลือกสินค้าเลย →</a>
-    </div>`;
-    return;
+// ── Load cart + addresses from Supabase ───────────────────
+async function loadCheckoutData() {
+  let user = null;
+  try {
+    const { data:{ user: u } } = await _sbCO.auth.getUser();
+    user = u;
+  } catch(e) { /* anon */ }
+
+  // ── 1. CART: try Supabase cart_items first, fallback to localStorage ──
+  let cartItems = [];
+  if (user) {
+    try {
+      const { data, error } = await _sbCO
+        .from('cart_items')
+        .select('id, product_id, quantity, variant_text, products(id, name_th, name_en, price, thumbnail, images, sellers(shop_name))')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      cartItems = (data || []).map(row => {
+        const p = row.products || {};
+        const imgs = Array.isArray(p.images) ? p.images : [];
+        const img = imgs[0] || p.thumbnail || '';
+        return {
+          id: row.product_id,
+          icon: img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover">` : '📦',
+          name: p.name_th || p.name_en || 'สินค้า',
+          var: row.variant_text || '',
+          shop: (p.sellers && p.sellers.shop_name) || 'Thailand Market',
+          price: Number(p.price || 0),
+          old: Number(p.price || 0),  // no old price from cart, default same
+          qty: row.quantity || 1
+        };
+      });
+    } catch(e) {
+      console.warn('loadCart from Supabase failed:', e?.message || e);
+    }
   }
-  
-  const total = cart.reduce((s,i)=>s+(i.price*(i.qty||1)),0);
-  
-  if (cartEl) {
-    cartEl.innerHTML = cart.map((item,idx) => `
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #E5E5E5">
-        <div style="width:60px;height:60px;background:#F2F2F2;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
-          ${item.img?`<img src="${item.img}" style="width:100%;height:100%;object-fit:cover">`:'📦'}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.name}</div>
-          <div style="font-family:var(--mono);font-size:13px;margin-top:4px">฿${Number(item.price).toLocaleString()}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <button onclick="changeQty(${idx},-1)" style="width:26px;height:26px;border:1px solid #E5E5E5;background:#fff;cursor:pointer;font-size:14px">-</button>
-          <span style="font-family:var(--mono);font-size:13px;min-width:20px;text-align:center">${item.qty||1}</span>
-          <button onclick="changeQty(${idx},1)" style="width:26px;height:26px;border:1px solid #E5E5E5;background:#fff;cursor:pointer;font-size:14px">+</button>
-          <button onclick="removeItem(${idx})" style="width:26px;height:26px;border:1px solid #E5E5E5;background:#fff;cursor:pointer;font-size:12px;color:#E63329">✕</button>
-        </div>
-        <div style="font-family:var(--mono);font-size:14px;font-weight:600;min-width:80px;text-align:right">฿${Number(item.price*(item.qty||1)).toLocaleString()}</div>
-      </div>
-    `).join('');
+  // Fallback: localStorage
+  if (!cartItems.length) {
+    const ls = JSON.parse(localStorage.getItem('tm_cart') || localStorage.getItem('tm_cart_guest') || '[]');
+    cartItems = ls.map(it => ({
+      id: it.id || it.product_id || '',
+      icon: it.img ? `<img src="${it.img}" style="width:100%;height:100%;object-fit:cover">` : (it.icon || '📦'),
+      name: it.name || 'สินค้า',
+      var: it.variant || it.var || '',
+      shop: it.shop || 'Thailand Market',
+      price: Number(it.price || 0),
+      old: Number(it.old || it.price || 0),
+      qty: it.qty || it.quantity || 1
+    }));
   }
-  
-  if (totalEl) totalEl.textContent = '฿' + total.toLocaleString();
+  CART.length = 0;
+  cartItems.forEach(it => CART.push(it));
+
+  // ── 2. ADDRESSES: from Supabase addresses table ──
+  let addrItems = [];
+  if (user) {
+    try {
+      const { data, error } = await _sbCO
+        .from('addresses')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('is_default', { ascending: false })
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      addrItems = (data || []).map((a, idx) => ({
+        id: a.id,
+        name: `${a.name || ''}  |  ${a.phone || ''}`,
+        detail: [a.line1, a.subdistrict, a.district, a.province, a.postcode].filter(Boolean).join(' '),
+        tag: a.tag || 'บ้าน',
+        sel: idx === 0  // first one (default or most recent) selected
+      }));
+    } catch(e) {
+      console.warn('loadAddresses failed:', e?.message || e);
+    }
+  }
+  ADDRS.length = 0;
+  addrItems.forEach(a => ADDRS.push(a));
+
+  // ── 3. Render everything ──
+  if (CART.length === 0) {
+    const cartEl = document.getElementById('cart-items');
+    if (cartEl) cartEl.innerHTML = `
+      <div style="text-align:center;padding:48px;color:#737373">
+        <div style="font-size:48px;margin-bottom:12px">🛒</div>
+        <div style="font-size:16px;font-weight:500;margin-bottom:8px">ตะกร้าว่างเปล่า</div>
+        <a href="storefront-live.html" style="color:#E63329;font-size:13px">เลือกสินค้าเลย →</a>
+      </div>`;
+  } else {
+    buildCart();
+  }
+
+  if (ADDRS.length === 0) {
+    const addrEl = document.getElementById('addr-list');
+    if (addrEl) addrEl.innerHTML = `
+      <div style="text-align:center;padding:32px;color:#737373;border:2px dashed #E5E5E5;border-radius:6px">
+        <div style="font-size:14px;margin-bottom:12px">ยังไม่มีที่อยู่จัดส่ง</div>
+        <a href="profile.html#addresses" style="display:inline-block;padding:10px 20px;background:var(--black);color:#fff;border-radius:4px;text-decoration:none;font-size:13px">+ เพิ่มที่อยู่ในโปรไฟล์</a>
+      </div>`;
+  } else {
+    buildAddrs();
+  }
+
+  buildPays();
+  updateTotal();
 }
 
-function changeQty(idx, delta) {
-  let cart = JSON.parse(localStorage.getItem('tm_cart')||'[]');
-  cart[idx].qty = Math.max(1, (cart[idx].qty||1)+delta);
-  localStorage.setItem('tm_cart',JSON.stringify(cart));
-  loadCartItems();
+// Quantity / remove using CART array (synced to Supabase if logged in)
+async function changeQty(idx, delta) {
+  if (!CART[idx]) return;
+  CART[idx].qty = Math.max(1, (CART[idx].qty || 1) + delta);
+  buildCart();
+  updateTotal();
+  try {
+    const { data:{ user } } = await _sbCO.auth.getUser();
+    if (user && CART[idx].id) {
+      await _sbCO.from('cart_items')
+        .update({ quantity: CART[idx].qty })
+        .eq('user_id', user.id).eq('product_id', CART[idx].id);
+    } else {
+      // sync to localStorage
+      const ls = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+      const lsItem = ls.find(i => (i.id || i.product_id) === CART[idx].id);
+      if (lsItem) { lsItem.qty = CART[idx].qty; localStorage.setItem('tm_cart', JSON.stringify(ls)); }
+    }
+  } catch(e) { /* silent */ }
 }
 
-function removeItem(idx) {
-  let cart = JSON.parse(localStorage.getItem('tm_cart')||'[]');
-  cart.splice(idx,1);
-  localStorage.setItem('tm_cart',JSON.stringify(cart));
-  loadCartItems();
+async function removeItem(idx) {
+  const removed = CART[idx];
+  CART.splice(idx, 1);
+  if (CART.length === 0) {
+    document.getElementById('cart-items').innerHTML = `
+      <div style="text-align:center;padding:48px;color:#737373">
+        <div style="font-size:48px;margin-bottom:12px">🛒</div>
+        <div style="font-size:16px;font-weight:500;margin-bottom:8px">ตะกร้าว่างเปล่า</div>
+        <a href="storefront-live.html" style="color:#E63329;font-size:13px">เลือกสินค้าเลย →</a>
+      </div>`;
+  } else {
+    buildCart();
+  }
+  updateTotal();
+  try {
+    const { data:{ user } } = await _sbCO.auth.getUser();
+    if (user && removed?.id) {
+      await _sbCO.from('cart_items').delete()
+        .eq('user_id', user.id).eq('product_id', removed.id);
+    } else {
+      const ls = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+      const filtered = ls.filter(i => (i.id || i.product_id) !== removed.id);
+      localStorage.setItem('tm_cart', JSON.stringify(filtered));
+    }
+  } catch(e) { /* silent */ }
   toast('🗑️ ลบสินค้าออกแล้ว');
 }
 
@@ -1308,7 +1400,7 @@ async function placeOrder() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', loadCartItems);
+document.addEventListener('DOMContentLoaded', loadCheckoutData);
 </script>
 
 </body>
