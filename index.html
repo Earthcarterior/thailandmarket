@@ -978,11 +978,13 @@ nav, .nav {
     const sb = window._sb;
     if (!sb) return;
 
-    // ดึง sellers (top 8)
-    const { data:sellers } = await sb.from('sellers')
-      .select('id, shop_name, slug, logo_url, description, tagline, is_verified, created_at')
+    // ดึง sellers (top 8) — ใช้เฉพาะ column ที่มีจริงใน schema
+    const { data:sellers, error:sErr } = await sb.from('sellers')
+      .select('id, shop_name, logo_url, shop_logo, description, is_verified, status, created_at')
+      .eq('status','active')
       .order('created_at', {ascending: false})
       .limit(8);
+    if (sErr) { console.warn('sellers query error:', sErr); throw sErr; }
     if (!sellers || !sellers.length){
       document.getElementById('featured-shops-grid').innerHTML = '<div style="text-align:center;padding:60px 0;color:var(--g400);grid-column:1/-1;font-size:13px">ยังไม่มีร้านค้า</div>';
       return;
@@ -991,21 +993,24 @@ nav, .nav {
     // ดึงสินค้า top 3 ของแต่ละร้าน (parallel)
     const shopsWithProducts = await Promise.all(sellers.map(async s => {
       const { data:prods } = await sb.from('products')
-        .select('id, name_th, name_en, price, original_price, thumbnail, images, sales_count')
+        .select('id, name_th, name_en, price, compare_price, thumbnail, images, sold_count')
         .eq('seller_id', s.id)
-        .order('sales_count', {ascending: false, nullsFirst: false})
+        .eq('status','active')
+        .order('sold_count', {ascending: false, nullsFirst: false})
         .limit(3);
       const { count } = await sb.from('products')
         .select('*', {count:'exact', head:true})
-        .eq('seller_id', s.id);
+        .eq('seller_id', s.id)
+        .eq('status','active');
       return {...s, products: prods || [], total_products: count || 0};
     }));
 
     // Render
     const html = shopsWithProducts.map(s => {
       const initial = (s.shop_name||'S').charAt(0).toUpperCase();
-      const logoHTML = s.logo_url
-        ? `<img src="${s.logo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+      const logoSrc = s.shop_logo || s.logo_url || '';
+      const logoHTML = logoSrc
+        ? `<img src="${logoSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.style.display='none';this.parentElement.textContent='${initial}'">`
         : initial;
       const productsHTML = s.products.length === 0
         ? `<div style="grid-column:1/-1;text-align:center;color:var(--g400);font-size:11px;padding:24px 0">ยังไม่มีสินค้า</div>`
