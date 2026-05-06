@@ -507,7 +507,8 @@ img{max-width:100%;height:auto}
 ::selection{background:#0A0A0A;color:#fff}
 </style>
 <!-- back nav -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" data-cfasync="false"></script>
+<script>
 function addToCart(id, name, price, img, qty) {
   qty = qty || 1;
   let cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
@@ -1046,7 +1047,7 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
 <!-- legacy badge styles removed in favor of tm-product-master-v4 (2026-05-04) -->
 <style>.gallery-main{position:relative}</style>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/[email protected]"></script>
+<!-- (Supabase script already loaded at top, removed duplicate broken URL) -->
 <script>
 // ════════════════════════════════════════════════════════════════════
 // PRODUCT.HTML — Live Supabase Integration [REWRITE 2026-05-04]
