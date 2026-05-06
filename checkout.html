@@ -584,7 +584,7 @@ img{max-width:100%;height:auto}
           <div class="fg"><label class="fl">วันหมดอายุ</label><input class="fi" placeholder="MM / YY" maxlength="7"></div>
           <div class="fg"><label class="fl">CVV</label><input class="fi" placeholder="•••" maxlength="3" type="password"></div>
         </div>
-        <div class="fg"><label class="fl">ชื่อบนบัตร</label><input class="fi" placeholder="SOMCHAI JAIDEE"></div>
+        <div class="fg"><label class="fl">ชื่อบนบัตร</label><input class="fi" id="card-name" placeholder="SOMCHAI JAIDEE"></div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
           <input type="checkbox" id="save-card" style="accent-color:var(--accent)">
           <label for="save-card" style="font-size:12px;color:var(--g700);cursor:pointer">บันทึกบัตรนี้สำหรับการชำระในครั้งถัดไป</label>
@@ -1021,10 +1021,128 @@ function formatCard(inp){
   inp.value=v;
 }
 
-function doCheckout(){
+async function doCheckout(){
   if(!selPay){toast('⚠️ กรุณาเลือกวิธีชำระเงิน');return;}
-  toast('🔐 กำลังดำเนินการชำระเงิน...');
-  setTimeout(()=>{toast('✅ ชำระเงินสำเร็จ! กำลังไปยังหน้ายืนยัน');setTimeout(()=>window.location.href='payment-result.html',900);},1500);
+  if(!CART.length){toast('⚠️ ตะกร้าว่างเปล่า');return;}
+
+  const selectedAddr = ADDRS.find(a=>a.sel);
+  if(!selectedAddr){toast('⚠️ กรุณาเลือกที่อยู่จัดส่ง');return;}
+
+  // ดึง user
+  const { data:{ user } } = await _sbCO.auth.getUser();
+  if(!user){
+    toast('⚠️ กรุณาเข้าสู่ระบบก่อน');
+    setTimeout(()=>location.href='login.html?from=checkout.html',1200);
+    return;
+  }
+
+  // เก็บข้อมูลบัตร (เฉพาะ credit method) — เก็บแค่ 4 ตัวท้าย
+  let cardData = {};
+  if(selPay==='credit' || selPay==='install'){
+    const cardNum = (document.getElementById('card-num')?.value||'').replace(/\s+/g,'');
+    const cardName = document.getElementById('card-name')?.value?.trim()||'';
+    if(cardNum.length<13){toast('⚠️ กรุณากรอกเลขบัตรให้ครบ');return;}
+    if(!cardName){toast('⚠️ กรุณากรอกชื่อบนบัตร');return;}
+    // detect brand จากตัวแรก
+    const firstDigit = cardNum.charAt(0);
+    const brand = firstDigit==='4'?'Visa' : firstDigit==='5'?'Mastercard' : firstDigit==='3'?'JCB' : 'Card';
+    cardData = {
+      card_brand: brand,
+      card_last4: cardNum.slice(-4),
+      card_holder: cardName
+    };
+  }
+
+  // คำนวณยอด
+  const sub = CART.reduce((s,it)=>s+it.price*it.qty, 0);
+  const couponDisc = (typeof _appliedCoupons!=='undefined'?_appliedCoupons:[]).reduce((s,c)=>s+(c.discount||0), 0);
+  const shipping = sub>=500 ? 0 : 50;
+  const total = Math.max(0, sub - couponDisc + shipping);
+
+  // สร้าง order_number — TM-YYYY-XXX
+  const year = new Date().getFullYear();
+  const orderNum = 'TM-'+year+'-'+String(Date.now()).slice(-6);
+
+  const btn = document.querySelector('.btn-checkout');
+  if(btn){btn.disabled=true; btn.innerHTML='⏳ กำลังบันทึก...';}
+
+  try {
+    // 1. สร้าง order
+    const { data:order, error:oErr } = await _sbCO.from('orders').insert({
+      user_id: user.id,
+      order_number: orderNum,
+      status: 'pending',
+      subtotal: sub,
+      discount: couponDisc,
+      shipping_fee: shipping,
+      total: total,
+      payment_method: selPay,
+      shipping_address: {
+        name: selectedAddr.name,
+        detail: selectedAddr.detail,
+        tag: selectedAddr.tag,
+        addr_id: selectedAddr.id||null
+      },
+      items: CART.map(it=>({
+        product_id: it.id, name: it.name, variant: it.var||'',
+        shop: it.shop, price: it.price, qty: it.qty,
+        subtotal: it.price*it.qty
+      })),
+      notes: null
+    }).select().single();
+    if(oErr) throw new Error('Order: '+oErr.message);
+
+    // 2. tracking event เริ่มต้น
+    await _sbCO.from('order_tracking').insert({
+      order_id: order.id, status: 'placed',
+      description: 'สั่งซื้อสำเร็จ — รอชำระเงิน'
+    });
+
+    // 3. payment record
+    const payMethodLabel = {credit:'บัตรเครดิต/เดบิต',qr:'QR PromptPay',install:'ผ่อน 0% นาน 12 เดือน',counter:'Counter Service'}[selPay]||selPay;
+    const payInsert = {
+      order_id: order.id, user_id: user.id,
+      method: selPay, amount: total,
+      status: 'pending',
+      ...cardData
+    };
+    if(selPay==='qr') payInsert.qr_ref = 'QR'+Date.now();
+    if(selPay==='counter') payInsert.counter_ref = String(Date.now()).slice(-13).padStart(13,'0');
+    const { error:pErr } = await _sbCO.from('payments').insert(payInsert);
+    if(pErr) console.warn('payment insert:', pErr.message);
+
+    // 4. notification
+    await _sbCO.from('notifications').insert({
+      user_id: user.id, type: 'order',
+      title: 'ออเดอร์ใหม่! 📦',
+      message: `${orderNum} — ${payMethodLabel} ฿${total.toLocaleString()} กำลังรอชำระเงิน`,
+      link: 'order-history.html', icon: '📦', is_read: false
+    });
+
+    // 5. loyalty: 1 baht = 0.1 point
+    const pts = Math.floor(total/10);
+    if(pts>0){
+      await _sbCO.from('loyalty_history').insert({
+        user_id: user.id, points: pts,
+        reason: `ซื้อสินค้า ${orderNum} (รอยืนยัน)`,
+        ref_type: 'order', ref_id: order.id
+      });
+    }
+
+    // 6. clear cart_items
+    await _sbCO.from('cart_items').delete().eq('user_id', user.id);
+    localStorage.removeItem('tm_cart');
+    localStorage.removeItem('tm_cart_guest');
+
+    // 7. redirect → payment-result
+    toast('✅ สั่งซื้อสำเร็จ!');
+    setTimeout(()=>{location.href = `payment-result.html?order=${orderNum}`;}, 800);
+
+  } catch(e) {
+    console.error('checkout error:', e);
+    toast('❌ สั่งซื้อไม่สำเร็จ: '+(e.message||'unknown'));
+    if(btn){btn.disabled=false; btn.innerHTML='🔐 ยืนยันคำสั่งซื้อ';}
+  }
 }
 
 function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}

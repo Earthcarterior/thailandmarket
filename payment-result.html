@@ -560,31 +560,37 @@ window._sb = _sb;
     <div class="result-card">
       <div class="rc-header">
         <div class="rc-icon success" id="icon-anim">✓</div>
-        <div class="rc-title success">ชำระเงินสำเร็จ!</div>
-        <div class="rc-sub">ออเดอร์ของคุณได้รับการยืนยันแล้ว · อีเมลยืนยันถูกส่งไปแล้ว</div>
+        <div class="rc-title success" id="rc-title">กำลังโหลด...</div>
+        <div class="rc-sub" id="rc-sub">โปรดรอสักครู่</div>
       </div>
       <div class="rc-body">
         <div class="rc-order-box">
           <div class="rc-row">
             <span class="rc-row-label">เลขออเดอร์</span>
-            <span class="rc-row-value">#ZM-48271</span>
+            <span class="rc-row-value" id="rc-order-num">-</span>
           </div>
           <div class="rc-row">
             <span class="rc-row-label">วันที่ชำระ</span>
-            <span class="rc-row-value">28 เม.ย. 2569 · 14:32</span>
+            <span class="rc-row-value" id="rc-date">-</span>
           </div>
           <div class="rc-row">
             <span class="rc-row-label">วิธีชำระ</span>
-            <span class="rc-row-value">💳 บัตรเครดิต Visa ···4521</span>
+            <span class="rc-row-value" id="rc-method">-</span>
           </div>
           <div class="rc-row">
             <span class="rc-row-label">ยอดชำระทั้งหมด</span>
-            <span class="rc-row-value accent">฿14,290</span>
+            <span class="rc-row-value accent" id="rc-amount">-</span>
           </div>
-          <div class="rc-row">
+          <div class="rc-row" id="rc-points-row">
             <span class="rc-row-label">ThaiPoints ที่ได้รับ</span>
-            <span class="rc-row-value green">+1,429 แต้ม ⭐</span>
+            <span class="rc-row-value green" id="rc-points">-</span>
           </div>
+        </div>
+
+        <!-- Pending payment actions (QR / Counter / Pending) -->
+        <div id="pending-actions" style="display:none;margin:20px 0;padding:16px;background:#FFF8E5;border:1px solid #FCD34D;border-radius:6px">
+          <div id="pending-content"></div>
+          <button id="btn-confirm-paid" onclick="confirmPaid()" style="display:none;width:100%;padding:12px;margin-top:12px;background:#10B981;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:700;cursor:pointer">✓ ฉันโอนเงินแล้ว</button>
         </div>
 
         <div class="steps-wrap">
@@ -794,5 +800,143 @@ function tmToast(msg){
 </footer>
 <div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
 <script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+<script>
+(async function loadPaymentResult(){
+  if(!window._sb){
+    if(typeof supabase==='undefined'){return;}
+    window._sb = supabase.createClient(
+      'https://qmgyimsptzewwyafvjzk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+    );
+  }
+  const sb = window._sb;
+
+  const orderNum = new URLSearchParams(location.search).get('order');
+  if(!orderNum){
+    document.getElementById('rc-title').textContent = '❌ ไม่พบเลขออเดอร์';
+    document.getElementById('rc-sub').textContent = 'กรุณาเข้าหน้านี้ผ่านลิงก์จากการสั่งซื้อ';
+    return;
+  }
+
+  // ดึง order
+  const { data:order, error } = await sb.from('orders')
+    .select('*').eq('order_number', orderNum).maybeSingle();
+  if(error || !order){
+    document.getElementById('rc-title').textContent = '❌ ไม่พบออเดอร์';
+    document.getElementById('rc-sub').textContent = orderNum + ' — ตรวจสอบเลขออเดอร์อีกครั้ง';
+    return;
+  }
+
+  // ดึง payment
+  const { data:payment } = await sb.from('payments')
+    .select('*').eq('order_id', order.id).maybeSingle();
+
+  // วันที่
+  const d = new Date(order.created_at);
+  const dateStr = d.toLocaleDateString('th-TH', {year:'numeric',month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+
+  // วิธีชำระ
+  const methodLabel = {
+    credit:    payment?.card_brand ? `💳 ${payment.card_brand} ····${payment.card_last4||''}` : '💳 บัตรเครดิต/เดบิต',
+    install:   payment?.card_brand ? `🏦 ผ่อน ${payment.card_brand} ····${payment.card_last4||''}` : '🏦 ผ่อน 0%',
+    qr:        '📱 QR PromptPay',
+    counter:   '🏪 Counter Service'
+  }[order.payment_method] || order.payment_method;
+
+  // status title
+  const isPaid = (payment?.status === 'paid') || (order.payment_method === 'credit');
+  document.getElementById('rc-title').textContent = isPaid ? 'ชำระเงินสำเร็จ!' : 'รอชำระเงิน';
+  document.getElementById('rc-sub').textContent = isPaid ? 'ออเดอร์ของคุณได้รับการยืนยันแล้ว' : 'กรุณาชำระเงินภายใน 24 ชั่วโมง';
+  document.getElementById('icon-anim').textContent = isPaid ? '✓' : '⏳';
+  if(!isPaid) document.getElementById('icon-anim').style.background = '#FCD34D';
+
+  // populate order fields
+  document.getElementById('rc-order-num').textContent = '#'+order.order_number;
+  document.getElementById('rc-date').textContent = dateStr;
+  document.getElementById('rc-method').textContent = methodLabel;
+  document.getElementById('rc-amount').textContent = '฿'+Number(order.total).toLocaleString();
+
+  const pts = Math.floor(Number(order.total)/10);
+  document.getElementById('rc-points').textContent = '+'+pts.toLocaleString()+' แต้ม ⭐';
+
+  // pending payment instructions
+  if(!isPaid){
+    const box = document.getElementById('pending-actions');
+    const cnt = document.getElementById('pending-content');
+    const btn = document.getElementById('btn-confirm-paid');
+    box.style.display = 'block';
+    btn.style.display = 'block';
+    btn.dataset.paymentId = payment?.id || '';
+    btn.dataset.orderId = order.id;
+
+    if(order.payment_method === 'qr'){
+      cnt.innerHTML = `
+        <div style="text-align:center">
+          <div style="font-weight:700;margin-bottom:8px">📱 สแกน QR PromptPay เพื่อชำระเงิน</div>
+          <div style="margin:16px auto;width:160px;height:160px;background:#fff;border:1px solid #E5E5E5;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:80px">🔲</div>
+          <div style="font-size:13px;color:#525252">รหัสอ้างอิง: <strong>${payment?.qr_ref||'-'}</strong></div>
+          <div style="font-size:13px;color:#525252;margin-top:4px">ยอดชำระ: <strong style="color:#E63329">฿${Number(order.total).toLocaleString()}</strong></div>
+        </div>`;
+    } else if(order.payment_method === 'counter'){
+      cnt.innerHTML = `
+        <div>
+          <div style="font-weight:700;margin-bottom:12px">🏪 ชำระที่ Counter Service (7-Eleven, Family Mart)</div>
+          <div style="background:#fff;padding:12px;border-radius:6px;font-family:monospace;font-size:18px;letter-spacing:2px;text-align:center;border:2px dashed #FCD34D;margin-bottom:8px">
+            ${payment?.counter_ref || '-'}
+          </div>
+          <div style="font-size:12px;color:#525252">นำรหัสนี้ไปแจ้งพนักงาน + ชำระเงินสด ฿${Number(order.total).toLocaleString()}</div>
+          <div style="font-size:11px;color:#999;margin-top:8px">หมดอายุภายใน 24 ชั่วโมง</div>
+        </div>`;
+    } else if(order.payment_method === 'install'){
+      cnt.innerHTML = `<div style="text-align:center"><div style="font-weight:700;margin-bottom:6px">🏦 รอผลอนุมัติจากธนาคาร</div><div style="font-size:13px;color:#525252">ใช้เวลา 1-3 นาที</div></div>`;
+      btn.textContent = '✓ ผ่านการอนุมัติ (จำลอง)';
+    } else {
+      cnt.innerHTML = `<div style="text-align:center;color:#525252">รอตรวจสอบการชำระเงิน...</div>`;
+    }
+  }
+})();
+
+async function confirmPaid(){
+  const btn = document.getElementById('btn-confirm-paid');
+  const payId = btn.dataset.paymentId;
+  const orderId = btn.dataset.orderId;
+  if(!payId || !orderId){alert('ไม่พบข้อมูลการชำระเงิน');return;}
+
+  btn.disabled = true; btn.textContent = '⏳ กำลังตรวจสอบ...';
+  const sb = window._sb;
+  try {
+    // อัปเดต payment → paid
+    await sb.from('payments').update({
+      status: 'paid', confirmed_at: new Date().toISOString(), updated_at: new Date().toISOString()
+    }).eq('id', payId);
+
+    // อัปเดต order status → paid
+    await sb.from('orders').update({status:'paid', updated_at: new Date().toISOString()}).eq('id', orderId);
+
+    // tracking event
+    await sb.from('order_tracking').insert({
+      order_id: orderId, status:'paid', description:'ชำระเงินสำเร็จ — ร้านค้ากำลังเตรียมพัสดุ'
+    });
+
+    // notification
+    const { data:{ user } } = await sb.auth.getUser();
+    if(user){
+      await sb.from('notifications').insert({
+        user_id: user.id, type:'order',
+        title: 'ชำระเงินสำเร็จ! ✅',
+        message: 'ออเดอร์ของคุณได้รับการยืนยันแล้ว ร้านค้ากำลังเตรียมพัสดุ',
+        link:'order-history.html', icon:'✅', is_read:false
+      });
+    }
+
+    setTimeout(()=>location.reload(), 800);
+  } catch(e){
+    console.error(e);
+    btn.disabled=false; btn.textContent='✓ ฉันโอนเงินแล้ว';
+    alert('เกิดข้อผิดพลาด: '+e.message);
+  }
+}
+</script>
+
 </body>
 </html>

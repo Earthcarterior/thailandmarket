@@ -385,10 +385,7 @@ img{max-width:100%;height:auto}
       <input type="text" style="flex:1;padding:9px 14px;border:var(--border);font-size:13px;font-family:var(--font);outline:none;transition:border-color .15s" placeholder="ค้นหา Order ID หรือชื่อสินค้า..." onfocus="this.style.borderColor='var(--black)'" onblur="this.style.borderColor='var(--g200)'">
       <button class="btn btn-o btn-sm">🔍</button>
     </div>
-    <div style="border:var(--border);overflow:hidden;overflow-x:auto">
-      <table><thead><tr><th>Order ID</th><th>วันที่</th><th>รายการ</th><th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead>
-      <tbody><tr onclick="location.href='order-detail.html'" style="cursor:pointer"><td style="font-family:var(--mono);font-size:11px">TM-20260428-001</td><td style="font-size:12px;color:var(--g500)">28 เม.ย. 2026</td><td>Samsung TV 65" QLED × 1</td><td style="font-family:var(--mono);font-size:14px;font-weight:500">฿43,490</td><td><span class="badge badge-k">🚚 กำลังจัดส่ง</span></td><td style="display:flex;gap:6px"><button class="btn btn-o btn-xs" onclick="event.stopPropagation();location.href='order-detail.html'">รายละเอียด</button><button class="btn btn-xs" style="border:var(--border);background:var(--white)" onclick="event.stopPropagation();location.href='tracking.html'">ติดตาม</button></td></tr><tr onclick="location.href='order-detail.html'" style="cursor:pointer"><td style="font-family:var(--mono);font-size:11px">TM-20260425-089</td><td style="font-size:12px;color:var(--g500)">25 เม.ย. 2026</td><td>Nike Air Max × 1, Vitamin C × 2</td><td style="font-family:var(--mono);font-size:14px;font-weight:500">฿3,687</td><td><span class="badge badge-ok">✓ สำเร็จ</span></td><td style="display:flex;gap:6px"><button class="btn btn-o btn-xs" onclick="event.stopPropagation();location.href='order-detail.html'">รายละเอียด</button><button class="btn btn-xs" style="border:var(--border);background:var(--white)" onclick="event.stopPropagation();location.href='review-write.html'">รีวิว</button></td></tr><tr onclick="location.href='order-detail.html'" style="cursor:pointer"><td style="font-family:var(--mono);font-size:11px">TM-20260420-312</td><td style="font-size:12px;color:var(--g500)">20 เม.ย. 2026</td><td>โซฟา L-Shape Nordic × 1</td><td style="font-family:var(--mono);font-size:14px;font-weight:500">฿18,500</td><td><span class="badge badge-ok">✓ สำเร็จ</span></td><td style="display:flex;gap:6px"><button class="btn btn-o btn-xs" onclick="event.stopPropagation();location.href='order-detail.html'">รายละเอียด</button><button class="btn btn-xs" style="border:var(--border);background:var(--white)" onclick="event.stopPropagation();location.href='review-write.html'">รีวิว</button></td></tr><tr onclick="location.href='order-detail.html'" style="cursor:pointer"><td style="font-family:var(--mono);font-size:11px">TM-20260415-204</td><td style="font-size:12px;color:var(--g500)">15 เม.ย. 2026</td><td>Laneige Lip Mask × 3</td><td style="font-family:var(--mono);font-size:14px;font-weight:500">฿2,370</td><td><span class="badge badge-ok">✓ สำเร็จ</span></td><td style="display:flex;gap:6px"><button class="btn btn-o btn-xs" onclick="event.stopPropagation();location.href='order-detail.html'">รายละเอียด</button><button class="btn btn-xs" style="border:var(--border);background:var(--white)" onclick="event.stopPropagation();location.href='review-write.html'">รีวิว</button></td></tr><tr onclick="location.href='order-detail.html'" style="cursor:pointer"><td style="font-family:var(--mono);font-size:11px">TM-20260401-099</td><td style="font-size:12px;color:var(--g500)">1 เม.ย. 2026</td><td>Royal Canin 2kg × 4</td><td style="font-family:var(--mono);font-size:14px;font-weight:500">฿1,940</td><td><span class="badge badge-r">↩️ คืนสินค้า</span></td><td style="display:flex;gap:6px"><button class="btn btn-o btn-xs" onclick="event.stopPropagation();location.href='order-detail.html'">รายละเอียด</button><button class="btn btn-xs" style="border:var(--border);background:var(--white)" onclick="event.stopPropagation();location.href='returns.html'">ดูการคืน</button></td></tr></tbody></table>
-    </div>
+    <div id="order-list" style="min-height:200px"></div>
   </div>
 </div>
 <script>function setT(el){el.closest('div').querySelectorAll('button').forEach(b=>{b.style.color='var(--g500)';b.style.borderBottomColor='transparent'});el.style.color='var(--black)';el.style.borderBottomColor='var(--black)'}</script>
@@ -457,24 +454,22 @@ function toast(msg, type) {
 })();
 
 
-const ST_MAP   = {pending:'รอยืนยัน',confirmed:'ยืนยันแล้ว',processing:'กำลังเตรียม',shipped:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า'};
-const ST_COLOR = {pending:'#D97706',confirmed:'#2563EB',processing:'#7C3AED',shipped:'#0891B2',delivered:'#16A34A',cancelled:'#737373',returned:'#737373'};
+const ST_MAP   = {pending:'รอชำระเงิน',paid:'ชำระแล้ว',preparing:'กำลังเตรียม',shipping:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า'};
+const ST_COLOR = {pending:'#D97706',paid:'#2563EB',preparing:'#7C3AED',shipping:'#0891B2',delivered:'#16A34A',cancelled:'#737373',returned:'#737373'};
 
 async function loadOrderHistory() {
   const { data:{ session } } = await _sbOH.auth.getSession();
   if (!session) { location.href='login.html?from=order-history.html'; return; }
-  
-  const { data:user } = await _sbOH.from('users').select('id').eq('email',session.user.email).maybeSingle();
-  if (!user) return;
-  
-  const { data:orders } = await _sbOH.from('orders')
-    .select('id,order_number,status,total_amount,payment_status,created_at,order_items(name_th,price,qty,thumbnail)')
-    .eq('user_id', user.id)
+
+  const { data:orders, error } = await _sbOH.from('orders')
+    .select('id,order_number,status,total,subtotal,discount,shipping_fee,payment_method,items,created_at,shipping_address')
+    .eq('user_id', session.user.id)
     .order('created_at', {ascending:false});
-  
-  const container = document.getElementById('order-list') || document.querySelector('[class*="order"]') || document.querySelector('main');
+  if (error) { console.error('orders load:', error); }
+
+  const container = document.getElementById('order-list') || document.querySelector('main') || document.body;
   if (!container) return;
-  
+
   if (!orders?.length) {
     container.innerHTML = `<div style="text-align:center;padding:80px 24px;color:#737373">
       <div style="font-size:64px;margin-bottom:16px">📦</div>
@@ -485,33 +480,38 @@ async function loadOrderHistory() {
     return;
   }
 
-  const pyText = {paid:'ชำระแล้ว',unpaid:'ค้างชำระ',refunded:'คืนเงินแล้ว'};
-  const pyColor= {paid:'#16A34A',unpaid:'#D97706',refunded:'#737373'};
-  
-  container.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px;max-width:900px;margin:0 auto;padding:20px">` +
+  const payIcon = {credit:'💳',qr:'📱',install:'🏦',counter:'🏪'};
+  const payText = {credit:'บัตรเครดิต/เดบิต',qr:'QR PromptPay',install:'ผ่อน 0%',counter:'Counter Service'};
+
+  container.innerHTML = `<div style="display:flex;flex-direction:column;gap:14px;max-width:900px;margin:0 auto;padding:20px">` +
     orders.map(o => {
-      const items = o.order_items||[];
-      const names = items.map(i=>i.name_th).join(', ');
-      return `<div style="background:#fff;border:1px solid #E5E5E5;overflow:hidden">
+      const items = Array.isArray(o.items)?o.items:[];
+      const names = items.map(i=>i.name||i.name_th||'').filter(Boolean);
+      const itemSummary = names.slice(0,3).join(', ') + (names.length>3?` และอีก ${names.length-3} รายการ`:'');
+      const totalQty = items.reduce((s,i)=>s+(i.qty||1), 0);
+      const dateStr = new Date(o.created_at).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) + ' · ' + new Date(o.created_at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+
+      return `<div style="background:#fff;border:1px solid #E5E5E5;border-radius:6px;overflow:hidden">
         <div style="padding:12px 16px;border-bottom:1px solid #E5E5E5;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#FAFAFA">
-          <div style="font-family:var(--mono);font-size:11px;font-weight:500">${o.order_number}</div>
-          <div style="font-size:11px;color:#737373">${new Date(o.created_at).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}</div>
+          <div style="font-family:var(--mono);font-size:12px;font-weight:600">${o.order_number}</div>
+          <div style="font-size:11px;color:#737373">${dateStr}</div>
           <div style="margin-left:auto;display:flex;gap:8px">
-            <span style="background:${ST_COLOR[o.status]||'#737373'}20;color:${ST_COLOR[o.status]||'#737373'};padding:3px 12px;font-size:11px;font-family:var(--mono)">${ST_MAP[o.status]||o.status}</span>
-            <span style="background:${pyColor[o.payment_status]||'#737373'}20;color:${pyColor[o.payment_status]||'#737373'};padding:3px 12px;font-size:11px;font-family:var(--mono)">${pyText[o.payment_status]||o.payment_status}</span>
+            <span style="background:${ST_COLOR[o.status]||'#737373'}20;color:${ST_COLOR[o.status]||'#737373'};padding:3px 12px;font-size:11px;font-family:var(--mono);border-radius:3px">${ST_MAP[o.status]||o.status}</span>
           </div>
         </div>
         <div style="padding:14px 16px">
-          <div style="display:flex;gap:8px;margin-bottom:10px;overflow-x:auto">
-            ${items.slice(0,4).map(i=>i.thumbnail?`<img src="${i.thumbnail}" style="width:48px;height:48px;object-fit:cover;border:1px solid #E5E5E5;flex-shrink:0">`:'').join('')}
-          </div>
-          <div style="font-size:12px;color:#525252;margin-bottom:10px;line-height:1.5">${names.slice(0,80)}${names.length>80?'...':''}</div>
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div style="font-family:var(--mono);font-size:16px;font-weight:600">฿${Number(o.total_amount).toLocaleString()}</div>
+          <div style="font-size:13px;color:#404040;margin-bottom:6px;line-height:1.5">${itemSummary}</div>
+          <div style="font-size:11px;color:#737373;margin-bottom:12px">${totalQty} ชิ้น · ${payIcon[o.payment_method]||''} ${payText[o.payment_method]||o.payment_method}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-size:11px;color:#737373">ยอดรวม</div>
+              <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:#E63329">฿${Number(o.total).toLocaleString()}</div>
+            </div>
             <div style="display:flex;gap:8px">
-              ${o.status==='delivered'?`<a href="review-write.html?order=${o.id}" style="padding:7px 14px;border:1px solid #0A0A0A;font-size:12px;color:#0A0A0A">⭐ รีวิว</a>`:''}
-              ${o.status==='shipped'?`<a href="tracking.html?order=${o.order_number}" style="padding:7px 14px;background:#0A0A0A;color:#fff;font-size:12px">📍 ติดตาม</a>`:''}
-              <button onclick="viewOrderDetail('${o.id}')" style="padding:7px 14px;background:#0A0A0A;color:#fff;border:none;font-size:12px;cursor:pointer">ดูรายละเอียด</button>
+              ${o.status==='pending' ? `<a href="payment-result.html?order=${o.order_number}" style="padding:8px 14px;background:#FCD34D;color:#7C2D12;font-size:12px;font-weight:700;text-decoration:none;border-radius:3px">⏳ ชำระเงิน</a>` : ''}
+              ${(o.status==='paid'||o.status==='preparing'||o.status==='shipping') ? `<a href="tracking.html?order=${o.order_number}" style="padding:8px 14px;background:#0A0A0A;color:#fff;font-size:12px;text-decoration:none;border-radius:3px">📍 ติดตาม</a>` : ''}
+              ${o.status==='delivered' ? `<a href="review-write.html?order=${o.id}" style="padding:8px 14px;border:1px solid #0A0A0A;color:#0A0A0A;font-size:12px;text-decoration:none;border-radius:3px">⭐ รีวิว</a>` : ''}
+              <a href="payment-result.html?order=${o.order_number}" style="padding:8px 14px;background:#fff;border:1px solid #E5E5E5;color:#525252;font-size:12px;text-decoration:none;border-radius:3px">รายละเอียด</a>
             </div>
           </div>
         </div>
@@ -519,8 +519,8 @@ async function loadOrderHistory() {
     }).join('') + `</div>`;
 }
 
-function viewOrderDetail(orderId) {
-  location.href = 'order-detail.html?id=' + orderId;
+function viewOrderDetail(orderNum) {
+  location.href = 'payment-result.html?order=' + orderNum;
 }
 
 document.addEventListener('DOMContentLoaded', loadOrderHistory);

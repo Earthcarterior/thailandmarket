@@ -877,5 +877,147 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════════
+     TRACKING OVERRIDE — uses real schema (items jsonb, order_tracking)
+     2026-05-06 v2
+═══════════════════════════════════════════════════════════════ -->
+<script>
+async function loadTracking() {
+  if(!window._sb){
+    if(typeof supabase==='undefined') return;
+    window._sb = supabase.createClient(
+      'https://qmgyimsptzewwyafvjzk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+    );
+  }
+  const sb = window._sb;
+
+  const params = new URLSearchParams(location.search);
+  const orderNum = params.get('order') || '';
+
+  if (!orderNum){
+    // No order specified — replace whole page with order-list link
+    document.body.innerHTML = `<div style="max-width:600px;margin:80px auto;padding:40px;text-align:center;font-family:'DM Sans',sans-serif">
+      <div style="font-size:64px;margin-bottom:20px">📦</div>
+      <h1 style="font-size:24px;margin-bottom:12px">ติดตามพัสดุ</h1>
+      <p style="color:#737373;margin-bottom:24px">กรุณาเข้าหน้านี้ผ่านลิงก์ "ติดตาม" ในประวัติคำสั่งซื้อ</p>
+      <a href="order-history.html" style="display:inline-block;padding:12px 24px;background:#0A0A0A;color:#fff;text-decoration:none;border-radius:4px">📋 ดูประวัติคำสั่งซื้อ</a>
+    </div>`;
+    return;
+  }
+
+  const { data:order, error } = await sb.from('orders')
+    .select('*').eq('order_number', orderNum).maybeSingle();
+
+  if (error || !order){
+    document.body.innerHTML = `<div style="max-width:600px;margin:80px auto;padding:40px;text-align:center;font-family:'DM Sans',sans-serif">
+      <div style="font-size:64px;margin-bottom:20px">🔍</div>
+      <h1 style="font-size:20px;margin-bottom:12px">ไม่พบออเดอร์ ${orderNum}</h1>
+      <p style="color:#737373;margin-bottom:24px">ตรวจสอบเลขออเดอร์อีกครั้ง</p>
+      <a href="order-history.html" style="display:inline-block;padding:12px 24px;background:#0A0A0A;color:#fff;text-decoration:none;border-radius:4px">📋 ดูประวัติคำสั่งซื้อ</a>
+    </div>`;
+    return;
+  }
+
+  // Fetch tracking events
+  const { data:events } = await sb.from('order_tracking')
+    .select('*').eq('order_id', order.id)
+    .order('created_at', {ascending:true});
+
+  // Fetch payment for context
+  const { data:payment } = await sb.from('payments')
+    .select('*').eq('order_id', order.id).maybeSingle();
+
+  // Update sidebar order number
+  const sbOrderEl = document.querySelector('.sb-order-num');
+  if (sbOrderEl) sbOrderEl.textContent = '#' + order.order_number;
+
+  // Update header — find h1 or title element
+  const titleEl = document.querySelector('.tr-title, h1');
+  if (titleEl) titleEl.textContent = `ติดตามออเดอร์ ${order.order_number}`;
+
+  // Status flow mapping
+  const statusFlow = ['placed','paid','preparing','shipping','delivered'];
+  const statusLabels = {placed:'สั่งซื้อแล้ว',paid:'ชำระเงินสำเร็จ',preparing:'เตรียมพัสดุ',shipping:'กำลังจัดส่ง',delivered:'จัดส่งสำเร็จ'};
+  const statusIcons = {placed:'📝',paid:'💳',preparing:'📦',shipping:'🚚',delivered:'🎉'};
+
+  // Determine current step from latest event
+  const eventStatuses = (events||[]).map(e=>e.status);
+  const currentIdx = Math.max(...statusFlow.map((s,i)=>eventStatuses.includes(s)?i:-1), 0);
+
+  // Render status steps
+  const stepsEl = document.getElementById('status-steps');
+  if (stepsEl) {
+    stepsEl.innerHTML = statusFlow.map((s,i)=>{
+      const cls = i<currentIdx ? 'done' : (i===currentIdx ? 'active' : '');
+      return `<div class="st-step ${cls}">
+        <div class="st-ico">${statusIcons[s]}</div>
+        <div class="st-name">${statusLabels[s]}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Render timeline
+  const timelineEl = document.getElementById('timeline');
+  if (timelineEl) {
+    if (!events?.length) {
+      timelineEl.innerHTML = `<div style="text-align:center;padding:24px;color:#737373">ยังไม่มีข้อมูลการขนส่ง</div>`;
+    } else {
+      timelineEl.innerHTML = events.slice().reverse().map(ev => {
+        const t = new Date(ev.created_at);
+        const tStr = t.toLocaleDateString('th-TH',{day:'numeric',month:'short'}) + ' · ' + t.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="tl-item done">
+          <div class="tl-time">${tStr}</div>
+          <div class="tl-title">${statusIcons[ev.status]||'•'} ${statusLabels[ev.status]||ev.status}</div>
+          <div class="tl-desc">${ev.description||''}</div>
+          ${ev.location?`<div class="tl-loc">📍 ${ev.location}</div>`:''}
+          ${ev.tracking_no?`<div class="tl-track">🔢 ${ev.carrier||''} ${ev.tracking_no}</div>`:''}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Render order items from items jsonb
+  const itemsEl = document.getElementById('order-items');
+  if (itemsEl) {
+    const items = Array.isArray(order.items)?order.items:[];
+    itemsEl.innerHTML = items.map(it=>`<div class="order-item">
+      <div class="oi-img">📦</div>
+      <div class="oi-info">
+        <div class="oi-name">${it.name||'-'}</div>
+        <div class="oi-meta">${it.variant||it.shop||''}</div>
+        <div class="oi-qty">× ${it.qty||1}</div>
+      </div>
+      <div class="oi-price">฿${Number((it.price||0)*(it.qty||1)).toLocaleString()}</div>
+    </div>`).join('');
+  }
+
+  // Render summary rows
+  const sumEl = document.getElementById('sum-rows');
+  if (sumEl) {
+    const payIcon = {credit:'💳',qr:'📱',install:'🏦',counter:'🏪'};
+    const payText = {credit:'บัตรเครดิต/เดบิต',qr:'QR PromptPay',install:'ผ่อน 0%',counter:'Counter Service'};
+    let payDisplay = (payIcon[order.payment_method]||'') + ' ' + (payText[order.payment_method]||order.payment_method);
+    if (payment?.card_brand) payDisplay += ` (${payment.card_brand} ····${payment.card_last4||''})`;
+    sumEl.innerHTML = `
+      <div class="sum-row"><span>ราคาสินค้า</span><span>฿${Number(order.subtotal).toLocaleString()}</span></div>
+      ${Number(order.discount)>0?`<div class="sum-row"><span>ส่วนลด</span><span style="color:#16A34A">-฿${Number(order.discount).toLocaleString()}</span></div>`:''}
+      <div class="sum-row"><span>ค่าจัดส่ง</span><span>${Number(order.shipping_fee)===0?'ฟรี':'฿'+Number(order.shipping_fee).toLocaleString()}</span></div>
+      <div class="sum-row" style="border-top:1px solid #E5E5E5;padding-top:8px;font-weight:700;font-size:16px"><span>ยอดรวม</span><span style="color:#E63329">฿${Number(order.total).toLocaleString()}</span></div>
+      <div class="sum-row" style="margin-top:6px;font-size:11px;color:#737373"><span>วิธีชำระ</span><span>${payDisplay}</span></div>
+    `;
+  }
+
+  // Update shipping address display if exists
+  const addrEls = document.querySelectorAll('[class*="ship-addr"], [id*="ship-addr"]');
+  if (order.shipping_address) {
+    const a = order.shipping_address;
+    addrEls.forEach(el => {
+      el.innerHTML = `<div style="font-weight:600">${a.name||''}</div><div style="font-size:12px;color:#737373;margin-top:4px">${a.detail||''}</div>`;
+    });
+  }
+}
+</script>
+
 </body>
 </html>
