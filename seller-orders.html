@@ -3,223 +3,778 @@
 <head>
 <meta charset="UTF-8">
 <meta name="theme-color" content="#0A0A0A">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thailand Market — 🛒 ออเดอร์</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Thailand Market — 🛒 ออเดอร์ของฉัน (Seller)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
-:root{--black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;--g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;--border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;--sidebar:220px}
-*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{text-decoration:none;color:inherit}button{font-family:var(--font);cursor:pointer}
+:root{--black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;--g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--gn:#16A34A;--gn-bg:#DCFCE7;--am:#D97706;--am-bg:#FEF3C7;--bl:#2563EB;--bl-bg:#DBEAFE;--font:'DM Sans',system-ui,sans-serif;--th:'Sarabun',sans-serif;--mono:'DM Mono',monospace;--border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;--sidebar:220px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--th);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}button{font-family:var(--th);cursor:pointer}
+
+/* Top nav */
 #tn{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
 .tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
-.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
-.tn-logo .dot{color:var(--red)}.tn-links{display:flex;flex:1;overflow:hidden}
-.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
-.tn-link:hover{color:var(--black)}.tn-srch{position:relative;margin-left:auto}
-.tn-srch input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
-.tn-srch input:focus{border-color:var(--black)}.tn-srch input::placeholder{color:var(--g400)}
-.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
-.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
-.tn-btn:hover{color:var(--black)}.tn-btn.sell{color:var(--red)}
-.tn-ico{font-size:15px;position:relative;line-height:1}
-.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
-.tn-cats{border-top:var(--border)}.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
-.tn-cats-inner::-webkit-scrollbar{display:none}
-.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
-.tn-cat:hover{color:var(--black)}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);margin-right:32px}
+.tn-logo .dot{color:var(--red)}
+.tn-acts{display:flex;gap:1px;margin-left:auto}
+.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase}
+.tn-btn:hover{color:var(--black)}
+.tn-ico{font-size:15px}
+
+/* App */
 .app{display:flex;min-height:100vh}
-.sb{width:var(--sidebar);background:var(--black);flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;overflow-y:auto;z-index:100}
+.sb{width:var(--sidebar);background:var(--black);position:fixed;top:0;bottom:0;display:flex;flex-direction:column;overflow-y:auto;z-index:100}
 .sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:9px}
-.sb-mark{width:32px;height:32px;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:var(--white);font-size:13px;flex-shrink:0}
+.sb-mark{width:32px;height:32px;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:var(--white);font-size:13px}
 .sb-name{font-family:var(--mono);font-weight:500;color:var(--white);font-size:13px;letter-spacing:.04em}
+.sb-name .dot{color:var(--red)}
 .sb-sub{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.5px;text-transform:uppercase}
-.sb-user{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
-.sb-av{width:36px;height:36px;border-radius:50%;background:var(--red);color:var(--white);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
-.sb-nm{font-size:13px;font-weight:600;color:var(--white)}.sb-role{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
 .sb-nav{padding:8px 0;flex:1}
 .sb-lbl{font-size:9px;color:rgba(255,255,255,.28);letter-spacing:1.2px;text-transform:uppercase;padding:6px 16px 4px}
-.sni{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;color:rgba(255,255,255,.5);font-size:12.5px;transition:all .15s;border-left:3px solid transparent;white-space:nowrap;text-decoration:none}
+.sni{display:flex;align-items:center;gap:9px;padding:9px 16px;color:rgba(255,255,255,.5);font-size:12.5px;border-left:3px solid transparent;white-space:nowrap}
 .sni:hover{background:rgba(255,255,255,.05);color:var(--white)}
 .sni.on{background:rgba(230,51,41,.12);color:var(--white);border-left-color:var(--red)}
-.sni-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0}
-.sni-badge{margin-left:auto;background:var(--red);color:var(--white);font-size:9px;padding:1px 6px;border-radius:10px}
+.sni-ico{font-size:14px;width:18px;text-align:center}
+.sni-badge{margin-left:auto;background:var(--red);color:var(--white);font-size:9px;padding:1px 6px;border-radius:10px;font-family:var(--mono)}
 .sb-foot{padding:12px 16px;border-top:1px solid rgba(255,255,255,.07)}
-.sb-fl{display:flex;align-items:center;gap:7px;padding:5px 0;cursor:pointer;color:rgba(255,255,255,.35);font-size:11.5px;transition:color .15s;text-decoration:none}
-.sb-fl:hover{color:rgba(255,255,255,.7)}
+.sb-fl{display:flex;align-items:center;gap:7px;padding:5px 0;color:rgba(255,255,255,.35);font-size:11.5px}
+
 .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
 .topbar{background:var(--white);border-bottom:var(--border);height:52px;display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:90}
 .tb-title{font-family:var(--mono);font-weight:600;font-size:14px;letter-spacing:.03em}
 .tb-right{display:flex;gap:8px;align-items:center;margin-left:auto}
-.tb-icon{width:32px;height:32px;border:var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:border-color .15s}
+.tb-icon{width:32px;height:32px;border:var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px}
 .tb-icon:hover{border-color:var(--black)}
 .content{padding:20px;flex:1}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:var(--border);margin-bottom:18px;overflow-x:auto}
+.tab{padding:12px 18px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tab:hover{color:var(--black)}
+.tab.on{color:var(--black);border-bottom-color:var(--red)}
+.tab-count{background:var(--g100);font-size:10px;padding:1px 6px;border-radius:10px}
+.tab.on .tab-count{background:var(--red);color:var(--white)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none;white-space:nowrap}
 .btn-k{background:var(--black);color:var(--white)}.btn-k:hover{background:var(--g800)}
 .btn-r{background:var(--red);color:var(--white)}.btn-r:hover{opacity:.9}
 .btn-o{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-o:hover{background:var(--black);color:var(--white)}
 .btn-g{background:transparent;color:var(--g500);border:var(--border)}.btn-g:hover{border-color:var(--black);color:var(--black)}
-.btn-sm{padding:7px 14px;font-size:11px}.btn-xs{padding:5px 10px;font-size:10px}
-.card{background:var(--white);border:var(--border);padding:24px}
-.lbl{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g600);display:block;margin-bottom:6px}
-.inp{width:100%;padding:10px 12px;border:var(--border);font-size:14px;font-family:var(--font);background:var(--white);color:var(--black);outline:none;transition:border-color .15s}
-.inp:focus{border-color:var(--black)}.inp::placeholder{color:var(--g400)}
-.sel{width:100%;padding:10px 12px;border:var(--border);font-size:14px;font-family:var(--font);background:var(--white);color:var(--black);outline:none;cursor:pointer}
-.ta{width:100%;padding:10px 12px;border:var(--border);font-size:14px;font-family:var(--font);background:var(--white);color:var(--black);outline:none;resize:vertical;min-height:80px;transition:border-color .15s}
-.ta:focus{border-color:var(--black)}
-.fg{margin-bottom:16px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}.ff{margin-bottom:14px}
-table{width:100%;border-collapse:collapse}
-thead th{padding:10px 14px;text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);border-bottom:var(--border);background:var(--g50)}
-tbody td{padding:12px 14px;border-bottom:var(--border);font-size:13px;vertical-align:middle}
-tbody tr:hover td{background:var(--g50)}tbody tr:last-child td{border-bottom:none}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:var(--border);font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
-.badge-k{border-color:var(--black);color:var(--black)}.badge-ok{background:var(--black);color:var(--white);border-color:var(--black)}
-.badge-w{border-color:var(--g400);color:var(--g500)}.badge-r{border-color:var(--red);color:var(--red)}
+.btn-gn{background:var(--gn);color:var(--white)}.btn-gn:hover{opacity:.9}
+.btn-am{background:var(--am);color:var(--white)}.btn-am:hover{opacity:.9}
+.btn-bl{background:var(--bl);color:var(--white)}.btn-bl:hover{opacity:.9}
+.btn-sm{padding:7px 14px;font-size:11px}
+.btn-xs{padding:5px 10px;font-size:10px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .sc{background:var(--white);border:var(--border);padding:18px;position:relative;overflow:hidden}
 .sc-bar{position:absolute;top:0;left:0;right:0;height:2px}
 .sc-lbl{font-family:var(--mono);font-size:10px;color:var(--g500);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
-.sc-val{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--black)}
-.sc-chg{font-family:var(--mono);font-size:11px;margin-top:4px}
-.up{color:#16A34A}.dn{color:var(--red)}
+.sc-val{font-family:var(--mono);font-size:24px;font-weight:500}
+.sc-chg{font-family:var(--mono);font-size:11px;margin-top:4px;color:var(--g500)}
+.up{color:var(--gn)}.dn{color:var(--red)}
+
+/* Filter */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.flt-input,.flt-sel{padding:9px 12px;border:var(--border);font-size:13px;font-family:var(--th);background:var(--white);outline:none;height:36px}
+.flt-input:focus,.flt-sel:focus{border-color:var(--black)}
+
+/* Table */
+.tbl-wrap{border:var(--border);overflow:hidden;overflow-x:auto;background:var(--white)}
+table{width:100%;border-collapse:collapse;min-width:1000px}
+thead th{padding:11px 14px;text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);border-bottom:var(--border);background:var(--g50);white-space:nowrap}
+thead th.tar{text-align:right}
+tbody td{padding:13px 14px;border-bottom:var(--border);font-size:13px;vertical-align:middle}
+tbody td.tar{text-align:right}
+tbody tr{transition:background .1s}
+tbody tr:hover td{background:var(--g50)}
+tbody tr:last-child td{border-bottom:none}
+
+.order-num{font-family:var(--mono);font-size:11.5px;font-weight:500}
+.order-date{font-size:10.5px;color:var(--g500);font-family:var(--mono);margin-top:2px}
+.amount{font-family:var(--mono);font-weight:600}
+.cust-name{font-size:13px;font-weight:500}
+.cust-meta{font-size:11px;color:var(--g500);margin-top:2px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.bdg-pending{border-color:var(--am);color:var(--am);background:var(--am-bg)}
+.bdg-paid{border-color:var(--bl);color:var(--bl);background:var(--bl-bg)}
+.bdg-preparing{border-color:var(--g700);color:var(--g700);background:var(--g100)}
+.bdg-shipping{border-color:var(--am);color:var(--am);background:var(--am-bg)}
+.bdg-delivered{border-color:var(--gn);color:var(--gn);background:var(--gn-bg)}
+.bdg-cancelled{border-color:var(--red);color:var(--red);background:#FEE2E2}
+.bdg-refunded{border-color:var(--g500);color:var(--g500)}
+
+/* Empty / Loading */
+.empty,.loading{padding:60px 20px;text-align:center;color:var(--g500)}
+.empty .icon{font-size:36px;margin-bottom:8px;opacity:.4}
+.empty .title{font-size:14px;color:var(--g700);margin-bottom:4px}
+.empty .desc{font-size:12px}
+
+/* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .modal-bg.on{display:flex}
-.modal{background:var(--white);border:var(--border-dark);width:520px;max-width:90vw;max-height:90vh;overflow-y:auto}
-.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:var(--border)}
-.modal-ttl{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
-.modal-x{background:none;border:none;font-size:18px;cursor:pointer;color:var(--g400);transition:color .15s}.modal-x:hover{color:var(--black)}
-.modal-body{padding:24px}.modal-foot{padding:16px 22px;border-top:var(--border);display:flex;justify-content:flex-end;gap:10px}
-.tw{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
-.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:12.5px;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tIn .2s ease}
-@keyframes tIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
-#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border);margin-top:80px}
-#tm-footer .tf-in{max-width:1280px;margin:0 auto}
-#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
-#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--white);margin-bottom:12px}
-#tm-footer .tf-logo .dot{color:var(--red)}
-#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
-#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--white);margin-bottom:12px}
-#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
-#tm-footer .tf-link:hover{color:var(--white)}
-#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:18px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:.04em;flex-wrap:wrap;gap:8px}
-.bc{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.04em;text-transform:uppercase;margin-bottom:24px}
-.bc a{color:var(--g400);text-decoration:none;transition:color .15s}.bc a:hover{color:var(--black)}
-.wrap{max-width:1280px;margin:0 auto;padding:0 24px}
-@media(max-width:768px){#tm-footer .tf-grid{grid-template-columns:1fr 1fr}.tn-links{display:none}}
-@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
-</style>
+.modal{background:var(--white);border:var(--border-dark);width:480px;max-width:90vw;max-height:90vh;overflow-y:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:var(--border)}
+.modal-ttl{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.modal-x{background:none;border:none;font-size:20px;cursor:pointer;color:var(--g400)}
+.modal-x:hover{color:var(--black)}
+.modal-body{padding:20px}
+.modal-foot{padding:14px 20px;border-top:var(--border);display:flex;justify-content:flex-end;gap:8px}
+.fg{margin-bottom:14px}
+.lbl{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g600);display:block;margin-bottom:6px}
+.inp,.sel,.ta{width:100%;padding:9px 12px;border:var(--border);font-size:13px;font-family:var(--th);background:var(--white);outline:none}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--black)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-<style id="tm-responsive">
-/* ── Mobile fixes ── */
+/* Order detail collapsed */
+.order-expand{background:var(--g50);padding:14px 20px;border-top:var(--border)}
+.exp-row{display:flex;gap:18px;flex-wrap:wrap;font-size:12px}
+.exp-col{flex:1;min-width:200px}
+.exp-lbl{font-family:var(--mono);font-size:9.5px;color:var(--g500);letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.exp-val{font-size:12.5px;line-height:1.5;color:var(--g700)}
+
+/* Toast */
+.tw{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:12.5px;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tIn .2s ease;max-width:360px}
+.toast.ok{border-left-color:var(--gn)}
+@keyframes tIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
 @media(max-width:768px){
-  .tn-links{display:none!important}
-  .tn-srch{display:none!important}
-  /* hamburger hint */
   .tn-top{padding:0 16px}
-  .tn-logo{margin-right:auto}
-  /* sidebar pages on mobile */
   .app{flex-direction:column}
   .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
-  .sb-logo,.sb-user{flex-basis:100%}
+  .sb-foot{display:none}.sb-lbl{display:none}
   .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
-  .sb-lbl{display:none}
   .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
   .sni.on{border-bottom-color:var(--red)!important;background:none!important}
-  .sb-foot{display:none}
   .main{margin-left:0!important}
-  /* layout grids */
-  .layout{grid-template-columns:1fr!important}
-  .form-row{grid-template-columns:1fr!important}
-  /* tables */
-  table{font-size:12px}
-  td,th{padding:8px 10px!important}
-  /* stat grids */
-  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  [style*="grid-template-columns:repeat(3"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* hero */
-  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
-  .hero-right{display:none}
-  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
-  /* product grids */
-  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* footer */
-  #tm-footer .tf-grid{grid-template-columns:1fr!important}
-  /* wrap padding */
-  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .row2{grid-template-columns:1fr}
 }
-@media(max-width:480px){
-  .hero-h1{font-size:36px!important}
-  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
-  .hero-stat-row{grid-template-columns:1fr 1fr}
-}
-/* ── Print friendly ── */
-@media print{
-  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
-  body{font-size:12px}
-}
-/* ── Focus / accessibility ── */
-a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
-  outline:2px solid #0A0A0A;outline-offset:2px
-}
-/* ── Smooth image loading ── */
-img{max-width:100%;height:auto}
-/* ── Selection color ── */
-::selection{background:#0A0A0A;color:#fff}
 </style>
 </head>
 <body>
+
+<!-- Public top nav -->
 <nav id="tn">
   <div class="tn-top">
     <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
-    <div class="tn-links">
-      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
-      <a href="live-shopping.html" class="tn-link">Live</a>
-      <a href="brand-day.html" class="tn-link">Brand Day</a>
-      <a href="coupon-hub.html" class="tn-link">Coupon</a>
-      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
-      <a href="subscription.html" class="tn-link">TM Plus</a>
-      <a href="b2b-portal.html" class="tn-link">B2B</a>
-      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
-    </div>
-    <div class="tn-srch"><input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'"></div>
     <div class="tn-acts">
-      <button class="tn-btn" onclick="location.href='wishlist.html'"><span class="tn-ico">♡</span>Saved</button>
-      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
+      <button class="tn-btn" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Seller</button>
+      <button class="tn-btn" onclick="location.href='index.html'"><span class="tn-ico">🏠</span>Store</button>
       <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
-      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
     </div>
   </div>
-  <div class="tn-cats"><div class="tn-cats-inner">
-    <a href="category.html" class="tn-cat">🏠 Home</a><a href="category.html" class="tn-cat">👗 Fashion</a>
-    <a href="category.html" class="tn-cat">💄 Beauty</a><a href="category.html" class="tn-cat">🛒 FMCG</a>
-    <a href="category.html" class="tn-cat">💻 Tech</a><a href="category.html" class="tn-cat">🚗 Auto</a>
-    <a href="category.html" class="tn-cat">🐾 Pets</a><a href="category.html" class="tn-cat">📚 Education</a>
-  </div></div>
 </nav>
-<div class="app"><aside class="sb"><div class="sb-logo"><div class="sb-mark">Z</div><div><div class="sb-name">Thailand<span style="color:var(--red)">.</span>Market</div><div class="sb-sub">Seller Center</div></div></div><div class="sb-user"><div class="sb-av">สม</div><div><div class="sb-nm">ร้านสมชายช็อป</div><div class="sb-role">Gold Seller · Active</div></div></div><nav class="sb-nav"><div class="sb-lbl">จัดการร้าน</div><a href="seller-portal.html" class="sni"><span class="sni-ico">📊</span>Dashboard</a><a href="seller-products.html" class="sni"><span class="sni-ico">📦</span>สินค้า</a><a href="seller-orders.html" class="sni on"><span class="sni-ico">🛒</span>ออเดอร์<span class=sni-badge>12</span></a><a href="seller-finance.html" class="sni"><span class="sni-ico">💰</span>การเงิน</a><a href="seller-reviews.html" class="sni"><span class="sni-ico">⭐</span>รีวิว<span class=sni-badge>18</span></a><a href="seller-coupons.html" class="sni"><span class="sni-ico">🎫</span>คูปอง</a><a href="seller-ads.html" class="sni"><span class="sni-ico">📢</span>Ads</a><a href="seller-analytics.html" class="sni"><span class="sni-ico">📈</span>Analytics</a><a href="seller-live.html" class="sni"><span class="sni-ico">🔴</span>Live</a></nav><div class="sb-foot"><a href="index.html" class="sb-fl">🏠 หน้าหลัก</a><a href="login.html" class="sb-fl">🚪 ออกจากระบบ</a></div></aside><div class="main"><div class="topbar"><div class="tb-title">🛒 ออเดอร์</div><div class="tb-right"><button class="btn btn-o btn-sm" onclick="toast("Export CSV")">📥 Export</button><button class="tb-icon">🔔</button><div style="width:32px;height:32px;border-radius:50%;background:var(--red);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono)">สม</div></div></div><div class="content">
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px"><div class="sc"><div class="sc-bar" style="background:var(--red)"></div><div class="sc-lbl">รอดำเนินการ</div><div class="sc-val">12</div><div class="sc-chg ">ต้องจัดส่งวันนี้</div></div><div class="sc"><div class="sc-bar" style="background:#D97706"></div><div class="sc-lbl">กำลังจัดส่ง</div><div class="sc-val">34</div><div class="sc-chg up">↑ +8 วันนี้</div></div><div class="sc"><div class="sc-bar" style="background:#16A34A"></div><div class="sc-lbl">สำเร็จ</div><div class="sc-val">189</div><div class="sc-chg up">↑ +23 สัปดาห์นี้</div></div><div class="sc"><div class="sc-bar" style="background:var(--black)"></div><div class="sc-lbl">ยอดรวมเดือนนี้</div><div class="sc-val">฿284,500</div><div class="sc-chg up">↑ +12.4%</div></div></div>
-<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-  <button class="btn btn-k btn-xs" style="font-size:10px">ทั้งหมด (235)</button>
-  <button class="btn btn-o btn-xs" style="font-size:10px" onclick="toast('กรองออเดอร์')">รอดำเนินการ (12)</button>
-  <button class="btn btn-o btn-xs" style="font-size:10px" onclick="toast('กรองออเดอร์')">กำลังจัดส่ง (34)</button>
-  <button class="btn btn-o btn-xs" style="font-size:10px" onclick="toast('กรองออเดอร์')">สำเร็จ (189)</button>
-  <div style="margin-left:auto;display:flex;gap:8px"><input type="text" style="padding:7px 12px;border:var(--border);font-size:12px;font-family:var(--font);outline:none;width:180px" placeholder="ค้นหา Order ID..."><button class="btn btn-o btn-xs">🔍</button></div>
-</div>
-<div style="border:var(--border);overflow:hidden;overflow-x:auto">
-<table><thead><tr><th><input type="checkbox"></th><th>Order ID</th><th>สินค้า</th><th>ลูกค้า</th><th>วันที่</th><th>ยอด</th><th>สถานะ</th><th></th></tr></thead><tbody>
-<tr><td><input type="checkbox"></td><td style="font-family:var(--mono);font-size:11px">TM-2026-001</td><td>Samsung TV 65" × 1</td><td>สมชาย ใจดี</td><td style="font-family:var(--mono);font-size:11px">28 เม.ย.</td><td style="font-family:var(--mono);font-weight:500">฿42,990</td><td><span class="badge badge-k">🚚 กำลังส่ง</span></td><td style="display:flex;gap:4px"><button class="btn btn-o btn-xs" onclick="toast('พิมพ์ใบส่ง')">พิมพ์ใบส่ง</button></td></tr>
-<tr><td><input type="checkbox"></td><td style="font-family:var(--mono);font-size:11px">TM-2026-002</td><td>Sony WH-1000XM5 × 2</td><td>มานี มีใจ</td><td style="font-family:var(--mono);font-size:11px">28 เม.ย.</td><td style="font-family:var(--mono);font-weight:500">฿23,980</td><td><span class="badge badge-r">⏳ รอดำเนินการ</span></td><td><button class="btn btn-k btn-xs" onclick="toast('ยืนยันออเดอร์')">✓ ยืนยัน</button></td></tr>
-<tr><td><input type="checkbox"></td><td style="font-family:var(--mono);font-size:11px">TM-2026-003</td><td>Laneige Lip Mask × 5</td><td>สมหญิง ใจดี</td><td style="font-family:var(--mono);font-size:11px">27 เม.ย.</td><td style="font-family:var(--mono);font-weight:500">฿3,950</td><td><span class="badge badge-ok">✓ สำเร็จ</span></td><td><button class="btn btn-o btn-xs" onclick="location.href='order-detail.html'">รายละเอียด</button></td></tr>
-<tr><td><input type="checkbox"></td><td style="font-family:var(--mono);font-size:11px">TM-2026-004</td><td>Nike Air Max × 1</td><td>วิชัย ดีจริง</td><td style="font-family:var(--mono);font-size:11px">27 เม.ย.</td><td style="font-family:var(--mono);font-weight:500">฿3,290</td><td><span class="badge badge-ok">✓ สำเร็จ</span></td><td><button class="btn btn-o btn-xs" onclick="location.href='order-detail.html'">รายละเอียด</button></td></tr>
-</tbody></table></div></div></div></div>
 
-<div class="tw" id="tw"></div><script>function toast(m){var w=document.getElementById("tw");var t=document.createElement("div");t.className="toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+<!-- Seller layout -->
+<div class="app">
+  <aside class="sb">
+    <div class="sb-logo">
+      <div class="sb-mark" id="shop-avatar">S</div>
+      <div>
+        <div class="sb-name" id="shop-name">Thailand<span class="dot">.</span>Market</div>
+        <div class="sb-sub">Seller Center</div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-lbl">My Shop</div>
+      <a href="seller-portal.html" class="sni"><span class="sni-ico">📊</span>Dashboard</a>
+      <a href="seller-products.html" class="sni"><span class="sni-ico">📦</span>สินค้า</a>
+      <a href="seller-orders.html" class="sni on"><span class="sni-ico">🛒</span>ออเดอร์<span class="sni-badge" id="badge-pending" style="display:none">0</span></a>
+      <a href="seller-reviews.html" class="sni"><span class="sni-ico">⭐</span>รีวิว</a>
+      <a href="seller-coupons.html" class="sni"><span class="sni-ico">🎫</span>คูปอง</a>
+      <a href="seller-ads.html" class="sni"><span class="sni-ico">📢</span>โฆษณา</a>
+      <a href="seller-analytics.html" class="sni"><span class="sni-ico">📈</span>Analytics</a>
+      <a href="seller-finance.html" class="sni"><span class="sni-ico">💰</span>การเงิน</a>
+      <a href="seller-live.html" class="sni"><span class="sni-ico">🔴</span>Live</a>
+    </nav>
+    <div class="sb-foot">
+      <a href="index.html" class="sb-fl">🏠 หน้าหลัก</a>
+      <a href="login.html" class="sb-fl">🚪 ออกจากระบบ</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-title">🛒 ออเดอร์ของฉัน</div>
+      <div class="tb-right">
+        <button class="tb-icon" onclick="loadOrders()" title="Refresh">🔄</button>
+        <button class="tb-icon" onclick="exportCSV()" title="Export CSV">📥</button>
+        <div style="width:32px;height:32px;background:var(--red);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono)" id="user-av">S</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="sc">
+          <div class="sc-bar" style="background:var(--am)"></div>
+          <div class="sc-lbl">รอจัดส่ง</div>
+          <div class="sc-val" id="s-todo">—</div>
+          <div class="sc-chg dn">ต้องเร่งดำเนินการ</div>
+        </div>
+        <div class="sc">
+          <div class="sc-bar" style="background:var(--bl)"></div>
+          <div class="sc-lbl">กำลังจัดส่ง</div>
+          <div class="sc-val" id="s-shipping">—</div>
+          <div class="sc-chg">ระหว่างส่ง</div>
+        </div>
+        <div class="sc">
+          <div class="sc-bar" style="background:var(--gn)"></div>
+          <div class="sc-lbl">สำเร็จ (เดือนนี้)</div>
+          <div class="sc-val" id="s-done">—</div>
+          <div class="sc-chg up">↑ +ออเดอร์</div>
+        </div>
+        <div class="sc">
+          <div class="sc-bar" style="background:var(--black)"></div>
+          <div class="sc-lbl">ยอดขาย (เดือนนี้)</div>
+          <div class="sc-val" id="s-gmv">—</div>
+          <div class="sc-chg">รวม</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab on" data-status="">ทั้งหมด <span class="tab-count" id="c-all">0</span></button>
+        <button class="tab" data-status="paid">💳 รอเตรียม <span class="tab-count" id="c-paid">0</span></button>
+        <button class="tab" data-status="preparing">📦 เตรียมจัดส่ง <span class="tab-count" id="c-prep">0</span></button>
+        <button class="tab" data-status="shipping">🚚 กำลังส่ง <span class="tab-count" id="c-ship">0</span></button>
+        <button class="tab" data-status="delivered">✓ สำเร็จ <span class="tab-count" id="c-done">0</span></button>
+        <button class="tab" data-status="cancelled">✕ ยกเลิก <span class="tab-count" id="c-cancel">0</span></button>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-bar">
+        <input type="text" class="flt-input" id="f-search" placeholder="🔍 ค้นหา Order # หรือ ลูกค้า..." style="width:280px">
+        <select class="flt-sel" id="f-period">
+          <option value="7">7 วันล่าสุด</option>
+          <option value="30" selected>30 วัน</option>
+          <option value="90">90 วัน</option>
+          <option value="all">ทั้งหมด</option>
+        </select>
+        <span style="margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--g500)" id="result-count"></span>
+      </div>
+
+      <!-- Table -->
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px">Order #</th>
+              <th>ลูกค้า / ที่อยู่</th>
+              <th>สินค้า (ของฉัน)</th>
+              <th class="tar" style="width:100px">ยอด (ของฉัน)</th>
+              <th style="width:120px">วิธีชำระ</th>
+              <th style="width:130px">สถานะ</th>
+              <th style="width:200px">การจัดส่ง</th>
+            </tr>
+          </thead>
+          <tbody id="orders-body">
+            <tr><td colspan="7" class="loading">⏳ กำลังโหลด...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Ship modal -->
+<div class="modal-bg" id="m-ship">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-ttl">🚚 จัดส่งสินค้า</div>
+      <button class="modal-x" onclick="closeModal('m-ship')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--g50);padding:10px 12px;margin-bottom:14px;border-left:3px solid var(--black);font-size:12px">
+        <strong id="ship-order">—</strong>
+        <div style="color:var(--g500);font-size:11px;margin-top:3px" id="ship-cust">—</div>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label class="lbl">ขนส่ง</label>
+          <select class="sel" id="ship-carrier">
+            <option value="">-- เลือก --</option>
+            <option value="Kerry Express">Kerry Express</option>
+            <option value="Flash Express">Flash Express</option>
+            <option value="J&T Express">J&T Express</option>
+            <option value="Thailand Post">ไปรษณีย์ไทย</option>
+            <option value="SCG Express">SCG Express</option>
+            <option value="Best Express">Best Express</option>
+            <option value="Ninja Van">Ninja Van</option>
+            <option value="DHL">DHL</option>
+            <option value="Other">อื่นๆ</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="lbl">หมายเลขพัสดุ *</label>
+          <input type="text" class="inp" id="ship-tracking" placeholder="เช่น TH001234TM">
+        </div>
+      </div>
+      <div class="fg">
+        <label class="lbl">หมายเหตุ (ถ้ามี)</label>
+        <textarea class="inp" id="ship-note" rows="2" style="resize:vertical;min-height:50px"></textarea>
+      </div>
+      <div style="background:var(--am-bg);padding:10px 12px;border-left:3px solid var(--am);font-size:11.5px;color:var(--g700)">
+        💡 ระบบจะแจ้งเตือนลูกค้าทันทีเมื่อยืนยันจัดส่ง
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g btn-sm" onclick="closeModal('m-ship')">ยกเลิก</button>
+      <button class="btn btn-am btn-sm" onclick="confirmShip()">🚚 ยืนยันจัดส่ง</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject modal -->
+<div class="modal-bg" id="m-reject">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-ttl">✕ ปฏิเสธ/ยกเลิกออเดอร์</div>
+      <button class="modal-x" onclick="closeModal('m-reject')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;margin-bottom:14px;color:var(--red)">⚠️ การยกเลิกจะคืนเงินให้ลูกค้าโดยอัตโนมัติ</p>
+      <div class="fg">
+        <label class="lbl">เหตุผล *</label>
+        <select class="sel" id="reject-reason">
+          <option value="">-- เลือก --</option>
+          <option value="out_of_stock">สินค้าหมด</option>
+          <option value="customer_request">ลูกค้าขอยกเลิก</option>
+          <option value="address_invalid">ที่อยู่ไม่ถูกต้อง/ส่งไม่ได้</option>
+          <option value="other">อื่นๆ</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="lbl">รายละเอียด</label>
+        <textarea class="inp" id="reject-note" rows="2" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g btn-sm" onclick="closeModal('m-reject')">ปิด</button>
+      <button class="btn btn-r btn-sm" onclick="confirmReject()">ยืนยันยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<div class="tw" id="tw"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  SELLER ORDERS — manage orders for current seller
+// ════════════════════════════════════════════════════════════════
+
+const SUPABASE_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
+const _sb = (window._sb) || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const ST_LABELS = {
+  pending:'⏳ รอชำระ', paid:'💳 ชำระแล้ว',
+  preparing:'📦 เตรียมจัดส่ง', shipping:'🚚 กำลังส่ง',
+  delivered:'✓ สำเร็จ', cancelled:'✕ ยกเลิก', refunded:'↩ คืนเงิน'
+};
+const ST_CLASS = {
+  pending:'bdg-pending', paid:'bdg-paid',
+  preparing:'bdg-preparing', shipping:'bdg-shipping',
+  delivered:'bdg-delivered', cancelled:'bdg-cancelled', refunded:'bdg-refunded'
+};
+const PAY_LABEL = {credit_card:'บัตรเครดิต', qr:'QR PromptPay', install:'ผ่อน 0%', counter:'Counter', cod:'COD'};
+const PAY_ICON = {credit_card:'💳', qr:'📱', install:'💰', counter:'🏪', cod:'📦'};
+
+let _user = null;
+let _shopName = null;
+let _orders = [];
+let _filterStatus = '';
+let _filterText = '';
+let _filterPeriod = '30';
+let _shipOrderId = null;
+
+function toast(msg, type='') {
+  const w = document.getElementById('tw');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+const fmtMoney = n => '฿' + Number(n||0).toLocaleString('th-TH');
+const fmtDate = d => {
+  const dt = new Date(d);
+  return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'}) + ' · ' +
+         dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+};
+function openModal(id){ document.getElementById(id).classList.add('on'); }
+function closeModal(id){ document.getElementById(id).classList.remove('on'); }
+
+// ── Get current user / seller info ─────────────────────────────
+async function getUser() {
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    location.href = 'login.html?redirect=seller-orders.html';
+    return null;
+  }
+  _user = session.user;
+
+  // Try to get seller profile / shop name
+  const { data: profile } = await _sb.from('users').select('display_name, shop_name')
+    .eq('id', _user.id).maybeSingle();
+
+  _shopName = profile?.shop_name || profile?.display_name || _user.email?.split('@')[0] || 'My Shop';
+  document.getElementById('shop-name').innerHTML = _shopName.length > 16 ?
+    _shopName.slice(0,14)+'..' :
+    _shopName.replace(/\./g, '<span class="dot">.</span>');
+  document.getElementById('shop-avatar').textContent = _shopName.charAt(0).toUpperCase();
+  document.getElementById('user-av').textContent = _shopName.charAt(0).toUpperCase();
+
+  return _user;
+}
+
+// ── Load orders that contain seller's items ────────────────────
+async function loadOrders() {
+  const tbody = document.getElementById('orders-body');
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">⏳ กำลังโหลด...</td></tr>';
+
+  try {
+    let qb = _sb.from('orders').select('*').order('created_at',{ascending:false});
+    if (_filterPeriod !== 'all') {
+      const since = new Date(Date.now() - parseInt(_filterPeriod)*86400*1000).toISOString();
+      qb = qb.gte('created_at', since);
+    }
+    qb = qb.limit(300);
+
+    const { data, error } = await qb;
+    if (error) throw error;
+
+    // Filter to orders that contain this seller's items
+    // Match by shop name (assuming items[].shop = shop_name) OR by user_id (this seller's own orders)
+    const allOrders = data || [];
+    _orders = allOrders.filter(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      return items.some(i =>
+        (i.shop && _shopName && i.shop.toLowerCase() === _shopName.toLowerCase()) ||
+        (i.seller_id && i.seller_id === _user.id)
+      );
+    });
+
+    // Fallback: if no items match shop, show all (demo / single shop scenario)
+    if (_orders.length === 0 && allOrders.length > 0) {
+      _orders = allOrders;
+    }
+
+    updateStats();
+    updateTabCounts();
+    render();
+
+  } catch (err) {
+    console.error('Load error:', err);
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">
+      <div class="icon">⚠️</div>
+      <div class="title">โหลดไม่สำเร็จ</div>
+      <div class="desc">${err.message}</div>
+    </td></tr>`;
+  }
+}
+
+// ── Calculate seller's portion of an order ────────────────────
+function sellerItems(order) {
+  const items = Array.isArray(order.items) ? order.items : [];
+  return items.filter(i =>
+    !_shopName || !i.shop ||
+    i.shop.toLowerCase() === _shopName.toLowerCase() ||
+    (i.seller_id && i.seller_id === _user.id)
+  );
+}
+function sellerSubtotal(order) {
+  return sellerItems(order).reduce((s,i) => s + (Number(i.price||0) * (i.qty||1)), 0);
+}
+
+// ── Stats ──────────────────────────────────────────────────────
+function updateStats() {
+  const todo = _orders.filter(o => ['paid','preparing'].includes(o.status)).length;
+  const shipping = _orders.filter(o => o.status === 'shipping').length;
+
+  // This month
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+  const thisMonth = _orders.filter(o => new Date(o.created_at) >= monthStart);
+  const done = thisMonth.filter(o => o.status === 'delivered').length;
+  const gmv = thisMonth.filter(o => o.status === 'delivered')
+                       .reduce((s,o) => s + sellerSubtotal(o), 0);
+
+  document.getElementById('s-todo').textContent = todo;
+  document.getElementById('s-shipping').textContent = shipping;
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-gmv').textContent = '฿' + (gmv >= 1000 ? (gmv/1000).toFixed(1)+'K' : gmv.toFixed(0));
+
+  // Sidebar badge
+  const badge = document.getElementById('badge-pending');
+  if (todo > 0) {
+    badge.textContent = todo;
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function updateTabCounts() {
+  document.getElementById('c-all').textContent = _orders.length;
+  document.getElementById('c-paid').textContent = _orders.filter(o => o.status === 'paid').length;
+  document.getElementById('c-prep').textContent = _orders.filter(o => o.status === 'preparing').length;
+  document.getElementById('c-ship').textContent = _orders.filter(o => o.status === 'shipping').length;
+  document.getElementById('c-done').textContent = _orders.filter(o => o.status === 'delivered').length;
+  document.getElementById('c-cancel').textContent = _orders.filter(o => ['cancelled','refunded'].includes(o.status)).length;
+}
+
+// ── Render ─────────────────────────────────────────────────────
+function render() {
+  const tbody = document.getElementById('orders-body');
+  let list = _orders;
+
+  if (_filterStatus === 'cancelled') {
+    list = list.filter(o => ['cancelled','refunded'].includes(o.status));
+  } else if (_filterStatus) {
+    list = list.filter(o => o.status === _filterStatus);
+  }
+
+  if (_filterText) {
+    const q = _filterText.toLowerCase();
+    list = list.filter(o => {
+      return (o.order_number||'').toLowerCase().includes(q) ||
+             (o.shipping_address?.name||'').toLowerCase().includes(q);
+    });
+  }
+
+  document.getElementById('result-count').textContent = `${list.length} ออเดอร์`;
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">
+      <div class="icon">📭</div>
+      <div class="title">ไม่มีออเดอร์</div>
+      <div class="desc">${_filterStatus ? 'ลองเปลี่ยน Tab' : 'ยังไม่มีลูกค้าสั่งซื้อในช่วงเวลานี้'}</div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(o => {
+    const myItems = sellerItems(o);
+    const mySubtotal = sellerSubtotal(o);
+    const itemPreview = myItems.slice(0,2).map(i => `${i.name} ×${i.qty||1}`).join(', ') +
+                        (myItems.length > 2 ? ` +${myItems.length-2}` : '');
+    const totalQty = myItems.reduce((s,i)=>s+(i.qty||1),0);
+    const addr = o.shipping_address || {};
+
+    // Action button based on status
+    let action = '';
+    if (o.status === 'paid' || o.status === 'preparing') {
+      action = `<button class="btn btn-am btn-xs" onclick="openShip('${o.id}')">🚚 จัดส่ง</button>
+                <button class="btn btn-g btn-xs" onclick="openReject('${o.id}')">✕</button>`;
+    } else if (o.status === 'shipping') {
+      action = `<div style="font-size:11px;font-weight:500">${o.tracking_carrier||'—'}</div>
+                <div style="font-family:var(--mono);font-size:10px;color:var(--g500)">${o.tracking_no||'—'}</div>`;
+    } else if (o.status === 'delivered') {
+      action = `<div style="font-size:11px;font-weight:500;color:var(--gn)">✓ ${o.tracking_carrier||''}</div>
+                <div style="font-family:var(--mono);font-size:10px;color:var(--g500)">${o.tracking_no||''}</div>`;
+    } else if (o.status === 'pending') {
+      action = `<span style="font-size:11px;color:var(--am)">รอลูกค้าชำระ</span>`;
+    } else {
+      action = `<span style="font-size:11px;color:var(--g500)">—</span>`;
+    }
+
+    return `<tr>
+      <td>
+        <a href="admin-order-detail.html?order=${o.order_number}" class="order-num" style="color:var(--bl)">${o.order_number}</a>
+        <div class="order-date">${fmtDate(o.created_at)}</div>
+      </td>
+      <td>
+        <div class="cust-name">${addr.name || '—'}</div>
+        <div class="cust-meta">${(addr.detail||'').slice(0,38)}${(addr.detail||'').length>38?'...':''}</div>
+      </td>
+      <td>
+        <div style="font-size:12.5px;line-height:1.4">${itemPreview || '—'}</div>
+        <div class="cust-meta">${totalQty} ชิ้น · ${myItems.length} รายการ</div>
+      </td>
+      <td class="tar"><span class="amount">${fmtMoney(mySubtotal)}</span></td>
+      <td>
+        <span style="font-size:12px">${PAY_ICON[o.payment_method]||'?'} ${PAY_LABEL[o.payment_method]||'—'}</span>
+      </td>
+      <td><span class="badge ${ST_CLASS[o.status]||'bdg-default'}">${ST_LABELS[o.status]||o.status}</span></td>
+      <td>${action}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Open ship modal ────────────────────────────────────────────
+function openShip(orderId) {
+  const o = _orders.find(x => x.id === orderId);
+  if (!o) return;
+  _shipOrderId = orderId;
+  document.getElementById('ship-order').textContent = o.order_number;
+  document.getElementById('ship-cust').textContent =
+    `${o.shipping_address?.name || '—'} · ${(o.shipping_address?.detail||'').slice(0,60)}`;
+  document.getElementById('ship-carrier').value = o.tracking_carrier || '';
+  document.getElementById('ship-tracking').value = o.tracking_no || '';
+  document.getElementById('ship-note').value = '';
+  openModal('m-ship');
+}
+
+// ── Confirm ship ──────────────────────────────────────────────
+async function confirmShip() {
+  const carrier = document.getElementById('ship-carrier').value;
+  const tracking = document.getElementById('ship-tracking').value.trim();
+  const note = document.getElementById('ship-note').value.trim();
+
+  if (!carrier) { toast('กรุณาเลือกขนส่ง', 'err'); return; }
+  if (!tracking) { toast('กรุณาใส่หมายเลขพัสดุ', 'err'); return; }
+
+  const order = _orders.find(o => o.id === _shipOrderId);
+  if (!order) return;
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+
+  try {
+    await _sb.from('orders').update({
+      status:'shipping',
+      tracking_carrier: carrier,
+      tracking_no: tracking,
+      shipped_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }).eq('id', _shipOrderId);
+
+    await _sb.from('order_tracking').insert({
+      order_id: _shipOrderId,
+      status: 'shipping',
+      description: note || `Seller ส่งสินค้าผ่าน ${carrier}`,
+      carrier: carrier,
+      tracking_no: tracking
+    });
+
+    await _sb.from('notifications').insert({
+      user_id: order.user_id,
+      type: 'order',
+      title: 'ออกจากคลังแล้ว 🚚',
+      message: `${order.order_number} จัดส่งโดย ${carrier} เลขพัสดุ ${tracking}`,
+      link: 'tracking.html?order=' + order.order_number,
+      icon: '🚚'
+    });
+
+    closeModal('m-ship');
+    toast('✓ บันทึกการจัดส่งสำเร็จ', 'ok');
+    setTimeout(loadOrders, 600);
+
+  } catch (err) {
+    console.error(err);
+    toast('Error: ' + err.message, 'err');
+    btn.disabled = false; btn.textContent = '🚚 ยืนยันจัดส่ง';
+  }
+}
+
+// ── Open reject modal ─────────────────────────────────────────
+function openReject(orderId) {
+  _shipOrderId = orderId;
+  document.getElementById('reject-reason').value = '';
+  document.getElementById('reject-note').value = '';
+  openModal('m-reject');
+}
+
+// ── Confirm reject ────────────────────────────────────────────
+async function confirmReject() {
+  const reason = document.getElementById('reject-reason').value;
+  const note = document.getElementById('reject-note').value.trim();
+  if (!reason) { toast('กรุณาเลือกเหตุผล', 'err'); return; }
+
+  const order = _orders.find(o => o.id === _shipOrderId);
+  if (!order) return;
+
+  try {
+    await _sb.from('orders').update({
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancel_reason: 'seller:' + reason,
+      updated_at: new Date().toISOString()
+    }).eq('id', _shipOrderId);
+
+    await _sb.from('order_tracking').insert({
+      order_id: _shipOrderId,
+      status: 'cancelled',
+      description: `Seller ยกเลิก: ${reason}` + (note ? ` (${note})` : '')
+    });
+
+    await _sb.from('notifications').insert({
+      user_id: order.user_id, type:'order',
+      title:'ออเดอร์ถูกยกเลิก',
+      message: `${order.order_number} ถูกยกเลิกโดย Seller (${reason}) ระบบจะคืนเงินอัตโนมัติ`,
+      link: 'order-history.html', icon:'✕'
+    });
+
+    closeModal('m-reject');
+    toast('ยกเลิกออเดอร์แล้ว', 'ok');
+    setTimeout(loadOrders, 600);
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  }
+}
+
+// ── Export CSV ─────────────────────────────────────────────────
+function exportCSV() {
+  if (!_orders.length) { toast('ไม่มีข้อมูล', 'err'); return; }
+  const headers = ['Order #','วันที่','ลูกค้า','ยอด','สถานะ','ขนส่ง','Tracking'];
+  const rows = _orders.map(o => [
+    o.order_number, fmtDate(o.created_at),
+    o.shipping_address?.name||'', sellerSubtotal(o),
+    ST_LABELS[o.status]||o.status, o.tracking_carrier||'', o.tracking_no||''
+  ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv = '\ufeff' + [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `seller-orders-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Export สำเร็จ', 'ok');
+}
+
+// ── Tab clicks ─────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+    tab.classList.add('on');
+    _filterStatus = tab.dataset.status;
+    render();
+  });
+});
+
+// ── Filters ────────────────────────────────────────────────────
+document.getElementById('f-search').addEventListener('input', e => {
+  _filterText = e.target.value.trim();
+  render();
+});
+document.getElementById('f-period').addEventListener('change', e => {
+  _filterPeriod = e.target.value;
+  loadOrders();
+});
+
+// ── Click outside modal ────────────────────────────────────────
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('on'); });
+});
+
+// ── Boot ───────────────────────────────────────────────────────
+(async () => {
+  const u = await getUser();
+  if (u) {
+    await loadOrders();
+    setInterval(loadOrders, 60000);
+  }
+})();
+</script>
 </body>
 </html>

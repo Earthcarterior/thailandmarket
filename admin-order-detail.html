@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thailand Market — รายละเอียดออเดอร์ (Admin)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{--black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;--g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--gn:#16A34A;--gn-bg:#DCFCE7;--am:#D97706;--am-bg:#FEF3C7;--bl:#2563EB;--bl-bg:#DBEAFE;--font:'DM Sans',system-ui,sans-serif;--th:'Sarabun',sans-serif;--mono:'DM Mono',monospace;--border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;--sidebar:220px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--th);background:var(--g50);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}button{font-family:var(--th);cursor:pointer}
+
+/* ── Top nav (compact) ── */
+#tn{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
+.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);margin-right:32px}
+.tn-logo .dot{color:var(--red)}
+.tn-acts{display:flex;gap:1px;margin-left:auto}
+.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase}
+.tn-btn:hover{color:var(--black)}.tn-ico{font-size:15px}
+
+/* ── App ── */
+.app{display:flex;min-height:100vh}
+.sb{width:var(--sidebar);background:var(--black);position:fixed;top:0;bottom:0;display:flex;flex-direction:column;overflow-y:auto;z-index:100}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:9px}
+.sb-mark{width:32px;height:32px;background:var(--g800);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:var(--white);font-size:13px}
+.sb-name{font-family:var(--mono);font-weight:500;color:var(--white);font-size:13px;letter-spacing:.04em}
+.sb-name .dot{color:var(--red)}.sb-sub{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.5px;text-transform:uppercase}
+.sb-nav{padding:8px 0;flex:1}
+.sb-lbl{font-size:9px;color:rgba(255,255,255,.28);letter-spacing:1.2px;text-transform:uppercase;padding:6px 16px 4px}
+.sni{display:flex;align-items:center;gap:9px;padding:9px 16px;color:rgba(255,255,255,.5);font-size:12.5px;border-left:3px solid transparent}
+.sni:hover{background:rgba(255,255,255,.05);color:var(--white)}
+.sni.on{background:rgba(230,51,41,.12);color:var(--white);border-left-color:var(--red)}
+.sni-ico{font-size:14px;width:18px;text-align:center}
+.sb-foot{padding:12px 16px;border-top:1px solid rgba(255,255,255,.07)}
+.sb-fl{display:flex;align-items:center;gap:7px;padding:5px 0;color:rgba(255,255,255,.35);font-size:11.5px}
+
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--white);border-bottom:var(--border);height:52px;display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:90}
+.tb-back{background:none;border:var(--border);width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.tb-back:hover{border-color:var(--black)}
+.tb-title{font-family:var(--mono);font-weight:600;font-size:14px;letter-spacing:.03em}
+.tb-right{display:flex;gap:8px;align-items:center;margin-left:auto}
+.content{padding:20px;flex:1}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;transition:all .15s}
+.btn-k{background:var(--black);color:var(--white)}.btn-k:hover{background:var(--g800)}
+.btn-r{background:var(--red);color:var(--white)}.btn-r:hover{opacity:.9}
+.btn-o{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-o:hover{background:var(--black);color:var(--white)}
+.btn-g{background:transparent;color:var(--g500);border:var(--border)}.btn-g:hover{border-color:var(--black);color:var(--black)}
+.btn-gn{background:var(--gn);color:var(--white)}.btn-gn:hover{opacity:.9}
+.btn-am{background:var(--am);color:var(--white)}.btn-am:hover{opacity:.9}
+.btn-bl{background:var(--bl);color:var(--white)}.btn-bl:hover{opacity:.9}
+.btn-sm{padding:8px 14px;font-size:11px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:1fr 360px;gap:18px;max-width:1280px}
+.col-main{display:flex;flex-direction:column;gap:14px}
+.col-side{display:flex;flex-direction:column;gap:14px}
+
+/* ── Card ── */
+.card{background:var(--white);border:var(--border)}
+.card-head{padding:14px 18px;border-bottom:var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.card-body{padding:18px}
+
+/* ── Order header ── */
+.order-head{background:var(--white);border:var(--border);padding:20px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.order-num{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:.04em}
+.order-meta{font-size:12px;color:var(--g500);margin-top:4px;font-family:var(--mono)}
+.order-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── Status timeline ── */
+.tl-row{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;padding-top:14px;border-top:var(--border)}
+.tl-step{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--g100);font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--g500)}
+.tl-step.done{background:var(--gn);color:var(--white)}
+.tl-step.now{background:var(--black);color:var(--white)}
+.tl-arr{color:var(--g300);font-size:14px}
+
+/* ── Items ── */
+.item-row{display:flex;gap:12px;padding:12px 0;border-bottom:var(--border)}
+.item-row:last-child{border-bottom:none}
+.item-img{width:54px;height:54px;background:var(--g100);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:var(--border)}
+.item-info{flex:1;min-width:0}
+.item-name{font-size:13px;font-weight:500;line-height:1.3;margin-bottom:3px}
+.item-var{font-size:11px;color:var(--g500)}
+.item-shop{font-size:11px;color:var(--g600);margin-top:4px;font-family:var(--mono)}
+.item-price{text-align:right;flex-shrink:0;min-width:90px}
+.item-price-main{font-family:var(--mono);font-weight:600;font-size:13px}
+.item-price-sub{font-size:11px;color:var(--g500);font-family:var(--mono)}
+
+/* ── Tracking timeline ── */
+.tk-list{position:relative;padding-left:18px}
+.tk-list::before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:1px;background:var(--g200)}
+.tk-item{position:relative;padding-bottom:14px;font-size:12.5px}
+.tk-item:last-child{padding-bottom:0}
+.tk-item::before{content:'';position:absolute;left:-17px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--white);border:2px solid var(--g300)}
+.tk-item.active::before{background:var(--gn);border-color:var(--gn)}
+.tk-item.latest::before{background:var(--red);border-color:var(--red);box-shadow:0 0 0 3px rgba(230,51,41,.2)}
+.tk-status{font-weight:500;font-size:12.5px}
+.tk-desc{color:var(--g600);font-size:11.5px;margin-top:1px}
+.tk-time{font-family:var(--mono);font-size:10px;color:var(--g500);margin-top:2px}
+
+/* ── Forms ── */
+.fg{margin-bottom:14px}
+.lbl{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g600);display:block;margin-bottom:6px}
+.inp,.sel,.ta{width:100%;padding:9px 12px;border:var(--border);font-size:13px;font-family:var(--th);background:var(--white);color:var(--black);outline:none}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--black)}
+.sel{cursor:pointer}.ta{resize:vertical;min-height:60px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── Summary side ── */
+.sum-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0}
+.sum-row.total{padding-top:10px;border-top:var(--border);margin-top:6px;font-weight:600;font-size:15px}
+.sum-row.total .v{font-family:var(--mono);color:var(--red)}
+.sum-row .v{font-family:var(--mono)}
+
+/* ── Customer / Address ── */
+.info-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--g100)}
+.info-row:last-child{border-bottom:none}
+.info-row .k{color:var(--g500);font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase}
+.info-row .v{font-weight:500;text-align:right}
+
+.addr-box{background:var(--g50);padding:14px;border-left:3px solid var(--black)}
+.addr-name{font-weight:600;font-size:13.5px;margin-bottom:4px}
+.addr-phone{font-family:var(--mono);font-size:12px;color:var(--g600);margin-bottom:6px}
+.addr-detail{font-size:12.5px;color:var(--g700);line-height:1.5}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border:1px solid;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.bdg-pending{border-color:var(--am);color:var(--am);background:var(--am-bg)}
+.bdg-paid{border-color:var(--bl);color:var(--bl);background:var(--bl-bg)}
+.bdg-preparing{border-color:var(--g700);color:var(--g700);background:var(--g100)}
+.bdg-shipping{border-color:var(--am);color:var(--am);background:var(--am-bg)}
+.bdg-delivered{border-color:var(--gn);color:var(--gn);background:var(--gn-bg)}
+.bdg-cancelled{border-color:var(--red);color:var(--red);background:#FEE2E2}
+.bdg-refunded{border-color:var(--g500);color:var(--g500)}
+.bdg-default{border-color:var(--g300);color:var(--g600)}
+
+/* ── Modal ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-bg.on{display:flex}
+.modal{background:var(--white);border:var(--border-dark);width:480px;max-width:90vw;max-height:90vh;overflow-y:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:var(--border)}
+.modal-ttl{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.modal-x{background:none;border:none;font-size:20px;cursor:pointer;color:var(--g400)}
+.modal-x:hover{color:var(--black)}
+.modal-body{padding:20px}
+.modal-foot{padding:14px 20px;border-top:var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* ── Empty / Loading ── */
+.loading,.empty{padding:60px 20px;text-align:center;color:var(--g500)}
+.empty .icon{font-size:40px;margin-bottom:10px;opacity:.4}
+.empty .title{font-size:15px;color:var(--g700);margin-bottom:6px;font-weight:600}
+
+/* ── Toast ── */
+.tw{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
+.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:12.5px;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tIn .2s ease;max-width:360px}
+.toast.ok{border-left-color:var(--gn)}
+@keyframes tIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── Mobile ── */
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .app{flex-direction:column}
+  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
+  .sb-foot{display:none}.sb-lbl{display:none}
+  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
+  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
+  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
+  .main{margin-left:0!important}
+  .order-head{flex-direction:column;align-items:stretch}
+  .row2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Public top nav -->
+<nav id="tn">
+  <div class="tn-top">
+    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="tn-acts">
+      <button class="tn-btn" onclick="location.href='admin-dashboard.html'"><span class="tn-ico">⚙️</span>Admin</button>
+      <button class="tn-btn" onclick="location.href='login.html'"><span class="tn-ico">🚪</span>Logout</button>
+    </div>
+  </div>
+</nav>
+
+<!-- Admin sidebar layout -->
+<div class="app">
+  <aside class="sb">
+    <div class="sb-logo">
+      <div class="sb-mark">A</div>
+      <div>
+        <div class="sb-name">Thailand<span class="dot">.</span>Market</div>
+        <div class="sb-sub">Admin Panel</div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-lbl">Administration</div>
+      <a href="admin-dashboard.html" class="sni"><span class="sni-ico">📊</span>Overview</a>
+      <a href="admin-cms.html" class="sni"><span class="sni-ico">⚙️</span>CMS</a>
+      <a href="admin-users.html" class="sni"><span class="sni-ico">👤</span>ผู้ใช้</a>
+      <a href="admin-sellers.html" class="sni"><span class="sni-ico">🏪</span>ร้านค้า</a>
+      <a href="admin-orders.html" class="sni on"><span class="sni-ico">🛒</span>ออเดอร์</a>
+      <a href="admin-products.html" class="sni"><span class="sni-ico">📦</span>สินค้า</a>
+      <a href="admin-coupons.html" class="sni"><span class="sni-ico">🎫</span>คูปอง</a>
+      <a href="admin-payouts.html" class="sni"><span class="sni-ico">💰</span>Payout</a>
+    </nav>
+    <div class="sb-foot">
+      <a href="index.html" class="sb-fl">🏠 หน้าหลัก</a>
+      <a href="login.html" class="sb-fl">🚪 ออกจากระบบ</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="tb-back" onclick="location.href='admin-orders.html'" title="กลับ">←</button>
+      <div class="tb-title" id="tb-order-num">รายละเอียดออเดอร์</div>
+      <div class="tb-right">
+        <button class="btn btn-g btn-sm" onclick="loadOrder()">🔄 Refresh</button>
+        <button class="btn btn-o btn-sm" onclick="window.print()">🖨️ พิมพ์</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div id="page-content">
+        <div class="loading">⏳ กำลังโหลดข้อมูลออเดอร์...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──── MODALS ──── -->
+
+<!-- Confirm payment modal -->
+<div class="modal-bg" id="m-pay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-ttl">💳 ยืนยันการชำระเงิน</div>
+      <button class="modal-x" onclick="closeModal('m-pay')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;margin-bottom:14px">ยืนยันว่าได้รับเงินจากลูกค้าแล้วใช่ไหม?</p>
+      <div class="fg">
+        <label class="lbl">เลขอ้างอิงการชำระ (Transaction ID)</label>
+        <input type="text" class="inp" id="pay-ref" placeholder="เช่น TXN20260506123456">
+      </div>
+      <div class="fg">
+        <label class="lbl">หมายเหตุ (ถ้ามี)</label>
+        <textarea class="ta" id="pay-note" placeholder="เช่น โอนผ่าน KBank, สลิปแนบ..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g btn-sm" onclick="closeModal('m-pay')">ยกเลิก</button>
+      <button class="btn btn-gn btn-sm" onclick="confirmPayment()">✓ ยืนยันชำระเงิน</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ship modal -->
+<div class="modal-bg" id="m-ship">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-ttl">🚚 จัดส่งสินค้า</div>
+      <button class="modal-x" onclick="closeModal('m-ship')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="row2">
+        <div class="fg">
+          <label class="lbl">ขนส่ง</label>
+          <select class="sel" id="ship-carrier">
+            <option value="">-- เลือกขนส่ง --</option>
+            <option value="Kerry Express">Kerry Express</option>
+            <option value="Flash Express">Flash Express</option>
+            <option value="J&T Express">J&T Express</option>
+            <option value="Thailand Post">ไปรษณีย์ไทย (EMS)</option>
+            <option value="SCG Express">SCG Express</option>
+            <option value="Best Express">Best Express</option>
+            <option value="Ninja Van">Ninja Van</option>
+            <option value="DHL">DHL</option>
+            <option value="Other">อื่นๆ</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="lbl">หมายเลขพัสดุ</label>
+          <input type="text" class="inp" id="ship-tracking" placeholder="เช่น TH001234TM">
+        </div>
+      </div>
+      <div class="fg">
+        <label class="lbl">ที่ตั้งคลังส่ง (ถ้ามี)</label>
+        <input type="text" class="inp" id="ship-from" placeholder="เช่น Bangkok DC">
+      </div>
+      <div class="fg">
+        <label class="lbl">หมายเหตุ</label>
+        <textarea class="ta" id="ship-note" placeholder="เช่น ออกจากคลังเรียบร้อย..."></textarea>
+      </div>
+      <div style="background:var(--am-bg);padding:10px 12px;border-left:3px solid var(--am);font-size:12px;color:var(--g700)">
+        💡 ระบบจะเปลี่ยนสถานะออเดอร์เป็น "กำลังจัดส่ง" และส่ง notification ให้ลูกค้า
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g btn-sm" onclick="closeModal('m-ship')">ยกเลิก</button>
+      <button class="btn btn-am btn-sm" onclick="confirmShip()">🚚 ยืนยันจัดส่ง</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update tracking modal -->
+<div class="modal-bg" id="m-track">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-ttl">📍 อัปเดตสถานะพัสดุ</div>
+      <button class="modal-x" onclick="closeModal('m-track')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label class="lbl">สถานะ</label>
+        <select class="sel" id="track-status">
+          <option value="shipping">🚚 กำลังจัดส่ง</option>
+          <option value="delivered">✓ ส่งถึงผู้รับแล้ว</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="lbl">ตำแหน่ง / สถานี</label>
+        <input type="text" class="inp" id="track-loc" placeholder="เช่น ศูนย์กระจายสินค้า กรุงเทพ">
+      </div>
+      <div class="fg">
+        <label class="lbl">รายละเอียด</label>
+        <textarea class="ta" id="track-desc" placeholder="เช่น ถึงสาขาปลายทางแล้ว, รอจัดส่ง..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g btn-sm" onclick="closeModal('m-track')">ยกเลิก</button>
+      <button class="btn btn-bl btn-sm" onclick="confirmTracking()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel modal -->
+<div class="modal-bg" id="m-cancel">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-ttl">✕ ยกเลิกออเดอร์</div>
+      <button class="modal-x" onclick="closeModal('m-cancel')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;margin-bottom:14px;color:var(--red)"><strong>⚠️ การยกเลิกไม่สามารถย้อนกลับได้</strong></p>
+      <div class="fg">
+        <label class="lbl">เหตุผลในการยกเลิก *</label>
+        <select class="sel" id="cancel-reason">
+          <option value="">-- เลือก --</option>
+          <option value="customer_request">ลูกค้าขอยกเลิก</option>
+          <option value="out_of_stock">สินค้าหมด</option>
+          <option value="payment_failed">ชำระเงินไม่สำเร็จ</option>
+          <option value="suspicious">ออเดอร์ต้องสงสัย</option>
+          <option value="other">อื่นๆ</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="lbl">หมายเหตุ</label>
+        <textarea class="ta" id="cancel-note" placeholder="ระบุรายละเอียด..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g btn-sm" onclick="closeModal('m-cancel')">ปิด</button>
+      <button class="btn btn-r btn-sm" onclick="confirmCancel()">ยกเลิกออเดอร์</button>
+    </div>
+  </div>
+</div>
+
+<!-- Refund modal -->
+<div class="modal-bg" id="m-refund">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-ttl">↩ คืนเงิน (Refund)</div>
+      <button class="modal-x" onclick="closeModal('m-refund')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <label class="lbl">จำนวนเงินคืน (บาท) *</label>
+        <input type="number" class="inp" id="refund-amount" placeholder="0.00">
+      </div>
+      <div class="fg">
+        <label class="lbl">วิธีคืนเงิน</label>
+        <select class="sel" id="refund-method">
+          <option value="original">คืนทางช่องทางเดิม</option>
+          <option value="bank_transfer">โอนเงินบัญชีธนาคาร</option>
+          <option value="store_credit">เครดิตในระบบ</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="lbl">เลขอ้างอิงการคืนเงิน</label>
+        <input type="text" class="inp" id="refund-ref" placeholder="REF...">
+      </div>
+      <div class="fg">
+        <label class="lbl">หมายเหตุ</label>
+        <textarea class="ta" id="refund-note"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g btn-sm" onclick="closeModal('m-refund')">ยกเลิก</button>
+      <button class="btn btn-r btn-sm" onclick="confirmRefund()">↩ คืนเงิน</button>
+    </div>
+  </div>
+</div>
+
+<div class="tw" id="tw"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  ADMIN ORDER DETAIL — Payment + Shipping Management
+// ════════════════════════════════════════════════════════════════
+
+const SUPABASE_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
+const _sb = (window._sb) || supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// --- Constants
+const ST_LABELS = {
+  pending:'⏳ รอชำระ', paid:'💳 ชำระแล้ว',
+  preparing:'📦 เตรียมจัดส่ง', shipping:'🚚 กำลังส่ง',
+  delivered:'✓ สำเร็จ', cancelled:'✕ ยกเลิก', refunded:'↩ คืนเงิน'
+};
+const ST_CLASS = {
+  pending:'bdg-pending', paid:'bdg-paid',
+  preparing:'bdg-preparing', shipping:'bdg-shipping',
+  delivered:'bdg-delivered', cancelled:'bdg-cancelled', refunded:'bdg-refunded'
+};
+const PAY_LABEL = {
+  credit_card:'บัตรเครดิต/เดบิต', qr:'QR PromptPay', install:'ผ่อน 0% นาน 12 เดือน',
+  counter:'Counter Service', cod:'เก็บเงินปลายทาง'
+};
+const PAY_ICON = {credit_card:'💳', qr:'📱', install:'💰', counter:'🏪', cod:'📦'};
+const ST_FLOW = ['pending','paid','preparing','shipping','delivered'];
+
+// --- State
+let _order = null;
+let _payment = null;
+let _tracking = [];
+
+// --- URL params
+const urlParams = new URLSearchParams(location.search);
+const ORDER_NUM = urlParams.get('order');
+
+// ── Helpers ────────────────────────────────────────────────────
+function toast(msg, type='') {
+  const w = document.getElementById('tw');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+const fmtMoney = n => '฿' + Number(n||0).toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:2});
+const fmtDate = d => {
+  const dt = new Date(d);
+  return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'}) + ' · ' +
+         dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+};
+function openModal(id){ document.getElementById(id).classList.add('on'); }
+function closeModal(id){ document.getElementById(id).classList.remove('on'); }
+
+// ── Load order from Supabase ───────────────────────────────────
+async function loadOrder() {
+  if (!ORDER_NUM) {
+    showError('ไม่พบหมายเลขออเดอร์', 'กรุณากลับไปยังหน้ารายการออเดอร์');
+    return;
+  }
+
+  try {
+    // Fetch order
+    const { data: ord, error: oErr } = await _sb
+      .from('orders').select('*').eq('order_number', ORDER_NUM).single();
+
+    if (oErr || !ord) {
+      showError('ไม่พบออเดอร์', `Order ${ORDER_NUM} ไม่อยู่ในระบบ`);
+      return;
+    }
+    _order = ord;
+
+    // Fetch payment
+    const { data: pay } = await _sb
+      .from('payments').select('*').eq('order_id', ord.id)
+      .order('created_at',{ascending:false}).limit(1).maybeSingle();
+    _payment = pay;
+
+    // Fetch tracking events
+    const { data: tk } = await _sb
+      .from('order_tracking').select('*').eq('order_id', ord.id)
+      .order('created_at',{ascending:true});
+    _tracking = tk || [];
+
+    document.getElementById('tb-order-num').textContent = '🛒 ' + ord.order_number;
+    document.title = `Order ${ord.order_number} — Thailand Market Admin`;
+    renderPage();
+
+  } catch (err) {
+    console.error('Load order error:', err);
+    showError('โหลดข้อมูลไม่สำเร็จ', err.message);
+  }
+}
+
+// ── Show error ──────────────────────────────────────────────────
+function showError(title, desc) {
+  document.getElementById('page-content').innerHTML = `<div class="empty">
+    <div class="icon">⚠️</div>
+    <div class="title">${title}</div>
+    <div class="desc">${desc}</div>
+    <div style="margin-top:18px"><a href="admin-orders.html" class="btn btn-o btn-sm">← กลับ</a></div>
+  </div>`;
+}
+
+// ── Render the entire detail page ──────────────────────────────
+function renderPage() {
+  const o = _order;
+  const items = Array.isArray(o.items) ? o.items : [];
+  const addr = o.shipping_address || {};
+  const stClass = ST_CLASS[o.status] || 'bdg-default';
+  const isFinal = ['delivered','cancelled','refunded'].includes(o.status);
+
+  // Build action buttons based on status
+  const actions = buildActionButtons(o.status);
+
+  // Build status timeline
+  const stIdx = ST_FLOW.indexOf(o.status);
+  const stTimeline = ST_FLOW.map((st,i) => {
+    let cls = '';
+    if (o.status === 'cancelled' || o.status === 'refunded') {
+      cls = '';
+    } else if (i < stIdx) cls = 'done';
+    else if (i === stIdx) cls = 'now';
+    return `<span class="tl-step ${cls}">${ST_LABELS[st].replace(/^.\s+/,'')}</span>`;
+  }).join('<span class="tl-arr">›</span>');
+
+  document.getElementById('page-content').innerHTML = `
+    <!-- Order header -->
+    <div class="order-head" style="margin-bottom:18px">
+      <div>
+        <div class="order-num">${o.order_number}</div>
+        <div class="order-meta">สั่งเมื่อ ${fmtDate(o.created_at)}</div>
+        <div style="margin-top:8px"><span class="badge ${stClass}">${ST_LABELS[o.status]}</span></div>
+        ${(o.status !== 'cancelled' && o.status !== 'refunded') ? `<div class="tl-row">${stTimeline}</div>` : ''}
+      </div>
+      <div class="order-actions">${actions}</div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: Items + Tracking -->
+      <div class="col-main">
+
+        <!-- Items -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">📦 รายการสินค้า (${items.length})</div>
+            <div style="font-size:11px;color:var(--g500);font-family:var(--mono)">
+              รวม ${items.reduce((s,i)=>s+(i.qty||1),0)} ชิ้น
+            </div>
+          </div>
+          <div class="card-body">
+            ${items.length === 0 ? '<div style="color:var(--g500);text-align:center;padding:20px">ไม่มีรายการ</div>' :
+            items.map(it => `<div class="item-row">
+              <div class="item-img">${it.image || '📦'}</div>
+              <div class="item-info">
+                <div class="item-name">${it.name || '—'}</div>
+                ${it.variant ? `<div class="item-var">${it.variant}</div>` : ''}
+                ${it.shop ? `<div class="item-shop">🏪 ${it.shop}</div>` : ''}
+              </div>
+              <div class="item-price">
+                <div class="item-price-main">${fmtMoney(it.price * (it.qty||1))}</div>
+                <div class="item-price-sub">${fmtMoney(it.price)} × ${it.qty||1}</div>
+              </div>
+            </div>`).join('')}
+          </div>
+        </div>
+
+        <!-- Shipping/Tracking -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">🚚 การจัดส่ง</div>
+            ${o.tracking_carrier ? `<div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:12px;font-weight:500">${o.tracking_carrier}</span>
+              <span style="font-family:var(--mono);font-size:11px;color:var(--g600)">${o.tracking_no||'—'}</span>
+            </div>` : ''}
+          </div>
+          <div class="card-body">
+            ${_tracking.length === 0 ? `<div style="color:var(--g500);text-align:center;padding:20px;font-size:12.5px">
+              ยังไม่มีการอัปเดตสถานะการจัดส่ง
+            </div>` :
+            `<div class="tk-list">${_tracking.slice().reverse().map((t,i) => `
+              <div class="tk-item ${i === 0 ? 'latest' : 'active'}">
+                <div class="tk-status">${ST_LABELS[t.status] || t.status}</div>
+                ${t.description ? `<div class="tk-desc">${t.description}</div>` : ''}
+                ${t.location ? `<div class="tk-desc" style="color:var(--g500)">📍 ${t.location}</div>` : ''}
+                <div class="tk-time">${fmtDate(t.created_at)}</div>
+              </div>`).join('')}
+            </div>`}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Customer + Payment + Summary -->
+      <div class="col-side">
+
+        <!-- Customer -->
+        <div class="card">
+          <div class="card-head"><div class="card-title">👤 ลูกค้า</div></div>
+          <div class="card-body" style="padding-top:10px">
+            <div class="addr-box">
+              <div class="addr-name">${addr.name || '(ไม่ระบุ)'}</div>
+              ${addr.phone ? `<div class="addr-phone">📞 ${addr.phone}</div>` : ''}
+              <div class="addr-detail">${addr.detail || '—'}</div>
+              ${addr.tag ? `<div style="margin-top:6px"><span class="badge bdg-default">${addr.tag}</span></div>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">💳 การชำระเงิน</div>
+            ${o.status === 'pending' ?
+              `<span class="badge bdg-pending">รอชำระ</span>` :
+              `<span class="badge bdg-paid">ชำระแล้ว</span>`}
+          </div>
+          <div class="card-body">
+            <div class="info-row">
+              <div class="k">วิธีชำระ</div>
+              <div class="v">${PAY_ICON[o.payment_method]||'?'} ${PAY_LABEL[o.payment_method]||o.payment_method||'—'}</div>
+            </div>
+            ${_payment?.card_brand ? `<div class="info-row">
+              <div class="k">บัตร</div>
+              <div class="v" style="font-family:var(--mono)">${_payment.card_brand} ····${_payment.card_last4}</div>
+            </div>` : ''}
+            ${_payment?.qr_ref ? `<div class="info-row">
+              <div class="k">QR Ref</div>
+              <div class="v" style="font-family:var(--mono);font-size:11px">${_payment.qr_ref}</div>
+            </div>` : ''}
+            ${_payment?.counter_ref ? `<div class="info-row">
+              <div class="k">Counter Ref</div>
+              <div class="v" style="font-family:var(--mono);font-size:11px">${_payment.counter_ref}</div>
+            </div>` : ''}
+            ${_payment?.transaction_id ? `<div class="info-row">
+              <div class="k">Transaction ID</div>
+              <div class="v" style="font-family:var(--mono);font-size:11px">${_payment.transaction_id}</div>
+            </div>` : ''}
+            ${_payment?.gateway ? `<div class="info-row">
+              <div class="k">Gateway</div>
+              <div class="v">${_payment.gateway}</div>
+            </div>` : ''}
+            <div class="info-row">
+              <div class="k">สถานะ</div>
+              <div class="v">${_payment?.status === 'paid' ? '<span style="color:var(--gn)">✓ ชำระแล้ว</span>' :
+                              _payment?.status === 'failed' ? '<span style="color:var(--red)">✕ ล้มเหลว</span>' :
+                              _payment?.status === 'refunded' ? '<span style="color:var(--g500)">↩ คืนเงินแล้ว</span>' :
+                              '<span style="color:var(--am)">⏳ รอชำระ</span>'}</div>
+            </div>
+            ${_payment?.paid_at ? `<div class="info-row">
+              <div class="k">ชำระเมื่อ</div>
+              <div class="v" style="font-size:11px;font-family:var(--mono)">${fmtDate(_payment.paid_at)}</div>
+            </div>` : ''}
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="card">
+          <div class="card-head"><div class="card-title">💰 สรุปยอด</div></div>
+          <div class="card-body">
+            <div class="sum-row"><div>ค่าสินค้า</div><div class="v">${fmtMoney(o.subtotal)}</div></div>
+            ${o.discount ? `<div class="sum-row"><div>ส่วนลด</div><div class="v" style="color:var(--gn)">-${fmtMoney(o.discount)}</div></div>` : ''}
+            <div class="sum-row"><div>ค่าจัดส่ง</div><div class="v">${o.shipping_fee > 0 ? fmtMoney(o.shipping_fee) : '<span style="color:var(--gn)">ฟรี</span>'}</div></div>
+            <div class="sum-row total"><div>รวมทั้งสิ้น</div><div class="v">${fmtMoney(o.total)}</div></div>
+          </div>
+        </div>
+
+        ${o.notes ? `<div class="card">
+          <div class="card-head"><div class="card-title">📝 หมายเหตุ</div></div>
+          <div class="card-body" style="font-size:13px;color:var(--g700)">${o.notes}</div>
+        </div>` : ''}
+
+      </div>
+    </div>
+  `;
+}
+
+// ── Action buttons based on order status ───────────────────────
+function buildActionButtons(status) {
+  const buttons = [];
+
+  // PENDING → confirm payment
+  if (status === 'pending') {
+    buttons.push(`<button class="btn btn-gn" onclick="openModal('m-pay')">✓ ยืนยันชำระเงิน</button>`);
+    buttons.push(`<button class="btn btn-r" onclick="openModal('m-cancel')">✕ ยกเลิก</button>`);
+  }
+
+  // PAID → mark preparing or ship directly
+  if (status === 'paid') {
+    buttons.push(`<button class="btn btn-bl" onclick="markPreparing()">📦 เริ่มจัดเตรียม</button>`);
+    buttons.push(`<button class="btn btn-am" onclick="openModal('m-ship')">🚚 จัดส่งสินค้า</button>`);
+    buttons.push(`<button class="btn btn-r" onclick="openModal('m-cancel')">✕ ยกเลิก</button>`);
+  }
+
+  // PREPARING → ship
+  if (status === 'preparing') {
+    buttons.push(`<button class="btn btn-am" onclick="openModal('m-ship')">🚚 จัดส่งสินค้า</button>`);
+    buttons.push(`<button class="btn btn-r" onclick="openModal('m-cancel')">✕ ยกเลิก</button>`);
+  }
+
+  // SHIPPING → update tracking or mark delivered
+  if (status === 'shipping') {
+    buttons.push(`<button class="btn btn-bl" onclick="openModal('m-track')">📍 อัปเดตสถานะ</button>`);
+    buttons.push(`<button class="btn btn-gn" onclick="markDelivered()">✓ ส่งถึงแล้ว</button>`);
+  }
+
+  // DELIVERED → refund only
+  if (status === 'delivered') {
+    buttons.push(`<button class="btn btn-r" onclick="openModal('m-refund')">↩ คืนเงิน</button>`);
+  }
+
+  // CANCELLED / REFUNDED → no actions
+  return buttons.join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ACTION HANDLERS
+// ════════════════════════════════════════════════════════════════
+
+// ── Confirm payment ────────────────────────────────────────────
+async function confirmPayment() {
+  const ref = document.getElementById('pay-ref').value.trim();
+  const note = document.getElementById('pay-note').value.trim();
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+
+  try {
+    // 1. Update payment
+    if (_payment) {
+      await _sb.from('payments').update({
+        status: 'paid',
+        transaction_id: ref || _payment.transaction_id,
+        paid_at: new Date().toISOString()
+      }).eq('id', _payment.id);
+    }
+
+    // 2. Update order status to paid
+    await _sb.from('orders').update({
+      status: 'paid',
+      updated_at: new Date().toISOString()
+    }).eq('id', _order.id);
+
+    // 3. Add tracking event
+    await _sb.from('order_tracking').insert({
+      order_id: _order.id,
+      status: 'paid',
+      description: note || 'Admin ยืนยันการชำระเงินสำเร็จ' + (ref ? ` (${ref})` : '')
+    });
+
+    // 4. Notify customer
+    await _sb.from('notifications').insert({
+      user_id: _order.user_id,
+      type: 'order',
+      title: 'ชำระเงินสำเร็จ ✓',
+      message: `ออเดอร์ ${_order.order_number} ของคุณได้รับการชำระเงินแล้ว`,
+      link: 'tracking.html?order=' + _order.order_number,
+      icon: '✓'
+    });
+
+    closeModal('m-pay');
+    toast('✓ ยืนยันการชำระเงินสำเร็จ', 'ok');
+    setTimeout(loadOrder, 600);
+
+  } catch (err) {
+    console.error('Confirm payment error:', err);
+    toast('เกิดข้อผิดพลาด: ' + err.message, 'err');
+    btn.disabled = false; btn.textContent = '✓ ยืนยันชำระเงิน';
+  }
+}
+
+// ── Mark preparing ────────────────────────────────────────────
+async function markPreparing() {
+  if (!confirm('เริ่มเตรียมสินค้าใช่ไหม?')) return;
+  try {
+    await _sb.from('orders').update({status:'preparing', updated_at: new Date().toISOString()}).eq('id', _order.id);
+    await _sb.from('order_tracking').insert({order_id: _order.id, status:'preparing', description:'Seller กำลังเตรียมสินค้า'});
+    toast('เปลี่ยนสถานะเป็น "เตรียมจัดส่ง" แล้ว', 'ok');
+    setTimeout(loadOrder, 500);
+  } catch (err) { toast('Error: ' + err.message, 'err'); }
+}
+
+// ── Confirm ship ──────────────────────────────────────────────
+async function confirmShip() {
+  const carrier = document.getElementById('ship-carrier').value;
+  const tracking = document.getElementById('ship-tracking').value.trim();
+  const fromLoc = document.getElementById('ship-from').value.trim();
+  const note = document.getElementById('ship-note').value.trim();
+
+  if (!carrier) { toast('กรุณาเลือกขนส่ง', 'err'); return; }
+  if (!tracking) { toast('กรุณาใส่หมายเลขพัสดุ', 'err'); return; }
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+
+  try {
+    // 1. Update order
+    await _sb.from('orders').update({
+      status: 'shipping',
+      tracking_carrier: carrier,
+      tracking_no: tracking,
+      shipped_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }).eq('id', _order.id);
+
+    // 2. Add tracking event
+    await _sb.from('order_tracking').insert({
+      order_id: _order.id,
+      status: 'shipping',
+      description: note || `ออกจากคลัง ${fromLoc || ''} - ${carrier}`,
+      location: fromLoc || null,
+      carrier: carrier,
+      tracking_no: tracking
+    });
+
+    // 3. Notify customer
+    await _sb.from('notifications').insert({
+      user_id: _order.user_id,
+      type: 'order',
+      title: 'ออกจากคลังแล้ว 🚚',
+      message: `${_order.order_number} จัดส่งโดย ${carrier} เลขพัสดุ ${tracking}`,
+      link: 'tracking.html?order=' + _order.order_number,
+      icon: '🚚'
+    });
+
+    closeModal('m-ship');
+    toast('✓ บันทึกการจัดส่งสำเร็จ', 'ok');
+    setTimeout(loadOrder, 600);
+
+  } catch (err) {
+    console.error('Ship error:', err);
+    toast('Error: ' + err.message, 'err');
+    btn.disabled = false; btn.textContent = '🚚 ยืนยันจัดส่ง';
+  }
+}
+
+// ── Update tracking ───────────────────────────────────────────
+async function confirmTracking() {
+  const status = document.getElementById('track-status').value;
+  const loc = document.getElementById('track-loc').value.trim();
+  const desc = document.getElementById('track-desc').value.trim();
+
+  try {
+    // 1. Add tracking event
+    await _sb.from('order_tracking').insert({
+      order_id: _order.id,
+      status,
+      description: desc || (status === 'delivered' ? 'จัดส่งถึงผู้รับเรียบร้อย' : 'อัปเดตสถานะ'),
+      location: loc || null,
+      carrier: _order.tracking_carrier,
+      tracking_no: _order.tracking_no
+    });
+
+    // 2. If delivered, update order
+    if (status === 'delivered') {
+      await _sb.from('orders').update({
+        status: 'delivered',
+        delivered_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).eq('id', _order.id);
+
+      await _sb.from('notifications').insert({
+        user_id: _order.user_id,
+        type: 'order',
+        title: 'จัดส่งถึงแล้ว ✓',
+        message: `${_order.order_number} ส่งถึงคุณเรียบร้อย ขอบคุณที่ใช้บริการ!`,
+        link: 'review-write.html?order=' + _order.order_number,
+        icon: '✓'
+      });
+    }
+
+    closeModal('m-track');
+    toast('อัปเดตสถานะสำเร็จ', 'ok');
+    setTimeout(loadOrder, 500);
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+  }
+}
+
+// ── Mark delivered ────────────────────────────────────────────
+async function markDelivered() {
+  if (!confirm('ยืนยันว่าสินค้าถึงผู้รับแล้ว?')) return;
+  try {
+    await _sb.from('orders').update({
+      status:'delivered',
+      delivered_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }).eq('id', _order.id);
+
+    await _sb.from('order_tracking').insert({
+      order_id: _order.id, status:'delivered',
+      description:'จัดส่งถึงผู้รับเรียบร้อย',
+      carrier: _order.tracking_carrier, tracking_no: _order.tracking_no
+    });
+
+    await _sb.from('notifications').insert({
+      user_id: _order.user_id, type:'order',
+      title:'จัดส่งถึงแล้ว ✓',
+      message:`${_order.order_number} ส่งถึงคุณเรียบร้อย ให้คะแนนรีวิวได้เลย`,
+      link:'review-write.html?order='+_order.order_number, icon:'✓'
+    });
+
+    toast('✓ จัดส่งสำเร็จ', 'ok');
+    setTimeout(loadOrder, 500);
+  } catch (err) { toast('Error: ' + err.message, 'err'); }
+}
+
+// ── Cancel order ──────────────────────────────────────────────
+async function confirmCancel() {
+  const reason = document.getElementById('cancel-reason').value;
+  const note = document.getElementById('cancel-note').value.trim();
+  if (!reason) { toast('กรุณาเลือกเหตุผล', 'err'); return; }
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ ...';
+
+  try {
+    await _sb.from('orders').update({
+      status:'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancel_reason: reason,
+      updated_at: new Date().toISOString()
+    }).eq('id', _order.id);
+
+    await _sb.from('order_tracking').insert({
+      order_id: _order.id, status:'cancelled',
+      description: `ยกเลิกออเดอร์ - ${reason}` + (note ? ` (${note})` : '')
+    });
+
+    if (_payment && _payment.status === 'paid') {
+      // Mark for refund
+      await _sb.from('payments').update({status:'refund_pending'}).eq('id', _payment.id);
+    }
+
+    await _sb.from('notifications').insert({
+      user_id: _order.user_id, type:'order',
+      title:'ออเดอร์ถูกยกเลิก', message: `${_order.order_number} ถูกยกเลิกเรียบร้อย`,
+      link:'order-history.html', icon:'✕'
+    });
+
+    closeModal('m-cancel');
+    toast('ยกเลิกออเดอร์สำเร็จ', 'ok');
+    setTimeout(loadOrder, 600);
+  } catch (err) {
+    toast('Error: ' + err.message, 'err');
+    btn.disabled = false; btn.textContent = 'ยกเลิกออเดอร์';
+  }
+}
+
+// ── Refund ────────────────────────────────────────────────────
+async function confirmRefund() {
+  const amount = parseFloat(document.getElementById('refund-amount').value);
+  const method = document.getElementById('refund-method').value;
+  const ref = document.getElementById('refund-ref').value.trim();
+  const note = document.getElementById('refund-note').value.trim();
+
+  if (!amount || amount <= 0) { toast('กรุณาใส่จำนวนเงิน', 'err'); return; }
+  if (amount > _order.total) { toast('จำนวนเงินคืนมากกว่ายอดรวม', 'err'); return; }
+
+  try {
+    await _sb.from('orders').update({
+      status:'refunded',
+      refunded_at: new Date().toISOString(),
+      refund_amount: amount,
+      updated_at: new Date().toISOString()
+    }).eq('id', _order.id);
+
+    if (_payment) {
+      await _sb.from('payments').update({
+        status:'refunded',
+        refund_amount: amount,
+        refund_ref: ref,
+        refund_method: method,
+        refunded_at: new Date().toISOString()
+      }).eq('id', _payment.id);
+    }
+
+    await _sb.from('order_tracking').insert({
+      order_id: _order.id, status:'refunded',
+      description: `คืนเงิน ${fmtMoney(amount)} (${method})` + (note ? ` - ${note}` : '')
+    });
+
+    await _sb.from('notifications').insert({
+      user_id: _order.user_id, type:'order',
+      title:'ได้รับเงินคืน ↩',
+      message:`${_order.order_number} คืนเงิน ${fmtMoney(amount)} เรียบร้อย`,
+      link:'order-history.html', icon:'↩'
+    });
+
+    closeModal('m-refund');
+    toast('คืนเงินสำเร็จ', 'ok');
+    setTimeout(loadOrder, 600);
+  } catch (err) { toast('Error: ' + err.message, 'err'); }
+}
+
+// ── Click outside modal to close ──────────────────────────────
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => {
+    if (e.target === bg) bg.classList.remove('on');
+  });
+});
+
+// ── Boot ───────────────────────────────────────────────────────
+loadOrder();
+</script>
+</body>
+</html>
