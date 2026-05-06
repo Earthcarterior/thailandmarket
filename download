@@ -1,0 +1,31 @@
+# ════════════════════════════════════════════════════════════
+# Thailand Market — Cache Control
+# วางไฟล์นี้ไว้ root directory เดียวกับ index.html
+# ════════════════════════════════════════════════════════════
+
+# ── ไม่ cache HTML/JSON เพราะมีการอัปเดตบ่อย ──────────────
+<FilesMatch "\.(html|htm|json)$">
+  Header set Cache-Control "no-cache, no-store, must-revalidate"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</FilesMatch>
+
+# ── Cache static assets นาน 1 ปี (ไฟล์ไม่ค่อยเปลี่ยน) ─────
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|woff|woff2|ttf|eot)$">
+  Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+
+# ── CSS/JS ภายนอก cache 1 ชั่วโมง ────────────────────────
+<FilesMatch "\.(css|js)$">
+  Header set Cache-Control "public, max-age=3600, must-revalidate"
+</FilesMatch>
+
+# ── Compression ──────────────────────────────────────────
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json
+</IfModule>
+
+# ── Security headers ─────────────────────────────────────
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set Referrer-Policy "strict-origin-when-cross-origin"

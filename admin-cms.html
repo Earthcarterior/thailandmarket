@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0A0A0A">
+<!-- ── CACHE BUSTING ─────────────────────────────────────── -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="version" content="2026-05-06-v3">
 <title>Thailand Market — Admin CMS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1961,6 +1966,10 @@ nav { display: block !important; height: auto !important; }
 <!-- ══════════════════════════════════════════════════════ -->
 <script>
 "use strict";
+
+// ── Build Version (เปลี่ยนทุกครั้งที่ deploy) ─────────────
+const __BUILD_VERSION__ = '2026-05-06-v3';
+console.log('%c🛠️ Admin CMS Build: ' + __BUILD_VERSION__, 'background:#0A0A0A;color:#fff;padding:4px 10px;font-family:monospace;font-size:12px;border-radius:3px');
 
 // ── Global Helpers ────────────────────────────────────────
 function escapeHtml(s) {
