@@ -512,7 +512,7 @@ nav, .nav {
 //  Thailand Market — Profile Page (Supabase Live)
 // ══════════════════════════════════════════════════════════
 const sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
-let allCats = [], currentUserId = null, editingAddrId = null;
+let allCats = [], currentUserId = null, currentAuthId = null, editingAddrId = null;
 
 // ── Helpers ───────────────────────────────────────────────
 const setEl  = (id, v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
@@ -577,6 +577,7 @@ async function loadProfile() {
   const ini   = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
   const avatarUrl = user?.avatar_url || null;
   currentUserId = uid;
+  currentAuthId = session.user.id;
 
   // Hero
   setEl('ph-avatar-txt', ini);
@@ -668,7 +669,7 @@ async function loadProfile() {
   setEl('sb-wish-count', wishCount);
 
   // Load sections
-  await Promise.all([loadOrders(uid), loadWishlist(uid), loadCoupons(), loadAddresses(uid), loadCats()]);
+  await Promise.all([loadOrders(uid), loadWishlist(uid), loadCoupons(), loadAddresses(currentAuthId), loadCats()]);
 
   // Form prefill
   const parts=name.split(' ');
@@ -855,22 +856,22 @@ async function saveAddress() {
   const btn=document.getElementById('addr-save-btn');
   if(btn) { btn.textContent='⏳ กำลังบันทึก...'; btn.disabled=true; }
   try {
-    const addrData={user_id:currentUserId,name,phone,line1,subdistrict,district,province,postcode,tag,is_default:isDefault,updated_at:new Date().toISOString()};
-    if(isDefault&&currentUserId) await sb.from('addresses').update({is_default:false}).eq('user_id',currentUserId);
+    const addrData={user_id:currentAuthId,name,phone,line1,subdistrict,district,province,postcode,tag,is_default:isDefault,updated_at:new Date().toISOString()};
+    if(isDefault&&currentUserId) await sb.from('addresses').update({is_default:false}).eq('user_id',currentAuthId);
     const editId=document.getElementById('addr-edit-id')?.value;
     const {error} = editId ? await sb.from('addresses').update(addrData).eq('id',editId)
                              : await sb.from('addresses').insert({...addrData,created_at:new Date().toISOString()});
     if(error) throw error;
     closeAddrModal();
-    await loadAddresses(currentUserId);
+    await loadAddresses(currentAuthId);
     toast('✅ บันทึกที่อยู่สำเร็จ!','ok');
   } catch(e) { toast('❌ '+e.message); if(btn) { btn.textContent='💾 บันทึกที่อยู่'; btn.disabled=false; } }
 }
 
 async function setDefaultAddr(addrId) {
-  await sb.from('addresses').update({is_default:false}).eq('user_id',currentUserId);
+  await sb.from('addresses').update({is_default:false}).eq('user_id',currentAuthId);
   await sb.from('addresses').update({is_default:true}).eq('id',addrId);
-  await loadAddresses(currentUserId);
+  await loadAddresses(currentAuthId);
   toast('✅ ตั้งเป็นที่อยู่หลักแล้ว','ok');
 }
 
@@ -878,7 +879,7 @@ async function deleteAddr(addrId) {
   if(!confirm('ต้องการลบที่อยู่นี้ใช่ไหม?')) return;
   const {error}=await sb.from('addresses').delete().eq('id',addrId);
   if(error) { toast('❌ '+error.message); return; }
-  await loadAddresses(currentUserId);
+  await loadAddresses(currentAuthId);
   toast('🗑️ ลบที่อยู่แล้ว');
 }
 
