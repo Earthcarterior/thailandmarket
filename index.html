@@ -2866,12 +2866,31 @@ async function loadHomeArticles() {
       return;
     }
 
+    // gradient palette ตามหมวดหมู่ — ใช้เมื่อบทความยังไม่มี cover_image
+    const catGradients = {
+      'shopping-tips': 'linear-gradient(135deg,#FEF3C7 0%,#FDE68A 100%)',
+      'product-review': 'linear-gradient(135deg,#FCE7F3 0%,#FBCFE8 100%)',
+      'home-living': 'linear-gradient(135deg,#DBEAFE 0%,#BFDBFE 100%)',
+      'fashion': 'linear-gradient(135deg,#F3E8FF 0%,#E9D5FF 100%)',
+      'tech': 'linear-gradient(135deg,#E0E7FF 0%,#C7D2FE 100%)',
+      'news': 'linear-gradient(135deg,#FEE2E2 0%,#FECACA 100%)',
+      'beauty': 'linear-gradient(135deg,#FFE4E6 0%,#FECDD3 100%)',
+      'food': 'linear-gradient(135deg,#FEF3C7 0%,#FCD34D 100%)'
+    };
+    const fallbackGradient = 'linear-gradient(135deg,#F5F5F5 0%,#E5E5E5 100%)';
+
     grid.innerHTML = data.map((a, idx) => {
       const dateStr = a.published_at
         ? formatArtDate(a.published_at) : '';
+      const hasCover = a.cover_image && a.cover_image.trim();
+      const grad = catGradients[a.category_slug] || fallbackGradient;
+      const fallbackIcon = a.category_icon || '📰';
+      const imgHTML = hasCover
+        ? `<img src="${a.cover_image}" alt="" loading="lazy" onerror="this.parentElement.style.background='${grad}';this.outerHTML='<div style=&quot;font-size:64px;opacity:.55;filter:grayscale(.1)&quot;>'+'${fallbackIcon}'+'</div>'">`
+        : `<div style="position:absolute;inset:0;background:${grad};display:flex;align-items:center;justify-content:center"><div style="font-size:64px;opacity:.55">${fallbackIcon}</div></div>`;
       return `<a class="art-card" href="article.html?slug=${a.slug}">
         <div class="art-card-img">
-          ${a.cover_image ? `<img src="${a.cover_image}" alt="" loading="lazy">` : '📰'}
+          ${imgHTML}
           ${a.category_name ? `<div class="art-card-cat">${a.category_icon||''} ${escapeHtml(a.category_name)}</div>` : ''}
           ${a.is_featured && idx === 0 ? '<div class="art-card-feat-badge">⭐ FEATURED</div>' : ''}
         </div>

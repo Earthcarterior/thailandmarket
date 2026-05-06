@@ -1332,8 +1332,22 @@ nav { display: block !important; height: auto !important; }
           <div class="cp-fg"><label class="cp-lbl">Excerpt (สรุปย่อ — แสดงในหน้า list)</label>
             <textarea class="cp-inp" id="ar-excerpt" rows="2" placeholder="2-3 ประโยคสรุปบทความ"></textarea></div>
 
-          <div class="cp-fg"><label class="cp-lbl">รูป Cover (URL)</label>
-            <input class="cp-inp" id="ar-cover" placeholder="https://..."></div>
+          <div class="cp-fg"><label class="cp-lbl">รูป Cover (16:10 แนะนำ 1200×750px)</label>
+            <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+              <div id="ar-cover-preview" style="width:160px;aspect-ratio:16/10;background:#F5F5F5;border:1px dashed #D4D4D4;display:flex;align-items:center;justify-content:center;font-size:32px;color:#A3A3A3;flex-shrink:0;overflow:hidden;position:relative">
+                <span id="ar-cover-empty">📰</span>
+                <img id="ar-cover-img" src="" style="display:none;width:100%;height:100%;object-fit:cover">
+              </div>
+              <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:8px">
+                <input type="file" id="ar-cover-file" accept="image/*" style="display:none" onchange="uploadArticleCover(this.files[0])">
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <button type="button" class="btn btn-sm" style="background:#0A0A0A;color:#fff" onclick="document.getElementById('ar-cover-file').click()">📤 อัปโหลดรูป</button>
+                  <button type="button" class="btn btn-sm" style="background:#fff;color:#0A0A0A;border:1px solid #E5E5E5" onclick="clearArticleCover()" id="ar-cover-clear" style="display:none">🗑️ ลบ</button>
+                </div>
+                <input class="cp-inp" id="ar-cover" placeholder="หรือใส่ URL: https://..." onchange="previewArticleCover(this.value)" style="font-size:12px">
+                <div id="ar-cover-status" style="font-size:11px;color:#737373;font-family:'DM Mono',monospace"></div>
+              </div>
+            </div></div>
 
           <div class="cp-fg"><label class="cp-lbl">เนื้อหาบทความ * (Markdown)</label>
             <textarea class="cp-inp" id="ar-body" rows="12" placeholder="## หัวข้อย่อย\n\nเขียนเนื้อหาตรงนี้...\n\n## หัวข้อถัดไป\n\n- ข้อ 1\n- ข้อ 2" style="font-family:'DM Mono',monospace;font-size:12px;line-height:1.6"></textarea></div>
@@ -4600,6 +4614,70 @@ function arRenderTable() {
   }).join('');
 }
 
+// ── Article Cover Upload ─────────────────────────────────
+async function uploadArticleCover(file) {
+  if (!file) return;
+  const status = document.getElementById('ar-cover-status');
+  if (file.size > 5 * 1024 * 1024) { status.textContent = '⚠️ ไฟล์ใหญ่เกิน 5MB'; status.style.color='#DC2626'; return; }
+  if (!file.type.startsWith('image/')) { status.textContent = '⚠️ ต้องเป็นรูปภาพเท่านั้น'; status.style.color='#DC2626'; return; }
+
+  status.textContent = '⏳ กำลังอัปโหลด...';
+  status.style.color = '#737373';
+
+  try {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `articles/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const { error } = await sb.storage.from('product-images').upload(path, file, {
+      cacheControl: '3600', upsert: false, contentType: file.type
+    });
+    if (error) throw error;
+    const { data: urlData } = sb.storage.from('product-images').getPublicUrl(path);
+    const url = urlData.publicUrl;
+
+    document.getElementById('ar-cover').value = url;
+    previewArticleCover(url);
+    status.textContent = '✅ อัปโหลดสำเร็จ';
+    status.style.color = '#16A34A';
+  } catch(e) {
+    status.textContent = '❌ อัปโหลดไม่สำเร็จ: ' + (e.message || e);
+    status.style.color = '#DC2626';
+  } finally {
+    document.getElementById('ar-cover-file').value = '';
+  }
+}
+
+function previewArticleCover(url) {
+  const img = document.getElementById('ar-cover-img');
+  const empty = document.getElementById('ar-cover-empty');
+  const clear = document.getElementById('ar-cover-clear');
+  if (url && url.trim()) {
+    img.src = url.trim();
+    img.style.display = 'block';
+    empty.style.display = 'none';
+    if (clear) clear.style.display = 'inline-block';
+    img.onerror = () => {
+      img.style.display = 'none';
+      empty.style.display = 'flex';
+      empty.textContent = '⚠️';
+      const status = document.getElementById('ar-cover-status');
+      if (status) { status.textContent = '⚠️ URL รูปไม่ถูกต้อง'; status.style.color = '#DC2626'; }
+    };
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    empty.style.display = 'flex';
+    empty.textContent = '📰';
+    if (clear) clear.style.display = 'none';
+  }
+}
+
+function clearArticleCover() {
+  document.getElementById('ar-cover').value = '';
+  previewArticleCover('');
+  const status = document.getElementById('ar-cover-status');
+  if (status) status.textContent = '';
+}
+
 function openArticleModal(data) {
   document.getElementById('ar-modal-title').textContent = data ? '✏️ แก้ไขบทความ' : '➕ เขียนบทความใหม่';
   document.getElementById('ar-id').value = data?.id || '';
@@ -4608,6 +4686,7 @@ function openArticleModal(data) {
   document.getElementById('ar-subtitle').value = data?.subtitle || '';
   document.getElementById('ar-excerpt').value = data?.excerpt || '';
   document.getElementById('ar-cover').value = data?.cover_image || '';
+  previewArticleCover(data?.cover_image || '');
   document.getElementById('ar-body').value = data?.body || '';
   document.getElementById('ar-tags').value = (data?.tags || []).join(', ');
   document.getElementById('ar-author').value = data?.author_name || 'Thailand Market Editor';
