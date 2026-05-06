@@ -947,6 +947,104 @@ nav, .nav {
 </div>
 
 <!-- ── VIEW ALL STRIP ── -->
+<!-- ═══════════════════════════════════════════════════════════════
+     FEATURED SHOPS SECTION — ร้านค้าเด่น
+═══════════════════════════════════════════════════════════════ -->
+<section style="padding:40px 0;background:#fff;border-top:1px solid var(--g200)">
+  <div style="max-width:var(--max);margin:0 auto;padding:0 24px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap">
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-bottom:6px">🏪 OFFICIAL SHOPS</div>
+        <h2 style="font-size:26px;font-weight:800;letter-spacing:-0.5px">ร้านค้าเด่นวันนี้</h2>
+        <div style="font-size:13px;color:var(--g500);margin-top:4px">ผู้ขายยอดนิยม สินค้าครบ ราคาดี ของแท้ 100%</div>
+      </div>
+      <a href="storefront-live.html" style="font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:8px 14px;border:1px solid var(--g200);transition:all 0.15s" onmouseover="this.style.color='var(--black)';this.style.borderColor='var(--black)'" onmouseout="this.style.color='var(--g500)';this.style.borderColor='var(--g200)'">ดูร้านทั้งหมด →</a>
+    </div>
+    <div id="featured-shops-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+      <div style="text-align:center;padding:60px 0;color:var(--g400);grid-column:1/-1;font-size:13px">⏳ กำลังโหลดร้านค้า...</div>
+    </div>
+  </div>
+</section>
+
+<script>
+(async function loadFeaturedShops(){
+  try {
+    if (!window._sb && typeof supabase !== 'undefined'){
+      window._sb = supabase.createClient(
+        'https://qmgyimsptzewwyafvjzk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+      );
+    }
+    const sb = window._sb;
+    if (!sb) return;
+
+    // ดึง sellers (top 8)
+    const { data:sellers } = await sb.from('sellers')
+      .select('id, shop_name, slug, logo_url, description, tagline, is_verified, created_at')
+      .order('created_at', {ascending: false})
+      .limit(8);
+    if (!sellers || !sellers.length){
+      document.getElementById('featured-shops-grid').innerHTML = '<div style="text-align:center;padding:60px 0;color:var(--g400);grid-column:1/-1;font-size:13px">ยังไม่มีร้านค้า</div>';
+      return;
+    }
+
+    // ดึงสินค้า top 3 ของแต่ละร้าน (parallel)
+    const shopsWithProducts = await Promise.all(sellers.map(async s => {
+      const { data:prods } = await sb.from('products')
+        .select('id, name_th, name_en, price, original_price, thumbnail, images, sales_count')
+        .eq('seller_id', s.id)
+        .order('sales_count', {ascending: false, nullsFirst: false})
+        .limit(3);
+      const { count } = await sb.from('products')
+        .select('*', {count:'exact', head:true})
+        .eq('seller_id', s.id);
+      return {...s, products: prods || [], total_products: count || 0};
+    }));
+
+    // Render
+    const html = shopsWithProducts.map(s => {
+      const initial = (s.shop_name||'S').charAt(0).toUpperCase();
+      const logoHTML = s.logo_url
+        ? `<img src="${s.logo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+        : initial;
+      const productsHTML = s.products.length === 0
+        ? `<div style="grid-column:1/-1;text-align:center;color:var(--g400);font-size:11px;padding:24px 0">ยังไม่มีสินค้า</div>`
+        : s.products.map(p => {
+            const img = (Array.isArray(p.images)&&p.images[0]) || p.thumbnail || '';
+            return `<a href="product.html?id=${p.id}" style="display:block" onclick="event.stopPropagation()">
+              <div style="aspect-ratio:1;background:var(--g100);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:32px;overflow:hidden;margin-bottom:5px">
+                ${img?`<img src="${img}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.parentElement.textContent='📦'">`:'📦'}
+              </div>
+              <div style="font-size:11px;font-weight:600;font-family:var(--mono);color:var(--red)">฿${Number(p.price).toLocaleString()}</div>
+            </a>`;
+          }).join('');
+
+      return `<div onclick="location.href='seller-shop.html?id=${s.id}'" style="background:#fff;border:1px solid var(--g200);border-radius:6px;overflow:hidden;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="padding:14px 14px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--g100)">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--black);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex-shrink:0;overflow:hidden">${logoHTML}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.shop_name||'ร้านค้า'}</span>
+              ${s.is_verified !== false ? '<span style="font-size:9px;background:#10B981;color:#fff;padding:1px 6px;border-radius:2px;font-family:var(--mono);font-weight:700;flex-shrink:0">✓</span>':''}
+            </div>
+            <div style="font-size:10px;color:var(--g500);font-family:var(--mono);margin-top:2px">${s.total_products} สินค้า</div>
+          </div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--g400)">→</div>
+        </div>
+        <div style="padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          ${productsHTML}
+        </div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('featured-shops-grid').innerHTML = html;
+  } catch(e){
+    console.warn('loadFeaturedShops:', e?.message||e);
+    document.getElementById('featured-shops-grid').innerHTML = '<div style="text-align:center;padding:60px 0;color:var(--g400);grid-column:1/-1;font-size:13px">โหลดร้านค้าไม่สำเร็จ</div>';
+  }
+})();
+</script>
+
 <div style="border-top:var(--border);border-bottom:var(--border);padding:20px 0;margin-bottom:0;background:var(--g50)">
   <div style="max-width:var(--max);margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px" class="view-all-strip">
     <div>

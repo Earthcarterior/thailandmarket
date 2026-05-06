@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — Payment & Shipping · Thailand Market</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{--black:#0A0A0A;--red:#E63329;--g50:#FAFAFA;--g100:#F5F5F5;--g200:#E5E5E5;--g500:#737373;--g700:#404040;--g900:#171717;--green:#16A34A}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--g900);font-size:14px;display:flex;min-height:100vh}
+a{text-decoration:none;color:inherit}
+.sidebar{width:240px;background:var(--black);color:#fff;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.sb-logo{padding:22px;font-weight:800;font-size:18px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sb-logo .dot{color:var(--red)}
+.sb-sub{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:500;letter-spacing:1px;margin-top:2px}
+.sb-section{padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sb-label{padding:0 18px 8px;font-size:10px;font-weight:600;color:rgba(255,255,255,0.3);letter-spacing:1.2px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:11px;padding:11px 18px;font-size:13px;color:rgba(255,255,255,0.65);cursor:pointer;border-left:3px solid transparent}
+.sb-item:hover{background:rgba(255,255,255,0.05);color:#fff}
+.sb-item.active{background:rgba(255,255,255,0.08);color:#fff;border-left-color:var(--red)}
+.main{flex:1;display:flex;flex-direction:column;overflow-x:hidden}
+.topbar{background:#fff;border-bottom:1px solid var(--g200);padding:14px 24px}
+.topbar h1{font-size:18px;font-weight:700}
+.topbar .crumb{font-size:12px;color:var(--g500)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--g200);background:#fff;padding:0 24px}
+.tab{padding:14px 18px;font-size:13px;font-weight:600;color:var(--g500);cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:var(--black);border-bottom-color:var(--red)}
+.content{padding:20px 24px;flex:1}
+.notice{background:#FEF3C7;border:1px solid #FDE68A;color:#78350F;padding:12px 14px;border-radius:6px;font-size:12px;margin-bottom:18px;line-height:1.5}
+.prov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.prov-card{background:#fff;border:1px solid var(--g200);border-radius:6px;overflow:hidden}
+.prov-head{padding:14px 16px;border-bottom:1px solid var(--g200);display:flex;align-items:center;gap:10px;background:var(--g50)}
+.prov-head .icon{font-size:24px}
+.prov-head .name{font-weight:700;font-size:14px;flex:1}
+.prov-head .toggle{position:relative;width:40px;height:22px;background:var(--g200);border-radius:11px;cursor:pointer;transition:background 0.2s}
+.prov-head .toggle::before{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left 0.2s}
+.prov-head .toggle.on{background:var(--green)}
+.prov-head .toggle.on::before{left:20px}
+.prov-body{padding:16px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:11px;font-weight:600;margin-bottom:5px;color:var(--g700);text-transform:uppercase;letter-spacing:0.3px}
+.fg input,.fg select{width:100%;padding:8px 10px;border:1px solid var(--g200);border-radius:4px;font-size:12px;font-family:'DM Mono',monospace}
+.fg .help{font-size:10px;color:var(--g500);margin-top:3px;font-family:'DM Sans',sans-serif}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{padding:9px 14px;border:1px solid var(--g200);background:#fff;font-size:12px;border-radius:4px;cursor:pointer;font-weight:600}
+.btn-primary{background:var(--black);color:#fff;border-color:var(--black)}
+.test-mode{display:inline-block;font-size:10px;background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:3px;font-weight:700}
+.live-mode{display:inline-block;font-size:10px;background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-weight:700}
+.empty{text-align:center;padding:60px 20px;color:var(--g500)}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">Thailand<span class="dot">.</span>Market<span class="sb-sub">ADMIN PANEL</span></div>
+  <div class="sb-section">
+    <div class="sb-label">หลัก</div>
+    <a href="admin-cms.html"><div class="sb-item"><span>📊</span>Dashboard</div></a>
+    <a href="admin-cms.html"><div class="sb-item"><span>📦</span>สินค้า</div></a>
+    <a href="admin-orders.html"><div class="sb-item"><span>🛒</span>ออเดอร์</div></a>
+    <a href="admin-payments.html"><div class="sb-item"><span>💳</span>การชำระเงิน</div></a>
+    <a href="admin-shipping.html"><div class="sb-item"><span>🚚</span>จัดส่ง</div></a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">ตั้งค่า</div>
+    <a href="admin-providers.html"><div class="sb-item active"><span>⚙️</span>Payment & Shipping</div></a>
+    <a href="index.html"><div class="sb-item"><span>🏠</span>กลับสู่เว็บไซต์</div></a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="crumb">Admin · Settings</div>
+    <h1>⚙️ Payment & Shipping Providers</h1>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-tab="payments">💳 Payment Gateways</div>
+    <div class="tab" data-tab="shipping">🚚 Shipping Carriers</div>
+  </div>
+  <div class="content" id="content"><div class="empty">⏳ Loading...</div></div>
+</div>
+
+<script>
+const sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
+window._sb = sb;
+let _payProvs = []; let _shipProvs = []; let _activeTab = 'payments';
+
+const PAY_LOGOS = {omise:'🟦',['2c2p']:'🔵',scb_qr:'🏛️',promptpay:'📱',counter:'🏪',stripe:'💜',kbank:'💚'};
+const SHIP_LOGOS = {kerry:'📦',flash:'⚡',jnt:'🟥',thp:'📮',grab:'🟢',['j&t']:'🟥'};
+
+async function load(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session){ location.href='login.html?from=admin-providers.html'; return; }
+  
+  const [pay, ship] = await Promise.all([
+    sb.from('payment_providers').select('*').order('display_order'),
+    sb.from('shipping_providers').select('*').order('display_order')
+  ]);
+  _payProvs = pay.data || [];
+  _shipProvs = ship.data || [];
+  render();
+}
+
+function render(){
+  if (_activeTab === 'payments'){
+    document.getElementById('content').innerHTML = `
+      <div class="notice">
+        <strong>💡 หมายเหตุ:</strong> หน้านี้เก็บ <strong>config สำหรับเชื่อมต่อจริง</strong> เช่น API endpoint, public keys, webhook URL.
+        <br>⚠️ <strong>Secret keys</strong> (เช่น Omise secret_key) ควรเก็บใน Supabase Vault หรือ environment variables — ไม่ควรเก็บในตารางนี้
+        <br>🧪 ตอนนี้ทุก provider อยู่ใน <strong>Test Mode</strong> ทุก payment เป็น mock จนกว่าจะตั้ง production credentials
+      </div>
+      <div class="prov-grid">
+        ${_payProvs.map(p => renderPayCard(p)).join('')}
+      </div>
+    `;
+  } else {
+    document.getElementById('content').innerHTML = `
+      <div class="notice">
+        <strong>💡 หมายเหตุ:</strong> Config สำหรับ shipping carrier API (Kerry, Flash, J&T)
+        <br>📦 Tracking URL template ใช้ {tracking_no} placeholder — ระบบแทนที่ด้วยเลขจริงตอนแสดง
+      </div>
+      <div class="prov-grid">
+        ${_shipProvs.map(p => renderShipCard(p)).join('')}
+      </div>
+    `;
+  }
+}
+
+function renderPayCard(p){
+  const id = p.id;
+  return `<div class="prov-card">
+    <div class="prov-head">
+      <div class="icon">${PAY_LOGOS[p.code]||'💳'}</div>
+      <div class="name">${p.name}<div style="font-size:10px;color:var(--g500);font-weight:400;margin-top:2px">${p.type} · ${p.is_test_mode?'<span class="test-mode">TEST</span>':'<span class="live-mode">LIVE</span>'}</div></div>
+      <div class="toggle ${p.is_active?'on':''}" onclick="togglePay('${id}', ${!p.is_active})"></div>
+    </div>
+    <div class="prov-body">
+      <div class="fg">
+        <label>API Endpoint</label>
+        <input type="text" id="pay-ep-${id}" value="${p.api_endpoint||''}" placeholder="https://api.${p.code}.com/v1">
+      </div>
+      <div class="fg">
+        <label>Public Key</label>
+        <input type="text" id="pay-pk-${id}" value="${p.public_key||''}" placeholder="pkey_test_xxxxxxxx">
+        <div class="help">⚠️ ห้ามใส่ secret_key ที่นี่ — ใช้ Supabase Vault สำหรับ secret</div>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label>ค่าธรรมเนียม %</label>
+          <input type="number" step="0.01" id="pay-fp-${id}" value="${p.fee_percent||0}">
+        </div>
+        <div class="fg">
+          <label>ค่าธรรมเนียมคงที่</label>
+          <input type="number" step="0.01" id="pay-ff-${id}" value="${p.fee_fixed||0}">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Webhook URL</label>
+        <input type="text" id="pay-wh-${id}" value="${p.webhook_url||''}" placeholder="https://your-site/webhooks/${p.code}">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;flex:1">
+          <input type="checkbox" id="pay-test-${id}" ${p.is_test_mode?'checked':''}>
+          Test Mode
+        </label>
+        <button class="btn btn-primary" onclick="savePay('${id}')">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderShipCard(p){
+  const id = p.id;
+  return `<div class="prov-card">
+    <div class="prov-head">
+      <div class="icon">${SHIP_LOGOS[p.code]||'🚚'}</div>
+      <div class="name">${p.name}<div style="font-size:10px;color:var(--g500);font-weight:400;margin-top:2px">${p.estimated_days||'-'} · ${p.is_test_mode?'<span class="test-mode">TEST</span>':'<span class="live-mode">LIVE</span>'}</div></div>
+      <div class="toggle ${p.is_active?'on':''}" onclick="toggleShip('${id}', ${!p.is_active})"></div>
+    </div>
+    <div class="prov-body">
+      <div class="fg">
+        <label>API Endpoint</label>
+        <input type="text" id="ship-ep-${id}" value="${p.api_endpoint||''}" placeholder="https://api.${p.code}.co.th/v1">
+      </div>
+      <div class="fg">
+        <label>Tracking URL Template</label>
+        <input type="text" id="ship-tt-${id}" value="${p.tracking_url_template||''}" placeholder="https://.../track?no={tracking_no}">
+        <div class="help">ใช้ {tracking_no} เป็น placeholder</div>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label>ค่าจัดส่งพื้นฐาน</label>
+          <input type="number" step="0.01" id="ship-bf-${id}" value="${p.base_fee||0}">
+        </div>
+        <div class="fg">
+          <label>ต่อ kg</label>
+          <input type="number" step="0.01" id="ship-pk-${id}" value="${p.per_kg_fee||0}">
+        </div>
+      </div>
+      <div class="fg">
+        <label>ระยะเวลาส่ง</label>
+        <input type="text" id="ship-d-${id}" value="${p.estimated_days||''}" placeholder="1-2 วัน">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;flex:1">
+          <input type="checkbox" id="ship-test-${id}" ${p.is_test_mode?'checked':''}>
+          Test Mode
+        </label>
+        <button class="btn btn-primary" onclick="saveShip('${id}')">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function togglePay(id, on){
+  await sb.from('payment_providers').update({is_active: on}).eq('id', id);
+  load();
+}
+async function toggleShip(id, on){
+  await sb.from('shipping_providers').update({is_active: on}).eq('id', id);
+  load();
+}
+
+async function savePay(id){
+  const upd = {
+    api_endpoint: document.getElementById(`pay-ep-${id}`).value.trim() || null,
+    public_key: document.getElementById(`pay-pk-${id}`).value.trim() || null,
+    fee_percent: Number(document.getElementById(`pay-fp-${id}`).value) || 0,
+    fee_fixed: Number(document.getElementById(`pay-ff-${id}`).value) || 0,
+    webhook_url: document.getElementById(`pay-wh-${id}`).value.trim() || null,
+    is_test_mode: document.getElementById(`pay-test-${id}`).checked,
+  };
+  const { error } = await sb.from('payment_providers').update(upd).eq('id', id);
+  if (error) alert('Error: ' + error.message); else { alert('✓ บันทึกแล้ว'); load(); }
+}
+
+async function saveShip(id){
+  const upd = {
+    api_endpoint: document.getElementById(`ship-ep-${id}`).value.trim() || null,
+    tracking_url_template: document.getElementById(`ship-tt-${id}`).value.trim() || null,
+    base_fee: Number(document.getElementById(`ship-bf-${id}`).value) || 0,
+    per_kg_fee: Number(document.getElementById(`ship-pk-${id}`).value) || 0,
+    estimated_days: document.getElementById(`ship-d-${id}`).value.trim() || null,
+    is_test_mode: document.getElementById(`ship-test-${id}`).checked,
+  };
+  const { error } = await sb.from('shipping_providers').update(upd).eq('id', id);
+  if (error) alert('Error: ' + error.message); else { alert('✓ บันทึกแล้ว'); load(); }
+}
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    _activeTab = t.dataset.tab;
+    render();
+  });
+});
+
+load();
+</script>
+</body>
+</html>
