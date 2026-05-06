@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ชำระเงิน — Thailand.Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;--g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
+  --gn:#16A34A;--gn-bg:#DCFCE7;--am:#D97706;--am-bg:#FEF3C7;--bl:#2563EB;--bl-bg:#DBEAFE;
+  --font:'DM Sans',system-ui,sans-serif;
+  --th:'Sarabun',sans-serif;
+  --mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;
+  --border-dark:1px solid #0A0A0A;
+}
+body{font-family:var(--th);background:var(--g50);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+
+/* TOP NAV */
+.tn{height:54px;background:var(--white);border-bottom:var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:50}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);text-decoration:none}
+.tn-logo .dot{color:var(--red)}
+.tn-back{font-size:12px;color:var(--g500);text-decoration:none;display:flex;align-items:center;gap:6px}
+.tn-back:hover{color:var(--black)}
+
+/* PAGE */
+.pg{max-width:920px;margin:0 auto;padding:32px 22px 80px}
+.pg-h{margin-bottom:24px}
+.pg-t{font-family:var(--font);font-size:24px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.pg-s{font-size:13px;color:var(--g500)}
+
+/* ORDER SUMMARY CARD */
+.os{background:var(--white);border:var(--border);padding:20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.os-l{display:flex;flex-direction:column;gap:4px}
+.os-n{font-family:var(--mono);font-size:13px;font-weight:500}
+.os-d{font-size:12px;color:var(--g500)}
+.os-r{text-align:right}
+.os-amt{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--red)}
+.os-amt-l{font-size:10px;color:var(--g500);letter-spacing:.05em;text-transform:uppercase}
+
+/* STATUS BANNER */
+.banner{padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px;border-left:3px solid;font-size:13px}
+.banner.pending{background:var(--am-bg);border-color:var(--am);color:#92400E}
+.banner.review{background:var(--bl-bg);border-color:var(--bl);color:#1E3A8A}
+.banner.confirmed{background:var(--gn-bg);border-color:var(--gn);color:#166534}
+.banner.rejected{background:#FEE2E2;border-color:var(--red);color:#991B1B}
+.banner-i{font-size:20px;flex-shrink:0}
+.banner-t{font-weight:500;margin-bottom:2px}
+.banner-x{font-size:12px;opacity:.85}
+
+/* STEPS */
+.steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:32px;background:var(--white);border:var(--border);padding:18px}
+.step{display:flex;align-items:center;gap:8px;flex:1;justify-content:center;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--g400);font-family:var(--font);font-weight:500}
+.step-n{width:22px;height:22px;border:1px solid var(--g300);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--white)}
+.step.done{color:var(--gn)}
+.step.done .step-n{background:var(--gn);border-color:var(--gn);color:var(--white)}
+.step.now{color:var(--black)}
+.step.now .step-n{background:var(--black);border-color:var(--black);color:var(--white)}
+.step-line{flex:0 0 32px;height:1px;background:var(--g200)}
+.step.done + .step-line{background:var(--gn)}
+
+/* CHANNELS */
+.sec{margin-bottom:24px}
+.sec-h{font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);margin-bottom:12px}
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.ch{background:var(--white);border:var(--border);padding:14px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:6px;position:relative}
+.ch:hover{border-color:var(--black)}
+.ch.active{border:2px solid var(--black);padding:13px}
+.ch-ico{width:36px;height:36px;background:var(--g100);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:2px}
+.ch-ico.pp{background:#003D6B;color:#fff;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.5px}
+.ch-ico.kbank{background:#138F2D;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700}
+.ch-ico.scb{background:#4D2E83;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700}
+.ch-ico.bbl{background:#1E4598;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700}
+.ch-ico.ktb{background:#00A4E4;color:#fff;font-family:var(--mono);font-size:11px;font-weight:700}
+.ch-ico.true{background:#FF7900;color:#fff;font-family:var(--mono);font-size:9px;font-weight:700}
+.ch-ico.cc{background:var(--g800);color:#fff;font-size:16px}
+.ch-name{font-size:13px;font-weight:500;line-height:1.3}
+.ch-acc{font-size:11px;color:var(--g500);font-family:var(--mono)}
+.ch-note{font-size:11px;color:var(--g400);line-height:1.4}
+.ch-fee{font-size:10px;color:var(--am);font-weight:500;margin-top:2px}
+.ch-check{position:absolute;top:10px;right:10px;width:18px;height:18px;border:1px solid var(--g300);border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--white)}
+.ch.active .ch-check{background:var(--black);border-color:var(--black);color:var(--white);font-size:11px}
+
+/* PAYMENT INSTRUCTIONS PANEL */
+.pn{background:var(--white);border:var(--border);padding:24px;margin-bottom:20px}
+.pn-grid{display:grid;grid-template-columns:280px 1fr;gap:32px;align-items:start}
+.qr-box{background:var(--white);border:1px solid var(--g200);padding:18px;text-align:center}
+.qr-img{width:100%;max-width:240px;height:240px;background:var(--g100);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.qr-img canvas,.qr-img img{max-width:100%;max-height:100%;display:block}
+.qr-amt{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--red);margin-bottom:4px}
+.qr-amt-l{font-size:10px;color:var(--g500);letter-spacing:.05em;text-transform:uppercase}
+.qr-dl{display:inline-block;margin-top:10px;font-size:11px;color:var(--g500);text-decoration:underline;cursor:pointer}
+.qr-dl:hover{color:var(--black)}
+
+.dt-row{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)}
+.dt-row:last-child{border-bottom:none}
+.dt-l{font-size:11px;color:var(--g500);letter-spacing:.05em;text-transform:uppercase;min-width:90px;padding-top:2px;font-family:var(--font);font-weight:500}
+.dt-v{flex:1;font-size:14px;font-weight:500}
+.dt-v.mono{font-family:var(--mono);font-size:15px}
+.dt-v.amt{color:var(--red);font-family:var(--mono);font-size:18px}
+.copy-btn{display:inline-flex;align-items:center;gap:5px;margin-left:8px;padding:3px 8px;background:var(--g100);border:none;font-size:10px;cursor:pointer;font-family:var(--font);letter-spacing:.05em;text-transform:uppercase;color:var(--g600)}
+.copy-btn:hover{background:var(--black);color:var(--white)}
+.copy-btn.copied{background:var(--gn);color:var(--white)}
+
+.tip{background:var(--am-bg);border-left:3px solid var(--am);padding:10px 14px;font-size:12px;color:#92400E;margin-top:14px;line-height:1.5}
+
+/* SLIP UPLOAD FORM */
+.uf{background:var(--white);border:var(--border);padding:24px}
+.uf-h{font-family:var(--font);font-size:16px;font-weight:500;margin-bottom:4px}
+.uf-s{font-size:12px;color:var(--g500);margin-bottom:18px}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g600);margin-bottom:6px;font-family:var(--font)}
+.req{color:var(--red)}
+.inp,.sel,.ta{width:100%;padding:10px 12px;border:var(--border);font-size:13px;font-family:var(--th);background:var(--white);color:var(--black);outline:none}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--black)}
+.ta{min-height:60px;resize:vertical}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* DROPZONE */
+.dz{border:2px dashed var(--g300);padding:24px;text-align:center;cursor:pointer;transition:all .15s;background:var(--g50)}
+.dz:hover,.dz.over{border-color:var(--black);background:var(--white)}
+.dz-i{font-size:32px;color:var(--g400);margin-bottom:8px}
+.dz-t{font-size:13px;font-weight:500;margin-bottom:2px}
+.dz-s{font-size:11px;color:var(--g500)}
+.dz input{display:none}
+.dz-prev{margin-top:14px;display:none}
+.dz-prev.show{display:block}
+.dz-prev img{max-width:100%;max-height:280px;border:var(--border)}
+.dz-prev-x{display:inline-block;margin-top:8px;font-size:11px;color:var(--red);text-decoration:underline;cursor:pointer}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 20px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-k{background:var(--black);color:var(--white)}.btn-k:hover:not(:disabled){background:var(--g800)}
+.btn-r{background:var(--red);color:var(--white)}.btn-r:hover:not(:disabled){opacity:.9}
+.btn-o{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-o:hover:not(:disabled){background:var(--black);color:var(--white)}
+.btn-g{background:var(--g100);color:var(--g600)}.btn-g:hover:not(:disabled){background:var(--g200);color:var(--black)}
+.btn-blk{width:100%}
+
+/* EXISTING SLIPS LIST */
+.sl-list{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.sl{background:var(--g50);border:var(--border);padding:12px;display:flex;align-items:center;gap:12px}
+.sl-thumb{width:48px;height:48px;background:var(--g200);border:1px solid var(--g300);object-fit:cover;flex-shrink:0;cursor:pointer}
+.sl-info{flex:1;min-width:0}
+.sl-amt{font-family:var(--mono);font-size:13px;font-weight:500}
+.sl-meta{font-size:11px;color:var(--g500);margin-top:2px}
+.sl-bdg{font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:4px 8px;font-weight:500;font-family:var(--font);border:1px solid}
+.sl-bdg.review{background:var(--bl-bg);color:var(--bl);border-color:var(--bl)}
+.sl-bdg.confirmed{background:var(--gn-bg);color:var(--gn);border-color:var(--gn)}
+.sl-bdg.rejected{background:#FEE2E2;color:var(--red);border-color:var(--red)}
+
+/* TOAST */
+.toast-w{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:200}
+.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:12.5px;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);max-width:360px}
+.toast.ok{border-color:var(--gn)}
+.toast.err{border-color:var(--red)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:300;padding:20px}
+.modal-bg.show{display:flex}
+.modal-img{max-width:90vw;max-height:90vh;background:var(--white);padding:8px}
+.modal-img img{max-width:100%;max-height:calc(90vh - 16px);display:block}
+
+/* MOBILE */
+@media (max-width:768px){
+  .pn-grid{grid-template-columns:1fr;gap:20px}
+  .qr-box{max-width:320px;margin:0 auto}
+  .fg-row{grid-template-columns:1fr}
+  .steps{padding:14px;flex-wrap:wrap;gap:8px}
+  .step-line{display:none}
+  .pg-t{font-size:20px}
+  .os{flex-direction:column;align-items:stretch;text-align:left}
+  .os-r{text-align:left}
+}
+
+/* HIDDEN */
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="tn">
+  <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
+  <a href="profile.html" class="tn-back">← กลับสู่บัญชี</a>
+</nav>
+
+<!-- LOADING -->
+<div id="loading" style="text-align:center;padding:80px 20px;color:var(--g500)">กำลังโหลด...</div>
+
+<!-- ERROR -->
+<div id="error" class="hide" style="text-align:center;padding:80px 20px">
+  <div style="font-size:48px;margin-bottom:12px">⚠</div>
+  <div style="font-weight:500;margin-bottom:8px">ไม่พบคำสั่งซื้อ</div>
+  <div style="font-size:13px;color:var(--g500);margin-bottom:18px" id="errorMsg"></div>
+  <a href="profile.html" class="btn btn-o">กลับสู่บัญชี</a>
+</div>
+
+<!-- PAGE -->
+<div class="pg hide" id="page">
+  <div class="pg-h">
+    <div class="pg-t">ชำระเงิน</div>
+    <div class="pg-s">เลือกวิธีชำระและทำตามขั้นตอน</div>
+  </div>
+
+  <!-- ORDER SUMMARY -->
+  <div class="os">
+    <div class="os-l">
+      <div class="os-n" id="ordNum">TM-—</div>
+      <div class="os-d" id="ordDate"></div>
+      <div class="os-d" id="ordItems"></div>
+    </div>
+    <div class="os-r">
+      <div class="os-amt-l">ยอดรวมที่ต้องชำระ</div>
+      <div class="os-amt" id="ordAmt">฿0</div>
+    </div>
+  </div>
+
+  <!-- STATUS BANNER -->
+  <div id="banner" class="hide"></div>
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step" id="s1"><div class="step-n">1</div><span>เลือกวิธี</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="s2"><div class="step-n">2</div><span>โอนเงิน</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="s3"><div class="step-n">3</div><span>แจ้งสลิป</span></div>
+    <div class="step-line"></div>
+    <div class="step" id="s4"><div class="step-n">4</div><span>รอยืนยัน</span></div>
+  </div>
+
+  <!-- STEP 1: SELECT CHANNEL -->
+  <div class="sec" id="secChannels">
+    <div class="sec-h">เลือกวิธีชำระเงิน</div>
+    <div class="ch-grid" id="chGrid"></div>
+  </div>
+
+  <!-- STEP 2: PAYMENT INSTRUCTIONS -->
+  <div class="pn hide" id="secPay">
+    <div class="pn-grid" id="pnGrid"></div>
+  </div>
+
+  <!-- EXISTING SLIPS -->
+  <div class="sec hide" id="secSlips">
+    <div class="sec-h">สลิปที่ส่งแล้ว</div>
+    <div class="sl-list" id="slList"></div>
+  </div>
+
+  <!-- STEP 3: UPLOAD SLIP -->
+  <div class="uf hide" id="secUpload">
+    <div class="uf-h">แจ้งโอนเงิน</div>
+    <div class="uf-s">กรอกข้อมูลและอัปโหลดสลิปการโอน — แอดมินจะตรวจสอบภายใน 1-3 ชั่วโมง</div>
+
+    <div class="fg">
+      <label class="fl">สลิปการโอน <span class="req">*</span></label>
+      <div class="dz" id="dz">
+        <input type="file" id="slipFile" accept="image/*,application/pdf">
+        <div id="dzEmpty">
+          <div class="dz-i">📎</div>
+          <div class="dz-t">คลิกหรือลากไฟล์มาวาง</div>
+          <div class="dz-s">JPG / PNG / PDF — ไม่เกิน 5 MB</div>
+        </div>
+        <div class="dz-prev" id="dzPrev">
+          <img id="dzImg" alt="">
+          <div class="dz-prev-x" onclick="event.stopPropagation();clearSlip()">✕ ลบและเลือกใหม่</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fg-row">
+      <div class="fg">
+        <label class="fl">ยอดที่โอน (บาท) <span class="req">*</span></label>
+        <input type="number" class="inp" id="slipAmount" step="0.01" placeholder="0.00">
+      </div>
+      <div class="fg">
+        <label class="fl">เลข Ref จากสลิป <span class="req">*</span></label>
+        <input type="text" class="inp" id="slipRef" placeholder="เช่น 0123456789">
+      </div>
+    </div>
+
+    <div class="fg-row">
+      <div class="fg">
+        <label class="fl">เวลาที่โอน</label>
+        <input type="datetime-local" class="inp" id="slipTime">
+      </div>
+      <div class="fg">
+        <label class="fl">ธนาคาร / บัญชีต้นทาง</label>
+        <input type="text" class="inp" id="slipFrom" placeholder="เช่น KBANK xxx-x-12345-x">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">หมายเหตุ (ถ้ามี)</label>
+      <textarea class="ta" id="slipNote" placeholder="เช่น ขอความช่วยเหลือเพิ่มเติม / โอนเป็น 2 รอบ"></textarea>
+    </div>
+
+    <button class="btn btn-k btn-blk" id="btnSubmit" onclick="submitSlip()">
+      ส่งสลิปให้ตรวจสอบ
+    </button>
+  </div>
+
+  <!-- ACTIONS -->
+  <div style="margin-top:24px;text-align:center">
+    <a href="profile.html" class="btn btn-g">บันทึกและกลับมาทีหลัง</a>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-w" id="toasts"></div>
+
+<!-- IMAGE MODAL -->
+<div class="modal-bg" id="imgModal" onclick="this.classList.remove('show')">
+  <div class="modal-img"><img id="imgModalSrc" src="" alt=""></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/promptpay-qr@0.5.0/build/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+const SB_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5MDg2NDIsImV4cCI6MjA3NzQ4NDY0Mn0.XbMqBimjVfwoZcm-Bp8kIo2Tt2bC75QMDGmMmaH4_nE';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+let order=null, channels=[], requests=[], slips=[], selectedChannel=null, currentRequest=null, slipFile=null;
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TOAST
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function toast(msg, type='ok') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='ok'?'✓':type==='err'?'⚠':'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// LOAD
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function loadAll() {
+  const orderNum = new URL(location.href).searchParams.get('order');
+  if (!orderNum) return showError('ไม่มีรหัสคำสั่งซื้อใน URL');
+
+  // 1) Order
+  const { data: ord, error: ordErr } = await sb.from('orders')
+    .select('*').eq('order_number', orderNum).single();
+  if (ordErr || !ord) return showError('ไม่พบคำสั่งซื้อ ' + orderNum);
+  order = ord;
+
+  // 2) Channels
+  const { data: chs } = await sb.from('payment_channels')
+    .select('*').eq('is_active', true).order('sort_order');
+  channels = chs || [];
+
+  // 3) Existing payment requests
+  const { data: prs } = await sb.from('payment_requests')
+    .select('*').eq('order_id', order.id).order('created_at', { ascending: false });
+  requests = prs || [];
+
+  // 4) Existing slips
+  const { data: sls } = await sb.from('payment_slips')
+    .select('*').eq('order_id', order.id).order('created_at', { ascending: false });
+  slips = sls || [];
+
+  document.getElementById('loading').classList.add('hide');
+  document.getElementById('page').classList.remove('hide');
+  render();
+}
+
+function showError(msg) {
+  document.getElementById('loading').classList.add('hide');
+  document.getElementById('error').classList.remove('hide');
+  document.getElementById('errorMsg').textContent = msg;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// RENDER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function render() {
+  // Order summary
+  document.getElementById('ordNum').textContent = order.order_number;
+  document.getElementById('ordDate').textContent = 'สั่งซื้อเมื่อ ' + new Date(order.created_at).toLocaleString('th-TH', {dateStyle:'medium', timeStyle:'short'});
+  const items = order.items || [];
+  document.getElementById('ordItems').textContent = `${items.length} รายการ`;
+  document.getElementById('ordAmt').textContent = '฿' + Number(order.total_amount).toLocaleString('th-TH', {minimumFractionDigits:2});
+
+  // Status banner + steps
+  renderStatus();
+
+  // If order already paid → show success only
+  if (order.status === 'paid' || order.status === 'preparing' || order.status === 'shipping' || order.status === 'delivered') {
+    document.getElementById('secChannels').classList.add('hide');
+    document.getElementById('secPay').classList.add('hide');
+    document.getElementById('secUpload').classList.add('hide');
+    if (slips.length) {
+      renderSlipsList();
+      document.getElementById('secSlips').classList.remove('hide');
+    }
+    return;
+  }
+
+  // Pick latest pending request as current
+  currentRequest = requests.find(r => r.status === 'pending' || r.status === 'submitted');
+  if (currentRequest) {
+    selectedChannel = channels.find(c => c.id === currentRequest.channel_id) || channels.find(c => c.channel_type === currentRequest.channel_type);
+    renderChannels();
+    renderPaymentPanel();
+    renderSlipsList();
+    if (slips.length) document.getElementById('secSlips').classList.remove('hide');
+    document.getElementById('secUpload').classList.remove('hide');
+  } else {
+    renderChannels();
+  }
+}
+
+function renderStatus() {
+  const banner = document.getElementById('banner');
+  const s1 = document.getElementById('s1');
+  const s2 = document.getElementById('s2');
+  const s3 = document.getElementById('s3');
+  const s4 = document.getElementById('s4');
+  [s1,s2,s3,s4].forEach(s=>s.className='step');
+
+  const hasReq = requests.length > 0;
+  const hasSlip = slips.length > 0;
+  const hasReview = slips.some(s => s.status === 'pending_review');
+  const isPaid = ['paid','preparing','shipping','delivered'].includes(order.status);
+
+  if (isPaid) {
+    banner.className = 'banner confirmed';
+    banner.innerHTML = `<div class="banner-i">✓</div><div><div class="banner-t">ชำระเงินสำเร็จ</div><div class="banner-x">ยืนยันเมื่อ ${order.paid_at ? new Date(order.paid_at).toLocaleString('th-TH') : 'แล้ว'} • รอผู้ขายจัดส่ง</div></div>`;
+    banner.classList.remove('hide');
+    [s1,s2,s3,s4].forEach(s=>s.classList.add('done'));
+  } else if (hasReview) {
+    banner.className = 'banner review';
+    banner.innerHTML = `<div class="banner-i">⏱</div><div><div class="banner-t">รอการตรวจสอบสลิป</div><div class="banner-x">แอดมินกำลังตรวจสอบสลิปของคุณ ใช้เวลาประมาณ 1-3 ชั่วโมง</div></div>`;
+    banner.classList.remove('hide');
+    s1.classList.add('done'); s2.classList.add('done'); s3.classList.add('done');
+    s4.classList.add('now');
+  } else if (slips.some(s => s.status === 'rejected')) {
+    const rej = slips.find(s => s.status === 'rejected');
+    banner.className = 'banner rejected';
+    banner.innerHTML = `<div class="banner-i">✕</div><div><div class="banner-t">สลิปก่อนหน้าถูกปฏิเสธ</div><div class="banner-x">เหตุผล: ${rej.reject_note || rejectReasonLabel(rej.reject_reason) || 'กรุณาส่งสลิปใหม่'}</div></div>`;
+    banner.classList.remove('hide');
+    s1.classList.add('done'); s2.classList.add('done'); s3.classList.add('now');
+  } else if (hasReq) {
+    banner.className = 'banner pending';
+    banner.innerHTML = `<div class="banner-i">⏳</div><div><div class="banner-t">รอการชำระเงิน</div><div class="banner-x">โอนเงินตามวิธีที่เลือก แล้วอัปโหลดสลิป</div></div>`;
+    banner.classList.remove('hide');
+    s1.classList.add('done'); s2.classList.add('now');
+  } else {
+    s1.classList.add('now');
+  }
+}
+
+function renderChannels() {
+  const grid = document.getElementById('chGrid');
+  grid.innerHTML = channels.map(c => {
+    const isActive = selectedChannel && selectedChannel.id === c.id;
+    const ico = channelIconHtml(c);
+    const accLine = c.account_number ? `<div class="ch-acc">${maskAcc(c.account_number)}</div>` : '';
+    const fee = c.fee_percent > 0 || c.fee_fixed > 0 ? `<div class="ch-fee">+ ค่าธรรมเนียม ${c.fee_percent>0?c.fee_percent+'%':''}${c.fee_fixed>0?'฿'+c.fee_fixed:''}</div>` : '';
+    return `<div class="ch ${isActive?'active':''}" onclick="selectChannel('${c.id}')">
+      <div class="ch-check">${isActive?'✓':''}</div>
+      ${ico}
+      <div class="ch-name">${c.display_name}</div>
+      ${accLine}
+      ${fee}
+    </div>`;
+  }).join('');
+}
+
+function channelIconHtml(c) {
+  const t = c.channel_type;
+  const bank = (c.bank_code || '').toLowerCase();
+  if (t === 'promptpay') return '<div class="ch-ico pp">PROMPT<br>PAY</div>';
+  if (t === 'truemoney') return '<div class="ch-ico true">TRUE<br>MONEY</div>';
+  if (t === 'credit_card_manual') return '<div class="ch-ico cc">💳</div>';
+  if (t === 'bank') {
+    const cls = ['kbank','scb','bbl','ktb'].includes(bank) ? bank : '';
+    const label = bank ? bank.toUpperCase() : 'BANK';
+    return `<div class="ch-ico ${cls}">${label}</div>`;
+  }
+  return '<div class="ch-ico">💰</div>';
+}
+
+function maskAcc(acc) {
+  if (!acc || acc.length < 6) return acc;
+  return acc.slice(0,3) + '-x-xxxxx-' + acc.slice(-1);
+}
+
+function rejectReasonLabel(r) {
+  return ({
+    amount_mismatch: 'ยอดเงินไม่ตรง',
+    invalid_slip: 'สลิปไม่ชัดเจน/อ่านไม่ออก',
+    wrong_account: 'โอนผิดบัญชี',
+    duplicate: 'สลิปซ้ำกับรายการอื่น',
+    other: 'อื่นๆ'
+  })[r] || r;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SELECT CHANNEL → CREATE PAYMENT REQUEST
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function selectChannel(channelId) {
+  const ch = channels.find(c => c.id === channelId);
+  if (!ch) return;
+
+  // ถ้ามี request เดิมที่ยังเปิดอยู่ และเปลี่ยน channel → cancel เก่า สร้างใหม่
+  if (currentRequest && currentRequest.channel_id !== channelId) {
+    await sb.from('payment_requests').update({ status: 'cancelled' }).eq('id', currentRequest.id);
+    currentRequest = null;
+  }
+
+  selectedChannel = ch;
+
+  // คำนวณยอดรวมค่าธรรมเนียม
+  const baseAmt = Number(order.total_amount);
+  const feeAmt = (baseAmt * Number(ch.fee_percent || 0) / 100) + Number(ch.fee_fixed || 0);
+  const totalAmt = baseAmt + feeAmt;
+
+  // สร้าง reference code
+  const ref = 'TM' + new Date().getFullYear() + String(Math.floor(Math.random()*900000)+100000);
+
+  // สร้าง QR (เฉพาะ PromptPay)
+  let qrPayload = null;
+  if (ch.channel_type === 'promptpay' && ch.account_number) {
+    try {
+      qrPayload = generatePayload(ch.account_number, { amount: Number(totalAmt.toFixed(2)) });
+    } catch(e) { console.warn('QR gen fail', e); }
+  }
+
+  // ถ้ายังไม่มี request หรือคนละ channel → insert ใหม่
+  if (!currentRequest) {
+    const { data, error } = await sb.from('payment_requests').insert({
+      order_id: order.id,
+      order_number: order.order_number,
+      channel_id: ch.id,
+      channel_type: ch.channel_type,
+      channel_snapshot: ch,
+      amount: totalAmt,
+      amount_base: baseAmt,
+      amount_fee: feeAmt,
+      qr_payload: qrPayload,
+      reference_code: ref,
+      status: 'pending'
+    }).select().single();
+
+    if (error) {
+      toast('ไม่สามารถสร้างคำขอชำระเงิน: ' + error.message, 'err');
+      return;
+    }
+    currentRequest = data;
+    requests.unshift(data);
+
+    // อัปเดต orders.payment_channel_id
+    await sb.from('orders').update({
+      payment_channel_id: ch.id,
+      payment_channel_type: ch.channel_type,
+      payment_method: ch.channel_type,
+      payment_reference: ref
+    }).eq('id', order.id);
+  }
+
+  renderChannels();
+  renderPaymentPanel();
+  renderStatus();
+  document.getElementById('secUpload').classList.remove('hide');
+
+  setTimeout(()=> document.getElementById('secPay').scrollIntoView({behavior:'smooth', block:'start'}), 100);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// RENDER PAYMENT PANEL
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function renderPaymentPanel() {
+  if (!selectedChannel || !currentRequest) {
+    document.getElementById('secPay').classList.add('hide');
+    return;
+  }
+  document.getElementById('secPay').classList.remove('hide');
+
+  const c = selectedChannel;
+  const r = currentRequest;
+  const grid = document.getElementById('pnGrid');
+
+  let leftCol = '';
+  let rightCol = '';
+  const amt = '฿' + Number(r.amount).toLocaleString('th-TH', {minimumFractionDigits:2});
+
+  if (c.channel_type === 'promptpay' && r.qr_payload) {
+    leftCol = `
+      <div class="qr-box">
+        <div class="qr-img"><canvas id="qrCanvas"></canvas></div>
+        <div class="qr-amt">${amt}</div>
+        <div class="qr-amt-l">PromptPay</div>
+        <div class="qr-dl" onclick="downloadQR()">⬇ บันทึกรูป QR</div>
+      </div>`;
+  } else if (c.qr_image_url) {
+    leftCol = `
+      <div class="qr-box">
+        <div class="qr-img"><img src="${c.qr_image_url}" alt="QR"></div>
+        <div class="qr-amt">${amt}</div>
+        <div class="qr-amt-l">${c.display_name}</div>
+      </div>`;
+  } else if (c.channel_type === 'credit_card_manual') {
+    leftCol = `
+      <div class="qr-box">
+        <div class="qr-img" style="font-size:48px;color:var(--g400);background:var(--g50)">💳</div>
+        <div style="font-size:13px;color:var(--g600);line-height:1.5">แอดมินจะติดต่อคุณกลับเพื่อส่งลิงก์ชำระบัตรเครดิต</div>
+      </div>`;
+  } else {
+    leftCol = `
+      <div class="qr-box">
+        <div class="qr-img" style="background:var(--g50);font-size:64px;color:var(--g400)">🏦</div>
+        <div class="qr-amt">${amt}</div>
+        <div class="qr-amt-l">${c.display_name}</div>
+      </div>`;
+  }
+
+  // Right column — details
+  const rows = [];
+  rows.push(`<div class="dt-row"><div class="dt-l">ยอดที่ต้องโอน</div><div class="dt-v amt">${amt}<button class="copy-btn" onclick="copyTxt('${r.amount}', this)">คัดลอก</button></div></div>`);
+
+  if (c.account_number) {
+    const accLabel = c.channel_type === 'promptpay' ? 'PromptPay' : c.channel_type === 'truemoney' ? 'TrueMoney' : 'เลขบัญชี';
+    rows.push(`<div class="dt-row"><div class="dt-l">${accLabel}</div><div class="dt-v mono">${c.account_number}<button class="copy-btn" onclick="copyTxt('${c.account_number}', this)">คัดลอก</button></div></div>`);
+  }
+  if (c.account_name) rows.push(`<div class="dt-row"><div class="dt-l">ชื่อบัญชี</div><div class="dt-v">${c.account_name}</div></div>`);
+  if (c.bank_name) rows.push(`<div class="dt-row"><div class="dt-l">ธนาคาร</div><div class="dt-v">${c.bank_name}</div></div>`);
+  rows.push(`<div class="dt-row"><div class="dt-l">เลขอ้างอิง</div><div class="dt-v mono">${r.reference_code}<button class="copy-btn" onclick="copyTxt('${r.reference_code}', this)">คัดลอก</button></div></div>`);
+  if (c.contact_info) rows.push(`<div class="dt-row"><div class="dt-l">ติดต่อ</div><div class="dt-v">${c.contact_info}</div></div>`);
+
+  let tipText = '';
+  if (c.channel_type === 'promptpay') tipText = '💡 เปิดแอปธนาคารแล้วสแกน QR — ระบบจะใส่ยอดเงินให้อัตโนมัติ ห้ามแก้ไขยอด เพื่อให้ตรวจสอบได้ง่าย';
+  else if (c.channel_type === 'bank') tipText = '💡 โอนยอดให้ตรงกับที่ระบุไว้พอดี (รวมเศษสตางค์) เพื่อความรวดเร็วในการตรวจสอบ — แล้วเก็บสลิปไว้อัปโหลด';
+  else if (c.channel_type === 'truemoney') tipText = '💡 เข้าแอป TrueMoney → โอน → ใส่เบอร์ที่ระบุ → โอนยอดตามที่ระบุพอดี';
+  else if (c.channel_type === 'credit_card_manual') tipText = '💡 แอดมินจะติดต่อคุณผ่านช่องทางที่ระบุ ภายในเวลาทำการ (9:00-21:00) — เตรียมบัตรเครดิตให้พร้อม';
+  else tipText = '💡 ' + (c.instructions || 'โอนเงินตามวิธีที่เลือก แล้วอัปโหลดสลิป');
+
+  if (c.instructions && c.channel_type !== 'credit_card_manual') {
+    rows.push(`<div class="dt-row"><div class="dt-l">คำแนะนำ</div><div class="dt-v" style="font-size:12px;color:var(--g600);font-weight:400">${c.instructions}</div></div>`);
+  }
+
+  rightCol = `<div>${rows.join('')}<div class="tip">${tipText}</div></div>`;
+
+  grid.innerHTML = leftCol + rightCol;
+
+  // Render QR canvas
+  if (c.channel_type === 'promptpay' && r.qr_payload) {
+    setTimeout(()=>{
+      const canvas = document.getElementById('qrCanvas');
+      if (canvas && window.QRCode) {
+        QRCode.toCanvas(canvas, r.qr_payload, { width: 240, margin: 1, color: { dark: '#0A0A0A', light: '#FFFFFF' } });
+      }
+    }, 50);
+  }
+}
+
+function copyTxt(txt, btn) {
+  navigator.clipboard.writeText(String(txt)).then(()=>{
+    const orig = btn.textContent;
+    btn.textContent = '✓ คัดลอกแล้ว';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent = orig; btn.classList.remove('copied');}, 1500);
+  });
+}
+
+function downloadQR() {
+  const canvas = document.getElementById('qrCanvas');
+  if (!canvas) return;
+  const link = document.createElement('a');
+  link.download = `qr-${currentRequest.reference_code}.png`;
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SLIPS LIST
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function renderSlipsList() {
+  if (!slips.length) { document.getElementById('secSlips').classList.add('hide'); return; }
+  const list = document.getElementById('slList');
+  list.innerHTML = slips.map(s => {
+    const status = s.status === 'pending_review' ? 'review' : s.status === 'confirmed' ? 'confirmed' : 'rejected';
+    const statusLabel = s.status === 'pending_review' ? 'รอตรวจสอบ' : s.status === 'confirmed' ? 'ยืนยันแล้ว' : 'ปฏิเสธ';
+    const isPdf = s.slip_image_url && s.slip_image_url.toLowerCase().endsWith('.pdf');
+    return `<div class="sl">
+      ${isPdf ?
+        `<div class="sl-thumb" style="display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--g600)" onclick="window.open('${s.slip_image_url}')">📄</div>` :
+        `<img src="${s.slip_image_url}" class="sl-thumb" alt="" onclick="showImg('${s.slip_image_url}')">`}
+      <div class="sl-info">
+        <div class="sl-amt">฿${Number(s.amount_paid).toLocaleString('th-TH',{minimumFractionDigits:2})} ${s.reference_no?'• ref: '+s.reference_no:''}</div>
+        <div class="sl-meta">${new Date(s.created_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'})}${s.reject_note?' • '+s.reject_note:''}</div>
+      </div>
+      <div class="sl-bdg ${status}">${statusLabel}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('secSlips').classList.remove('hide');
+}
+
+function showImg(url) {
+  document.getElementById('imgModalSrc').src = url;
+  document.getElementById('imgModal').classList.add('show');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SLIP UPLOAD (DROPZONE)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const dz = document.getElementById('dz');
+const dzInput = document.getElementById('slipFile');
+dz.addEventListener('click', ()=>dzInput.click());
+dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+dz.addEventListener('drop', e=>{
+  e.preventDefault(); dz.classList.remove('over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+dzInput.addEventListener('change', e=>{
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  if (file.size > 5*1024*1024) { toast('ไฟล์ใหญ่เกิน 5 MB', 'err'); return; }
+  slipFile = file;
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('dzImg').src = e.target.result;
+      document.getElementById('dzPrev').classList.add('show');
+      document.getElementById('dzEmpty').classList.add('hide');
+    };
+    reader.readAsDataURL(file);
+  } else {
+    document.getElementById('dzImg').src = '';
+    document.getElementById('dzImg').alt = file.name;
+    document.getElementById('dzPrev').classList.add('show');
+    document.getElementById('dzEmpty').classList.add('hide');
+  }
+  // pre-fill amount
+  if (currentRequest && !document.getElementById('slipAmount').value) {
+    document.getElementById('slipAmount').value = Number(currentRequest.amount).toFixed(2);
+  }
+  // pre-fill time
+  if (!document.getElementById('slipTime').value) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('slipTime').value = now.toISOString().slice(0,16);
+  }
+}
+
+function clearSlip() {
+  slipFile = null;
+  dzInput.value = '';
+  document.getElementById('dzImg').src = '';
+  document.getElementById('dzPrev').classList.remove('show');
+  document.getElementById('dzEmpty').classList.remove('hide');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SUBMIT SLIP
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function submitSlip() {
+  if (!currentRequest) { toast('กรุณาเลือกวิธีชำระก่อน', 'err'); return; }
+  if (!slipFile) { toast('กรุณาแนบสลิป', 'err'); return; }
+
+  const amt = parseFloat(document.getElementById('slipAmount').value);
+  const ref = document.getElementById('slipRef').value.trim();
+  if (!amt || amt <= 0) { toast('กรุณากรอกยอดเงินที่โอน', 'err'); return; }
+  if (!ref) { toast('กรุณากรอกเลข ref จากสลิป', 'err'); return; }
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = 'กำลังส่ง...';
+
+  try {
+    // 1) Upload to storage
+    const ext = slipFile.name.split('.').pop().toLowerCase();
+    const path = `${order.order_number}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const { error: upErr } = await sb.storage.from('payment-slips').upload(path, slipFile, {
+      contentType: slipFile.type, upsert: false
+    });
+    if (upErr) throw upErr;
+
+    const { data: { publicUrl } } = sb.storage.from('payment-slips').getPublicUrl(path);
+
+    // 2) Get current user (optional - might be guest)
+    const { data: { user } } = await sb.auth.getUser();
+
+    // 3) Insert payment_slips
+    const { data: slip, error: slipErr } = await sb.from('payment_slips').insert({
+      payment_request_id: currentRequest.id,
+      order_id: order.id,
+      order_number: order.order_number,
+      user_id: user?.id || order.user_id || null,
+      slip_image_url: publicUrl,
+      slip_image_path: path,
+      amount_paid: amt,
+      reference_no: ref,
+      transferred_at: document.getElementById('slipTime').value || null,
+      transferred_from: document.getElementById('slipFrom').value || null,
+      buyer_note: document.getElementById('slipNote').value || null,
+      status: 'pending_review'
+    }).select().single();
+    if (slipErr) throw slipErr;
+
+    // 4) Update payment_request → submitted
+    await sb.from('payment_requests').update({ status: 'submitted' }).eq('id', currentRequest.id);
+
+    // 5) Update order → awaiting_review
+    await sb.from('orders').update({ awaiting_review: true }).eq('id', order.id);
+
+    // 6) Notify admin (insert notification with admin role target — handled by admin filter)
+    await sb.from('notifications').insert({
+      user_id: order.user_id, // ส่งหาลูกค้าด้วยเป็น confirmation
+      type: 'slip_submitted',
+      title: 'ส่งสลิปสำเร็จ',
+      message: `เราได้รับสลิปสำหรับ ${order.order_number} แล้ว — รอแอดมินตรวจสอบ`,
+      link: `/payment-pending.html?order=${order.order_number}`
+    }).then(()=>{}).catch(()=>{});
+
+    // 7) Insert tracking
+    await sb.from('order_tracking').insert({
+      order_id: order.id,
+      status: order.status,
+      description: `ลูกค้าแจ้งโอนเงิน ฿${amt.toLocaleString('th-TH',{minimumFractionDigits:2})} (ref: ${ref})`
+    }).then(()=>{}).catch(()=>{});
+
+    toast('ส่งสลิปเรียบร้อย — รอแอดมินตรวจสอบ');
+    slips.unshift(slip);
+    clearSlip();
+    document.getElementById('slipAmount').value = '';
+    document.getElementById('slipRef').value = '';
+    document.getElementById('slipNote').value = '';
+    currentRequest.status = 'submitted';
+    renderSlipsList();
+    renderStatus();
+    document.getElementById('secSlips').classList.remove('hide');
+    document.getElementById('secSlips').scrollIntoView({behavior:'smooth'});
+  } catch(e) {
+    console.error(e);
+    toast('เกิดข้อผิดพลาด: ' + (e.message || 'ไม่สามารถส่งสลิปได้'), 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'ส่งสลิปให้ตรวจสอบ';
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// REALTIME — listen for admin confirmation
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function subscribeRealtime() {
+  if (!order) return;
+  sb.channel(`order:${order.id}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${order.id}` },
+      payload => {
+        const newStatus = payload.new.status;
+        if (newStatus === 'paid' && order.status !== 'paid') {
+          toast('🎉 แอดมินยืนยันการชำระเงินแล้ว!');
+          setTimeout(loadAll, 600);
+        }
+      })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'payment_slips', filter: `order_id=eq.${order.id}` },
+      payload => {
+        if (payload.new.status === 'rejected') {
+          toast('สลิปถูกปฏิเสธ — กรุณาส่งใหม่', 'err');
+          setTimeout(loadAll, 600);
+        } else if (payload.new.status === 'confirmed') {
+          toast('สลิปได้รับการยืนยัน');
+          setTimeout(loadAll, 600);
+        }
+      })
+    .subscribe();
+}
+
+// INIT
+loadAll().then(subscribeRealtime);
+</script>
+
+</body>
+</html>

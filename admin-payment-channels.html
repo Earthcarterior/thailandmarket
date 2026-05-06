@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ช่องทางการชำระเงิน — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;
+  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;--g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
+  --gn:#16A34A;--gn-bg:#DCFCE7;--am:#D97706;--am-bg:#FEF3C7;--bl:#2563EB;--bl-bg:#DBEAFE;
+  --font:'DM Sans',system-ui,sans-serif;--th:'Sarabun',sans-serif;--mono:'DM Mono',monospace;
+  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;--sidebar:220px;
+}
+body{font-family:var(--th);background:var(--g50);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.tn{height:54px;background:var(--white);border-bottom:var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:fixed;top:0;left:var(--sidebar);right:0;z-index:50}
+.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+.tn-logo .dot{color:var(--red)}
+
+.sb{width:var(--sidebar);background:var(--black);position:fixed;top:0;bottom:0;display:flex;flex-direction:column;overflow-y:auto;z-index:100}
+.sb-h{padding:18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.sb-mark{width:32px;height:32px;background:var(--g800);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:var(--white);font-size:13px}
+.sb-name{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.04em;color:var(--white)}
+.sb-name .dot{color:var(--red)}
+.sb-sub{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+.sb-nav{padding:14px 0;flex:1}
+.sni{display:flex;align-items:center;gap:10px;padding:10px 18px;color:rgba(255,255,255,.65);text-decoration:none;font-size:13px;border-left:3px solid transparent;font-family:var(--th)}
+.sni:hover{background:rgba(255,255,255,.04);color:var(--white)}
+.sni.on{background:rgba(230,51,41,.12);color:var(--white);border-left-color:var(--red)}
+.sni-i{font-size:14px;width:18px;text-align:center}
+
+.main{margin-left:var(--sidebar);padding:74px 22px 40px}
+.pg-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.pg-t{font-family:var(--font);font-size:22px;font-weight:700;letter-spacing:-.02em}
+.pg-s{font-size:12px;color:var(--g500);margin-top:4px}
+
+/* CHANNEL LIST */
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:12px}
+.ch{background:var(--white);border:var(--border);padding:16px;display:flex;flex-direction:column;gap:8px}
+.ch.inactive{opacity:.55;background:var(--g50)}
+.ch-h{display:flex;align-items:flex-start;gap:12px}
+.ch-ico{width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono);font-weight:700;color:#fff;font-size:10px;text-align:center;line-height:1.1}
+.ch-ico.pp{background:#003D6B;font-size:8px}
+.ch-ico.kbank{background:#138F2D;font-size:11px}
+.ch-ico.scb{background:#4D2E83;font-size:11px}
+.ch-ico.bbl{background:#1E4598;font-size:11px}
+.ch-ico.ktb{background:#00A4E4;font-size:11px}
+.ch-ico.true{background:#FF7900;font-size:8px}
+.ch-ico.cc{background:var(--g800);font-size:18px}
+.ch-ico.bank{background:var(--g600)}
+.ch-info{flex:1;min-width:0}
+.ch-name{font-weight:500;font-size:14px;margin-bottom:2px}
+.ch-type{font-size:10px;color:var(--g500);text-transform:uppercase;letter-spacing:.05em;font-family:var(--font)}
+.ch-toggle{position:relative;width:36px;height:20px;background:var(--g300);cursor:pointer;transition:.2s;flex-shrink:0;border-radius:10px}
+.ch-toggle.on{background:var(--gn)}
+.ch-toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;transition:.2s;border-radius:50%}
+.ch-toggle.on::after{transform:translateX(16px)}
+
+.ch-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed var(--g200)}
+.ch-row:last-child{border-bottom:none}
+.ch-l{color:var(--g500)}
+.ch-v{font-weight:500;text-align:right;font-family:var(--mono)}
+
+.ch-actions{margin-top:8px;display:flex;gap:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border:none;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn-k{background:var(--black);color:var(--white)}.btn-k:hover{background:var(--g800)}
+.btn-r{background:var(--red);color:var(--white)}.btn-r:hover{opacity:.9}
+.btn-o{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-o:hover{background:var(--black);color:var(--white)}
+.btn-g{background:transparent;color:var(--g500);border:var(--border)}.btn-g:hover{border-color:var(--black);color:var(--black)}
+.btn-sm{padding:6px 10px;font-size:10px;flex:1}
+
+/* MODAL */
+.mb{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+.mb.show{display:flex}
+.m{background:var(--white);width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.m-h{padding:18px 22px;border-bottom:var(--border);display:flex;align-items:center;justify-content:space-between}
+.m-t{font-family:var(--font);font-size:16px;font-weight:500}
+.m-x{background:none;border:none;font-size:22px;cursor:pointer;color:var(--g500);line-height:1}
+.m-b{padding:22px}
+
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g600);margin-bottom:6px;font-family:var(--font)}
+.req{color:var(--red)}
+.inp,.sel,.ta{width:100%;padding:9px 12px;border:var(--border);font-size:13px;font-family:var(--th);background:var(--white);color:var(--black);outline:none}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--black)}
+.ta{min-height:60px;resize:vertical}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.m-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+.toast-w{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:300}
+.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:12.5px;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);max-width:360px}
+.toast.ok{border-color:var(--gn)}.toast.err{border-color:var(--red)}
+
+@media (max-width:768px){
+  .sb{position:relative;width:100%;height:auto;flex-direction:row;overflow-x:auto}
+  .sb-h{flex-shrink:0;border-bottom:none;border-right:1px solid rgba(255,255,255,.08)}
+  .sb-nav{display:flex;padding:0;flex:0}
+  .sni{padding:14px 12px;border-left:none;border-bottom:3px solid transparent;flex-shrink:0;font-size:12px}
+  .sni.on{border-bottom-color:var(--red);background:none}
+  .tn{position:relative;left:0}
+  .main{margin-left:0;padding:14px}
+  .list{grid-template-columns:1fr}
+  .fg-row{grid-template-columns:1fr}
+}
+
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<aside class="sb">
+  <div class="sb-h">
+    <div class="sb-mark">A</div>
+    <div>
+      <div class="sb-name">Thailand<span class="dot">.</span>Market</div>
+      <div class="sb-sub">Admin</div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <a href="admin-dashboard.html" class="sni"><span class="sni-i">▦</span>Dashboard</a>
+    <a href="admin-orders.html" class="sni"><span class="sni-i">📦</span>Orders</a>
+    <a href="admin-payments.html" class="sni"><span class="sni-i">💳</span>Payments</a>
+    <a href="admin-payment-channels.html" class="sni on"><span class="sni-i">🏦</span>Channels</a>
+    <a href="admin-users.html" class="sni"><span class="sni-i">👥</span>Users</a>
+    <a href="admin-products.html" class="sni"><span class="sni-i">🛍</span>Products</a>
+  </nav>
+</aside>
+
+<nav class="tn">
+  <div class="tn-logo">Thailand<span class="dot">.</span>Market</div>
+  <div style="font-size:12px;color:var(--g500)">ช่องทางรับชำระเงิน</div>
+</nav>
+
+<main class="main">
+  <div class="pg-h">
+    <div>
+      <div class="pg-t">ช่องทางการชำระเงิน</div>
+      <div class="pg-s">จัดการช่องทางที่ลูกค้าจะเห็นในหน้าชำระเงิน</div>
+    </div>
+    <button class="btn btn-k" onclick="openModal()">+ เพิ่มช่องทาง</button>
+  </div>
+
+  <div class="list" id="list">
+    <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--g500)">กำลังโหลด...</div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="mb" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="m">
+    <div class="m-h">
+      <div class="m-t" id="modalTitle">เพิ่มช่องทางใหม่</div>
+      <button class="m-x" onclick="closeModal()">×</button>
+    </div>
+    <div class="m-b">
+      <input type="hidden" id="fId">
+
+      <div class="fg">
+        <label class="fl">ประเภท <span class="req">*</span></label>
+        <select class="sel" id="fType" onchange="onTypeChange()">
+          <option value="promptpay">PromptPay</option>
+          <option value="bank">โอนผ่านธนาคาร</option>
+          <option value="truemoney">TrueMoney Wallet</option>
+          <option value="credit_card_manual">บัตรเครดิต (ติดต่อแอดมิน)</option>
+        </select>
+      </div>
+
+      <div class="fg">
+        <label class="fl">ชื่อแสดง <span class="req">*</span></label>
+        <input type="text" class="inp" id="fName" placeholder="เช่น PromptPay (กสิกรไทย)">
+      </div>
+
+      <div class="fg-row" id="fgBank">
+        <div class="fg">
+          <label class="fl">ธนาคาร</label>
+          <select class="sel" id="fBank">
+            <option value="">— เลือก —</option>
+            <option value="kbank">ธนาคารกสิกรไทย (KBANK)</option>
+            <option value="scb">ธนาคารไทยพาณิชย์ (SCB)</option>
+            <option value="bbl">ธนาคารกรุงเทพ (BBL)</option>
+            <option value="ktb">ธนาคารกรุงไทย (KTB)</option>
+            <option value="bay">ธนาคารกรุงศรี (BAY)</option>
+            <option value="ttb">ธนาคารทีเอ็มบีธนชาต (TTB)</option>
+            <option value="gsb">ธนาคารออมสิน (GSB)</option>
+            <option value="ghb">ธนาคารอาคารสงเคราะห์ (GHB)</option>
+            <option value="cimbt">ธนาคารซีไอเอ็มบีไทย (CIMBT)</option>
+            <option value="lh">ธนาคารแลนด์แอนด์เฮ้าส์ (LH)</option>
+            <option value="other">อื่นๆ</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">เลขบัญชี / PromptPay <span class="req">*</span></label>
+          <input type="text" class="inp" id="fAcc" placeholder="123-4-56789-0">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">ชื่อบัญชี</label>
+        <input type="text" class="inp" id="fAccName" placeholder="บจก. ไทยแลนด์ มาร์เก็ต">
+      </div>
+
+      <div class="fg" id="fgQr">
+        <label class="fl">URL รูป QR (ถ้าใช้รูปสำเร็จรูปแทน auto-gen)</label>
+        <input type="url" class="inp" id="fQr" placeholder="https://...">
+      </div>
+
+      <div class="fg" id="fgContact">
+        <label class="fl">ข้อมูลติดต่อ</label>
+        <input type="text" class="inp" id="fContact" placeholder="เช่น Line: @thmarket / โทร 02-xxx-xxxx">
+      </div>
+
+      <div class="fg">
+        <label class="fl">คำแนะนำเพิ่มเติม (จะแสดงในหน้าชำระเงิน)</label>
+        <textarea class="ta" id="fInst" placeholder="เช่น โอนเสร็จแล้วอัปโหลดสลิปทันที"></textarea>
+      </div>
+
+      <div class="fg-row">
+        <div class="fg">
+          <label class="fl">ค่าธรรมเนียม %</label>
+          <input type="number" class="inp" id="fFeePct" step="0.01" placeholder="0">
+        </div>
+        <div class="fg">
+          <label class="fl">ค่าธรรมเนียมคงที่ (฿)</label>
+          <input type="number" class="inp" id="fFeeFix" step="0.01" placeholder="0">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">ลำดับการแสดง (น้อย = ขึ้นก่อน)</label>
+        <input type="number" class="inp" id="fSort" value="10">
+      </div>
+
+      <div class="m-actions">
+        <button class="btn btn-r btn-sm" onclick="deleteChannel()" id="btnDelete" style="margin-right:auto;display:none">ลบช่องทาง</button>
+        <button class="btn btn-o btn-sm" onclick="closeModal()">ยกเลิก</button>
+        <button class="btn btn-k btn-sm" onclick="saveChannel()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-w" id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5MDg2NDIsImV4cCI6MjA3NzQ4NDY0Mn0.XbMqBimjVfwoZcm-Bp8kIo2Tt2bC75QMDGmMmaH4_nE';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+let channels=[];
+
+const BANK_NAMES = {
+  kbank:'ธนาคารกสิกรไทย', scb:'ธนาคารไทยพาณิชย์', bbl:'ธนาคารกรุงเทพ',
+  ktb:'ธนาคารกรุงไทย', bay:'ธนาคารกรุงศรี', ttb:'ธนาคารทีเอ็มบีธนชาต',
+  gsb:'ธนาคารออมสิน', ghb:'ธนาคารอาคารสงเคราะห์', cimbt:'ธนาคารซีไอเอ็มบีไทย', lh:'ธนาคารแลนด์แอนด์เฮ้าส์'
+};
+
+function toast(msg, type='ok') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='ok'?'✓':type==='err'?'⚠':'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+async function loadAll() {
+  const { data, error } = await sb.from('payment_channels').select('*').order('sort_order');
+  if (error) { toast('โหลดข้อมูลผิดพลาด: ' + error.message, 'err'); return; }
+  channels = data || [];
+  render();
+}
+
+function render() {
+  const list = document.getElementById('list');
+  if (!channels.length) {
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--g500)">ยังไม่มีช่องทางการชำระเงิน</div>';
+    return;
+  }
+  list.innerHTML = channels.map(c => renderCard(c)).join('');
+}
+
+function renderCard(c) {
+  const ico = iconHtml(c);
+  const typeLabel = ({promptpay:'PromptPay', bank:'Bank Transfer', truemoney:'TrueMoney', credit_card_manual:'Credit Card'})[c.channel_type] || c.channel_type;
+
+  return `<div class="ch ${c.is_active?'':'inactive'}">
+    <div class="ch-h">
+      ${ico}
+      <div class="ch-info">
+        <div class="ch-name">${c.display_name}</div>
+        <div class="ch-type">${typeLabel}</div>
+      </div>
+      <div class="ch-toggle ${c.is_active?'on':''}" onclick="toggleActive('${c.id}', ${!c.is_active})"></div>
+    </div>
+    ${c.account_number ? `<div class="ch-row"><div class="ch-l">เลขบัญชี/PromptPay</div><div class="ch-v">${c.account_number}</div></div>` : ''}
+    ${c.account_name ? `<div class="ch-row"><div class="ch-l">ชื่อบัญชี</div><div class="ch-v" style="font-family:var(--th)">${c.account_name}</div></div>` : ''}
+    ${c.bank_name ? `<div class="ch-row"><div class="ch-l">ธนาคาร</div><div class="ch-v" style="font-family:var(--th)">${c.bank_name}</div></div>` : ''}
+    ${c.fee_percent > 0 || c.fee_fixed > 0 ? `<div class="ch-row"><div class="ch-l">ค่าธรรมเนียม</div><div class="ch-v" style="color:var(--am)">${c.fee_percent>0?c.fee_percent+'%':''} ${c.fee_fixed>0?'+ ฿'+c.fee_fixed:''}</div></div>` : ''}
+    <div class="ch-row"><div class="ch-l">ลำดับ</div><div class="ch-v">${c.sort_order || 0}</div></div>
+    <div class="ch-actions">
+      <button class="btn btn-o btn-sm" onclick="editChannel('${c.id}')">แก้ไข</button>
+    </div>
+  </div>`;
+}
+
+function iconHtml(c) {
+  const t = c.channel_type;
+  const bank = (c.bank_code || '').toLowerCase();
+  if (t === 'promptpay') return '<div class="ch-ico pp">PROMPT<br>PAY</div>';
+  if (t === 'truemoney') return '<div class="ch-ico true">TRUE<br>MONEY</div>';
+  if (t === 'credit_card_manual') return '<div class="ch-ico cc">💳</div>';
+  if (t === 'bank') {
+    const cls = ['kbank','scb','bbl','ktb'].includes(bank) ? bank : 'bank';
+    const label = bank ? bank.toUpperCase() : 'BANK';
+    return `<div class="ch-ico ${cls}">${label}</div>`;
+  }
+  return '<div class="ch-ico bank">💰</div>';
+}
+
+async function toggleActive(id, newState) {
+  const { error } = await sb.from('payment_channels').update({ is_active: newState }).eq('id', id);
+  if (error) { toast('ผิดพลาด: ' + error.message, 'err'); return; }
+  toast(newState ? 'เปิดใช้งานช่องทาง' : 'ปิดช่องทาง');
+  loadAll();
+}
+
+function openModal() {
+  document.getElementById('fId').value = '';
+  document.getElementById('modalTitle').textContent = 'เพิ่มช่องทางใหม่';
+  document.getElementById('btnDelete').style.display = 'none';
+  ['fName','fAcc','fAccName','fQr','fContact','fInst','fFeePct','fFeeFix'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fBank').value = '';
+  document.getElementById('fSort').value = '10';
+  document.getElementById('fType').value = 'promptpay';
+  onTypeChange();
+  document.getElementById('modal').classList.add('show');
+}
+
+function editChannel(id) {
+  const c = channels.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('fId').value = c.id;
+  document.getElementById('modalTitle').textContent = 'แก้ไขช่องทาง';
+  document.getElementById('btnDelete').style.display = 'inline-flex';
+  document.getElementById('fType').value = c.channel_type;
+  document.getElementById('fName').value = c.display_name || '';
+  document.getElementById('fBank').value = c.bank_code || '';
+  document.getElementById('fAcc').value = c.account_number || '';
+  document.getElementById('fAccName').value = c.account_name || '';
+  document.getElementById('fQr').value = c.qr_image_url || '';
+  document.getElementById('fContact').value = c.contact_info || '';
+  document.getElementById('fInst').value = c.instructions || '';
+  document.getElementById('fFeePct').value = c.fee_percent || 0;
+  document.getElementById('fFeeFix').value = c.fee_fixed || 0;
+  document.getElementById('fSort').value = c.sort_order || 0;
+  onTypeChange();
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+function onTypeChange() {
+  const t = document.getElementById('fType').value;
+  document.getElementById('fgBank').style.display = (t === 'bank') ? 'grid' : (t === 'credit_card_manual') ? 'none' : 'grid';
+  document.getElementById('fgQr').style.display = (t === 'promptpay' || t === 'bank') ? 'block' : 'none';
+  document.getElementById('fgContact').style.display = (t === 'credit_card_manual') ? 'block' : 'none';
+}
+
+async function saveChannel() {
+  const id = document.getElementById('fId').value;
+  const type = document.getElementById('fType').value;
+  const bankCode = document.getElementById('fBank').value;
+  const data = {
+    channel_type: type,
+    display_name: document.getElementById('fName').value.trim(),
+    account_name: document.getElementById('fAccName').value.trim() || null,
+    account_number: document.getElementById('fAcc').value.trim() || null,
+    bank_code: bankCode || null,
+    bank_name: bankCode ? (BANK_NAMES[bankCode] || null) : null,
+    qr_image_url: document.getElementById('fQr').value.trim() || null,
+    contact_info: document.getElementById('fContact').value.trim() || null,
+    instructions: document.getElementById('fInst').value.trim() || null,
+    fee_percent: parseFloat(document.getElementById('fFeePct').value) || 0,
+    fee_fixed: parseFloat(document.getElementById('fFeeFix').value) || 0,
+    sort_order: parseInt(document.getElementById('fSort').value) || 0,
+    is_active: true
+  };
+
+  if (!data.display_name) { toast('กรุณากรอกชื่อแสดง', 'err'); return; }
+  if (type !== 'credit_card_manual' && !data.account_number) { toast('กรุณากรอกเลขบัญชี', 'err'); return; }
+
+  let result;
+  if (id) {
+    result = await sb.from('payment_channels').update(data).eq('id', id);
+  } else {
+    result = await sb.from('payment_channels').insert(data);
+  }
+  if (result.error) { toast('ผิดพลาด: ' + result.error.message, 'err'); return; }
+  toast(id ? 'แก้ไขช่องทางเรียบร้อย' : 'เพิ่มช่องทางใหม่');
+  closeModal();
+  loadAll();
+}
+
+async function deleteChannel() {
+  const id = document.getElementById('fId').value;
+  if (!id) return;
+  if (!confirm('ลบช่องทางนี้ออกจากระบบ? (ลูกค้าจะไม่เห็นในหน้าชำระเงินอีก)')) return;
+  const { error } = await sb.from('payment_channels').delete().eq('id', id);
+  if (error) { toast('ผิดพลาด: ' + error.message, 'err'); return; }
+  toast('ลบช่องทางเรียบร้อย');
+  closeModal();
+  loadAll();
+}
+
+loadAll();
+</script>
+
+</body>
+</html>
