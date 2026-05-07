@@ -1142,5 +1142,43 @@ function setAvatarUI(url) {
   setInterval(updateBadges, 60000);
 })();
 </script>
+
+<!-- ── Account Nav Dropdown Handler (injected 2026-05-07) ── -->
+<script>
+// ── Account Nav (shared) ─────────────────────────────────
+(async function initAccountNav() {
+  const sb  = (window._sb) || supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
+  window._sb = sb;
+  const btn  = document.getElementById('account-nav-btn');
+  const drop = document.getElementById('account-dropdown');
+  if (!btn || !drop) return;
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) {
+    btn.onclick = () => location.href='login.html?from='+encodeURIComponent(location.pathname);
+    return;
+  }
+  const email = session.user.email;
+  const { data:user } = await sb.from('users').select('display_name,role,avatar_url').eq('email',email).maybeSingle();
+  const name = user?.display_name || email.split('@')[0];
+  const role = user?.role || 'buyer';
+  const ini  = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+  const ico = document.getElementById('account-ico');
+  const lbl = document.getElementById('account-lbl');
+  if (ico) ico.innerHTML = `<div style="width:22px;height:22px;border-radius:50%;background:var(--black);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">${ini}</div>`;
+  if (lbl) lbl.textContent = name.split(' ')[0];
+  ['dd-name','dd-email'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=id==='dd-name'?name:email; });
+  const dr=document.getElementById('dd-role');
+  if(dr){ dr.textContent=role==='admin'?'Admin':role==='seller'?'Seller':'Member'; dr.className='account-dropdown-role '+role; }
+  const da=document.getElementById('dd-admin'); if(da) da.style.display=role==='admin'?'flex':'none';
+  const ds=document.getElementById('dd-seller'); if(ds) ds.style.display=(role==='seller'||role==='admin')?'flex':'none';
+  btn.onclick=e=>{ e.stopPropagation(); drop.classList.toggle('open'); };
+  document.addEventListener('click',()=>drop.classList.remove('open'));
+  document.getElementById('dd-logout')?.addEventListener('click',async()=>{
+    await sb.auth.signOut();
+    location.href='index.html';
+  });
+})();
+</script>
+
 </body>
 </html>
