@@ -967,6 +967,7 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
       <button class="btn-buy" id="btn-buy" onclick="buyNow()">ซื้อเลย</button>
       <button class="btn-cart" onclick="addToCart()">🛒 เพิ่มลงตะกร้า</button>
       <button class="btn-wishlist" id="wl-btn" onclick="toggleWishlist()">❤️ บันทึกเป็น Wishlist</button>
+      <button class="btn-wishlist" onclick="contactSeller()" style="border-color:#3B82F6;color:#3B82F6">💬 ติดต่อร้านค้า</button>
     </div>
 
     <!-- SERVICES (dynamic) -->
@@ -1711,6 +1712,33 @@ async function toggleWishlist() {
     }
   } catch(e) {
     toast('ไม่สำเร็จ: ' + e.message);
+  }
+}
+
+// ── Contact Seller — สร้าง chat thread + redirect ──
+async function contactSeller() {
+  if (!_product) return;
+  if (!_product.seller_id) {
+    toast('❌ สินค้านี้ไม่มีร้านค้าเชื่อมโยง');
+    return;
+  }
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      toast('🔐 กรุณาเข้าสู่ระบบก่อน');
+      setTimeout(() => location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search), 1200);
+      return;
+    }
+    toast('💬 กำลังเปิดห้องแชท...');
+    const { data: threadId, error } = await sb.rpc('get_or_create_thread', {
+      p_seller_id: _product.seller_id,
+      p_product_id: productId
+    });
+    if (error) throw error;
+    location.href = 'chat.html?thread=' + threadId;
+  } catch(e) {
+    console.error('contactSeller:', e);
+    toast('❌ เปิดแชทไม่สำเร็จ: ' + (e.message || ''));
   }
 }
 

@@ -6,10 +6,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- ── CACHE BUSTING ─────────────────────────────────────── -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="version" content="2026-05-07-realtime">
 <title>Thailand Market — แชท</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" data-cfasync="false"></script>
 <style id="tm-base">
 :root{
   --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
@@ -396,46 +402,56 @@ img{max-width:100%;height:auto}
   </div>
 
   <!-- CHAT -->
-  <div class="chat-area">
-    <!-- HEADER -->
-    <div class="ca-header">
-      <div class="ca-av" style="background:#EFF6FF">🛒</div>
-      <div class="ca-info">
-        <div class="ca-name">TechHub Official</div>
-        <div class="ca-status">🟢 ออนไลน์ · ตอบกลับภายใน 5 นาที</div>
-      </div>
-      <div class="ca-actions">
-        <button class="ca-btn" onclick="toast('📞 โทรหาร้านค้า')">📞</button>
-        <button class="ca-btn" onclick="toast('ℹ️ ข้อมูลร้านค้า')">ℹ️</button>
-        <button class="ca-btn" onclick="toast('🚫 รายงาน')">⋯</button>
-      </div>
+  <div class="chat-area" id="chat-area">
+    <!-- EMPTY STATE (when no thread selected) -->
+    <div id="empty-state" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--g400);text-align:center;padding:40px;gap:12px">
+      <div style="font-size:64px;opacity:0.5">💬</div>
+      <div style="font-size:16px;font-weight:500;color:var(--g600)">เลือกการสนทนา</div>
+      <div style="font-size:13px">เลือกร้านค้าจากรายการด้านซ้าย<br>หรือกด "💬 ติดต่อร้าน" จากหน้าสินค้าเพื่อเริ่มแชท</div>
     </div>
 
-    <!-- PINNED PRODUCT -->
-    <div class="pinned-prod">
-      <div class="pp-img">📺</div>
-      <div class="pp-info">
-        <div class="pp-name">Samsung QLED 4K 55" QA55Q70C</div>
-        <div class="pp-price">฿14,290 <span style="font-size:11px;color:var(--g400);text-decoration:line-through;font-weight:400;font-family:'DM Sans',sans-serif">฿18,900</span></div>
+    <!-- ACTIVE THREAD (hidden until selected) -->
+    <div id="active-thread" style="display:none;flex:1;flex-direction:column;min-height:0">
+      <!-- HEADER -->
+      <div class="ca-header">
+        <div class="ca-av" id="ca-av" style="background:#EFF6FF">🛒</div>
+        <div class="ca-info">
+          <div class="ca-name" id="ca-name">—</div>
+          <div class="ca-status" id="ca-status">กำลังเชื่อมต่อ...</div>
+        </div>
+        <div class="ca-actions">
+          <button class="ca-btn" onclick="toast('📞 โทรหาร้านค้า')">📞</button>
+          <button class="ca-btn" onclick="viewSellerInfo()">ℹ️</button>
+          <button class="ca-btn" onclick="toast('🚫 รายงาน')">⋯</button>
+        </div>
       </div>
-      <button class="pp-btn" onclick="toast('🛒 เพิ่มลงตะกร้าแล้ว!')">ซื้อเลย</button>
-    </div>
 
-    <!-- MESSAGES -->
-    <div class="messages" id="messages"></div>
-
-    <!-- QUICK REPLIES -->
-    <div class="quick-replies" id="qr-wrap"></div>
-
-    <!-- INPUT -->
-    <div class="chat-input-wrap">
-      <div class="ci-tools">
-        <button class="ci-tool" onclick="sendImage()" title="ส่งรูปภาพ">📷</button>
-        <button class="ci-tool" onclick="sendProduct()" title="ส่งสินค้า">📦</button>
-        <button class="ci-tool" onclick="toast('😊 สติ๊กเกอร์')" title="สติ๊กเกอร์">😊</button>
+      <!-- PINNED PRODUCT (เฉพาะถ้ามี initial_product_id) -->
+      <div class="pinned-prod" id="pinned-prod" style="display:none">
+        <div class="pp-img" id="pp-img">📦</div>
+        <div class="pp-info">
+          <div class="pp-name" id="pp-name">—</div>
+          <div class="pp-price" id="pp-price">—</div>
+        </div>
+        <button class="pp-btn" id="pp-btn" onclick="goToProduct()">ดูสินค้า</button>
       </div>
-      <textarea class="ci-input" id="msg-input" placeholder="พิมพ์ข้อความ..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-      <button class="ci-send" onclick="sendMsg()">➤</button>
+
+      <!-- MESSAGES -->
+      <div class="messages" id="messages"></div>
+
+      <!-- QUICK REPLIES -->
+      <div class="quick-replies" id="qr-wrap"></div>
+
+      <!-- INPUT -->
+      <div class="chat-input-wrap">
+        <div class="ci-tools">
+          <button class="ci-tool" onclick="sendImage()" title="ส่งรูปภาพ">📷</button>
+          <button class="ci-tool" onclick="sendProduct()" title="ส่งสินค้า">📦</button>
+          <button class="ci-tool" onclick="toast('😊 สติ๊กเกอร์')" title="สติ๊กเกอร์">😊</button>
+        </div>
+        <textarea class="ci-input" id="msg-input" placeholder="พิมพ์ข้อความ..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="ci-send" onclick="sendMsg()">➤</button>
+      </div>
     </div>
   </div>
 
@@ -444,95 +460,434 @@ img{max-width:100%;height:auto}
 <div id="tw" style="position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999"></div>
 
 <script>
-const CONVS=[
-  {ico:'🛒',bg:'#EFF6FF',name:'TechHub Official',msg:'ได้เลยครับ ราคา Flash Sale ถึงพรุ่งนี้',time:'14:32',badge:2,online:true,active:true},
-  {ico:'👗',bg:'#FFF0F5',name:'Fashion Paradise',msg:'สินค้าพร้อมส่งวันนี้ค่ะ',time:'12:15',badge:0,online:true},
-  {ico:'🏠',bg:'#F0FFF4',name:'HomePerfect Store',msg:'ขอบคุณที่สนใจสินค้าของเรา',time:'10:00',badge:1,online:false},
-  {ico:'💄',bg:'#FFF5F0',name:'Beauty Corner',msg:'มีสต็อกค่ะ สีที่คุณต้องการ',time:'เมื่อวาน',badge:0,online:false},
-  {ico:'🐾',bg:'#FFFBEB',name:'PetLove Shop',msg:'อาหารแมวรสนี้มีสต็อกนะคะ',time:'2 วันก่อน',badge:0,online:false},
-];
-document.getElementById('conv-list').innerHTML=CONVS.map(c=>`<div class="conv-item ${c.active?'active':''}" onclick="selectConv(this)">
-  <div class="ci-av" style="background:${c.bg}">${c.ico}${c.online?'<div class="ci-online"></div>':''}</div>
-  <div class="ci-info">
-    <div class="ci-name">${c.name}</div>
-    <div class="ci-msg">${c.msg}</div>
-  </div>
-  <div class="ci-meta">
-    <span class="ci-time">${c.time}</span>
-    ${c.badge?`<span class="ci-badge">${c.badge}</span>`:''}
-  </div>
-</div>`).join('');
+// ════════════════════════════════════════════════════════════════════
+//  CHAT.HTML — Supabase Realtime Integration [2026-05-07]
+//  Architecture:
+//    - Threads list: 1-time fetch + reload on focus
+//    - Active thread: subscribe to chat_messages INSERT events via WebSocket
+//    - Mark-as-read: RPC mark_thread_read() เมื่อเปิด thread
+// ════════════════════════════════════════════════════════════════════
 
-function selectConv(el){
-  document.querySelectorAll('.conv-item').forEach(x=>{x.classList.remove('active');x.style.borderLeft='';});
-  el.classList.add('active');
-  const badge=el.querySelector('.ci-badge');
-  if(badge)badge.remove();
+const sb = supabase.createClient(
+  'https://qmgyimsptzewwyafvjzk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+);
+
+// ── State ───────────────────────────────────────────────────────────
+let _user = null;            // current logged-in user (from users table)
+let _userRole = 'buyer';     // 'buyer' | 'seller'
+let _mySellerIds = [];       // ถ้าเป็น seller — list ของ shops ที่เป็น owner
+let _threads = [];           // all threads (cache)
+let _activeThreadId = null;
+let _activeThread = null;
+let _messages = [];          // messages of active thread
+let _msgChannel = null;      // realtime subscription
+let _threadChannel = null;
+const QRS = ['ขอบคุณครับ','ราคานี้ดีเลยครับ','มีโปรอื่นไหมครับ?','ขอรูปสินค้าเพิ่มได้ไหม?','ผ่อนได้ไหมครับ?'];
+
+// ── Helpers ─────────────────────────────────────────────────────────
+function escapeHtml(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtTime(d){
+  const dt = new Date(d);
+  const now = new Date();
+  const dayMs = 86400000;
+  const diff = now - dt;
+  if (diff < dayMs && now.getDate() === dt.getDate()) {
+    return dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  }
+  if (diff < 2 * dayMs) return 'เมื่อวาน';
+  if (diff < 7 * dayMs) return Math.floor(diff/dayMs) + ' วันก่อน';
+  return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit'});
+}
+function toast(msg){
+  const w = document.getElementById('tw');
+  if (!w) return;
+  const t = document.createElement('div');
+  t.style.cssText = 'background:#0A0A0A;color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-family:DM Sans,sans-serif;animation:tIn 0.3s ease';
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+function shopAvatar(name) {
+  // Pick emoji based on first char of name
+  const emojis = ['🛒','🏪','🛍️','💼','🎁','📦','🏬','🏢'];
+  const code = (name || '').charCodeAt(0) || 0;
+  return emojis[code % emojis.length];
+}
+function shopBg(name) {
+  const bgs = ['#EFF6FF','#FFF0F5','#F0FFF4','#FFF5F0','#FFFBEB','#F5F0FF','#F0F4FF','#FFEEEE'];
+  const code = (name || '').charCodeAt(0) || 0;
+  return bgs[code % bgs.length];
 }
 
-const MSGS=[
-  {mine:false,text:'สวัสดีครับ มีคำถามเกี่ยวกับทีวี Samsung QLED ครับ',time:'14:20'},
-  {mine:true,text:'สวัสดีค่ะ! ยินดีตอบคำถามเลยนะคะ 😊 มีอะไรสงสัยคะ?',time:'14:21'},
-  {mine:false,text:'อยากทราบว่า Samsung QA55Q70C รองรับ Dolby Vision ไหมครับ?',time:'14:22'},
-  {mine:true,text:'QA55Q70C รองรับ HDR10+ ค่ะ แต่ไม่รองรับ Dolby Vision นะคะ ถ้าต้องการ Dolby Vision ต้องขึ้นรุ่น QN55Q80C ค่ะ',time:'14:23'},
-  {mine:false,text:'แล้วรับประกันกี่ปีครับ?',time:'14:25'},
-  {mine:true,text:'รับประกัน 3 ปีทุกชิ้นส่วน + 1 ปีแผงจอค่ะ เป็น warranty ของ Samsung Thailand โดยตรง มีบัตรรับประกันออนไลน์ด้วยค่ะ',time:'14:26'},
-  {mine:false,text:'ถ้าซื้อวันนี้จะส่งถึงมือวันไหนครับ? อยู่แถวกรุงเทพ',time:'14:28'},
-  {mine:true,text:'ถ้าสั่งก่อน 16.00 น. วันนี้ จะส่ง Kerry Express วันนี้เลยค่ะ คาดว่าถึงพรุ่งนี้บ่ายๆ สำหรับพื้นที่กรุงเทพ-ปริมณฑล 🚚',time:'14:29'},
-  {mine:false,text:'ราคา Flash Sale ได้ถึงเมื่อไรครับ?',time:'14:31'},
-  {mine:true,text:'ได้เลยครับ ราคา Flash Sale ถึงพรุ่งนี้',time:'14:32'},
-];
-const msgWrap=document.getElementById('messages');
-function renderMsgs(){
-  msgWrap.innerHTML='<div class="system-msg">📅 28 เมษายน 2569</div>';
-  MSGS.forEach(m=>{
-    const div=document.createElement('div');
-    div.className='msg'+(m.mine?' mine':'');
-    div.innerHTML=`
-      ${!m.mine?'<div class="msg-av" style="background:#EFF6FF;font-size:13px">🛒</div>':''}
-      <div style="display:flex;flex-direction:column;gap:2px;${m.mine?'align-items:flex-end':''}">
-        <div class="msg-bubble">${m.text}</div>
-        <span class="msg-time">${m.time}${m.mine?' ✓✓':''}</span>
+// ── Auth ────────────────────────────────────────────────────────────
+async function loadUser() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    document.body.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:DM Sans,sans-serif;gap:16px;padding:40px;text-align:center">
+      <div style="font-size:64px">🔐</div>
+      <div style="font-size:20px;font-weight:600">กรุณาเข้าสู่ระบบ</div>
+      <div style="color:#737373">เพื่อใช้งานแชท คุณต้องเข้าสู่ระบบก่อน</div>
+      <a href="login.html?from=chat.html" style="background:#0A0A0A;color:#fff;padding:12px 24px;text-decoration:none;font-size:14px">เข้าสู่ระบบ</a>
+    </div>`;
+    throw new Error('not logged in');
+  }
+  const { data: user } = await sb.from('users')
+    .select('id, email, display_name, role, avatar_url')
+    .eq('email', session.user.email).maybeSingle();
+  if (!user) throw new Error('user record not found');
+  _user = user;
+
+  // ตรวจว่าเป็น seller ไหม
+  const { data: sellers } = await sb.from('sellers')
+    .select('id, shop_name')
+    .eq('user_id', user.id);
+  if (sellers && sellers.length) {
+    _mySellerIds = sellers.map(s => s.id);
+    // ถ้าเป็น seller — ดู role จาก URL (?as=seller) หรือ default = buyer
+    const params = new URLSearchParams(location.search);
+    if (params.get('as') === 'seller') _userRole = 'seller';
+  }
+}
+
+// ── Load Threads List ───────────────────────────────────────────────
+async function loadThreads() {
+  let query = sb.from('chat_threads')
+    .select('*, sellers(shop_name, shop_logo, is_verified), buyer:users!chat_threads_buyer_id_fkey(display_name, avatar_url, email)')
+    .order('last_at', { ascending: false });
+
+  if (_userRole === 'seller') {
+    query = query.in('seller_id', _mySellerIds);
+  } else {
+    query = query.eq('buyer_id', _user.id);
+  }
+
+  const { data, error } = await query;
+  if (error) { console.error('loadThreads:', error); return; }
+  _threads = data || [];
+  renderThreads();
+}
+
+function renderThreads() {
+  const list = document.getElementById('conv-list');
+  if (!_threads.length) {
+    list.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--g400);font-size:13px">
+      <div style="font-size:48px;margin-bottom:12px;opacity:.4">💬</div>
+      ยังไม่มีการสนทนา<br>เริ่มแชทกับร้านค้าจากหน้าสินค้า
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = _threads.map(t => {
+    let displayName, lastMsg, unread;
+    if (_userRole === 'seller') {
+      displayName = (t.buyer && (t.buyer.display_name || t.buyer.email)) || 'ลูกค้า';
+      unread = t.unread_seller || 0;
+    } else {
+      displayName = (t.sellers && t.sellers.shop_name) || 'ร้านค้า';
+      unread = t.unread_buyer || 0;
+    }
+    lastMsg = t.last_message || 'เริ่มสนทนา...';
+    const time = t.last_at ? fmtTime(t.last_at) : '';
+    const isActive = t.id === _activeThreadId;
+    const ico = shopAvatar(displayName);
+    const bg = shopBg(displayName);
+
+    return `<div class="conv-item ${isActive?'active':''}" data-thread-id="${t.id}" onclick="openThread('${t.id}')">
+      <div class="ci-av" style="background:${bg}">${ico}</div>
+      <div class="ci-info">
+        <div class="ci-name">${escapeHtml(displayName)}</div>
+        <div class="ci-msg">${escapeHtml(lastMsg)}</div>
       </div>
-      ${m.mine?'<div class="msg-av" style="background:#FFF5F5;font-size:13px">สจ</div>':''}
-    `;
-    msgWrap.appendChild(div);
+      <div class="ci-meta">
+        <span class="ci-time">${escapeHtml(time)}</span>
+        ${unread > 0 ? `<span class="ci-badge">${unread}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Open Thread ─────────────────────────────────────────────────────
+async function openThread(threadId) {
+  // Cleanup previous subscription
+  if (_msgChannel) {
+    sb.removeChannel(_msgChannel);
+    _msgChannel = null;
+  }
+
+  _activeThreadId = threadId;
+  _activeThread = _threads.find(t => t.id === threadId);
+  if (!_activeThread) {
+    // fetch จาก DB ถ้าไม่อยู่ใน cache (เช่น เพิ่งถูกสร้าง)
+    const { data } = await sb.from('chat_threads')
+      .select('*, sellers(shop_name, shop_logo, is_verified), buyer:users!chat_threads_buyer_id_fkey(display_name, avatar_url, email)')
+      .eq('id', threadId).maybeSingle();
+    if (!data) { toast('❌ ไม่พบการสนทนานี้'); return; }
+    _activeThread = data;
+    _threads.unshift(data);
+  }
+
+  // Show active thread, hide empty state
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('active-thread').style.display = 'flex';
+
+  // Update header
+  let displayName, statusText;
+  if (_userRole === 'seller') {
+    displayName = (_activeThread.buyer && (_activeThread.buyer.display_name || _activeThread.buyer.email)) || 'ลูกค้า';
+    statusText = '🟢 พร้อมตอบกลับ';
+  } else {
+    displayName = (_activeThread.sellers && _activeThread.sellers.shop_name) || 'ร้านค้า';
+    statusText = (_activeThread.sellers && _activeThread.sellers.is_verified) ? '✓ ร้านค้ายืนยัน · ตอบกลับภายใน 5 นาที' : 'ตอบกลับภายใน 5 นาที';
+  }
+  document.getElementById('ca-name').textContent = displayName;
+  document.getElementById('ca-status').textContent = statusText;
+  document.getElementById('ca-av').textContent = shopAvatar(displayName);
+  document.getElementById('ca-av').style.background = shopBg(displayName);
+
+  // Pinned product
+  if (_activeThread.initial_product_id) {
+    loadPinnedProduct(_activeThread.initial_product_id);
+  } else {
+    document.getElementById('pinned-prod').style.display = 'none';
+  }
+
+  // Update active class
+  document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+  const activeEl = document.querySelector(`.conv-item[data-thread-id="${threadId}"]`);
+  if (activeEl) activeEl.classList.add('active');
+
+  // Render quick replies
+  document.getElementById('qr-wrap').innerHTML = QRS.map(q =>
+    `<button class="qr" onclick="sendQuick('${escapeHtml(q)}')">${escapeHtml(q)}</button>`
+  ).join('');
+
+  // Load messages
+  await loadMessages(threadId);
+
+  // Subscribe to realtime
+  subscribeToThread(threadId);
+
+  // Mark as read
+  await sb.rpc('mark_thread_read', { p_thread_id: threadId, p_role: _userRole });
+  // Reset unread badge ใน UI
+  if (_userRole === 'buyer') _activeThread.unread_buyer = 0;
+  else _activeThread.unread_seller = 0;
+  renderThreads();
+
+  // Update URL
+  history.replaceState(null, '', `?thread=${threadId}`);
+}
+
+async function loadPinnedProduct(productId) {
+  try {
+    const { data } = await sb.from('products')
+      .select('id, name_th, price, compare_price, thumbnail').eq('id', productId).maybeSingle();
+    if (!data) return;
+    document.getElementById('pinned-prod').style.display = 'flex';
+    document.getElementById('pp-img').innerHTML = data.thumbnail
+      ? `<img src="${escapeHtml(data.thumbnail)}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='📦'">`
+      : '📦';
+    document.getElementById('pp-name').textContent = data.name_th;
+    const old = data.compare_price && data.compare_price > data.price
+      ? `<span style="font-size:11px;color:var(--g400);text-decoration:line-through;font-weight:400">฿${Number(data.compare_price).toLocaleString()}</span>`
+      : '';
+    document.getElementById('pp-price').innerHTML = `฿${Number(data.price).toLocaleString()} ${old}`;
+    document.getElementById('pp-btn').dataset.productId = productId;
+  } catch(e) { console.warn('loadPinnedProduct:', e); }
+}
+
+window.goToProduct = function() {
+  const pid = document.getElementById('pp-btn').dataset.productId;
+  if (pid) location.href = `product.html?id=${pid}`;
+};
+
+window.viewSellerInfo = function() {
+  if (_activeThread && _activeThread.sellers && _activeThread.sellers.shop_name) {
+    toast('🏪 ' + _activeThread.sellers.shop_name);
+  }
+};
+
+// ── Load Messages ───────────────────────────────────────────────────
+async function loadMessages(threadId) {
+  const { data, error } = await sb.from('chat_messages')
+    .select('*').eq('thread_id', threadId).eq('is_deleted', false)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('loadMessages:', error); return; }
+  _messages = data || [];
+  renderMessages();
+}
+
+function renderMessages() {
+  const wrap = document.getElementById('messages');
+  if (!_messages.length) {
+    wrap.innerHTML = '<div class="system-msg">เริ่มต้นการสนทนา · ส่งข้อความแรกได้เลย</div>';
+    return;
+  }
+  let html = '';
+  let lastDate = '';
+  _messages.forEach(m => {
+    const d = new Date(m.created_at);
+    const dateStr = d.toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' });
+    if (dateStr !== lastDate) {
+      html += `<div class="system-msg">📅 ${dateStr}</div>`;
+      lastDate = dateStr;
+    }
+    if (m.msg_type === 'system') {
+      html += `<div class="system-msg">${escapeHtml(m.body || '')}</div>`;
+      return;
+    }
+    const isMine = m.sender_type === _userRole;
+    const time = d.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+    const avatar = m.sender_type === 'seller' ? '🛒' : 'ลค';
+    const avBg = m.sender_type === 'seller' ? '#EFF6FF' : '#FFF5F5';
+    let bubble = '';
+    if (m.msg_type === 'image' && m.meta && m.meta.image_url) {
+      bubble = `<div class="msg-bubble" style="padding:4px"><img src="${escapeHtml(m.meta.image_url)}" style="max-width:240px;max-height:240px;border-radius:8px;display:block"></div>`;
+    } else if (m.msg_type === 'product' && m.meta && m.meta.product_id) {
+      bubble = `<div class="msg-bubble" style="padding:8px;cursor:pointer" onclick="location.href='product.html?id=${m.meta.product_id}'">
+        📦 ${escapeHtml(m.meta.product_name || 'สินค้า')}<br>
+        <span style="font-size:11px;color:#666">฿${Number(m.meta.product_price||0).toLocaleString()}</span>
+      </div>`;
+    } else {
+      bubble = `<div class="msg-bubble">${escapeHtml(m.body || '')}</div>`;
+    }
+    const readMark = isMine
+      ? ((_userRole === 'buyer' ? m.is_read_seller : m.is_read_buyer) ? ' ✓✓' : ' ✓')
+      : '';
+    html += `<div class="msg${isMine?' mine':''}">
+      ${!isMine?`<div class="msg-av" style="background:${avBg};font-size:13px">${avatar}</div>`:''}
+      <div style="display:flex;flex-direction:column;gap:2px;${isMine?'align-items:flex-end':''}">
+        ${bubble}
+        <span class="msg-time">${time}${readMark}</span>
+      </div>
+      ${isMine?`<div class="msg-av" style="background:#FFF5F5;font-size:13px">${escapeHtml((_user.display_name||'?').slice(0,2))}</div>`:''}
+    </div>`;
   });
-  msgWrap.scrollTop=msgWrap.scrollHeight;
+  wrap.innerHTML = html;
+  wrap.scrollTop = wrap.scrollHeight;
 }
-renderMsgs();
 
-const QRS=['ขอบคุณครับ','ราคานี้ดีเลยครับ','มีโปรอื่นไหมครับ?','ขอรูปสินค้าเพิ่มได้ไหม?','ผ่อนได้ไหมครับ?'];
-document.getElementById('qr-wrap').innerHTML=QRS.map(q=>`<button class="qr" onclick="sendQuick('${q}')">${q}</button>`).join('');
-
-function sendMsg(){
-  const inp=document.getElementById('msg-input');
-  const txt=inp.value.trim();
-  if(!txt)return;
-  MSGS.push({mine:true,text:txt,time:new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})});
-  inp.value='';
-  inp.style.height='';
-  renderMsgs();
-  setTimeout(()=>{
-    MSGS.push({mine:false,text:'ขอบคุณที่ติดต่อมาค่ะ จะรีบตอบกลับทันที 😊',time:new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})});
-    renderMsgs();
-  },1200);
+// ── Realtime Subscription ──────────────────────────────────────────
+function subscribeToThread(threadId) {
+  _msgChannel = sb.channel(`chat:${threadId}`)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${threadId}` },
+      (payload) => {
+        const newMsg = payload.new;
+        // ป้องกัน duplicate (ของที่ตัวเอง insert จะเข้า realtime เหมือนกัน)
+        if (_messages.some(m => m.id === newMsg.id)) return;
+        _messages.push(newMsg);
+        renderMessages();
+        // ถ้า message มาจากฝ่ายตรงข้าม → mark as read ทันที (เพราะกำลังเปิดอยู่)
+        if (newMsg.sender_type !== _userRole && newMsg.sender_type !== 'system') {
+          sb.rpc('mark_thread_read', { p_thread_id: threadId, p_role: _userRole });
+        }
+      }
+    )
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${threadId}` },
+      (payload) => {
+        const idx = _messages.findIndex(m => m.id === payload.new.id);
+        if (idx >= 0) {
+          _messages[idx] = payload.new;
+          renderMessages();
+        }
+      }
+    )
+    .subscribe();
 }
-function sendQuick(txt){
-  document.getElementById('msg-input').value=txt;
+
+// Subscribe to thread changes (last_message updates) — for sidebar refresh
+function subscribeToThreadList() {
+  if (_threadChannel) sb.removeChannel(_threadChannel);
+  _threadChannel = sb.channel('threads-list')
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'chat_threads' },
+      () => loadThreads()
+    )
+    .subscribe();
+}
+
+// ── Send Message ────────────────────────────────────────────────────
+async function sendMsg() {
+  const inp = document.getElementById('msg-input');
+  const txt = (inp.value || '').trim();
+  if (!txt || !_activeThreadId) return;
+
+  // Optimistic: clear input ก่อน
+  inp.value = '';
+  inp.style.height = '';
+
+  const { error } = await sb.from('chat_messages').insert({
+    thread_id: _activeThreadId,
+    sender_type: _userRole,
+    sender_id: _user.id,
+    body: txt,
+    msg_type: 'text'
+  });
+  if (error) {
+    toast('❌ ส่งไม่สำเร็จ: ' + error.message);
+    inp.value = txt;
+  }
+  // Realtime subscription จะรับ INSERT event แล้ว update UI เอง
+}
+
+window.sendQuick = function(txt) {
+  document.getElementById('msg-input').value = txt;
   sendMsg();
-}
-function sendImage(){
-  MSGS.push({mine:true,text:'📸 [ส่งรูปภาพ]',time:new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})});
-  renderMsgs();
-  toast('📷 ส่งรูปภาพแล้ว');
-}
-function sendProduct(){
-  toast('📦 เลือกสินค้าเพื่อแนบในแชท');
-}
-function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
-function autoResize(el){el.style.height='';el.style.height=Math.min(el.scrollHeight,100)+'px';}
-function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.style.cssText='background:#0A0A0A;color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-family:DM Sans,sans-serif;animation:tIn 0.3s ease';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
+};
+
+window.sendImage = function() {
+  // TODO: implement image upload to storage + insert message with msg_type='image'
+  toast('📷 อัปโหลดรูป — กำลังพัฒนา');
+};
+
+window.sendProduct = function() {
+  // TODO: เปิด product picker
+  toast('📦 เลือกสินค้าแนบ — กำลังพัฒนา');
+};
+
+window.handleKey = function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMsg();
+  }
+};
+
+window.autoResize = function(el) {
+  el.style.height = '';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+};
+
+window.openThread = openThread;
+
+// ── Boot ────────────────────────────────────────────────────────────
+(async function init() {
+  try {
+    await loadUser();
+    await loadThreads();
+    subscribeToThreadList();
+
+    // ถ้ามี ?thread=xxx ใน URL → เปิด thread นั้นเลย
+    const params = new URLSearchParams(location.search);
+    const initThread = params.get('thread');
+    if (initThread) {
+      await openThread(initThread);
+    } else if (_threads.length > 0) {
+      // เปิด thread แรก (ล่าสุด) อัตโนมัติ
+      await openThread(_threads[0].id);
+    }
+  } catch(e) {
+    console.error('init error:', e);
+  }
+})();
+
+// Cleanup on page hide
+window.addEventListener('beforeunload', () => {
+  if (_msgChannel) sb.removeChannel(_msgChannel);
+  if (_threadChannel) sb.removeChannel(_threadChannel);
+});
 </script>
 
 
