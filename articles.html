@@ -88,7 +88,11 @@ button{font-family:inherit;cursor:pointer}
     <a href="index.html" class="tnav-logo">Thailand <span>Market</span></a>
     <a href="index.html" style="font-size:13px;color:var(--g600)">← กลับหน้าหลัก</a>
   </div>
-  <div style="font-family:var(--mono);font-size:11px;color:var(--g500);letter-spacing:.06em;text-transform:uppercase">📰 บทความ</div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <a href="cart.html" title="ตะกร้า" style="position:relative;text-decoration:none;color:var(--g600);font-size:18px">🛒<span id="cart-badge" style="display:none;position:absolute;top:-6px;right:-8px;background:#E63329;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-family:'DM Mono',monospace;font-weight:600;min-width:16px;text-align:center;line-height:1.4">0</span></a>
+    <a href="profile.html" title="บัญชี" style="text-decoration:none;color:var(--g600);font-size:18px">👤</a>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--g500);letter-spacing:.06em;text-transform:uppercase">📰 บทความ</div>
+  </div>
 </nav>
 
 <div class="hero">
@@ -243,6 +247,49 @@ function renderFeatured(a) {
 (async function init() {
   await loadCategories();
   await loadArticles();
+})();
+</script>
+
+<!-- ── Shared Cart Badge Auto-Update (injected 2026-05-07) ── -->
+<script>
+(function(){
+  function tmUpdateCartBadge(){
+    try {
+      const cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+      const count = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+      const ids = ['cart-badge','cart-count','cart-float-count','dd-cart-count'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (id === 'cart-float-count') {
+          el.textContent = count > 0 ? '(' + count + ' รายการ)' : '';
+        } else {
+          el.textContent = count > 99 ? '99+' : count;
+          // hide badge if 0 (only badge-style elements, not labels)
+          if (id === 'cart-badge' && el.classList.contains('nav-badge')) {
+            el.style.display = count > 0 ? '' : 'none';
+          }
+        }
+      });
+      // ปุ่ม float (ถ้ามี)
+      const cf = document.getElementById('cart-float');
+      if (cf) cf.classList.toggle('show', count > 0);
+    } catch(e) { /* ignore */ }
+  }
+  // Run on load + listen for changes
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tmUpdateCartBadge);
+  } else {
+    tmUpdateCartBadge();
+  }
+  // ฟังการเปลี่ยน tm_cart จาก tab อื่น
+  window.addEventListener('storage', e => {
+    if (e.key === 'tm_cart') tmUpdateCartBadge();
+  });
+  // Re-check ทุก 3 วินาที (เผื่อ same-tab race)
+  setInterval(tmUpdateCartBadge, 3000);
+  // Expose ให้เรียกได้จาก inline scripts
+  window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
 </body>

@@ -1574,5 +1574,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 })();
 </script>
 
+
+<!-- ── Shared Cart Badge Auto-Update (injected 2026-05-07) ── -->
+<script>
+(function(){
+  function tmUpdateCartBadge(){
+    try {
+      const cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+      const count = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+      const ids = ['cart-badge','cart-count','cart-float-count','dd-cart-count'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (id === 'cart-float-count') {
+          el.textContent = count > 0 ? '(' + count + ' รายการ)' : '';
+        } else {
+          el.textContent = count > 99 ? '99+' : count;
+          // hide badge if 0 (only badge-style elements, not labels)
+          if (id === 'cart-badge' && el.classList.contains('nav-badge')) {
+            el.style.display = count > 0 ? '' : 'none';
+          }
+        }
+      });
+      // ปุ่ม float (ถ้ามี)
+      const cf = document.getElementById('cart-float');
+      if (cf) cf.classList.toggle('show', count > 0);
+    } catch(e) { /* ignore */ }
+  }
+  // Run on load + listen for changes
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tmUpdateCartBadge);
+  } else {
+    tmUpdateCartBadge();
+  }
+  // ฟังการเปลี่ยน tm_cart จาก tab อื่น
+  window.addEventListener('storage', e => {
+    if (e.key === 'tm_cart') tmUpdateCartBadge();
+  });
+  // Re-check ทุก 3 วินาที (เผื่อ same-tab race)
+  setInterval(tmUpdateCartBadge, 3000);
+  // Expose ให้เรียกได้จาก inline scripts
+  window.tmUpdateCartBadge = tmUpdateCartBadge;
+})();
+</script>
 </body>
 </html>
