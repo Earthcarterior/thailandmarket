@@ -1717,51 +1717,143 @@ async function toggleWishlist() {
 
 // ── Contact Seller — สร้าง chat thread + redirect ──
 async function contactSeller() {
-  if (!_product) return;
-  if (!_product.seller_id) {
-    toast('❌ สินค้านี้ไม่มีร้านค้าเชื่อมโยง');
+  console.log('[contactSeller] start');
+  if (!_product) { alert('❌ ยังไม่ได้โหลดข้อมูลสินค้า'); return; }
+  if (!_product.seller_id) { alert('❌ สินค้านี้ไม่มีร้านค้าเชื่อมโยง'); return; }
+
+  // ตรวจ session ก่อน
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    if (confirm('🔐 ต้องเข้าสู่ระบบก่อนทักแชท\n\nไปหน้า login ตอนนี้?')) {
+      location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search);
+    }
     return;
   }
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) {
-      toast('🔐 กรุณาเข้าสู่ระบบก่อน');
-      setTimeout(() => location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search), 1200);
-      return;
-    }
 
-    // ── Pre-flight: ตรวจว่ามี user record ใน public.users ไหม ──
-    const { data: userRec } = await sb.from('users')
-      .select('id').eq('email', session.user.email).maybeSingle();
-    if (!userRec) {
-      console.log('[contact] auto-creating user record');
-      const fallbackName = (session.user.user_metadata && session.user.user_metadata.display_name)
-        || session.user.email.split('@')[0];
-      const { error: createErr } = await sb.from('users').insert({
-        email: session.user.email,
-        display_name: fallbackName,
-        role: 'buyer'
-      });
-      if (createErr) {
-        console.error('user create failed:', createErr);
-        toast('❌ สร้างบัญชีไม่สำเร็จ: ' + createErr.message);
-        return;
-      }
-    }
+  // เปิด inline chat modal
+  openContactModal();
+}
 
-    toast('💬 กำลังเปิดห้องแชท...');
-    const { data: threadId, error } = await sb.rpc('get_or_create_thread', {
-      p_seller_id: _product.seller_id,
-      p_product_id: productId
-    });
-    if (error) throw error;
-    if (!threadId) throw new Error('ไม่ได้ thread ID');
-    location.href = 'chat.html?thread=' + threadId;
-  } catch(e) {
-    console.error('contactSeller:', e);
-    toast('❌ เปิดแชทไม่สำเร็จ: ' + (e.message || JSON.stringify(e)));
+function openContactModal() {
+  // สร้าง modal ถ้ายังไม่มี
+  let modal = document.getElementById('contact-modal');
+  if (modal) { modal.style.display = 'flex'; return; }
+
+  modal = document.createElement('div');
+  modal.id = 'contact-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#fff;width:100%;max-width:480px;border-radius:8px;display:flex;flex-direction:column;max-height:90vh;overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid #E5E5E5;display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:#EFF6FF;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px">🛒</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">ติดต่อร้านค้า</div>
+          <div id="cm-status" style="font-size:11px;color:#737373">เกี่ยวกับสินค้านี้</div>
+        </div>
+        <button onclick="closeContactModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#737373;padding:0;width:32px;height:32px">×</button>
+      </div>
+      <div style="padding:14px;background:#F5F5F5;display:flex;gap:10px;align-items:center">
+        <div style="width:48px;height:48px;background:#fff;border:1px solid #E5E5E5;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📦</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(_product.name_th || '').replace(/</g,'&lt;')}</div>
+          <div style="font-size:13px;color:#E63329;font-weight:600">฿${Number(_product.price||0).toLocaleString()}</div>
+        </div>
+      </div>
+      <div id="cm-msgs" style="flex:1;overflow-y:auto;padding:14px;min-height:120px;max-height:280px;background:#FAFAFA;font-size:13px;color:#737373;text-align:center">
+        <div style="padding:30px 0">เริ่มต้นการสนทนา · ส่งข้อความแรกได้เลย</div>
+      </div>
+      <div style="padding:8px 12px;border-top:1px solid #E5E5E5;display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="cmQuick('สวัสดีครับ มีคำถามเกี่ยวกับสินค้านี้')" style="padding:5px 10px;background:#F5F5F5;border:none;font-size:11px;cursor:pointer;border-radius:14px">สวัสดี</button>
+        <button onclick="cmQuick('สินค้านี้มีพร้อมส่งไหม?')" style="padding:5px 10px;background:#F5F5F5;border:none;font-size:11px;cursor:pointer;border-radius:14px">มีของไหม?</button>
+        <button onclick="cmQuick('ขอราคาดีกว่านี้ได้ไหมครับ?')" style="padding:5px 10px;background:#F5F5F5;border:none;font-size:11px;cursor:pointer;border-radius:14px">ขอราคา</button>
+      </div>
+      <div style="padding:12px;border-top:1px solid #E5E5E5;display:flex;gap:8px">
+        <textarea id="cm-input" placeholder="พิมพ์ข้อความ..." rows="1" onkeydown="cmKey(event)" style="flex:1;padding:10px 14px;border:1px solid #E5E5E5;border-radius:20px;font-family:inherit;font-size:13px;resize:none;outline:none;max-height:80px"></textarea>
+        <button onclick="cmSend()" id="cm-send-btn" style="padding:8px 18px;background:#E63329;color:#fff;border:none;border-radius:20px;cursor:pointer;font-weight:600;font-size:13px">ส่ง ➤</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  setTimeout(() => document.getElementById('cm-input').focus(), 100);
+}
+
+function closeContactModal() {
+  const m = document.getElementById('contact-modal');
+  if (m) m.style.display = 'none';
+}
+
+function cmQuick(text) {
+  const inp = document.getElementById('cm-input');
+  if (inp) { inp.value = text; inp.focus(); }
+}
+
+function cmKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    cmSend();
   }
 }
+
+let _cmThreadId = null;
+
+async function cmSend() {
+  const inp = document.getElementById('cm-input');
+  const btn = document.getElementById('cm-send-btn');
+  const msgs = document.getElementById('cm-msgs');
+  const status = document.getElementById('cm-status');
+  const txt = (inp.value || '').trim();
+  if (!txt) return;
+
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  status.textContent = '⏳ กำลังส่ง...';
+
+  try {
+    // ใช้ all-in-one RPC
+    const { data, error } = await sb.rpc('send_chat_message', {
+      p_seller_id: _product.seller_id,
+      p_product_id: productId,
+      p_body: txt
+    });
+
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.message || data.error);
+    if (!data || !data.success) throw new Error('Unexpected response');
+
+    _cmThreadId = data.thread_id;
+    console.log('[cmSend] OK thread:', data.thread_id, 'msg:', data.message_id);
+
+    // Append message ใน UI
+    if (msgs.querySelector('div[style*="padding:30px"]')) {
+      msgs.innerHTML = '';
+    }
+    const time = new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-bottom:8px;text-align:right';
+    div.innerHTML = `<div style="display:inline-block;background:#0A0A0A;color:#fff;padding:8px 12px;border-radius:14px;border-bottom-right-radius:4px;max-width:80%;text-align:left;font-size:13px">${txt.replace(/</g,'&lt;')}</div><div style="font-size:10px;color:#999;margin-top:2px">${time} ✓</div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    inp.value = '';
+    status.textContent = '✅ ส่งแล้ว · รอร้านค้าตอบกลับ';
+    btn.textContent = 'ส่ง ➤';
+    btn.disabled = false;
+    inp.focus();
+  } catch(e) {
+    console.error('[cmSend] error:', e);
+    btn.disabled = false;
+    btn.textContent = 'ส่ง ➤';
+    status.textContent = '❌ ส่งไม่สำเร็จ';
+    alert('❌ ส่งข้อความไม่สำเร็จ\n\n' + (e.message || JSON.stringify(e)) + '\n\nกรุณาแจ้ง admin: ตรวจว่ารัน chat-allinone-rpc-2026-05-07.sql แล้ว');
+  }
+}
+
+// Expose to global
+window.openContactModal = openContactModal;
+window.closeContactModal = closeContactModal;
+window.cmQuick = cmQuick;
+window.cmKey = cmKey;
+window.cmSend = cmSend;
 
 async function updateCartBadge() {
   // ใช้ shared updater ที่ inject ไว้ — ทำงานบน tm_cart ตัวเดียว unified ทั้งเว็บ

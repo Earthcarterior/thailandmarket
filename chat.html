@@ -395,10 +395,32 @@ img{max-width:100%;height:auto}
 
   <!-- CONVERSATIONS -->
   <div class="conv-sidebar">
-    <div class="cs-header">
-      <input class="cs-search" placeholder="🔍 ค้นหาร้านค้า...">
+    <div class="cs-header" style="display:flex;flex-direction:column;gap:8px">
+      <button id="btn-new-chat" onclick="openNewChatModal()" style="background:var(--red,#E63329);color:#fff;border:none;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center;gap:6px">
+        <span style="font-size:16px">+</span> เริ่มแชทใหม่
+      </button>
+      <input class="cs-search" id="cs-search-input" placeholder="🔍 ค้นหาร้านค้า..." oninput="filterThreads()">
     </div>
     <div class="conv-list" id="conv-list"></div>
+  </div>
+
+  <!-- NEW CHAT MODAL -->
+  <div id="new-chat-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#fff;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;border-radius:8px;overflow:hidden">
+      <div style="padding:18px 20px;border-bottom:1px solid #E5E5E5;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:16px;font-weight:600">💬 เลือกร้านค้าที่จะแชท</div>
+          <div style="font-size:11px;color:#737373;margin-top:2px">หรือต้องการสอบถามทีมงาน Thailand Market — เลือก "Thailand Market Official"</div>
+        </div>
+        <button onclick="closeNewChatModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:#737373;padding:0 6px">×</button>
+      </div>
+      <div style="padding:14px 20px;border-bottom:1px solid #F5F5F5">
+        <input id="modal-search" oninput="renderSellerList()" placeholder="🔍 ค้นหาร้านค้า..." style="width:100%;padding:9px 12px;border:1.5px solid #E5E5E5;font-family:inherit;font-size:13px;outline:none;border-radius:2px">
+      </div>
+      <div id="seller-list-modal" style="flex:1;overflow-y:auto;max-height:55vh">
+        <div style="padding:40px 20px;text-align:center;color:#999;font-size:13px">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
   </div>
 
   <!-- CHAT -->
@@ -407,7 +429,8 @@ img{max-width:100%;height:auto}
     <div id="empty-state" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--g400);text-align:center;padding:40px;gap:12px">
       <div style="font-size:64px;opacity:0.5">💬</div>
       <div style="font-size:16px;font-weight:500;color:var(--g600)">เลือกการสนทนา</div>
-      <div style="font-size:13px">เลือกร้านค้าจากรายการด้านซ้าย<br>หรือกด "💬 ติดต่อร้าน" จากหน้าสินค้าเพื่อเริ่มแชท</div>
+      <div style="font-size:13px">เลือกร้านค้าจากรายการด้านซ้าย<br>หรือกดปุ่ม <strong style="color:var(--red,#E63329)">"+ เริ่มแชทใหม่"</strong> เพื่อเลือกร้านค้าที่ต้องการสอบถาม</div>
+      <button onclick="openNewChatModal()" style="margin-top:14px;background:var(--red,#E63329);color:#fff;border:none;padding:11px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border-radius:2px">+ เริ่มแชทใหม่</button>
     </div>
 
     <!-- ACTIVE THREAD (hidden until selected) -->
@@ -981,25 +1004,51 @@ async function sendMsg() {
   inp.value = '';
   inp.style.height = '';
 
-  const { data, error } = await sb.from('chat_messages').insert({
-    thread_id: _activeThreadId,
-    sender_type: _userRole,
-    sender_id: _user.id,
-    body: txt,
-    msg_type: 'text'
-  }).select().single();
+  let data, error;
+
+  // ใช้ RPC ที่เหมาะกับ role
+  if (_userRole === 'seller') {
+    // seller ใช้ send_seller_reply RPC (handles auth + permission)
+    const result = await sb.rpc('send_seller_reply', {
+      p_thread_id: _activeThreadId,
+      p_body: txt
+    });
+    if (result.error) {
+      error = result.error;
+    } else if (result.data && result.data.error) {
+      error = { message: result.data.message || result.data.error };
+    } else {
+      // RPC สำเร็จ — ดึง message ที่เพิ่ง insert
+      const msgId = result.data && result.data.message_id;
+      if (msgId) {
+        const { data: msg } = await sb.from('chat_messages').select('*').eq('id', msgId).maybeSingle();
+        data = msg;
+      }
+    }
+  } else {
+    // buyer: insert ตรงๆ
+    const result = await sb.from('chat_messages').insert({
+      thread_id: _activeThreadId,
+      sender_type: 'buyer',
+      sender_id: _user.id,
+      body: txt,
+      msg_type: 'text'
+    }).select().single();
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     ERR('sendMsg failed:', error);
-    toast('❌ ส่งไม่สำเร็จ: ' + error.message);
-    inp.value = txt;  // restore
+    inp.value = txt;  // restore text first
+    alert('❌ ส่งข้อความไม่สำเร็จ\n\n' + (error.message || 'unknown') + '\n\ncode: ' + (error.code || '?'));
     return;
   }
 
-  LOG('sent OK:', data.id);
+  LOG('sent OK:', data && data.id);
 
   // Append immediately (don't wait for realtime — realtime จะ skip ถ้าซ้ำ)
-  if (!_messages.some(m => m.id === data.id)) {
+  if (data && !_messages.some(m => m.id === data.id)) {
     _messages.push(data);
     renderMessages();
   }
@@ -1061,6 +1110,116 @@ window.toast = toast;
     showError('เกิดข้อผิดพลาด', e.message || String(e));
   }
 })();
+
+// ── New Chat Modal ────────────────────────────────────────────
+let _allSellers = null;  // cache
+
+window.openNewChatModal = async function() {
+  if (!_user) {
+    toast('⚠️ กรุณา login ก่อน');
+    return;
+  }
+  const modal = document.getElementById('new-chat-modal');
+  if (modal) modal.style.display = 'flex';
+  if (_allSellers === null) {
+    try {
+      const { data, error } = await sb.from('sellers')
+        .select('id, shop_name, shop_logo, is_verified, status')
+        .order('is_verified', { ascending: false })
+        .order('shop_name', { ascending: true });
+      if (error) throw error;
+      let sellers = (data || []).filter(s => s.status !== 'inactive');
+      // Pin "Thailand Market Official" to the top
+      sellers.sort((a, b) => {
+        const aOfficial = (a.shop_name || '').toLowerCase().includes('thailand market official');
+        const bOfficial = (b.shop_name || '').toLowerCase().includes('thailand market official');
+        if (aOfficial && !bOfficial) return -1;
+        if (!aOfficial && bOfficial) return 1;
+        return 0;
+      });
+      _allSellers = sellers;
+      LOG('sellers loaded for modal:', _allSellers.length);
+    } catch(e) {
+      ERR('load sellers:', e);
+      _allSellers = [];
+    }
+  }
+  renderSellerList();
+};
+
+window.closeNewChatModal = function() {
+  const modal = document.getElementById('new-chat-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.renderSellerList = function() {
+  const wrap = document.getElementById('seller-list-modal');
+  if (!wrap) return;
+  if (!_allSellers || !_allSellers.length) {
+    wrap.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#999;font-size:13px">ไม่พบร้านค้า</div>';
+    return;
+  }
+  const q = ((document.getElementById('modal-search') || {}).value || '').toLowerCase().trim();
+  const filtered = q ? _allSellers.filter(s => (s.shop_name || '').toLowerCase().includes(q)) : _allSellers;
+  if (!filtered.length) {
+    wrap.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#999;font-size:13px">ไม่พบร้าน "' + escapeHtml(q) + '"</div>';
+    return;
+  }
+  wrap.innerHTML = filtered.map(s => {
+    const name = s.shop_name || 'ร้านค้า';
+    const ico = shopAvatar(name);
+    const bg = shopBg(name);
+    const verified = s.is_verified ? ' <span style="color:#10B981;font-size:11px">✓ ยืนยันแล้ว</span>' : '';
+    return `<div onclick="startChatWithSeller('${s.id}')" style="display:flex;gap:12px;padding:12px 20px;cursor:pointer;border-bottom:1px solid #F5F5F5;align-items:center" onmouseenter="this.style.background='#FAFAFA'" onmouseleave="this.style.background=''">
+      <div style="width:44px;height:44px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${ico}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:500">${escapeHtml(name)}${verified}</div>
+        <div style="font-size:11px;color:#999;margin-top:2px">กดเพื่อเริ่มแชท</div>
+      </div>
+      <div style="color:#999;font-size:18px">›</div>
+    </div>`;
+  }).join('');
+};
+
+window.startChatWithSeller = async function(sellerId) {
+  closeNewChatModal();
+  toast('💬 กำลังเปิดห้องแชท...');
+  try {
+    const { data: threadId, error } = await sb.rpc('get_or_create_thread', {
+      p_seller_id: sellerId,
+      p_product_id: null
+    });
+    if (error) throw error;
+    if (!threadId) throw new Error('ไม่ได้รับ thread ID');
+    LOG('new thread:', threadId);
+    // Reload threads list then open
+    await loadThreads();
+    await openThread(threadId);
+  } catch(e) {
+    ERR('startChatWithSeller:', e);
+    toast('❌ เปิดแชทไม่สำเร็จ: ' + (e.message || JSON.stringify(e)));
+  }
+};
+
+// ── Filter threads (sidebar search) ──
+window.filterThreads = function() {
+  const q = ((document.getElementById('cs-search-input') || {}).value || '').toLowerCase().trim();
+  document.querySelectorAll('.conv-item').forEach(el => {
+    const name = (el.querySelector('.ci-name') || {}).textContent || '';
+    const msg = (el.querySelector('.ci-msg') || {}).textContent || '';
+    const matches = !q || name.toLowerCase().includes(q) || msg.toLowerCase().includes(q);
+    el.style.display = matches ? '' : 'none';
+  });
+};
+
+// Close modal on Escape or click outside
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeNewChatModal();
+});
+document.addEventListener('click', e => {
+  const modal = document.getElementById('new-chat-modal');
+  if (modal && e.target === modal) closeNewChatModal();
+});
 
 window.addEventListener('beforeunload', () => {
   if (_msgChannel) sb.removeChannel(_msgChannel);

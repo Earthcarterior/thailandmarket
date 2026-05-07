@@ -1916,38 +1916,36 @@ async function csSend() {
   if (!txt) return;
 
   const sb = window._sb;
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) { alert('Session หมดอายุ กรุณา login ใหม่'); return; }
-  const { data: u } = await sb.from('users').select('id').eq('email', user.email).maybeSingle();
-  if (!u) { alert('ไม่พบ user record'); return; }
-
   inp.value = '';
   inp.style.height = '';
 
   const sendBtn = document.getElementById('cs-send');
   if (sendBtn) sendBtn.disabled = true;
 
-  const { data, error } = await sb.from('chat_messages').insert({
-    thread_id: _csActiveThreadId,
-    sender_type: 'seller',  // admin replies as seller
-    sender_id: u.id,
-    body: txt,
-    msg_type: 'text'
-  }).select().single();
+  // ใช้ send_seller_reply RPC (handles auth + permission check)
+  const { data, error } = await sb.rpc('send_seller_reply', {
+    p_thread_id: _csActiveThreadId,
+    p_body: txt
+  });
 
   if (sendBtn) sendBtn.disabled = false;
 
-  if (error) {
-    csErr('send:', error);
-    alert('ส่งไม่สำเร็จ: ' + error.message);
+  if (error || (data && data.error)) {
+    const errMsg = error ? error.message : (data.message || data.error);
+    csErr('send:', errMsg);
+    alert('❌ ส่งไม่สำเร็จ\n\n' + errMsg + '\n\nกรุณารัน chat-allinone-rpc-2026-05-07.sql');
     inp.value = txt;
     return;
   }
-  csLog('sent:', data.id);
-  // Append immediately (don't wait for realtime)
-  if (!_csMessages.some(m => m.id === data.id)) {
-    _csMessages.push(data);
-    csRenderMessages();
+
+  csLog('sent OK, msg_id:', data && data.message_id);
+  // Fetch back the message and append
+  if (data && data.message_id) {
+    const { data: msg } = await sb.from('chat_messages').select('*').eq('id', data.message_id).maybeSingle();
+    if (msg && !_csMessages.some(m => m.id === msg.id)) {
+      _csMessages.push(msg);
+      csRenderMessages();
+    }
   }
 }
 
