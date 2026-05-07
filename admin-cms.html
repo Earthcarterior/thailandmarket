@@ -4293,21 +4293,102 @@ function bnSetLinkType(btn, type) {
   document.querySelectorAll('.bn-link-btn').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById('bn-link-type').value = type;
-  
-  const lbl = document.getElementById('bn-link-value-lbl');
-  const inp = document.getElementById('bn-link-value');
-  const help = document.getElementById('bn-link-help');
-  
+
+  const row = document.getElementById('bn-link-value-row');
+  const currentValue = document.getElementById('bn-link-value')?.value || '';
+
   const cfg = {
-    url:        ['URL ปลายทาง *',          'เช่น /flash-sale.html หรือ https://example.com',  'URL จะ redirect เมื่อ user คลิก'],
-    category:   ['Category Slug *',         'เช่น electronics, home-furniture',                'จะไปที่ /category.html?slug=...'],
-    brand:      ['ชื่อแบรนด์ *',             'เช่น Samsung, Apple',                              'จะไปที่ /storefront-live.html?brand_name=...'],
-    coupon:     ['Coupon Code *',           'เช่น WELCOME50',                                   'จะไปที่ /coupon-hub.html?code=...'],
-    collection: ['Collection Slug *',       'เช่น summer-2026',                                 'จะไปที่ /category.html?collection=...'],
-    article:    ['Article Slug *',          'เช่น how-to-style-living-room',                    'จะไปที่ /article.html?slug=...']
+    url:        { lbl: 'URL ปลายทาง *',     placeholder: 'เช่น /flash-sale.html หรือ https://example.com', help: 'URL จะ redirect เมื่อ user คลิก' },
+    category:   { lbl: 'เลือกหมวดสินค้า *',  placeholder: '',                                              help: 'จะไปที่ /category.html?slug=...' },
+    brand:      { lbl: 'ชื่อแบรนด์ *',       placeholder: 'เช่น Samsung, Apple',                            help: 'จะไปที่ /storefront-live.html?brand_name=...' },
+    coupon:     { lbl: 'Coupon Code *',     placeholder: 'เช่น WELCOME50',                                 help: 'จะไปที่ /coupon-hub.html?code=...' },
+    collection: { lbl: 'Collection Slug *', placeholder: 'เช่น summer-2026',                               help: 'จะไปที่ /category.html?collection=...' },
+    article:    { lbl: 'เลือกบทความ *',      placeholder: '',                                              help: 'จะไปที่ /article.html?slug=...' }
   };
   const c = cfg[type] || cfg.url;
-  lbl.textContent = c[0]; inp.placeholder = c[1]; help.textContent = c[2];
+
+  // type ที่ต้อง load options จาก DB → render เป็น <select>
+  if (type === 'category') {
+    row.innerHTML = `
+      <label class="cp-lbl">${c.lbl}</label>
+      <select class="cp-inp" id="bn-link-value" style="cursor:pointer">
+        <option value="">⏳ กำลังโหลด...</option>
+      </select>
+      <div style="font-size:11px;color:#737373;margin-top:4px" id="bn-link-help">${c.help}</div>`;
+    bnLoadCategories(currentValue);
+  } else if (type === 'article') {
+    row.innerHTML = `
+      <label class="cp-lbl">${c.lbl}</label>
+      <select class="cp-inp" id="bn-link-value" style="cursor:pointer">
+        <option value="">⏳ กำลังโหลด...</option>
+      </select>
+      <div style="font-size:11px;color:#737373;margin-top:4px" id="bn-link-help">${c.help}</div>`;
+    bnLoadArticles(currentValue);
+  } else {
+    // text input (url, brand, coupon, collection)
+    row.innerHTML = `
+      <label class="cp-lbl">${c.lbl}</label>
+      <input class="cp-inp" id="bn-link-value" placeholder="${c.placeholder}" value="${escapeHtml(currentValue)}">
+      <div style="font-size:11px;color:#737373;margin-top:4px" id="bn-link-help">${c.help}</div>`;
+  }
+}
+
+// โหลด categories ทั้งหมด (root + child) ใส่ <select>
+async function bnLoadCategories(selectedSlug) {
+  try {
+    const { data, error } = await sb.from('categories')
+      .select('slug, name_th, parent_id')
+      .order('parent_id', { nullsFirst: true })
+      .order('sort_order', { ascending: true });
+    if (error) throw error;
+
+    const rootCats = (data||[]).filter(c => !c.parent_id);
+    const childCats = (data||[]).filter(c => c.parent_id);
+    const sel = document.getElementById('bn-link-value');
+    if (!sel) return;
+
+    let html = '<option value="">— เลือกหมวด —</option>';
+    html += '<optgroup label="🏷️ หมวดหลัก">';
+    rootCats.forEach(c => {
+      const sel2 = c.slug === selectedSlug ? 'selected' : '';
+      html += `<option value="${escapeHtml(c.slug)}" ${sel2}>${escapeHtml(c.name_th)}</option>`;
+    });
+    html += '</optgroup>';
+    if (childCats.length) {
+      html += '<optgroup label="📁 หมวดย่อย">';
+      childCats.forEach(c => {
+        const sel2 = c.slug === selectedSlug ? 'selected' : '';
+        html += `<option value="${escapeHtml(c.slug)}" ${sel2}>↳ ${escapeHtml(c.name_th)}</option>`;
+      });
+      html += '</optgroup>';
+    }
+    sel.innerHTML = html;
+  } catch(e) {
+    const sel = document.getElementById('bn-link-value');
+    if (sel) sel.innerHTML = `<option value="">⚠️ โหลดล้มเหลว: ${e.message}</option>`;
+  }
+}
+
+// โหลด articles ทั้งหมด ใส่ <select>
+async function bnLoadArticles(selectedSlug) {
+  try {
+    const { data, error } = await sb.from('articles')
+      .select('slug, title, status')
+      .eq('status', 'published')
+      .order('published_at', { ascending: false });
+    if (error) throw error;
+    const sel = document.getElementById('bn-link-value');
+    if (!sel) return;
+    let html = '<option value="">— เลือกบทความ —</option>';
+    (data||[]).forEach(a => {
+      const sel2 = a.slug === selectedSlug ? 'selected' : '';
+      html += `<option value="${escapeHtml(a.slug)}" ${sel2}>${escapeHtml(a.title)}</option>`;
+    });
+    sel.innerHTML = html;
+  } catch(e) {
+    const sel = document.getElementById('bn-link-value');
+    if (sel) sel.innerHTML = `<option value="">⚠️ โหลดล้มเหลว: ${e.message}</option>`;
+  }
 }
 
 function bnPreviewImg() {
@@ -4379,8 +4460,12 @@ async function saveBanner() {
     if (!title) throw new Error('กรอกหัวข้อ');
 
     const linkType = document.getElementById('bn-link-type').value;
-    const linkValue = document.getElementById('bn-link-value').value.trim();
-    if (linkType !== 'url' && !linkValue) throw new Error('กรอก '+ document.getElementById('bn-link-value-lbl').textContent.replace(' *',''));
+    const linkValueEl = document.getElementById('bn-link-value');
+    const linkValue = (linkValueEl?.value || '').trim();
+    if (linkType !== 'url' && !linkValue) {
+      const fieldNames = { category:'หมวดสินค้า', brand:'แบรนด์', coupon:'คูปอง', collection:'collection', article:'บทความ' };
+      throw new Error('กรุณาเลือก ' + (fieldNames[linkType] || 'ปลายทาง'));
+    }
 
     const payload = {
       title,
