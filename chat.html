@@ -188,6 +188,60 @@ tbody tr:hover td{background:var(--g50)!important}
   .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
 }
 @media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
+
+/* ── NAVBAR (index pattern) ── */
+.nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:999}
+.nav-top{max-width:1280px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;gap:16px}
+.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);flex-shrink:0;margin-right:8px;text-decoration:none}
+.nav-logo .dot{color:var(--red)}
+.nav-links{display:flex;gap:0;align-items:center;overflow-x:auto;scrollbar-width:none;flex:1}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-link{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:0 14px;height:56px;display:flex;align-items:center;white-space:nowrap;transition:color .15s;border-bottom:2px solid transparent;text-decoration:none}
+.nav-link:hover{color:var(--black)}.nav-link.hot{color:var(--red)}
+.nav-search{display:flex;align-items:center;border:var(--border);background:var(--g50);flex:1;max-width:360px;margin:0 8px}
+.nav-search input{flex:1;padding:8px 14px;border:none;background:none;font-size:13px;outline:none}
+.nav-search button{padding:8px 14px;background:var(--black);color:var(--white);border:none;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;transition:background .15s;cursor:pointer}
+.nav-search button:hover{background:var(--g800)}
+.nav-acts{display:flex;gap:0;flex-shrink:0}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);border:none;background:none;transition:color .15s;position:relative;white-space:nowrap;cursor:pointer;font-family:var(--font)}
+.nav-btn:hover{color:var(--black)}
+.nav-btn.sell{color:var(--red)}
+.nav-btn.active{color:var(--black)}
+.nav-btn.active::after{content:'';position:absolute;bottom:-1px;left:8px;right:8px;height:2px;background:var(--red)}
+.nav-btn-ico{font-size:16px;line-height:1}
+.nav-badge{position:absolute;top:4px;right:8px;background:var(--red);color:var(--white);font-size:8px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+.nav-btn.account-btn{position:relative}
+.account-dropdown{position:absolute;top:calc(100% + 4px);right:0;background:var(--white);border:1px solid var(--black);min-width:220px;z-index:9999;display:none;flex-direction:column;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.account-dropdown.open{display:flex}
+.account-dropdown-header{padding:14px 16px;border-bottom:1px solid var(--g200);background:var(--g50)}
+.account-dropdown-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px}
+.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
+.account-dropdown-role{display:inline-block;margin-top:5px;padding:2px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:var(--black);color:var(--white)}
+.account-dropdown-role.admin{background:var(--red)}
+.account-dropdown-role.seller{background:#2563EB}
+.dropdown-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:var(--g600);cursor:pointer;transition:all .12s;text-decoration:none;border:none;background:none;font-family:var(--font);width:100%;text-align:left}
+.dropdown-item:hover{background:var(--g50);color:var(--black)}
+.dropdown-item.logout{color:var(--red);border-top:1px solid var(--g200)}
+.dropdown-item.logout:hover{background:#FFF5F5}
+.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
+
+/* ── MINIMAL FOOTER (เล็ก ๆ ไม่กินพื้นที่) ── */
+#tm-mini-footer{background:var(--black);color:var(--g500);padding:12px 24px;font-family:var(--mono);font-size:10px;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;flex-shrink:0}
+#tm-mini-footer a{color:var(--g500);text-decoration:none;margin-right:14px}
+#tm-mini-footer a:hover{color:var(--white)}
+.tmf-logo{font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--white)}
+.tmf-logo .dot{color:var(--red)}
+
+/* Hide old #tm-nav stuff if any leftover */
+#tm-nav{display:none!important}
+
+@media(max-width:768px){
+  .nav-links{display:none}
+  .nav-search{max-width:none}
+  .nav-btn{padding:6px 8px}
+  .account-dropdown{right:-50px}
+}
+
 </style>
 <style id="page-css">
 
@@ -342,40 +396,55 @@ img{max-width:100%;height:auto}
 </style>
 </head>
 <body>
-<nav id="tm-nav">
-  <div class="tn-top">
-    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
-    <div class="tn-links">
-      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
-      <a href="live-shopping.html" class="tn-link">Live</a>
-      <a href="brand-day.html" class="tn-link">Brand Day</a>
-      <a href="coupon-hub.html" class="tn-link">Coupon</a>
-      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
-      <a href="subscription.html" class="tn-link">TM Plus</a>
-      <a href="b2b-portal.html" class="tn-link">B2B</a>
-      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
+<nav class="nav" style="position:relative">
+  <div class="nav-top">
+    <a href="index.html" class="nav-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="nav-links" id="nav-links">
+      <a href="flash-sale.html" class="nav-link hot">⚡ Flash Sale</a>
+      <a href="live-shopping.html" class="nav-link">🔴 Live</a>
+      <a href="brand-day.html" class="nav-link">Brand Day</a>
+      <a href="coupon-hub.html" class="nav-link">Coupon</a>
+      <a href="articles.html" class="nav-link">📰 บทความ</a>
+      <a href="loyalty-catalog.html" class="nav-link">Loyalty</a>
     </div>
-    <div class="tn-search">
-      <input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'">
+    <div class="nav-search">
+      <input type="text" id="search-inp" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search-results.html?q='+encodeURIComponent(this.value)">
+      <button onclick="(function(){var q=document.getElementById('search-inp').value;if(q)location.href='search-results.html?q='+encodeURIComponent(q)})()">ค้นหา</button>
     </div>
-    <div class="tn-acts">
-      <button class="tn-btn" onclick="location.href='wishlist.html'"><span class="tn-ico">♡</span>Saved</button>
-      <button class="tn-btn" onclick="location.href='notification-center.html'"><span class="tn-ico">🔔</span>Alerts</button>
-      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
-      <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
-      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
-    </div>
-  </div>
-  <div class="tn-cats">
-    <div class="tn-cats-inner">
-      <a href="category.html" class="tn-cat">🏠 Home</a>
-      <a href="category.html" class="tn-cat">👗 Fashion</a>
-      <a href="category.html" class="tn-cat">💄 Beauty</a>
-      <a href="category.html" class="tn-cat">🛒 FMCG</a>
-      <a href="category.html" class="tn-cat">💻 Tech</a>
-      <a href="category.html" class="tn-cat">🚗 Auto</a>
-      <a href="category.html" class="tn-cat">🐾 Pets</a>
-      <a href="category.html" class="tn-cat">📚 Education</a>
+    <div class="nav-acts">
+      <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
+      <button class="nav-btn active" style="position:relative">
+        <span class="nav-btn-ico">💬</span>Chat
+      </button>
+      <button class="nav-btn" onclick="location.href='notification-center.html'" style="position:relative">
+        <span class="nav-btn-ico">🔔<span class="nav-badge" id="notif-badge" style="display:none">0</span></span>Alerts
+      </button>
+      <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
+        <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
+      </button>
+      <div style="position:relative">
+      <button class="nav-btn account-btn" id="account-nav-btn" style="flex-direction:column;gap:2px;padding:6px 12px">
+        <span class="nav-btn-ico" id="account-ico">👤</span>
+        <span class="nav-btn-lbl" style="font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500)">Account</span>
+      </button>
+      <div class="account-dropdown" id="account-dropdown">
+        <div class="account-dropdown-header">
+          <div class="account-dropdown-name" id="dd-name">กำลังโหลด...</div>
+          <div class="account-dropdown-email" id="dd-email"></div>
+          <span class="account-dropdown-role" id="dd-role">Member</span>
+        </div>
+        <a href="profile.html" class="dropdown-item"><span class="dropdown-item-ico">👤</span>โปรไฟล์ของฉัน</a>
+        <a href="order-history.html" class="dropdown-item"><span class="dropdown-item-ico">📦</span>คำสั่งซื้อ</a>
+        <a href="chat.html" class="dropdown-item" style="background:var(--g50)"><span class="dropdown-item-ico">💬</span>แชทของฉัน</a>
+        <a href="notification-center.html" class="dropdown-item"><span class="dropdown-item-ico">🔔</span>การแจ้งเตือน</a>
+        <a href="wishlist.html" class="dropdown-item"><span class="dropdown-item-ico">❤️</span>รายการโปรด</a>
+        <a href="coupon-hub.html" class="dropdown-item"><span class="dropdown-item-ico">🎟️</span>คูปองของฉัน</a>
+        <a href="seller-portal.html" class="dropdown-item" id="dd-seller" style="display:none"><span class="dropdown-item-ico">🏪</span>Seller Portal</a>
+        <a href="admin-cms.html" class="dropdown-item" id="dd-admin" style="display:none;background:var(--g50)"><span class="dropdown-item-ico">⚙️</span>Admin CMS</a>
+        <button class="dropdown-item logout" id="dd-logout"><span class="dropdown-item-ico">🚪</span>ออกจากระบบ</button>
+      </div>
+      </div>
+      <button class="nav-btn sell" onclick="location.href='seller-portal.html'"><span class="nav-btn-ico">🏪</span>Sell</button>
     </div>
   </div>
 </nav>
@@ -1240,57 +1309,97 @@ function tmToast(msg){
   w.appendChild(t);setTimeout(function(){t.remove()},2600);
 }
 </script>
-<footer id="tm-footer">
-  <div class="tf-inner">
-    <div class="tf-grid">
-      <div>
-        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
-        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
-      </div>
-      <div>
-        <div class="tf-title">ช้อปปิ้ง</div>
-        <a href="index.html" class="tf-link">หน้าแรก</a>
-        <a href="category.html" class="tf-link">หมวดหมู่</a>
-        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
-        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
-        <a href="brand-day.html" class="tf-link">Brand Day</a>
-        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
-      </div>
-      <div>
-        <div class="tf-title">บัญชีของฉัน</div>
-        <a href="profile.html" class="tf-link">โปรไฟล์</a>
-        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
-        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
-        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
-        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
-        <a href="returns.html" class="tf-link">คืนสินค้า</a>
-      </div>
-      <div>
-        <div class="tf-title">ผู้ขาย</div>
-        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
-        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
-        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
-        <a href="seller-analytics.html" class="tf-link">Analytics</a>
-        <a href="b2b-portal.html" class="tf-link">B2B</a>
-        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
-      </div>
-      <div>
-        <div class="tf-title">ช่วยเหลือ</div>
-        <a href="help-center.html" class="tf-link">Help Center</a>
-        <a href="chat.html" class="tf-link">แชทกับเรา</a>
-        <a href="subscription.html" class="tf-link">TM Plus</a>
-        <a href="gift-card.html" class="tf-link">Gift Card</a>
-        <a href="sitemap.html" class="tf-link">Site Map</a>
-        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
-      </div>
-    </div>
-    <div class="tf-bottom">
-      <span>© 2026 Thailand Market · All rights reserved</span>
-      <span>TH · EN · 🔒 SSL · PCI DSS</span>
-    </div>
+<footer id="tm-mini-footer">
+  <div>
+    <span class="tmf-logo">Thailand<span class="dot">.</span>Market</span>
+    <span style="margin:0 14px;color:var(--g700)">·</span>
+    <span>© 2026 All rights reserved</span>
+  </div>
+  <div>
+    <a href="help-center.html">Help</a>
+    <a href="sitemap.html">Site Map</a>
+    <a href="index.html">หน้าแรก</a>
   </div>
 </footer>
 <div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
 <script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+
+<script id="account-nav-handler">
+(function(){
+  if (!window.sb) return;
+  const sb = window.sb;
+  const dd = document.getElementById('account-dropdown');
+  const btn = document.getElementById('account-nav-btn');
+  if (!dd || !btn) return;
+
+  // Toggle dropdown
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dd.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!dd.contains(e.target) && !btn.contains(e.target)) dd.classList.remove('open');
+  });
+
+  // Load user info
+  (async function loadAcct(){
+    try{
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        const nameEl = document.getElementById('dd-name');
+        const emailEl = document.getElementById('dd-email');
+        const roleEl = document.getElementById('dd-role');
+        if (nameEl) nameEl.textContent = 'ยังไม่ได้เข้าสู่ระบบ';
+        if (emailEl) emailEl.innerHTML = '<a href="login.html" style="color:var(--red);text-decoration:underline">เข้าสู่ระบบ</a>';
+        if (roleEl) roleEl.style.display = 'none';
+        const lo = document.getElementById('dd-logout');
+        if (lo) lo.style.display = 'none';
+        return;
+      }
+      const { data: u } = await sb.from('users')
+        .select('id, email, display_name, role')
+        .eq('email', session.user.email).maybeSingle();
+      if (!u) return;
+      const ico = document.getElementById('account-ico');
+      const nameEl = document.getElementById('dd-name');
+      const emailEl = document.getElementById('dd-email');
+      const roleEl = document.getElementById('dd-role');
+      if (ico) ico.textContent = ((u.display_name || u.email).charAt(0) || '?').toUpperCase();
+      if (nameEl) nameEl.textContent = u.display_name || u.email.split('@')[0];
+      if (emailEl) emailEl.textContent = u.email;
+      if (roleEl) {
+        roleEl.textContent = u.role === 'admin' ? 'ADMIN' : (u.role === 'seller' ? 'SELLER' : 'MEMBER');
+        roleEl.className = 'account-dropdown-role' + (u.role === 'admin' ? ' admin' : u.role === 'seller' ? ' seller' : '');
+      }
+      // Show Seller Portal if seller, Admin if admin
+      const ddSeller = document.getElementById('dd-seller');
+      const ddAdmin = document.getElementById('dd-admin');
+      if (u.role === 'seller' || u.role === 'admin') { if (ddSeller) ddSeller.style.display = 'flex'; }
+      if (u.role === 'admin') { if (ddAdmin) ddAdmin.style.display = 'flex'; }
+    } catch(e) { console.error('account nav:', e); }
+  })();
+
+  // Logout
+  const logoutBtn = document.getElementById('dd-logout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      await sb.auth.signOut();
+      location.href = 'index.html';
+    });
+  }
+
+  // Cart badge
+  try{
+    const cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+    const count = cart.reduce((s,i)=>s+(Number(i.qty)||1),0);
+    const cb = document.getElementById('cart-badge');
+    if (cb) {
+      if (count > 0) { cb.textContent = count > 99 ? '99+' : count; cb.style.display = 'flex'; }
+      else cb.style.display = 'none';
+    }
+  } catch(e){}
+})();
+</script>
+
 </body>
 </html>
