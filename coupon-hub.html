@@ -240,8 +240,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
   <a href="index.html" class="hdr-back">← กลับหน้าหลัก</a>
   <a href="index.html" class="hdr-logo">Thailand<span class="dot">.</span>Market</a>
   <div class="hdr-actions">
-    <a href="cart.html" class="hdr-icon">🛒</a>
-    <a href="profile.html" class="hdr-icon">👤</a>
+    <a href="wishlist.html" class="hdr-icon" title="Wishlist">♡</a>
+    <a href="chat.html" class="hdr-icon" title="Chat" style="position:relative">💬<span id="chat-badge" style="display:none;position:absolute;top:-2px;right:-4px;background:var(--red,#E63329);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-family:'DM Mono',monospace;font-weight:600;min-width:16px;text-align:center">0</span></a>
+    <a href="notification-center.html" class="hdr-icon" title="Alerts" style="position:relative">🔔<span id="notif-badge" style="display:none;position:absolute;top:-2px;right:-4px;background:var(--red,#E63329);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-family:'DM Mono',monospace;font-weight:600;min-width:16px;text-align:center">0</span></a>
+    <a href="cart.html" class="hdr-icon" title="Cart">🛒</a>
+    <a href="profile.html" class="hdr-icon" title="Account">👤</a>
   </div>
 </div>
 
@@ -969,6 +972,32 @@ document.getElementById('search-input').addEventListener('keydown', e => {
 
 // INIT
 init();
+</script>
+<!-- ── Chat & Notification Badge Auto-Update ── -->
+<script>
+(function(){
+  const sbClient = window._sb;
+  if (!sbClient) return;
+  async function updateBadges() {
+    try {
+      const { data: { session } } = await sbClient.auth.getSession();
+      if (!session) return;
+      const { data: u } = await sbClient.from('users').select('id').eq('email', session.user.email).maybeSingle();
+      if (!u) return;
+      try {
+        const { count: c } = await sbClient.from('chat_messages').select('*', {count:'exact', head:true}).eq('to_user_id', u.id).eq('is_read', false);
+        if (c > 0) { const el = document.getElementById('chat-badge'); if (el) { el.textContent = c > 99 ? '99+' : c; el.style.display = 'inline-flex'; } }
+      } catch(e){}
+      try {
+        const { count: n } = await sbClient.from('notifications').select('*', {count:'exact', head:true}).eq('user_id', u.id).eq('is_read', false);
+        if (n > 0) { const el = document.getElementById('notif-badge'); if (el) { el.textContent = n > 99 ? '99+' : n; el.style.display = 'inline-flex'; } }
+      } catch(e){}
+    } catch(e){}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateBadges);
+  else updateBadges();
+  setInterval(updateBadges, 60000);
+})();
 </script>
 </body>
 </html>

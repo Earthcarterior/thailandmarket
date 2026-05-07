@@ -495,7 +495,12 @@ img{max-width:100%;height:auto}
     </div>
     <div class="nav-acts">
       <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
-      <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
+      <button class="nav-btn" onclick="location.href='chat.html'" style="position:relative">
+        <span class="nav-btn-ico">💬<span class="nav-badge" id="chat-badge" style="display:none">0</span></span>Chat
+      </button>
+      <button class="nav-btn" onclick="location.href='notification-center.html'" style="position:relative">
+        <span class="nav-btn-ico">🔔<span class="nav-badge" id="notif-badge" style="display:none">0</span></span>Alerts
+      </button>
       <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
         <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
       </button>
@@ -516,6 +521,14 @@ img{max-width:100%;height:auto}
         </a>
         <a href="order-history.html" class="dropdown-item">
           <span class="dropdown-item-ico">📦</span>คำสั่งซื้อ
+        </a>
+        <a href="chat.html" class="dropdown-item" style="position:relative">
+          <span class="dropdown-item-ico">💬</span>แชทของฉัน
+          <span id="dd-chat-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px;font-family:var(--mono);font-weight:600;min-width:22px;text-align:center">0</span>
+        </a>
+        <a href="notification-center.html" class="dropdown-item" style="position:relative">
+          <span class="dropdown-item-ico">🔔</span>การแจ้งเตือน
+          <span id="dd-notif-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px;font-family:var(--mono);font-weight:600;min-width:22px;text-align:center">0</span>
         </a>
         <a href="wishlist.html" class="dropdown-item">
           <span class="dropdown-item-ico">❤️</span>รายการโปรด
@@ -1519,6 +1532,63 @@ async function placeOrder() {
 }
 
 document.addEventListener('DOMContentLoaded', loadCheckoutData);
+</script>
+
+
+<!-- ── Chat & Notification Badge Auto-Update ── -->
+<script>
+(function(){
+  // ใช้ Supabase ที่ได้ load ไว้แล้วในหน้า ถ้ามี window.sb (ไม่ทุกหน้ามี — skip)
+  if (typeof supabase === 'undefined') return;
+  // หา sb client ที่หน้านี้ใช้ (อาจเป็น window.sb หรือ const sb)
+  let sbClient = window.sb;
+  if (!sbClient && typeof window.SUPABASE_CLIENT !== 'undefined') sbClient = window.SUPABASE_CLIENT;
+  if (!sbClient) {
+    // สร้าง client ของเราเอง
+    try {
+      sbClient = supabase.createClient(
+        'https://qmgyimsptzewwyafvjzk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+      );
+    } catch(e){ return; }
+  }
+
+  async function updateBadges() {
+    try {
+      const { data: { session } } = await sbClient.auth.getSession();
+      if (!session) return;
+      const { data: u } = await sbClient.from('users').select('id').eq('email', session.user.email).maybeSingle();
+      if (!u) return;
+      // chat unread count
+      try {
+        const { count: chatCount } = await sbClient.from('chat_messages').select('*', {count:'exact', head:true}).eq('to_user_id', u.id).eq('is_read', false);
+        if (chatCount > 0) {
+          ['chat-badge','dd-chat-badge'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = chatCount > 99 ? '99+' : chatCount; el.style.display='inline-flex'; }
+          });
+        }
+      } catch(e) {/* table may not exist */}
+      // notification unread count
+      try {
+        const { count: nCount } = await sbClient.from('notifications').select('*', {count:'exact', head:true}).eq('user_id', u.id).eq('is_read', false);
+        if (nCount > 0) {
+          ['notif-badge','dd-notif-badge'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = nCount > 99 ? '99+' : nCount; el.style.display='inline-flex'; }
+          });
+        }
+      } catch(e) {/* table may not exist */}
+    } catch(e) { /* silently fail */ }
+  }
+  // Run once + every 60s
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateBadges);
+  } else {
+    updateBadges();
+  }
+  setInterval(updateBadges, 60000);
+})();
 </script>
 
 </body>

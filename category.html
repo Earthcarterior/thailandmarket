@@ -600,6 +600,9 @@ nav, .nav {
       <input type="text" class="nav-search-inp" id="search-inp" placeholder="ค้นหาสินค้า บริการ..." oninput="onSearch()">
     </div>
     <div class="nav-actions" style="display:flex;align-items:center;gap:8px">
+      <button class="nav-btn" onclick="location.href='wishlist.html'" title="Saved" style="display:flex;align-items:center;gap:4px"><span>♡</span><span style="font-size:11px">Saved</span></button>
+      <button class="nav-btn" onclick="location.href='chat.html'" title="Chat" style="display:flex;align-items:center;gap:4px;position:relative"><span>💬</span><span style="font-size:11px">Chat</span><span id="chat-badge" style="display:none;position:absolute;top:-3px;right:-4px;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-family:var(--mono);font-weight:600;min-width:16px;text-align:center">0</span></button>
+      <button class="nav-btn" onclick="location.href='notification-center.html'" title="Alerts" style="display:flex;align-items:center;gap:4px;position:relative"><span>🔔</span><span style="font-size:11px">Alerts</span><span id="notif-badge" style="display:none;position:absolute;top:-3px;right:-4px;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-family:var(--mono);font-weight:600;min-width:16px;text-align:center">0</span></button>
       <!-- Account Button + Dropdown -->
       <div style="position:relative">
         <button class="nav-btn account-btn" id="account-nav-btn" style="display:flex;align-items:center;gap:6px">
@@ -614,7 +617,10 @@ nav, .nav {
           </div>
           <a href="profile.html" class="dropdown-item"><span class="dropdown-item-ico">👤</span>โปรไฟล์</a>
           <a href="order-history.html" class="dropdown-item"><span class="dropdown-item-ico">📦</span>คำสั่งซื้อ</a>
+          <a href="chat.html" class="dropdown-item" style="position:relative"><span class="dropdown-item-ico">💬</span>แชทของฉัน<span id="dd-chat-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px;font-family:var(--mono);font-weight:600;min-width:22px;text-align:center">0</span></a>
+          <a href="notification-center.html" class="dropdown-item" style="position:relative"><span class="dropdown-item-ico">🔔</span>การแจ้งเตือน<span id="dd-notif-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:9px;font-family:var(--mono);font-weight:600;min-width:22px;text-align:center">0</span></a>
           <a href="wishlist.html" class="dropdown-item"><span class="dropdown-item-ico">❤️</span>รายการโปรด</a>
+          <a href="coupon-hub.html" class="dropdown-item"><span class="dropdown-item-ico">🎟️</span>คูปองของฉัน</a>
           <a href="seller-portal.html" class="dropdown-item" id="dd-seller" style="display:none"><span class="dropdown-item-ico">🏪</span>Seller Portal</a>
           <a href="admin-cms.html" class="dropdown-item" id="dd-admin" style="display:none"><span class="dropdown-item-ico">⚙️</span>Admin CMS</a>
           <button class="dropdown-item logout" id="dd-logout"><span class="dropdown-item-ico">🚪</span>ออกจากระบบ</button>
@@ -1758,6 +1764,42 @@ async function toggleWish(productId, btn) {
   }
 }
 
+</script>
+<!-- ── Chat & Notification Badge Auto-Update ── -->
+<script>
+(function(){
+  const sbClient = window.sb || (typeof sb !== 'undefined' ? sb : null);
+  if (!sbClient) return;
+  async function updateBadges() {
+    try {
+      const { data: { session } } = await sbClient.auth.getSession();
+      if (!session) return;
+      const { data: u } = await sbClient.from('users').select('id').eq('email', session.user.email).maybeSingle();
+      if (!u) return;
+      try {
+        const { count: c } = await sbClient.from('chat_messages').select('*', {count:'exact', head:true}).eq('to_user_id', u.id).eq('is_read', false);
+        if (c > 0) {
+          ['chat-badge','dd-chat-badge'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = c > 99 ? '99+' : c; el.style.display = 'inline-flex'; }
+          });
+        }
+      } catch(e){}
+      try {
+        const { count: n } = await sbClient.from('notifications').select('*', {count:'exact', head:true}).eq('user_id', u.id).eq('is_read', false);
+        if (n > 0) {
+          ['notif-badge','dd-notif-badge'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = n > 99 ? '99+' : n; el.style.display = 'inline-flex'; }
+          });
+        }
+      } catch(e){}
+    } catch(e){}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateBadges);
+  else updateBadges();
+  setInterval(updateBadges, 60000);
+})();
 </script>
 </body>
 </html
