@@ -734,15 +734,8 @@ function buildCart(){
   </div>`).join('');
 }
 
-function changeQty(i,d){
-  CART[i].qty=Math.max(1,CART[i].qty+d);
-  document.getElementById('qty-'+i).textContent=CART[i].qty;
-  updateTotal();
-}
-function removeItem(i){
-  CART.splice(i,1);buildCart();updateTotal();
-  toast('🗑️ ลบสินค้าออกจากตะกร้าแล้ว');
-}
+// changeQty/removeItem ถูกประกาศไว้ด้านล่าง (ตัวที่ sync ทั้ง localStorage + Supabase)
+// ดู line ~1420 (changeQty) และ ~1458 (removeItem)
 
 function buildAddrs(){
   document.getElementById('addr-list').innerHTML=ADDRS.map((a,i)=>`<div class="addr-card ${a.sel?'selected':''}" onclick="selAddr(${i})">
@@ -1316,9 +1309,33 @@ async function loadCheckoutData() {
       console.warn('loadCart from Supabase failed:', e?.message || e);
     }
   }
-  // Fallback: localStorage
+  // Fallback: localStorage (with auto-migration of legacy tm_cart_guest)
   if (!cartItems.length) {
-    const ls = JSON.parse(localStorage.getItem('tm_cart') || localStorage.getItem('tm_cart_guest') || '[]');
+    let ls = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+    // ── Legacy migration: ถ้าเจอ tm_cart_guest ให้ merge เข้า tm_cart ──
+    const legacy = JSON.parse(localStorage.getItem('tm_cart_guest') || '[]');
+    if (legacy.length > 0) {
+      legacy.forEach(item => {
+        const id = item.id || item.product_id;
+        if (!id) return;
+        const existing = ls.find(c => c.id === id);
+        if (existing) {
+          existing.qty = (existing.qty || 1) + (item.qty || item.quantity || 1);
+        } else {
+          ls.push({
+            id: id,
+            name: item.name || 'สินค้า',
+            price: Number(item.price) || 0,
+            img: item.img || item.thumbnail || '',
+            qty: item.qty || item.quantity || 1,
+            variants: item.variants || {}
+          });
+        }
+      });
+      localStorage.setItem('tm_cart', JSON.stringify(ls));
+      localStorage.removeItem('tm_cart_guest');
+      console.log('[checkout] migrated', legacy.length, 'items from tm_cart_guest → tm_cart');
+    }
     cartItems = ls.map(it => ({
       id: it.id || it.product_id || '',
       icon: it.img ? `<img src="${it.img}" style="width:100%;height:100%;object-fit:cover">` : (it.icon || '📦'),
@@ -1392,17 +1409,35 @@ async function changeQty(idx, delta) {
   CART[idx].qty = Math.max(1, (CART[idx].qty || 1) + delta);
   buildCart();
   updateTotal();
+
+  // ── ALWAYS sync to localStorage (regardless of login) ──
+  try {
+    const ls = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+    const lsItem = ls.find(i => String(i.id || i.product_id) === String(CART[idx].id));
+    if (lsItem) {
+      lsItem.qty = CART[idx].qty;
+    } else {
+      // เผื่อ CART มาจาก Supabase แต่ไม่มีใน ls
+      ls.push({
+        id: CART[idx].id,
+        name: CART[idx].name,
+        price: Number(CART[idx].price) || 0,
+        img: CART[idx].img || '',
+        qty: CART[idx].qty,
+        variants: {}
+      });
+    }
+    localStorage.setItem('tm_cart', JSON.stringify(ls));
+    if (typeof window.tmUpdateCartBadge === 'function') window.tmUpdateCartBadge();
+  } catch(e) { console.warn('localStorage sync:', e); }
+
+  // ── Best-effort sync to Supabase if logged in ──
   try {
     const { data:{ user } } = await _sbCO.auth.getUser();
     if (user && CART[idx].id) {
       await _sbCO.from('cart_items')
         .update({ quantity: CART[idx].qty })
         .eq('user_id', user.id).eq('product_id', CART[idx].id);
-    } else {
-      // sync to localStorage
-      const ls = JSON.parse(localStorage.getItem('tm_cart') || '[]');
-      const lsItem = ls.find(i => (i.id || i.product_id) === CART[idx].id);
-      if (lsItem) { lsItem.qty = CART[idx].qty; localStorage.setItem('tm_cart', JSON.stringify(ls)); }
     }
   } catch(e) { /* silent */ }
 }
@@ -1421,19 +1456,61 @@ async function removeItem(idx) {
     buildCart();
   }
   updateTotal();
+
+  // ── ALWAYS sync to localStorage ──
+  try {
+    if (removed?.id) {
+      const ls = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+      const filtered = ls.filter(i => String(i.id || i.product_id) !== String(removed.id));
+      localStorage.setItem('tm_cart', JSON.stringify(filtered));
+      if (typeof window.tmUpdateCartBadge === 'function') window.tmUpdateCartBadge();
+    }
+  } catch(e) { console.warn('localStorage sync:', e); }
+
+  // ── Best-effort sync to Supabase ──
   try {
     const { data:{ user } } = await _sbCO.auth.getUser();
     if (user && removed?.id) {
       await _sbCO.from('cart_items').delete()
         .eq('user_id', user.id).eq('product_id', removed.id);
-    } else {
-      const ls = JSON.parse(localStorage.getItem('tm_cart') || '[]');
-      const filtered = ls.filter(i => (i.id || i.product_id) !== removed.id);
-      localStorage.setItem('tm_cart', JSON.stringify(filtered));
     }
   } catch(e) { /* silent */ }
   toast('🗑️ ลบสินค้าออกแล้ว');
 }
+
+// ── Listen for cart changes from other tabs (cart.html, product.html, etc.) ──
+window.addEventListener('storage', e => {
+  if (e.key !== 'tm_cart') return;
+  try {
+    const newCart = JSON.parse(e.newValue || '[]');
+    CART.length = 0;
+    newCart.forEach(item => {
+      CART.push({
+        id: item.id,
+        name: item.name || 'สินค้า',
+        price: Number(item.price) || 0,
+        qty: Number(item.qty) || 1,
+        img: item.img || '',
+        icon: '📦',
+        var: item.variant || '',
+        shop: item.shop || 'Thailand Market',
+        old: Number(item.old || item.price) || 0
+      });
+    });
+    if (CART.length === 0) {
+      const el = document.getElementById('cart-items');
+      if (el) el.innerHTML = `
+        <div style="text-align:center;padding:48px;color:#737373">
+          <div style="font-size:48px;margin-bottom:12px">🛒</div>
+          <div style="font-size:16px;font-weight:500;margin-bottom:8px">ตะกร้าว่างเปล่า</div>
+          <a href="category.html" style="color:#E63329;font-size:13px">เลือกสินค้าเลย →</a>
+        </div>`;
+    } else {
+      buildCart();
+    }
+    updateTotal();
+  } catch(err) { console.warn('storage sync:', err); }
+});
 
 // ── Place Order to Supabase ───────────────────────────────
 async function placeOrder() {
@@ -1591,6 +1668,109 @@ document.addEventListener('DOMContentLoaded', loadCheckoutData);
 })();
 </script>
 
+
+<!-- ── Shared Cart Helper (injected 2026-05-07-v2) ── -->
+<script>
+(function(){
+  // ── Read cart fresh from localStorage every time ──
+  function tmGetCart() {
+    try {
+      const raw = localStorage.getItem('tm_cart');
+      const data = JSON.parse(raw || '[]');
+      return Array.isArray(data) ? data : [];
+    } catch(e) { return []; }
+  }
+
+  function tmSaveCart(cart) {
+    try {
+      localStorage.setItem('tm_cart', JSON.stringify(cart));
+      // Trigger update in same tab (storage event only fires for OTHER tabs)
+      if (typeof window.tmUpdateCartBadge === 'function') {
+        window.tmUpdateCartBadge();
+      }
+    } catch(e) { console.warn('tmSaveCart:', e); }
+  }
+
+  // ── Unified Add to Cart ──
+  // params: {id, name, price, img, qty, variants}
+  // ALL pages should call this instead of writing to localStorage directly.
+  function tmAddToCart(item) {
+    if (!item || !item.id) {
+      console.warn('tmAddToCart: missing id');
+      return null;
+    }
+    const cart = tmGetCart();   // ← Always fresh!
+    const id = String(item.id);
+    const qty = Math.max(1, Number(item.qty) || 1);
+    const variants = item.variants || {};
+    const variantsKey = JSON.stringify(variants);
+
+    // Match: same id + same variants
+    const existing = cart.find(c =>
+      String(c.id) === id &&
+      JSON.stringify(c.variants || {}) === variantsKey
+    );
+
+    if (existing) {
+      existing.qty = (Number(existing.qty) || 1) + qty;
+      // อัปเดต fields กรณีของเก่ามี data ขาด
+      if (!existing.name && item.name) existing.name = item.name;
+      if (!existing.img && item.img)   existing.img = item.img;
+      if (!existing.price && item.price) existing.price = Number(item.price);
+    } else {
+      cart.push({
+        id: id,
+        name: item.name || '',
+        price: Number(item.price) || 0,
+        img: item.img || '',
+        qty: qty,
+        variants: variants
+      });
+    }
+
+    tmSaveCart(cart);
+    return cart;
+  }
+
+  // ── Update qty / Remove / Clear ──
+  function tmUpdateCartQty(id, qty, variants) {
+    const cart = tmGetCart();
+    const variantsKey = JSON.stringify(variants || {});
+    const item = cart.find(c =>
+      String(c.id) === String(id) &&
+      JSON.stringify(c.variants || {}) === variantsKey
+    );
+    if (!item) return cart;
+    if (qty <= 0) return tmRemoveFromCart(id, variants);
+    item.qty = Number(qty);
+    tmSaveCart(cart);
+    return cart;
+  }
+
+  function tmRemoveFromCart(id, variants) {
+    const cart = tmGetCart();
+    const variantsKey = JSON.stringify(variants || {});
+    const newCart = cart.filter(c =>
+      !(String(c.id) === String(id) &&
+        JSON.stringify(c.variants || {}) === variantsKey)
+    );
+    tmSaveCart(newCart);
+    return newCart;
+  }
+
+  function tmClearCart() {
+    tmSaveCart([]);
+  }
+
+  // ── Expose globally ──
+  window.tmGetCart = tmGetCart;
+  window.tmSaveCart = tmSaveCart;
+  window.tmAddToCart = tmAddToCart;
+  window.tmUpdateCartQty = tmUpdateCartQty;
+  window.tmRemoveFromCart = tmRemoveFromCart;
+  window.tmClearCart = tmClearCart;
+})();
+</script>
 
 <!-- ── Shared Cart Badge Auto-Update (injected 2026-05-07) ── -->
 <script>
