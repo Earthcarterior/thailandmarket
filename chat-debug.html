@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chat Diagnostic — Thailand Market</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" data-cfasync="false"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:#FAFAFA;padding:20px;color:#0A0A0A;line-height:1.6}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:24px;margin-bottom:24px}
+  .card{background:#fff;border:1px solid #E5E5E5;padding:20px;margin-bottom:14px;border-radius:6px}
+  .card h2{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dotted #E5E5E5;font-size:13px}
+  .row:last-child{border:none}
+  .row-l{color:#737373;font-family:'DM Mono',monospace;font-size:12px}
+  .row-r{font-weight:500;text-align:right;max-width:60%;word-break:break-all}
+  .ok{color:#10B981}
+  .err{color:#E63329}
+  .warn{color:#F59E0B}
+  pre{background:#0A0A0A;color:#10B981;padding:14px;border-radius:4px;overflow-x:auto;font-family:'DM Mono',monospace;font-size:11px;line-height:1.6;white-space:pre-wrap}
+  button{background:#0A0A0A;color:#fff;padding:10px 20px;border:none;cursor:pointer;font-size:13px;font-family:inherit;margin-right:8px;margin-top:8px;border-radius:4px}
+  button:hover{background:#000}
+  button.red{background:#E63329}
+  button.green{background:#10B981}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  a{color:#3B82F6}
+  input{padding:10px;border:1px solid #E5E5E5;font-family:inherit;font-size:13px;width:240px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔍 Chat System Diagnostic</h1>
+  <p style="margin-bottom:20px;color:#737373">หน้านี้ทดสอบทุก step ของระบบแชท ดูว่าจุดไหน fail</p>
+
+  <div class="card">
+    <h2>1️⃣ Auth Status</h2>
+    <div id="auth-status">⏳ checking...</div>
+  </div>
+
+  <div class="card">
+    <h2>2️⃣ User Record</h2>
+    <div id="user-status">⏳ pending</div>
+  </div>
+
+  <div class="card">
+    <h2>3️⃣ Database Tables</h2>
+    <div id="tables-status">⏳ pending</div>
+  </div>
+
+  <div class="card">
+    <h2>4️⃣ RPC Functions</h2>
+    <div id="rpc-status">⏳ pending</div>
+  </div>
+
+  <div class="card">
+    <h2>5️⃣ Threads (ของฉัน)</h2>
+    <div id="threads-status">⏳ pending</div>
+  </div>
+
+  <div class="card">
+    <h2>6️⃣ Realtime WebSocket</h2>
+    <div id="rt-status">⏳ pending</div>
+  </div>
+
+  <div class="card">
+    <h2>7️⃣ ทดสอบส่งข้อความ end-to-end</h2>
+    <p style="margin-bottom:10px;color:#737373;font-size:12px">
+      จะสร้าง test thread กับร้าน "Thailand Market Official" แล้วส่งข้อความทดสอบ<br>
+      <strong>ต้อง login ก่อน</strong>
+    </p>
+    <input type="text" id="test-msg" placeholder="ข้อความทดสอบ" value="Test message from diagnostic">
+    <button class="green" onclick="testSendMsg()">▶ ทดสอบส่ง</button>
+    <div id="send-status" style="margin-top:14px"></div>
+  </div>
+
+  <div class="card">
+    <h2>📜 Console Log</h2>
+    <pre id="log">[เริ่ม logging...]
+</pre>
+    <div class="actions">
+      <button onclick="runAll()">🔄 รันทดสอบใหม่</button>
+      <button onclick="document.getElementById('log').textContent=''">ล้าง log</button>
+      <button class="red" onclick="copyLog()">📋 Copy log</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const logEl = document.getElementById('log');
+function log(msg, type) {
+  const time = new Date().toLocaleTimeString('th-TH');
+  const prefix = type === 'err' ? '❌' : type === 'ok' ? '✅' : type === 'warn' ? '⚠️' : '·';
+  logEl.textContent += `[${time}] ${prefix} ${msg}\n`;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function setRow(elId, items) {
+  const html = items.map(i =>
+    `<div class="row"><div class="row-l">${i.label}</div><div class="row-r ${i.ok ? 'ok' : i.warn ? 'warn' : 'err'}">${i.value}</div></div>`
+  ).join('');
+  document.getElementById(elId).innerHTML = html;
+}
+
+let _user = null;
+let _userRecord = null;
+
+async function check1Auth() {
+  log('Step 1: ตรวจ auth session');
+  const { data: { session }, error } = await sb.auth.getSession();
+  if (error) {
+    setRow('auth-status', [{label:'getSession', value:'❌ ' + error.message, ok:false}]);
+    log('auth error: ' + error.message, 'err');
+    return false;
+  }
+  if (!session) {
+    setRow('auth-status', [{label:'session', value:'❌ ยังไม่ login', ok:false}]);
+    log('no session — ต้อง login ก่อน', 'err');
+    document.getElementById('auth-status').innerHTML += `<div style="margin-top:14px"><a href="login.html?from=setup.html" style="background:#0A0A0A;color:#fff;padding:10px 20px;text-decoration:none;display:inline-block;border-radius:4px">→ เข้าสู่ระบบ</a></div>`;
+    return false;
+  }
+  _user = session.user;
+  setRow('auth-status', [
+    {label:'session', value:'✅ active', ok:true},
+    {label:'auth uid', value:session.user.id, ok:true},
+    {label:'email', value:session.user.email, ok:true}
+  ]);
+  log('auth OK: ' + session.user.email, 'ok');
+  return true;
+}
+
+async function check2UserRecord() {
+  log('Step 2: ตรวจ users table record');
+  if (!_user) { return false; }
+  const { data, error } = await sb.from('users').select('id,email,display_name,role').eq('email', _user.email).maybeSingle();
+  if (error) {
+    setRow('user-status', [{label:'query users', value:'❌ ' + error.message, ok:false}]);
+    log('users query error: ' + error.message, 'err');
+    return false;
+  }
+  if (!data) {
+    setRow('user-status', [{label:'user record', value:'❌ ไม่พบใน users — auth user ไม่ตรง', ok:false}]);
+    log('USER MISSING from users table — this is the BUG!', 'err');
+    document.getElementById('user-status').innerHTML += `<div style="margin-top:14px;padding:14px;background:#FFF5F5;border-radius:4px;color:#E63329;font-size:13px">
+      <strong>⚠️ สาเหตุของปัญหา:</strong><br>
+      Auth user มี (sign-up สำเร็จ) แต่ไม่มี record ใน users table<br>
+      ต้องสร้าง trigger หรือ insert record ด้วยมือ<br><br>
+      <button class="green" onclick="autoCreateUser()">▶ สร้าง user record ให้ฉัน</button>
+    </div>`;
+    return false;
+  }
+  _userRecord = data;
+  setRow('user-status', [
+    {label:'user.id', value:data.id, ok:true},
+    {label:'display_name', value:data.display_name || '(empty)', ok:!!data.display_name, warn:!data.display_name},
+    {label:'role', value:data.role || 'buyer', ok:true}
+  ]);
+  log('user record OK: ' + data.id, 'ok');
+  return true;
+}
+
+window.autoCreateUser = async function() {
+  if (!_user) return;
+  log('Creating user record...');
+  const { data, error } = await sb.from('users').insert({
+    email: _user.email,
+    display_name: _user.email.split('@')[0],
+    role: 'buyer'
+  }).select().single();
+  if (error) { alert('Error: ' + error.message); log('insert error: ' + error.message, 'err'); return; }
+  log('Created: ' + data.id, 'ok');
+  alert('สร้างสำเร็จ! กดปุ่ม 🔄 รันทดสอบใหม่');
+};
+
+async function check3Tables() {
+  log('Step 3: ตรวจ tables');
+  const items = [];
+  for (const t of ['chat_threads','chat_messages']) {
+    const { error } = await sb.from(t).select('id', { count:'exact', head:true });
+    if (error) {
+      items.push({label:t, value:'❌ ' + error.message, ok:false});
+      log(t + ' error: ' + error.message, 'err');
+    } else {
+      items.push({label:t, value:'✅ accessible', ok:true});
+      log(t + ' OK', 'ok');
+    }
+  }
+  setRow('tables-status', items);
+}
+
+async function check4Rpcs() {
+  log('Step 4: ตรวจ RPCs');
+  const items = [];
+  // get_or_create_thread
+  const { error: e1 } = await sb.rpc('get_or_create_thread', { p_seller_id: '00000000-0000-0000-0000-000000000000' });
+  if (e1 && (e1.message.includes('not found in the schema') || e1.code === 'PGRST202')) {
+    items.push({label:'get_or_create_thread', value:'❌ RPC not registered — รัน chat-fix.sql', ok:false});
+    log('RPC get_or_create_thread MISSING — รัน chat-fix-2026-05-07.sql', 'err');
+  } else if (e1 && e1.message.includes('User not found')) {
+    items.push({label:'get_or_create_thread', value:'⚠️ RPC OK แต่ user ไม่อยู่ในระบบ', ok:false, warn:true});
+    log('RPC OK แต่ user record มีปัญหา', 'warn');
+  } else {
+    items.push({label:'get_or_create_thread', value:e1 ? '⚠️ ' + e1.message : '✅ working', ok:!e1, warn:!!e1});
+    log('RPC test: ' + (e1 ? e1.message : 'OK'), e1 ? 'warn' : 'ok');
+  }
+  // mark_thread_read
+  const { error: e2 } = await sb.rpc('mark_thread_read', { p_thread_id: '00000000-0000-0000-0000-000000000000', p_role: 'buyer' });
+  if (e2 && (e2.message.includes('not found') || e2.code === 'PGRST202')) {
+    items.push({label:'mark_thread_read', value:'❌ MISSING', ok:false});
+  } else {
+    items.push({label:'mark_thread_read', value:'✅ working', ok:true});
+  }
+  // is_admin
+  const { data: isAdmin, error: e3 } = await sb.rpc('is_admin');
+  if (e3) {
+    items.push({label:'is_admin', value:'❌ ' + e3.message, ok:false});
+  } else {
+    items.push({label:'is_admin', value:isAdmin ? 'true (admin)' : 'false', ok:true});
+  }
+  setRow('rpc-status', items);
+}
+
+async function check5Threads() {
+  log('Step 5: ตรวจ threads ของ user นี้');
+  if (!_userRecord) {
+    setRow('threads-status', [{label:'skip', value:'⚠️ ไม่มี user record', ok:false}]);
+    return;
+  }
+  const { data, error } = await sb.from('chat_threads').select('*').eq('buyer_id', _userRecord.id);
+  if (error) {
+    setRow('threads-status', [{label:'query', value:'❌ ' + error.message, ok:false}]);
+    log('threads error: ' + error.message, 'err');
+    return;
+  }
+  setRow('threads-status', [
+    {label:'count', value:data.length + ' threads', ok:true},
+    {label:'as buyer', value:data.length, ok:true}
+  ]);
+  log('threads loaded: ' + data.length, 'ok');
+}
+
+async function check6Realtime() {
+  log('Step 6: ทดสอบ Realtime WebSocket');
+  return new Promise((resolve) => {
+    let resolved = false;
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        setRow('rt-status', [{label:'subscribe', value:'❌ timeout 10s — WebSocket อาจถูก firewall block', ok:false}]);
+        log('realtime timeout — possible Cloudflare/firewall issue', 'err');
+        resolve(false);
+      }
+    }, 10000);
+
+    const ch = sb.channel('test-' + Date.now())
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'chat_messages' }, () => {})
+      .subscribe((status) => {
+        log('realtime status: ' + status);
+        if (status === 'SUBSCRIBED' && !resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          setRow('rt-status', [
+            {label:'WebSocket', value:'✅ connected', ok:true},
+            {label:'status', value:status, ok:true}
+          ]);
+          log('realtime SUBSCRIBED OK', 'ok');
+          setTimeout(() => sb.removeChannel(ch), 1000);
+          resolve(true);
+        } else if ((status === 'CHANNEL_ERROR' || status === 'CLOSED') && !resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          setRow('rt-status', [{label:'WebSocket', value:'❌ ' + status, ok:false}]);
+          log('realtime FAILED: ' + status, 'err');
+          resolve(false);
+        }
+      });
+  });
+}
+
+window.testSendMsg = async function() {
+  const box = document.getElementById('send-status');
+  const msg = document.getElementById('test-msg').value.trim();
+  if (!msg) { box.innerHTML = '<span class="err">กรุณาใส่ข้อความ</span>'; return; }
+  if (!_userRecord) { box.innerHTML = '<span class="err">ยังไม่ได้ login หรือไม่มี user record</span>'; return; }
+
+  box.innerHTML = '⏳ กำลังทดสอบ...';
+  log('=== Testing end-to-end send ===');
+
+  // Step 1: get_or_create_thread
+  const sellerId = '86083228-26bd-4973-81f1-c824fd004623'; // Thailand Market Official
+  log('1. get_or_create_thread with seller=' + sellerId);
+  const { data: threadId, error: e1 } = await sb.rpc('get_or_create_thread', { p_seller_id: sellerId });
+  if (e1) {
+    box.innerHTML = `<div class="err">❌ ขั้นตอนที่ 1 fail: ${e1.message}</div>`;
+    log('Step 1 FAILED: ' + e1.message, 'err');
+    return;
+  }
+  log('1. ✅ thread id: ' + threadId, 'ok');
+
+  // Step 2: insert message
+  log('2. insert chat_messages');
+  const { data: msgData, error: e2 } = await sb.from('chat_messages').insert({
+    thread_id: threadId,
+    sender_type: 'buyer',
+    sender_id: _userRecord.id,
+    body: msg,
+    msg_type: 'text'
+  }).select().single();
+  if (e2) {
+    box.innerHTML = `<div class="err">❌ ขั้นตอนที่ 2 (ส่งข้อความ) fail: ${e2.message}<br>code: ${e2.code}</div>`;
+    log('Step 2 FAILED: ' + e2.message + ' code=' + e2.code, 'err');
+    return;
+  }
+  log('2. ✅ message id: ' + msgData.id, 'ok');
+
+  // Step 3: verify trigger updated thread
+  log('3. verify trigger updated chat_threads');
+  const { data: thr } = await sb.from('chat_threads').select('last_message,last_at,unread_seller').eq('id', threadId).single();
+  log('3. last_message: ' + thr.last_message, 'ok');
+
+  box.innerHTML = `
+    <div class="ok" style="font-size:14px">✅ ทดสอบสำเร็จ! ระบบส่งข้อความได้</div>
+    <div style="margin-top:10px;font-size:12px;color:#737373">
+      Thread ID: <code>${threadId}</code><br>
+      Message ID: <code>${msgData.id}</code><br>
+      Last message: <strong>${thr.last_message}</strong>
+    </div>
+    <div style="margin-top:14px">
+      <a href="chat.html?thread=${threadId}" target="_blank" style="background:#10B981;color:#fff;padding:10px 18px;text-decoration:none;display:inline-block;border-radius:4px">→ เปิดในหน้า chat.html</a>
+    </div>
+  `;
+  log('=== END-TO-END TEST PASSED ===', 'ok');
+};
+
+window.copyLog = async function() {
+  await navigator.clipboard.writeText(logEl.textContent);
+  alert('Copy แล้ว ส่งให้ผู้พัฒนาดูได้');
+};
+
+window.runAll = async function() {
+  logEl.textContent = '';
+  log('=== Running all checks ===');
+  if (!await check1Auth()) return;
+  if (!await check2UserRecord()) {
+    await check3Tables();
+    await check4Rpcs();
+    return;
+  }
+  await check3Tables();
+  await check4Rpcs();
+  await check5Threads();
+  await check6Realtime();
+  log('=== Done ===', 'ok');
+};
+
+runAll();
+</script>
+</body>
+</html>

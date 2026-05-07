@@ -1729,16 +1729,37 @@ async function contactSeller() {
       setTimeout(() => location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search), 1200);
       return;
     }
+
+    // ── Pre-flight: ตรวจว่ามี user record ใน public.users ไหม ──
+    const { data: userRec } = await sb.from('users')
+      .select('id').eq('email', session.user.email).maybeSingle();
+    if (!userRec) {
+      console.log('[contact] auto-creating user record');
+      const fallbackName = (session.user.user_metadata && session.user.user_metadata.display_name)
+        || session.user.email.split('@')[0];
+      const { error: createErr } = await sb.from('users').insert({
+        email: session.user.email,
+        display_name: fallbackName,
+        role: 'buyer'
+      });
+      if (createErr) {
+        console.error('user create failed:', createErr);
+        toast('❌ สร้างบัญชีไม่สำเร็จ: ' + createErr.message);
+        return;
+      }
+    }
+
     toast('💬 กำลังเปิดห้องแชท...');
     const { data: threadId, error } = await sb.rpc('get_or_create_thread', {
       p_seller_id: _product.seller_id,
       p_product_id: productId
     });
     if (error) throw error;
+    if (!threadId) throw new Error('ไม่ได้ thread ID');
     location.href = 'chat.html?thread=' + threadId;
   } catch(e) {
     console.error('contactSeller:', e);
-    toast('❌ เปิดแชทไม่สำเร็จ: ' + (e.message || ''));
+    toast('❌ เปิดแชทไม่สำเร็จ: ' + (e.message || JSON.stringify(e)));
   }
 }
 

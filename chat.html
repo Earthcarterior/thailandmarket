@@ -567,7 +567,7 @@ async function loadUser() {
     const { data: created, error: createErr } = await sb.from('users').insert({
       email: session.user.email,
       display_name: fallbackName,
-      role: 'user'
+      role: 'buyer'
     }).select('id, email, display_name, role, avatar_url').single();
     if (createErr) {
       ERR('auto-create user failed:', createErr);

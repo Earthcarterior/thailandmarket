@@ -5868,7 +5868,7 @@ async function loadMembers(filter = '', search = '') {
         </td>
         <td style="padding:10px 12px">
           <select onchange="setUserRole('${u.id}', this.value)" style="background:${roleColor[u.role]||'#888'}15;color:${roleColor[u.role]||'#888'};border:1px solid ${roleColor[u.role]||'#888'}40;padding:3px 8px;font-size:11px;font-family:monospace;cursor:pointer">
-            <option value="user" ${u.role==='user'?'selected':''}>สมาชิก</option>
+            <option value="buyer" ${u.role==='buyer'||!u.role?'selected':''}>ลูกค้า (Buyer)</option>
             <option value="seller" ${u.role==='seller'?'selected':''}>Seller</option>
             <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
           </select>
