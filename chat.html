@@ -461,133 +461,208 @@ img{max-width:100%;height:auto}
 
 <script>
 // ════════════════════════════════════════════════════════════════════
-//  CHAT.HTML — Supabase Realtime Integration [2026-05-07]
-//  Architecture:
-//    - Threads list: 1-time fetch + reload on focus
-//    - Active thread: subscribe to chat_messages INSERT events via WebSocket
-//    - Mark-as-read: RPC mark_thread_read() เมื่อเปิด thread
+//  CHAT.HTML — Supabase Realtime Integration v2 [2026-05-07]
+//  Robust + debuggable. ไม่มี FK alias ที่อาจ fail
+//  Test: เปิด console (F12) เพื่อดู debug logs
 // ════════════════════════════════════════════════════════════════════
 
 const sb = supabase.createClient(
   'https://qmgyimsptzewwyafvjzk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
 );
+window.sb = sb;
+
+const LOG = (...args) => console.log('[chat]', ...args);
+const ERR = (...args) => console.error('[chat]', ...args);
 
 // ── State ───────────────────────────────────────────────────────────
-let _user = null;            // current logged-in user (from users table)
-let _userRole = 'buyer';     // 'buyer' | 'seller'
-let _mySellerIds = [];       // ถ้าเป็น seller — list ของ shops ที่เป็น owner
-let _threads = [];           // all threads (cache)
+let _user = null;
+let _userRole = 'buyer';
+let _mySellerIds = [];
+let _threads = [];
+let _userCache = {};        // id → user record (cache)
+let _sellerCache = {};      // id → seller record (cache)
 let _activeThreadId = null;
 let _activeThread = null;
-let _messages = [];          // messages of active thread
-let _msgChannel = null;      // realtime subscription
+let _messages = [];
+let _msgChannel = null;
 let _threadChannel = null;
 const QRS = ['ขอบคุณครับ','ราคานี้ดีเลยครับ','มีโปรอื่นไหมครับ?','ขอรูปสินค้าเพิ่มได้ไหม?','ผ่อนได้ไหมครับ?'];
 
 // ── Helpers ─────────────────────────────────────────────────────────
-function escapeHtml(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function fmtTime(d){
+function escapeHtml(s) {
+  return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtTime(d) {
   const dt = new Date(d);
+  if (isNaN(dt)) return '';
   const now = new Date();
   const dayMs = 86400000;
   const diff = now - dt;
   if (diff < dayMs && now.getDate() === dt.getDate()) {
-    return dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    return dt.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
   }
   if (diff < 2 * dayMs) return 'เมื่อวาน';
   if (diff < 7 * dayMs) return Math.floor(diff/dayMs) + ' วันก่อน';
-  return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit'});
+  return dt.toLocaleDateString('th-TH', {day:'2-digit', month:'2-digit'});
 }
-function toast(msg){
+function toast(msg) {
   const w = document.getElementById('tw');
-  if (!w) return;
+  if (!w) { console.log('TOAST:', msg); return; }
   const t = document.createElement('div');
   t.style.cssText = 'background:#0A0A0A;color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-family:DM Sans,sans-serif;animation:tIn 0.3s ease';
   t.textContent = msg;
   w.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
+function showError(title, detail) {
+  const ca = document.getElementById('chat-area');
+  if (!ca) return;
+  ca.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:40px;gap:14px">
+    <div style="font-size:64px">⚠️</div>
+    <div style="font-size:18px;font-weight:600;color:#0A0A0A">${escapeHtml(title)}</div>
+    <div style="font-size:13px;color:#737373;max-width:480px">${escapeHtml(detail || '')}</div>
+    <button onclick="location.reload()" style="background:#0A0A0A;color:#fff;padding:10px 24px;border:none;cursor:pointer;font-size:13px;margin-top:8px">โหลดใหม่</button>
+  </div>`;
+}
 function shopAvatar(name) {
-  // Pick emoji based on first char of name
   const emojis = ['🛒','🏪','🛍️','💼','🎁','📦','🏬','🏢'];
-  const code = (name || '').charCodeAt(0) || 0;
-  return emojis[code % emojis.length];
+  if (!name) return '💬';
+  const code = name.charCodeAt(0) || 0;
+  return emojis[Math.abs(code) % emojis.length];
 }
 function shopBg(name) {
   const bgs = ['#EFF6FF','#FFF0F5','#F0FFF4','#FFF5F0','#FFFBEB','#F5F0FF','#F0F4FF','#FFEEEE'];
-  const code = (name || '').charCodeAt(0) || 0;
-  return bgs[code % bgs.length];
+  if (!name) return '#F5F5F5';
+  const code = name.charCodeAt(0) || 0;
+  return bgs[Math.abs(code) % bgs.length];
 }
 
 // ── Auth ────────────────────────────────────────────────────────────
 async function loadUser() {
-  const { data: { session } } = await sb.auth.getSession();
+  const { data: { session }, error: sessionErr } = await sb.auth.getSession();
+  if (sessionErr) { ERR('getSession:', sessionErr); throw sessionErr; }
   if (!session) {
-    document.body.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:DM Sans,sans-serif;gap:16px;padding:40px;text-align:center">
+    LOG('no session — show login prompt');
+    document.body.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:DM Sans,sans-serif;gap:16px;padding:40px;text-align:center;background:#FAFAFA">
       <div style="font-size:64px">🔐</div>
       <div style="font-size:20px;font-weight:600">กรุณาเข้าสู่ระบบ</div>
       <div style="color:#737373">เพื่อใช้งานแชท คุณต้องเข้าสู่ระบบก่อน</div>
-      <a href="login.html?from=chat.html" style="background:#0A0A0A;color:#fff;padding:12px 24px;text-decoration:none;font-size:14px">เข้าสู่ระบบ</a>
+      <a href="login.html?from=${encodeURIComponent(location.pathname + location.search)}" style="background:#0A0A0A;color:#fff;padding:12px 24px;text-decoration:none;font-size:14px;border-radius:4px">เข้าสู่ระบบ</a>
     </div>`;
-    throw new Error('not logged in');
+    throw new Error('NOT_LOGGED_IN');
   }
-  const { data: user } = await sb.from('users')
+  LOG('session OK, email:', session.user.email);
+
+  const { data: user, error: userErr } = await sb.from('users')
     .select('id, email, display_name, role, avatar_url')
     .eq('email', session.user.email).maybeSingle();
-  if (!user) throw new Error('user record not found');
+  if (userErr) { ERR('users select:', userErr); throw userErr; }
+  if (!user) {
+    showError('ไม่พบข้อมูลผู้ใช้', 'Email ของคุณยังไม่มีในระบบ users กรุณาติดต่อ admin');
+    throw new Error('USER_NOT_FOUND');
+  }
   _user = user;
+  _userCache[user.id] = user;
+  LOG('user loaded:', user.id, user.display_name || user.email);
 
-  // ตรวจว่าเป็น seller ไหม
+  // ตรวจว่าเป็น seller
   const { data: sellers } = await sb.from('sellers')
-    .select('id, shop_name')
+    .select('id, shop_name, shop_logo, is_verified, user_id')
     .eq('user_id', user.id);
   if (sellers && sellers.length) {
     _mySellerIds = sellers.map(s => s.id);
-    // ถ้าเป็น seller — ดู role จาก URL (?as=seller) หรือ default = buyer
+    sellers.forEach(s => _sellerCache[s.id] = s);
+    LOG('user is seller, shops:', _mySellerIds);
     const params = new URLSearchParams(location.search);
-    if (params.get('as') === 'seller') _userRole = 'seller';
+    if (params.get('as') === 'seller') {
+      _userRole = 'seller';
+      LOG('viewing as seller');
+    }
   }
 }
 
-// ── Load Threads List ───────────────────────────────────────────────
+// ── Load Threads — แยก query ป้องกัน FK alias issue ──
 async function loadThreads() {
+  LOG('loadThreads, role=', _userRole);
   let query = sb.from('chat_threads')
-    .select('*, sellers(shop_name, shop_logo, is_verified), buyer:users!chat_threads_buyer_id_fkey(display_name, avatar_url, email)')
+    .select('*')
     .order('last_at', { ascending: false });
 
   if (_userRole === 'seller') {
+    if (!_mySellerIds.length) { _threads = []; renderThreads(); return; }
     query = query.in('seller_id', _mySellerIds);
   } else {
     query = query.eq('buyer_id', _user.id);
   }
 
   const { data, error } = await query;
-  if (error) { console.error('loadThreads:', error); return; }
+  if (error) {
+    ERR('loadThreads error:', error);
+    showError('โหลดรายการแชทไม่สำเร็จ', error.message);
+    return;
+  }
+  LOG('threads loaded:', data.length);
   _threads = data || [];
+
+  // Hydrate seller + buyer info แยกออกมาเพื่อหลบ FK alias issues
+  await hydrateThreadsContext();
   renderThreads();
+}
+
+async function hydrateThreadsContext() {
+  if (!_threads.length) return;
+  const sellerIds = [...new Set(_threads.map(t => t.seller_id).filter(Boolean))];
+  const buyerIds  = [...new Set(_threads.map(t => t.buyer_id).filter(Boolean))];
+
+  // Sellers (only fetch ones not in cache)
+  const newSellerIds = sellerIds.filter(id => !_sellerCache[id]);
+  if (newSellerIds.length) {
+    const { data, error } = await sb.from('sellers')
+      .select('id, shop_name, shop_logo, is_verified, user_id')
+      .in('id', newSellerIds);
+    if (error) ERR('hydrate sellers:', error);
+    else (data || []).forEach(s => _sellerCache[s.id] = s);
+  }
+
+  // Buyers (only for sellers viewing — to show buyer name)
+  if (_userRole === 'seller') {
+    const newBuyerIds = buyerIds.filter(id => !_userCache[id]);
+    if (newBuyerIds.length) {
+      const { data, error } = await sb.from('users')
+        .select('id, email, display_name, avatar_url')
+        .in('id', newBuyerIds);
+      if (error) ERR('hydrate buyers:', error);
+      else (data || []).forEach(u => _userCache[u.id] = u);
+    }
+  }
 }
 
 function renderThreads() {
   const list = document.getElementById('conv-list');
+  if (!list) { ERR('conv-list element not found'); return; }
   if (!_threads.length) {
     list.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--g400);font-size:13px">
       <div style="font-size:48px;margin-bottom:12px;opacity:.4">💬</div>
-      ยังไม่มีการสนทนา<br>เริ่มแชทกับร้านค้าจากหน้าสินค้า
+      ยังไม่มีการสนทนา<br><br>
+      ไปที่<a href="index.html" style="color:var(--red)">หน้าแรก</a>หรือ<a href="category.html" style="color:var(--red)">หมวดหมู่</a><br>
+      เลือกสินค้าแล้วกด "💬 ติดต่อร้าน"
     </div>`;
     return;
   }
 
   list.innerHTML = _threads.map(t => {
-    let displayName, lastMsg, unread;
+    let displayName, unread;
     if (_userRole === 'seller') {
-      displayName = (t.buyer && (t.buyer.display_name || t.buyer.email)) || 'ลูกค้า';
+      const buyer = _userCache[t.buyer_id];
+      displayName = (buyer && (buyer.display_name || buyer.email)) || 'ลูกค้า';
       unread = t.unread_seller || 0;
     } else {
-      displayName = (t.sellers && t.sellers.shop_name) || 'ร้านค้า';
+      const seller = _sellerCache[t.seller_id];
+      displayName = (seller && seller.shop_name) || 'ร้านค้า';
       unread = t.unread_buyer || 0;
     }
-    lastMsg = t.last_message || 'เริ่มสนทนา...';
+    const lastMsg = t.last_message || 'เริ่มสนทนา...';
     const time = t.last_at ? fmtTime(t.last_at) : '';
     const isActive = t.id === _activeThreadId;
     const ico = shopAvatar(displayName);
@@ -609,6 +684,8 @@ function renderThreads() {
 
 // ── Open Thread ─────────────────────────────────────────────────────
 async function openThread(threadId) {
+  LOG('openThread:', threadId);
+
   // Cleanup previous subscription
   if (_msgChannel) {
     sb.removeChannel(_msgChannel);
@@ -617,39 +694,52 @@ async function openThread(threadId) {
 
   _activeThreadId = threadId;
   _activeThread = _threads.find(t => t.id === threadId);
+
+  // Fetch from DB ถ้าไม่อยู่ใน cache
   if (!_activeThread) {
-    // fetch จาก DB ถ้าไม่อยู่ใน cache (เช่น เพิ่งถูกสร้าง)
-    const { data } = await sb.from('chat_threads')
-      .select('*, sellers(shop_name, shop_logo, is_verified), buyer:users!chat_threads_buyer_id_fkey(display_name, avatar_url, email)')
-      .eq('id', threadId).maybeSingle();
+    LOG('thread not in cache, fetch...');
+    const { data, error } = await sb.from('chat_threads')
+      .select('*').eq('id', threadId).maybeSingle();
+    if (error) { ERR('fetch thread:', error); toast('❌ ' + error.message); return; }
     if (!data) { toast('❌ ไม่พบการสนทนานี้'); return; }
     _activeThread = data;
     _threads.unshift(data);
+    await hydrateThreadsContext();
   }
 
   // Show active thread, hide empty state
-  document.getElementById('empty-state').style.display = 'none';
-  document.getElementById('active-thread').style.display = 'flex';
+  const empty = document.getElementById('empty-state');
+  const active = document.getElementById('active-thread');
+  if (empty) empty.style.display = 'none';
+  if (active) active.style.display = 'flex';
 
-  // Update header
+  // Determine display name + status
   let displayName, statusText;
   if (_userRole === 'seller') {
-    displayName = (_activeThread.buyer && (_activeThread.buyer.display_name || _activeThread.buyer.email)) || 'ลูกค้า';
+    const buyer = _userCache[_activeThread.buyer_id];
+    displayName = (buyer && (buyer.display_name || buyer.email)) || 'ลูกค้า';
     statusText = '🟢 พร้อมตอบกลับ';
   } else {
-    displayName = (_activeThread.sellers && _activeThread.sellers.shop_name) || 'ร้านค้า';
-    statusText = (_activeThread.sellers && _activeThread.sellers.is_verified) ? '✓ ร้านค้ายืนยัน · ตอบกลับภายใน 5 นาที' : 'ตอบกลับภายใน 5 นาที';
+    const seller = _sellerCache[_activeThread.seller_id];
+    displayName = (seller && seller.shop_name) || 'ร้านค้า';
+    statusText = (seller && seller.is_verified) ? '✓ ยืนยันแล้ว · ตอบกลับภายใน 5 นาที' : 'ตอบกลับภายใน 5 นาที';
   }
-  document.getElementById('ca-name').textContent = displayName;
-  document.getElementById('ca-status').textContent = statusText;
-  document.getElementById('ca-av').textContent = shopAvatar(displayName);
-  document.getElementById('ca-av').style.background = shopBg(displayName);
+  const nameEl = document.getElementById('ca-name');
+  const statusEl = document.getElementById('ca-status');
+  const avEl = document.getElementById('ca-av');
+  if (nameEl) nameEl.textContent = displayName;
+  if (statusEl) statusEl.textContent = statusText;
+  if (avEl) {
+    avEl.textContent = shopAvatar(displayName);
+    avEl.style.background = shopBg(displayName);
+  }
 
   // Pinned product
   if (_activeThread.initial_product_id) {
     loadPinnedProduct(_activeThread.initial_product_id);
   } else {
-    document.getElementById('pinned-prod').style.display = 'none';
+    const pp = document.getElementById('pinned-prod');
+    if (pp) pp.style.display = 'none';
   }
 
   // Update active class
@@ -657,10 +747,13 @@ async function openThread(threadId) {
   const activeEl = document.querySelector(`.conv-item[data-thread-id="${threadId}"]`);
   if (activeEl) activeEl.classList.add('active');
 
-  // Render quick replies
-  document.getElementById('qr-wrap').innerHTML = QRS.map(q =>
-    `<button class="qr" onclick="sendQuick('${escapeHtml(q)}')">${escapeHtml(q)}</button>`
-  ).join('');
+  // Quick replies
+  const qrWrap = document.getElementById('qr-wrap');
+  if (qrWrap) {
+    qrWrap.innerHTML = QRS.map(q =>
+      `<button class="qr" onclick="sendQuick('${escapeHtml(q).replace(/'/g, '&#39;')}')">${escapeHtml(q)}</button>`
+    ).join('');
+  }
 
   // Load messages
   await loadMessages(threadId);
@@ -669,57 +762,88 @@ async function openThread(threadId) {
   subscribeToThread(threadId);
 
   // Mark as read
-  await sb.rpc('mark_thread_read', { p_thread_id: threadId, p_role: _userRole });
-  // Reset unread badge ใน UI
+  try {
+    const { error: markErr } = await sb.rpc('mark_thread_read', {
+      p_thread_id: threadId,
+      p_role: _userRole
+    });
+    if (markErr) ERR('mark_thread_read:', markErr);
+  } catch(e) { ERR('mark_thread_read exception:', e); }
+
+  // Reset unread badge in UI
   if (_userRole === 'buyer') _activeThread.unread_buyer = 0;
   else _activeThread.unread_seller = 0;
   renderThreads();
 
   // Update URL
-  history.replaceState(null, '', `?thread=${threadId}`);
+  history.replaceState(null, '', `?thread=${threadId}` + (_userRole === 'seller' ? '&as=seller' : ''));
+
+  // Focus input
+  const inp = document.getElementById('msg-input');
+  if (inp) setTimeout(() => inp.focus(), 100);
 }
 
 async function loadPinnedProduct(productId) {
   try {
     const { data } = await sb.from('products')
       .select('id, name_th, price, compare_price, thumbnail').eq('id', productId).maybeSingle();
-    if (!data) return;
-    document.getElementById('pinned-prod').style.display = 'flex';
-    document.getElementById('pp-img').innerHTML = data.thumbnail
+    const pp = document.getElementById('pinned-prod');
+    if (!data || !pp) { if (pp) pp.style.display = 'none'; return; }
+    pp.style.display = 'flex';
+    const imgEl = document.getElementById('pp-img');
+    const nameEl = document.getElementById('pp-name');
+    const priceEl = document.getElementById('pp-price');
+    const btnEl = document.getElementById('pp-btn');
+    if (imgEl) imgEl.innerHTML = data.thumbnail
       ? `<img src="${escapeHtml(data.thumbnail)}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='📦'">`
       : '📦';
-    document.getElementById('pp-name').textContent = data.name_th;
-    const old = data.compare_price && data.compare_price > data.price
-      ? `<span style="font-size:11px;color:var(--g400);text-decoration:line-through;font-weight:400">฿${Number(data.compare_price).toLocaleString()}</span>`
-      : '';
-    document.getElementById('pp-price').innerHTML = `฿${Number(data.price).toLocaleString()} ${old}`;
-    document.getElementById('pp-btn').dataset.productId = productId;
-  } catch(e) { console.warn('loadPinnedProduct:', e); }
+    if (nameEl) nameEl.textContent = data.name_th || 'สินค้า';
+    if (priceEl) {
+      const old = data.compare_price && data.compare_price > data.price
+        ? ` <span style="font-size:11px;color:var(--g400);text-decoration:line-through;font-weight:400">฿${Number(data.compare_price).toLocaleString()}</span>`
+        : '';
+      priceEl.innerHTML = `฿${Number(data.price).toLocaleString()}${old}`;
+    }
+    if (btnEl) btnEl.dataset.productId = productId;
+  } catch(e) { ERR('loadPinnedProduct:', e); }
 }
 
 window.goToProduct = function() {
-  const pid = document.getElementById('pp-btn').dataset.productId;
+  const btn = document.getElementById('pp-btn');
+  const pid = btn && btn.dataset.productId;
   if (pid) location.href = `product.html?id=${pid}`;
 };
 
 window.viewSellerInfo = function() {
-  if (_activeThread && _activeThread.sellers && _activeThread.sellers.shop_name) {
-    toast('🏪 ' + _activeThread.sellers.shop_name);
+  if (_activeThread) {
+    const seller = _sellerCache[_activeThread.seller_id];
+    if (seller && seller.shop_name) toast('🏪 ' + seller.shop_name);
   }
 };
 
 // ── Load Messages ───────────────────────────────────────────────────
 async function loadMessages(threadId) {
+  LOG('loadMessages:', threadId);
   const { data, error } = await sb.from('chat_messages')
     .select('*').eq('thread_id', threadId).eq('is_deleted', false)
     .order('created_at', { ascending: true });
-  if (error) { console.error('loadMessages:', error); return; }
+  if (error) {
+    ERR('loadMessages:', error);
+    const wrap = document.getElementById('messages');
+    if (wrap) wrap.innerHTML = `<div style="text-align:center;padding:40px;color:#737373">
+      <div style="font-size:32px;margin-bottom:8px">⚠️</div>
+      โหลดข้อความไม่สำเร็จ<br><small>${escapeHtml(error.message)}</small>
+    </div>`;
+    return;
+  }
+  LOG('messages loaded:', data.length);
   _messages = data || [];
   renderMessages();
 }
 
 function renderMessages() {
   const wrap = document.getElementById('messages');
+  if (!wrap) return;
   if (!_messages.length) {
     wrap.innerHTML = '<div class="system-msg">เริ่มต้นการสนทนา · ส่งข้อความแรกได้เลย</div>';
     return;
@@ -739,8 +863,9 @@ function renderMessages() {
     }
     const isMine = m.sender_type === _userRole;
     const time = d.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
-    const avatar = m.sender_type === 'seller' ? '🛒' : 'ลค';
+    const avatar = m.sender_type === 'seller' ? '🛒' : (((_user && _user.display_name) || '?').slice(0, 2));
     const avBg = m.sender_type === 'seller' ? '#EFF6FF' : '#FFF5F5';
+
     let bubble = '';
     if (m.msg_type === 'image' && m.meta && m.meta.image_url) {
       bubble = `<div class="msg-bubble" style="padding:4px"><img src="${escapeHtml(m.meta.image_url)}" style="max-width:240px;max-height:240px;border-radius:8px;display:block"></div>`;
@@ -755,31 +880,38 @@ function renderMessages() {
     const readMark = isMine
       ? ((_userRole === 'buyer' ? m.is_read_seller : m.is_read_buyer) ? ' ✓✓' : ' ✓')
       : '';
+    const otherAv = m.sender_type === 'seller'
+      ? '🛒'
+      : (m.sender_type === 'buyer' ? 'ลค' : '');
     html += `<div class="msg${isMine?' mine':''}">
-      ${!isMine?`<div class="msg-av" style="background:${avBg};font-size:13px">${avatar}</div>`:''}
+      ${!isMine ? `<div class="msg-av" style="background:${avBg};font-size:13px">${otherAv}</div>` : ''}
       <div style="display:flex;flex-direction:column;gap:2px;${isMine?'align-items:flex-end':''}">
         ${bubble}
         <span class="msg-time">${time}${readMark}</span>
       </div>
-      ${isMine?`<div class="msg-av" style="background:#FFF5F5;font-size:13px">${escapeHtml((_user.display_name||'?').slice(0,2))}</div>`:''}
+      ${isMine ? `<div class="msg-av" style="background:#FFF5F5;font-size:13px">${escapeHtml(((_user && _user.display_name) || '?').slice(0, 2))}</div>` : ''}
     </div>`;
   });
   wrap.innerHTML = html;
   wrap.scrollTop = wrap.scrollHeight;
 }
 
-// ── Realtime Subscription ──────────────────────────────────────────
+// ── Realtime ────────────────────────────────────────────────────────
 function subscribeToThread(threadId) {
-  _msgChannel = sb.channel(`chat:${threadId}`)
+  LOG('subscribeToThread:', threadId);
+  _msgChannel = sb.channel(`chat-${threadId}`)
     .on('postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${threadId}` },
       (payload) => {
+        LOG('realtime INSERT:', payload.new.id);
         const newMsg = payload.new;
-        // ป้องกัน duplicate (ของที่ตัวเอง insert จะเข้า realtime เหมือนกัน)
-        if (_messages.some(m => m.id === newMsg.id)) return;
+        if (_messages.some(m => m.id === newMsg.id)) {
+          LOG('  duplicate, skip');
+          return;
+        }
         _messages.push(newMsg);
         renderMessages();
-        // ถ้า message มาจากฝ่ายตรงข้าม → mark as read ทันที (เพราะกำลังเปิดอยู่)
+        // Mark as read ถ้าจาก opposite role
         if (newMsg.sender_type !== _userRole && newMsg.sender_type !== 'system') {
           sb.rpc('mark_thread_read', { p_thread_id: threadId, p_role: _userRole });
         }
@@ -795,56 +927,78 @@ function subscribeToThread(threadId) {
         }
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      LOG('msg channel status:', status);
+    });
 }
 
-// Subscribe to thread changes (last_message updates) — for sidebar refresh
 function subscribeToThreadList() {
   if (_threadChannel) sb.removeChannel(_threadChannel);
   _threadChannel = sb.channel('threads-list')
     .on('postgres_changes',
       { event: '*', schema: 'public', table: 'chat_threads' },
-      () => loadThreads()
+      (payload) => {
+        LOG('thread realtime:', payload.eventType);
+        loadThreads();
+      }
     )
-    .subscribe();
+    .subscribe((status) => LOG('thread channel:', status));
 }
 
-// ── Send Message ────────────────────────────────────────────────────
+// ── Send ────────────────────────────────────────────────────────────
 async function sendMsg() {
   const inp = document.getElementById('msg-input');
+  if (!inp) return;
   const txt = (inp.value || '').trim();
-  if (!txt || !_activeThreadId) return;
+  if (!txt) return;
+  if (!_activeThreadId) {
+    toast('⚠️ กรุณาเลือกการสนทนาก่อน');
+    return;
+  }
+  if (!_user) {
+    toast('⚠️ ไม่พบข้อมูล user');
+    return;
+  }
 
-  // Optimistic: clear input ก่อน
+  LOG('sendMsg:', txt.slice(0, 30));
+  // Optimistic clear
   inp.value = '';
   inp.style.height = '';
 
-  const { error } = await sb.from('chat_messages').insert({
+  const { data, error } = await sb.from('chat_messages').insert({
     thread_id: _activeThreadId,
     sender_type: _userRole,
     sender_id: _user.id,
     body: txt,
     msg_type: 'text'
-  });
+  }).select().single();
+
   if (error) {
+    ERR('sendMsg failed:', error);
     toast('❌ ส่งไม่สำเร็จ: ' + error.message);
-    inp.value = txt;
+    inp.value = txt;  // restore
+    return;
   }
-  // Realtime subscription จะรับ INSERT event แล้ว update UI เอง
+
+  LOG('sent OK:', data.id);
+
+  // Append immediately (don't wait for realtime — realtime จะ skip ถ้าซ้ำ)
+  if (!_messages.some(m => m.id === data.id)) {
+    _messages.push(data);
+    renderMessages();
+  }
 }
 
 window.sendQuick = function(txt) {
-  document.getElementById('msg-input').value = txt;
-  sendMsg();
+  const inp = document.getElementById('msg-input');
+  if (inp) { inp.value = txt; sendMsg(); }
 };
 
 window.sendImage = function() {
-  // TODO: implement image upload to storage + insert message with msg_type='image'
   toast('📷 อัปโหลดรูป — กำลังพัฒนา');
 };
 
 window.sendProduct = function() {
-  // TODO: เปิด product picker
   toast('📦 เลือกสินค้าแนบ — กำลังพัฒนา');
 };
 
@@ -861,29 +1015,37 @@ window.autoResize = function(el) {
 };
 
 window.openThread = openThread;
+window.toast = toast;
 
 // ── Boot ────────────────────────────────────────────────────────────
 (async function init() {
+  LOG('chat.html init');
   try {
     await loadUser();
     await loadThreads();
     subscribeToThreadList();
 
-    // ถ้ามี ?thread=xxx ใน URL → เปิด thread นั้นเลย
     const params = new URLSearchParams(location.search);
     const initThread = params.get('thread');
     if (initThread) {
+      LOG('init with thread param:', initThread);
       await openThread(initThread);
     } else if (_threads.length > 0) {
-      // เปิด thread แรก (ล่าสุด) อัตโนมัติ
+      LOG('auto-open first thread');
       await openThread(_threads[0].id);
+    } else {
+      LOG('no threads, show empty state');
     }
   } catch(e) {
-    console.error('init error:', e);
+    if (e.message === 'NOT_LOGGED_IN' || e.message === 'USER_NOT_FOUND') {
+      // already showed UI
+      return;
+    }
+    ERR('init error:', e);
+    showError('เกิดข้อผิดพลาด', e.message || String(e));
   }
 })();
 
-// Cleanup on page hide
 window.addEventListener('beforeunload', () => {
   if (_msgChannel) sb.removeChannel(_msgChannel);
   if (_threadChannel) sb.removeChannel(_threadChannel);
