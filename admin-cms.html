@@ -544,6 +544,10 @@ nav { display: block !important; height: auto !important; }
       <div class="sni" id="nav-reviews" onclick="showPanel('reviews')">
         <span class="sni-ico">⭐</span> รีวิว
       </div>
+      <div class="sni" id="nav-support" onclick="showPanel('support')" style="position:relative">
+        <span class="sni-ico">💬</span> Customer Support
+        <span id="support-unread-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red,#E63329);color:#fff;font-size:10px;padding:2px 7px;border-radius:9px;font-family:'DM Mono',monospace;font-weight:600;min-width:22px;text-align:center">0</span>
+      </div>
 
       <div class="sb-section-lbl">การตลาด</div>
       <div class="sni" id="nav-coupons" onclick="showPanel('coupons')">
@@ -1482,6 +1486,555 @@ nav { display: block !important; height: auto !important; }
         </table>
       </div>
     </div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     CUSTOMER SUPPORT PANEL — Real-time chat with customers
+     ════════════════════════════════════════════════════════════════════ -->
+<div id="panel-support" class="panel admin-only" style="padding:0;display:none">
+  <style>
+    #panel-support .cs-layout{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 140px);min-height:560px;background:#fff;border:var(--border)}
+    #panel-support .cs-side{border-right:var(--border);display:flex;flex-direction:column;min-height:0}
+    #panel-support .cs-side-head{padding:14px;border-bottom:var(--border);display:flex;flex-direction:column;gap:8px}
+    #panel-support .cs-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    #panel-support .cs-stat{padding:6px 8px;background:var(--g100);text-align:center}
+    #panel-support .cs-stat-v{font-family:'DM Mono',monospace;font-size:14px;font-weight:600}
+    #panel-support .cs-stat-l{font-size:9px;color:var(--g500);text-transform:uppercase;letter-spacing:.05em}
+    #panel-support .cs-search{padding:8px 10px;border:var(--border);font-size:12px;font-family:inherit;outline:none}
+    #panel-support .cs-search:focus{border-color:var(--black)}
+    #panel-support .cs-thread-list{flex:1;overflow-y:auto}
+    #panel-support .cs-thread{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid var(--g100);cursor:pointer;transition:background .15s;align-items:flex-start;position:relative}
+    #panel-support .cs-thread:hover{background:var(--g50)}
+    #panel-support .cs-thread.on{background:var(--g100);border-left:3px solid var(--red)}
+    #panel-support .cs-thread.unread{background:#FFF8F8}
+    #panel-support .cs-thread.unread::before{content:'';position:absolute;left:6px;top:50%;width:6px;height:6px;background:var(--red);border-radius:50%;transform:translateY(-50%)}
+    #panel-support .cs-av{width:38px;height:38px;border-radius:50%;background:var(--g200);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:#fff;font-weight:600;font-family:'DM Mono',monospace}
+    #panel-support .cs-info{flex:1;min-width:0}
+    #panel-support .cs-name{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #panel-support .cs-msg{font-size:11px;color:var(--g500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #panel-support .cs-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+    #panel-support .cs-time{font-size:10px;color:var(--g400);font-family:'DM Mono',monospace}
+    #panel-support .cs-badge{background:var(--red);color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-family:'DM Mono',monospace;font-weight:600;min-width:16px;text-align:center}
+    #panel-support .cs-area{display:flex;flex-direction:column;min-height:0}
+    #panel-support .cs-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--g400);text-align:center;padding:40px;gap:12px}
+    #panel-support .cs-active{display:none;flex:1;flex-direction:column;min-height:0}
+    #panel-support .cs-head{padding:14px 18px;border-bottom:var(--border);display:flex;align-items:center;gap:10px}
+    #panel-support .cs-head-info{flex:1}
+    #panel-support .cs-head-name{font-size:14px;font-weight:600}
+    #panel-support .cs-head-meta{font-size:11px;color:var(--g500)}
+    #panel-support .cs-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px;background:var(--g50)}
+    #panel-support .cs-mb{max-width:70%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;word-wrap:break-word}
+    #panel-support .cs-mb.in{background:#fff;border:var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+    #panel-support .cs-mb.out{background:var(--black);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+    #panel-support .cs-mb.system{align-self:center;background:transparent;font-size:11px;color:var(--g400);padding:4px 12px}
+    #panel-support .cs-mb-time{font-size:9px;opacity:.6;margin-top:4px;font-family:'DM Mono',monospace}
+    #panel-support .cs-input-wrap{padding:14px;border-top:var(--border);display:flex;gap:8px;background:#fff}
+    #panel-support .cs-input{flex:1;padding:10px 14px;border:var(--border);border-radius:20px;outline:none;font-family:inherit;font-size:13px;resize:none;max-height:80px}
+    #panel-support .cs-input:focus{border-color:var(--black)}
+    #panel-support .cs-send{padding:8px 18px;background:var(--red);color:#fff;border:none;border-radius:20px;cursor:pointer;font-weight:600;font-size:13px}
+    #panel-support .cs-send:hover{background:#C5211C}
+    #panel-support .cs-send:disabled{background:var(--g300);cursor:not-allowed}
+    #panel-support .cs-quick{padding:8px 14px;display:flex;gap:6px;border-top:1px solid var(--g100);overflow-x:auto;background:#fff}
+    #panel-support .cs-quick-btn{padding:5px 12px;background:var(--g100);border:none;border-radius:14px;cursor:pointer;font-size:11px;white-space:nowrap;flex-shrink:0}
+    #panel-support .cs-quick-btn:hover{background:var(--g200)}
+    #panel-support .cs-filter{display:flex;gap:4px;padding:4px;background:var(--g100);border-radius:6px}
+    #panel-support .cs-filter-btn{padding:4px 10px;background:transparent;border:none;cursor:pointer;font-size:11px;border-radius:4px;color:var(--g600)}
+    #panel-support .cs-filter-btn.on{background:#fff;color:var(--black);font-weight:600}
+  </style>
+
+  <div class="cs-layout">
+    <!-- LEFT: Thread list -->
+    <div class="cs-side">
+      <div class="cs-side-head">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:14px;font-weight:600">💬 Customer Support</div>
+          <button onclick="csReload()" style="background:none;border:none;cursor:pointer;font-size:14px" title="โหลดใหม่">🔄</button>
+        </div>
+        <div class="cs-stats">
+          <div class="cs-stat"><div class="cs-stat-v" id="cs-stat-total">—</div><div class="cs-stat-l">ทั้งหมด</div></div>
+          <div class="cs-stat" style="background:#FFF5F5"><div class="cs-stat-v" id="cs-stat-unread" style="color:var(--red)">—</div><div class="cs-stat-l">ยังไม่อ่าน</div></div>
+          <div class="cs-stat"><div class="cs-stat-v" id="cs-stat-today">—</div><div class="cs-stat-l">วันนี้</div></div>
+        </div>
+        <div class="cs-filter">
+          <button class="cs-filter-btn on" data-filter="all" onclick="csFilter('all',this)">ทั้งหมด</button>
+          <button class="cs-filter-btn" data-filter="unread" onclick="csFilter('unread',this)">ยังไม่อ่าน</button>
+          <button class="cs-filter-btn" data-filter="today" onclick="csFilter('today',this)">วันนี้</button>
+        </div>
+        <input class="cs-search" id="cs-search" placeholder="🔍 ค้นหาชื่อลูกค้า..." oninput="csSearch()">
+      </div>
+      <div class="cs-thread-list" id="cs-thread-list">
+        <div style="padding:40px 20px;text-align:center;color:var(--g400);font-size:12px">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Chat area -->
+    <div class="cs-area">
+      <div class="cs-empty" id="cs-empty">
+        <div style="font-size:64px;opacity:.4">💬</div>
+        <div style="font-size:14px;font-weight:600;color:var(--g600)">เลือกการสนทนา</div>
+        <div style="font-size:11px">เลือกลูกค้าจากรายการด้านซ้ายเพื่อเริ่มแชท</div>
+      </div>
+      <div class="cs-active" id="cs-active">
+        <div class="cs-head">
+          <div class="cs-av" id="cs-h-av" style="background:var(--g300)">?</div>
+          <div class="cs-head-info">
+            <div class="cs-head-name" id="cs-h-name">—</div>
+            <div class="cs-head-meta" id="cs-h-meta">—</div>
+          </div>
+          <button onclick="csOpenInChat()" style="background:none;border:var(--border);padding:6px 12px;cursor:pointer;font-size:11px" title="เปิดในหน้าเต็ม">เปิดในหน้าเต็ม ↗</button>
+        </div>
+        <div class="cs-msgs" id="cs-msgs"></div>
+        <div class="cs-quick">
+          <button class="cs-quick-btn" onclick="csQuick('สวัสดีค่ะ ยินดีตอบคำถามนะคะ')">สวัสดีค่ะ</button>
+          <button class="cs-quick-btn" onclick="csQuick('ขอบคุณที่ติดต่อมาค่ะ')">ขอบคุณ</button>
+          <button class="cs-quick-btn" onclick="csQuick('ขอตรวจสอบสักครู่นะคะ')">ขอตรวจสอบสักครู่</button>
+          <button class="cs-quick-btn" onclick="csQuick('แจ้งกลับให้ทราบในไม่นานนี้นะคะ')">แจ้งกลับเร็วๆ นี้</button>
+          <button class="cs-quick-btn" onclick="csQuick('มีอะไรให้ช่วยอีกไหมคะ?')">มีอะไรอีกไหม?</button>
+        </div>
+        <div class="cs-input-wrap">
+          <textarea class="cs-input" id="cs-input" placeholder="พิมพ์ข้อความตอบกลับ..." rows="1" onkeydown="csKeyDown(event)" oninput="csAutoResize(this)"></textarea>
+          <button class="cs-send" id="cs-send" onclick="csSend()">ส่ง ➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Customer Support Logic -->
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  CUSTOMER SUPPORT — Admin Chat Panel
+//  ใช้ tables เดียวกับ chat.html (chat_threads, chat_messages)
+//  Admin เห็นทุก thread (RLS ใช้ is_admin())
+// ════════════════════════════════════════════════════════════════════
+
+let _csThreads = [];
+let _csUserCache = {};
+let _csSellerCache = {};
+let _csActiveThreadId = null;
+let _csActiveThread = null;
+let _csMessages = [];
+let _csCurrentFilter = 'all';
+let _csSearchTerm = '';
+let _csMsgChannel = null;
+let _csListChannel = null;
+let _csLoaded = false;
+
+function csLog(...a){ console.log('[support]', ...a); }
+function csErr(...a){ console.error('[support]', ...a); }
+
+function csEsc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function csFmtTime(d){
+  const dt = new Date(d);
+  if (isNaN(dt)) return '';
+  const now = new Date();
+  const diff = now - dt;
+  const dayMs = 86400000;
+  if (diff < dayMs && now.getDate() === dt.getDate()) {
+    return dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  }
+  if (diff < 2*dayMs) return 'เมื่อวาน';
+  if (diff < 7*dayMs) return Math.floor(diff/dayMs)+'d';
+  return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit'});
+}
+
+function csUserAvatar(name){
+  return ((name || '?').trim().charAt(0) || '?').toUpperCase();
+}
+function csUserBg(name){
+  const colors = ['#3B82F6','#EC4899','#10B981','#F59E0B','#8B5CF6','#EF4444','#06B6D4','#F97316'];
+  if (!name) return '#737373';
+  const code = name.charCodeAt(0) || 0;
+  return colors[Math.abs(code) % colors.length];
+}
+
+// ── Boot when panel shown ──
+async function csInit() {
+  if (_csLoaded) return;
+  _csLoaded = true;
+  csLog('init customer support');
+  await csLoadThreads();
+  csSubscribeToList();
+  await csLoadStats();
+}
+
+// ── Load threads ──
+async function csLoadThreads() {
+  try {
+    const sb = window._sb;
+    if (!sb) { csErr('no _sb'); return; }
+    const { data, error } = await sb.from('chat_threads')
+      .select('*').order('last_at', { ascending: false }).limit(200);
+    if (error) throw error;
+    _csThreads = data || [];
+    csLog('threads:', _csThreads.length);
+    await csHydrate();
+    csRenderThreads();
+  } catch(e) {
+    csErr('loadThreads:', e);
+    document.getElementById('cs-thread-list').innerHTML =
+      `<div style="padding:24px;text-align:center;color:var(--red);font-size:11px">โหลดไม่สำเร็จ:<br>${csEsc(e.message)}<br><br>ตรวจว่ารัน admin-chat-rls.sql แล้ว</div>`;
+  }
+}
+
+async function csHydrate() {
+  if (!_csThreads.length) return;
+  const sb = window._sb;
+  const buyerIds = [...new Set(_csThreads.map(t => t.buyer_id).filter(Boolean))]
+    .filter(id => !_csUserCache[id]);
+  const sellerIds = [...new Set(_csThreads.map(t => t.seller_id).filter(Boolean))]
+    .filter(id => !_csSellerCache[id]);
+
+  if (buyerIds.length) {
+    const { data } = await sb.from('users')
+      .select('id,email,display_name,avatar_url,phone')
+      .in('id', buyerIds);
+    (data || []).forEach(u => _csUserCache[u.id] = u);
+  }
+  if (sellerIds.length) {
+    const { data } = await sb.from('sellers')
+      .select('id,shop_name,is_verified')
+      .in('id', sellerIds);
+    (data || []).forEach(s => _csSellerCache[s.id] = s);
+  }
+}
+
+function csRenderThreads() {
+  const list = document.getElementById('cs-thread-list');
+  if (!list) return;
+
+  // Apply filter
+  let filtered = _csThreads;
+  if (_csCurrentFilter === 'unread') {
+    filtered = filtered.filter(t => (t.unread_seller || 0) > 0 || t.last_sender === 'buyer');
+  } else if (_csCurrentFilter === 'today') {
+    const dayAgo = new Date(Date.now() - 86400000);
+    filtered = filtered.filter(t => t.last_at && new Date(t.last_at) > dayAgo);
+  }
+
+  // Apply search
+  if (_csSearchTerm) {
+    const q = _csSearchTerm.toLowerCase();
+    filtered = filtered.filter(t => {
+      const buyer = _csUserCache[t.buyer_id];
+      const seller = _csSellerCache[t.seller_id];
+      const fields = [
+        buyer && buyer.display_name, buyer && buyer.email,
+        seller && seller.shop_name, t.last_message
+      ].filter(Boolean).join(' ').toLowerCase();
+      return fields.includes(q);
+    });
+  }
+
+  if (!filtered.length) {
+    list.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--g400);font-size:11px">
+      ${_csThreads.length === 0 ? 'ยังไม่มีการสนทนา<br>ลูกค้ายังไม่ได้ทักร้านค้า' : 'ไม่พบรายการที่ตรง filter'}
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => {
+    const buyer = _csUserCache[t.buyer_id] || {};
+    const seller = _csSellerCache[t.seller_id] || {};
+    const buyerName = buyer.display_name || buyer.email || 'ลูกค้าไม่ทราบชื่อ';
+    const shopName = seller.shop_name || 'ร้านค้า';
+    const isUnread = (t.unread_seller || 0) > 0 || t.last_sender === 'buyer';
+    const isActive = t.id === _csActiveThreadId;
+
+    const lastFromBuyer = t.last_sender === 'buyer' ? '👤 ' : (t.last_sender === 'seller' ? '🏪 ' : '');
+    return `<div class="cs-thread ${isActive?'on':''} ${isUnread?'unread':''}" onclick="csOpenThread('${t.id}')">
+      <div class="cs-av" style="background:${csUserBg(buyerName)}">${csEsc(csUserAvatar(buyerName))}</div>
+      <div class="cs-info">
+        <div class="cs-name">${csEsc(buyerName)}</div>
+        <div class="cs-msg">${csEsc(lastFromBuyer + (t.last_message || 'เริ่มสนทนา...'))}</div>
+        <div style="font-size:10px;color:var(--g400);margin-top:2px">→ ${csEsc(shopName)}</div>
+      </div>
+      <div class="cs-meta">
+        <span class="cs-time">${csEsc(csFmtTime(t.last_at))}</span>
+        ${(t.unread_seller||0) > 0 ? `<span class="cs-badge">${t.unread_seller}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Open thread ──
+async function csOpenThread(threadId) {
+  csLog('open thread', threadId);
+  const sb = window._sb;
+
+  // Cleanup old subscription
+  if (_csMsgChannel) {
+    sb.removeChannel(_csMsgChannel);
+    _csMsgChannel = null;
+  }
+
+  _csActiveThreadId = threadId;
+  _csActiveThread = _csThreads.find(t => t.id === threadId);
+  if (!_csActiveThread) {
+    const { data } = await sb.from('chat_threads').select('*').eq('id', threadId).maybeSingle();
+    _csActiveThread = data;
+    if (!_csActiveThread) { return; }
+  }
+
+  // Show active panel
+  document.getElementById('cs-empty').style.display = 'none';
+  document.getElementById('cs-active').style.display = 'flex';
+
+  // Header info
+  await csHydrate();
+  const buyer = _csUserCache[_csActiveThread.buyer_id] || {};
+  const seller = _csSellerCache[_csActiveThread.seller_id] || {};
+  const buyerName = buyer.display_name || buyer.email || 'ลูกค้า';
+  const avEl = document.getElementById('cs-h-av');
+  const nameEl = document.getElementById('cs-h-name');
+  const metaEl = document.getElementById('cs-h-meta');
+  if (avEl) {
+    avEl.textContent = csUserAvatar(buyerName);
+    avEl.style.background = csUserBg(buyerName);
+  }
+  if (nameEl) nameEl.textContent = buyerName;
+  if (metaEl) {
+    const parts = [];
+    if (buyer.email) parts.push('📧 ' + buyer.email);
+    if (buyer.phone) parts.push('📞 ' + buyer.phone);
+    parts.push('🏪 ' + (seller.shop_name || 'ร้าน'));
+    metaEl.textContent = parts.join(' · ');
+  }
+
+  // Update active in list
+  document.querySelectorAll('#panel-support .cs-thread').forEach(e => e.classList.remove('on'));
+
+  // Load messages
+  await csLoadMessages(threadId);
+  csSubscribeToThread(threadId);
+
+  // Mark read as 'seller' role (admin acts as seller for support)
+  try {
+    await sb.rpc('mark_thread_read', { p_thread_id: threadId, p_role: 'seller' });
+    if (_csActiveThread.unread_seller) _csActiveThread.unread_seller = 0;
+    csRenderThreads();
+    csLoadStats();
+  } catch(e) { csErr('mark read:', e); }
+
+  // Focus input
+  setTimeout(() => { const el = document.getElementById('cs-input'); if (el) el.focus(); }, 100);
+}
+
+async function csLoadMessages(threadId) {
+  const sb = window._sb;
+  const { data, error } = await sb.from('chat_messages')
+    .select('*').eq('thread_id', threadId).eq('is_deleted', false)
+    .order('created_at', { ascending: true });
+  if (error) { csErr('msgs:', error); return; }
+  _csMessages = data || [];
+  csRenderMessages();
+}
+
+function csRenderMessages() {
+  const wrap = document.getElementById('cs-msgs');
+  if (!wrap) return;
+  if (!_csMessages.length) {
+    wrap.innerHTML = '<div class="cs-mb system">ยังไม่มีข้อความ — ส่งข้อความแรกได้เลย</div>';
+    return;
+  }
+  let html = '';
+  let lastDate = '';
+  _csMessages.forEach(m => {
+    const d = new Date(m.created_at);
+    const dateStr = d.toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'});
+    if (dateStr !== lastDate) {
+      html += `<div class="cs-mb system">📅 ${dateStr}</div>`;
+      lastDate = dateStr;
+    }
+    if (m.msg_type === 'system') {
+      html += `<div class="cs-mb system">${csEsc(m.body || '')}</div>`;
+      return;
+    }
+    // Admin acts as seller — buyer's messages are 'in', seller's are 'out'
+    const isOut = m.sender_type === 'seller';
+    const time = d.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+    let body = '';
+    if (m.msg_type === 'image' && m.meta && m.meta.image_url) {
+      body = `<img src="${csEsc(m.meta.image_url)}" style="max-width:200px;border-radius:8px;display:block">`;
+    } else if (m.msg_type === 'product' && m.meta) {
+      body = `<div style="cursor:pointer" onclick="window.open('product.html?id=${m.meta.product_id}','_blank')">📦 ${csEsc(m.meta.product_name||'สินค้า')}</div>`;
+    } else {
+      body = csEsc(m.body || '');
+    }
+    html += `<div class="cs-mb ${isOut?'out':'in'}">
+      ${body}
+      <div class="cs-mb-time">${time}${isOut ? (m.is_read_buyer ? ' ✓✓' : ' ✓') : ''}</div>
+    </div>`;
+  });
+  wrap.innerHTML = html;
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+// ── Realtime subscriptions ──
+function csSubscribeToThread(threadId) {
+  const sb = window._sb;
+  _csMsgChannel = sb.channel(`support-msgs-${threadId}`)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${threadId}` },
+      (payload) => {
+        const m = payload.new;
+        if (_csMessages.some(x => x.id === m.id)) return;
+        _csMessages.push(m);
+        csRenderMessages();
+        // Auto-mark read if from buyer
+        if (m.sender_type === 'buyer') {
+          sb.rpc('mark_thread_read', { p_thread_id: threadId, p_role: 'seller' });
+        }
+      }
+    )
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${threadId}` },
+      (payload) => {
+        const idx = _csMessages.findIndex(m => m.id === payload.new.id);
+        if (idx >= 0) { _csMessages[idx] = payload.new; csRenderMessages(); }
+      }
+    )
+    .subscribe(s => csLog('msg ch:', s));
+}
+
+function csSubscribeToList() {
+  const sb = window._sb;
+  if (_csListChannel) sb.removeChannel(_csListChannel);
+  _csListChannel = sb.channel('support-threads-list')
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'chat_threads' },
+      () => { csLoadThreads(); csLoadStats(); csUpdateUnreadBadge(); }
+    )
+    .subscribe();
+}
+
+// ── Send ──
+async function csSend() {
+  const inp = document.getElementById('cs-input');
+  if (!inp || !_csActiveThreadId) return;
+  const txt = (inp.value || '').trim();
+  if (!txt) return;
+
+  const sb = window._sb;
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { alert('Session หมดอายุ กรุณา login ใหม่'); return; }
+  const { data: u } = await sb.from('users').select('id').eq('email', user.email).maybeSingle();
+  if (!u) { alert('ไม่พบ user record'); return; }
+
+  inp.value = '';
+  inp.style.height = '';
+
+  const sendBtn = document.getElementById('cs-send');
+  if (sendBtn) sendBtn.disabled = true;
+
+  const { data, error } = await sb.from('chat_messages').insert({
+    thread_id: _csActiveThreadId,
+    sender_type: 'seller',  // admin replies as seller
+    sender_id: u.id,
+    body: txt,
+    msg_type: 'text'
+  }).select().single();
+
+  if (sendBtn) sendBtn.disabled = false;
+
+  if (error) {
+    csErr('send:', error);
+    alert('ส่งไม่สำเร็จ: ' + error.message);
+    inp.value = txt;
+    return;
+  }
+  csLog('sent:', data.id);
+  // Append immediately (don't wait for realtime)
+  if (!_csMessages.some(m => m.id === data.id)) {
+    _csMessages.push(data);
+    csRenderMessages();
+  }
+}
+
+// ── Stats ──
+async function csLoadStats() {
+  try {
+    const sb = window._sb;
+    const { data, error } = await sb.rpc('get_admin_thread_stats');
+    if (error || !data || !data.length) return;
+    const s = data[0];
+    document.getElementById('cs-stat-total').textContent = s.total_threads;
+    document.getElementById('cs-stat-unread').textContent = s.total_unread;
+    document.getElementById('cs-stat-today').textContent = s.active_today;
+  } catch(e) { /* silent */ }
+}
+
+// ── Sidebar badge update (เรียกจาก global) ──
+async function csUpdateUnreadBadge() {
+  try {
+    const sb = window._sb;
+    if (!sb) return;
+    const { data, error } = await sb.rpc('get_admin_thread_stats');
+    if (error || !data || !data.length) return;
+    const unread = data[0].total_unread || 0;
+    const badge = document.getElementById('support-unread-badge');
+    if (badge) {
+      if (unread > 0) {
+        badge.textContent = unread > 99 ? '99+' : unread;
+        badge.style.display = 'inline-flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch(e) { /* silent */ }
+}
+
+// Auto-update badge every 30s
+setInterval(() => csUpdateUnreadBadge(), 30000);
+
+// ── UI handlers ──
+window.csReload = function() { _csLoaded = false; csInit(); };
+window.csOpenThread = csOpenThread;
+window.csSend = csSend;
+window.csKeyDown = function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); csSend(); }
+};
+window.csAutoResize = function(el) {
+  el.style.height = '';
+  el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+};
+window.csQuick = function(txt) {
+  const inp = document.getElementById('cs-input');
+  if (inp) { inp.value = txt; inp.focus(); }
+};
+window.csFilter = function(filter, btn) {
+  _csCurrentFilter = filter;
+  document.querySelectorAll('#panel-support .cs-filter-btn').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  csRenderThreads();
+};
+window.csSearch = function() {
+  _csSearchTerm = (document.getElementById('cs-search').value || '').trim();
+  csRenderThreads();
+};
+window.csOpenInChat = function() {
+  if (_csActiveThreadId) {
+    window.open('chat.html?thread=' + _csActiveThreadId + '&as=seller', '_blank');
+  }
+};
+window.csInit = csInit;
+
+// Auto-init when panel-support shown
+document.addEventListener('DOMContentLoaded', () => {
+  // Hook into existing showPanel
+  const origShowPanel = window.showPanel;
+  if (typeof origShowPanel === 'function') {
+    window.showPanel = function(name) {
+      const result = origShowPanel.apply(this, arguments);
+      if (name === 'support') csInit();
+      return result;
+    };
+  }
+  // Also try once on load (in case admin lands on this panel)
+  setTimeout(() => csUpdateUnreadBadge(), 2000);
+});
+</script>
+
 
 <div id="panel-settings" class="panel" style="padding:24px;display:none">
 
@@ -5473,6 +6026,109 @@ window.showApp = function(user, role) {
 })();
 </script>
 
+
+<!-- ── Shared Cart Helper (injected 2026-05-07-v2) ── -->
+<script>
+(function(){
+  // ── Read cart fresh from localStorage every time ──
+  function tmGetCart() {
+    try {
+      const raw = localStorage.getItem('tm_cart');
+      const data = JSON.parse(raw || '[]');
+      return Array.isArray(data) ? data : [];
+    } catch(e) { return []; }
+  }
+
+  function tmSaveCart(cart) {
+    try {
+      localStorage.setItem('tm_cart', JSON.stringify(cart));
+      // Trigger update in same tab (storage event only fires for OTHER tabs)
+      if (typeof window.tmUpdateCartBadge === 'function') {
+        window.tmUpdateCartBadge();
+      }
+    } catch(e) { console.warn('tmSaveCart:', e); }
+  }
+
+  // ── Unified Add to Cart ──
+  // params: {id, name, price, img, qty, variants}
+  // ALL pages should call this instead of writing to localStorage directly.
+  function tmAddToCart(item) {
+    if (!item || !item.id) {
+      console.warn('tmAddToCart: missing id');
+      return null;
+    }
+    const cart = tmGetCart();   // ← Always fresh!
+    const id = String(item.id);
+    const qty = Math.max(1, Number(item.qty) || 1);
+    const variants = item.variants || {};
+    const variantsKey = JSON.stringify(variants);
+
+    // Match: same id + same variants
+    const existing = cart.find(c =>
+      String(c.id) === id &&
+      JSON.stringify(c.variants || {}) === variantsKey
+    );
+
+    if (existing) {
+      existing.qty = (Number(existing.qty) || 1) + qty;
+      // อัปเดต fields กรณีของเก่ามี data ขาด
+      if (!existing.name && item.name) existing.name = item.name;
+      if (!existing.img && item.img)   existing.img = item.img;
+      if (!existing.price && item.price) existing.price = Number(item.price);
+    } else {
+      cart.push({
+        id: id,
+        name: item.name || '',
+        price: Number(item.price) || 0,
+        img: item.img || '',
+        qty: qty,
+        variants: variants
+      });
+    }
+
+    tmSaveCart(cart);
+    return cart;
+  }
+
+  // ── Update qty / Remove / Clear ──
+  function tmUpdateCartQty(id, qty, variants) {
+    const cart = tmGetCart();
+    const variantsKey = JSON.stringify(variants || {});
+    const item = cart.find(c =>
+      String(c.id) === String(id) &&
+      JSON.stringify(c.variants || {}) === variantsKey
+    );
+    if (!item) return cart;
+    if (qty <= 0) return tmRemoveFromCart(id, variants);
+    item.qty = Number(qty);
+    tmSaveCart(cart);
+    return cart;
+  }
+
+  function tmRemoveFromCart(id, variants) {
+    const cart = tmGetCart();
+    const variantsKey = JSON.stringify(variants || {});
+    const newCart = cart.filter(c =>
+      !(String(c.id) === String(id) &&
+        JSON.stringify(c.variants || {}) === variantsKey)
+    );
+    tmSaveCart(newCart);
+    return newCart;
+  }
+
+  function tmClearCart() {
+    tmSaveCart([]);
+  }
+
+  // ── Expose globally ──
+  window.tmGetCart = tmGetCart;
+  window.tmSaveCart = tmSaveCart;
+  window.tmAddToCart = tmAddToCart;
+  window.tmUpdateCartQty = tmUpdateCartQty;
+  window.tmRemoveFromCart = tmRemoveFromCart;
+  window.tmClearCart = tmClearCart;
+})();
+</script>
 
 <!-- ── Shared Cart Badge Auto-Update (injected 2026-05-07) ── -->
 <script>
