@@ -338,7 +338,10 @@ function toast(msg, type) {
 
 
 function getCart() { return JSON.parse(localStorage.getItem('tm_cart')||'[]'); }
-function saveCart(c) { localStorage.setItem('tm_cart',JSON.stringify(c)); }
+function saveCart(c) {
+  localStorage.setItem('tm_cart',JSON.stringify(c));
+  if (typeof window.tmUpdateCartBadge === 'function') window.tmUpdateCartBadge();
+}
 
 function renderCart() {
   const cart = getCart();
@@ -400,23 +403,70 @@ function updateSummary(subtotal) {
   else dRow.style.display='none';
 }
 
-function changeQty(idx,delta) {
-  let cart=getCart(); cart[idx].qty=Math.max(1,(cart[idx].qty||1)+delta);
-  saveCart(cart); renderCart();
+async function changeQty(idx, delta) {
+  let cart = getCart();
+  if (!cart[idx]) return;
+  cart[idx].qty = Math.max(1, (cart[idx].qty || 1) + delta);
+  saveCart(cart);
+  renderCart();
+  // Trigger badge update across tabs
+  if (typeof window.tmUpdateCartBadge === 'function') window.tmUpdateCartBadge();
+  // Sync to Supabase if logged in
+  syncCartItemToSupabase(cart[idx]);
 }
 
-function removeItem(idx) {
-  let cart=getCart(); cart.splice(idx,1);
-  saveCart(cart); renderCart();
+async function removeItem(idx) {
+  let cart = getCart();
+  const removed = cart[idx];
+  cart.splice(idx, 1);
+  saveCart(cart);
+  renderCart();
+  if (typeof window.tmUpdateCartBadge === 'function') window.tmUpdateCartBadge();
   toast('🗑️ ลบสินค้าออกแล้ว');
+  // Sync delete to Supabase
+  if (removed) deleteCartItemFromSupabase(removed.id);
 }
 
-function clearCart() {
+async function syncCartItemToSupabase(item) {
+  try {
+    const { data:{ user } } = await _sbCart.auth.getUser();
+    if (!user || !item) return;
+    await _sbCart.from('cart_items').upsert({
+      user_id: user.id,
+      product_id: item.id,
+      quantity: item.qty,
+      added_at: new Date().toISOString()
+    }, { onConflict: 'user_id,product_id' });
+  } catch(e) { /* DB sync ไม่ critical */ }
+}
+
+async function deleteCartItemFromSupabase(productId) {
+  try {
+    const { data:{ user } } = await _sbCart.auth.getUser();
+    if (!user) return;
+    await _sbCart.from('cart_items').delete()
+      .eq('user_id', user.id)
+      .eq('product_id', productId);
+  } catch(e) { /* DB sync ไม่ critical */ }
+}
+
+// ── Listen for cart changes from other tabs ──
+window.addEventListener('storage', e => {
+  if (e.key === 'tm_cart') renderCart();
+});
+
+async function clearCart() {
   if(!confirm('ต้องการล้างตะกร้าทั้งหมด?')) return;
   localStorage.removeItem('tm_cart');
   _discount=0; _couponType='';
   renderCart();
+  if (typeof window.tmUpdateCartBadge === 'function') window.tmUpdateCartBadge();
   toast('🗑️ ล้างตะกร้าแล้ว');
+  // Sync delete-all to Supabase
+  try {
+    const { data:{ user } } = await _sbCart.auth.getUser();
+    if (user) await _sbCart.from('cart_items').delete().eq('user_id', user.id);
+  } catch(e) {}
 }
 
 async function applyCoupon() {
@@ -511,6 +561,109 @@ document.addEventListener('DOMContentLoaded', renderCart);
 })();
 </script>
 
+
+<!-- ── Shared Cart Helper (injected 2026-05-07-v2) ── -->
+<script>
+(function(){
+  // ── Read cart fresh from localStorage every time ──
+  function tmGetCart() {
+    try {
+      const raw = localStorage.getItem('tm_cart');
+      const data = JSON.parse(raw || '[]');
+      return Array.isArray(data) ? data : [];
+    } catch(e) { return []; }
+  }
+
+  function tmSaveCart(cart) {
+    try {
+      localStorage.setItem('tm_cart', JSON.stringify(cart));
+      // Trigger update in same tab (storage event only fires for OTHER tabs)
+      if (typeof window.tmUpdateCartBadge === 'function') {
+        window.tmUpdateCartBadge();
+      }
+    } catch(e) { console.warn('tmSaveCart:', e); }
+  }
+
+  // ── Unified Add to Cart ──
+  // params: {id, name, price, img, qty, variants}
+  // ALL pages should call this instead of writing to localStorage directly.
+  function tmAddToCart(item) {
+    if (!item || !item.id) {
+      console.warn('tmAddToCart: missing id');
+      return null;
+    }
+    const cart = tmGetCart();   // ← Always fresh!
+    const id = String(item.id);
+    const qty = Math.max(1, Number(item.qty) || 1);
+    const variants = item.variants || {};
+    const variantsKey = JSON.stringify(variants);
+
+    // Match: same id + same variants
+    const existing = cart.find(c =>
+      String(c.id) === id &&
+      JSON.stringify(c.variants || {}) === variantsKey
+    );
+
+    if (existing) {
+      existing.qty = (Number(existing.qty) || 1) + qty;
+      // อัปเดต fields กรณีของเก่ามี data ขาด
+      if (!existing.name && item.name) existing.name = item.name;
+      if (!existing.img && item.img)   existing.img = item.img;
+      if (!existing.price && item.price) existing.price = Number(item.price);
+    } else {
+      cart.push({
+        id: id,
+        name: item.name || '',
+        price: Number(item.price) || 0,
+        img: item.img || '',
+        qty: qty,
+        variants: variants
+      });
+    }
+
+    tmSaveCart(cart);
+    return cart;
+  }
+
+  // ── Update qty / Remove / Clear ──
+  function tmUpdateCartQty(id, qty, variants) {
+    const cart = tmGetCart();
+    const variantsKey = JSON.stringify(variants || {});
+    const item = cart.find(c =>
+      String(c.id) === String(id) &&
+      JSON.stringify(c.variants || {}) === variantsKey
+    );
+    if (!item) return cart;
+    if (qty <= 0) return tmRemoveFromCart(id, variants);
+    item.qty = Number(qty);
+    tmSaveCart(cart);
+    return cart;
+  }
+
+  function tmRemoveFromCart(id, variants) {
+    const cart = tmGetCart();
+    const variantsKey = JSON.stringify(variants || {});
+    const newCart = cart.filter(c =>
+      !(String(c.id) === String(id) &&
+        JSON.stringify(c.variants || {}) === variantsKey)
+    );
+    tmSaveCart(newCart);
+    return newCart;
+  }
+
+  function tmClearCart() {
+    tmSaveCart([]);
+  }
+
+  // ── Expose globally ──
+  window.tmGetCart = tmGetCart;
+  window.tmSaveCart = tmSaveCart;
+  window.tmAddToCart = tmAddToCart;
+  window.tmUpdateCartQty = tmUpdateCartQty;
+  window.tmRemoveFromCart = tmRemoveFromCart;
+  window.tmClearCart = tmClearCart;
+})();
+</script>
 
 <!-- ── Shared Cart Badge Auto-Update (injected 2026-05-07) ── -->
 <script>
