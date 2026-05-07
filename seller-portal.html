@@ -1891,11 +1891,456 @@ function renderCustomersLive(){
   </div>`;
 }
 
-function renderMessagesLive(){
-  const page=$('page-messages'); if(!page) return;
-  let cont=page.querySelector('.msg-content');if(!cont){cont=document.createElement('div');cont.className='msg-content';page.appendChild(cont);}
-  cont.innerHTML='<div style="padding:48px;text-align:center;color:#888"><div style="font-size:48px;margin-bottom:16px">💬</div><div style="font-size:16px;font-weight:500;margin-bottom:8px">ระบบข้อความ</div><div style="font-size:13px">กำลังพัฒนา</div></div>';
+// ════════════════════════════════════════════════════════════════════
+//  SELLER MESSAGES PANEL — Real-time chat with customers
+//  ใช้ tables เดียวกับ chat.html / admin-cms (chat_threads, chat_messages)
+//  Seller เห็นเฉพาะ thread ของ shop ตัวเอง (filter ด้วย _sellerSellerId)
+// ════════════════════════════════════════════════════════════════════
+
+let _spThreads = [];
+let _spUserCache = {};
+let _spActiveThreadId = null;
+let _spActiveThread = null;
+let _spMessages = [];
+let _spMsgChannel = null;
+let _spListChannel = null;
+let _spLoaded = false;
+let _spFilter = 'all';
+let _spSearchTerm = '';
+
+function spLog(...a){ console.log('[seller-msg]', ...a); }
+function spErr(...a){ console.error('[seller-msg]', ...a); }
+function spEsc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function spFmtTime(d){
+  const dt=new Date(d); if(isNaN(dt))return '';
+  const now=new Date(),diff=now-dt,dayMs=86400000;
+  if(diff<dayMs && now.getDate()===dt.getDate())return dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  if(diff<2*dayMs)return 'เมื่อวาน';
+  if(diff<7*dayMs)return Math.floor(diff/dayMs)+'d';
+  return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit'});
 }
+function spAvatar(n){return ((n||'?').trim().charAt(0)||'?').toUpperCase();}
+function spBg(n){
+  const colors=['#3B82F6','#EC4899','#10B981','#F59E0B','#8B5CF6','#EF4444','#06B6D4','#F97316'];
+  if(!n)return '#737373';
+  return colors[Math.abs(n.charCodeAt(0)||0)%colors.length];
+}
+
+function renderMessagesLive(){
+  const page=$('page-messages');
+  if (!page) return;
+
+  // Render full chat UI
+  page.innerHTML = `
+    <style id="sp-msg-css">
+      #page-messages .ph{padding:14px 24px;border-bottom:1px solid #E5E5E5;font-size:18px;font-weight:600;background:#fff}
+      #page-messages .sp-layout{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 80px);min-height:500px;background:#fff;border:1px solid #E5E5E5;margin:0;overflow:hidden}
+      #page-messages .sp-side{border-right:1px solid #E5E5E5;display:flex;flex-direction:column;min-height:0;background:#FAFAFA}
+      #page-messages .sp-side-head{padding:12px;border-bottom:1px solid #E5E5E5;display:flex;flex-direction:column;gap:8px;background:#fff}
+      #page-messages .sp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+      #page-messages .sp-stat{padding:6px;background:#F5F5F5;text-align:center;border-radius:4px}
+      #page-messages .sp-stat-v{font-family:'DM Mono',monospace;font-size:14px;font-weight:600}
+      #page-messages .sp-stat-l{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em}
+      #page-messages .sp-search{padding:8px 10px;border:1px solid #E5E5E5;font-size:12px;font-family:inherit;outline:none;border-radius:4px}
+      #page-messages .sp-filter{display:flex;gap:4px;padding:3px;background:#F5F5F5;border-radius:6px}
+      #page-messages .sp-filter-btn{padding:5px 10px;background:transparent;border:none;cursor:pointer;font-size:11px;border-radius:4px;color:#666;font-family:inherit}
+      #page-messages .sp-filter-btn.on{background:#fff;color:#000;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+      #page-messages .sp-thread-list{flex:1;overflow-y:auto}
+      #page-messages .sp-thread{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid #EEE;cursor:pointer;transition:background .15s;align-items:flex-start;position:relative;background:#fff}
+      #page-messages .sp-thread:hover{background:#F5F5F5}
+      #page-messages .sp-thread.on{background:#FFF5F5;border-left:3px solid #E63329}
+      #page-messages .sp-thread.unread{background:#FFFBEB}
+      #page-messages .sp-thread.unread::before{content:'';position:absolute;left:6px;top:50%;width:6px;height:6px;background:#E63329;border-radius:50%;transform:translateY(-50%)}
+      #page-messages .sp-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:#fff;font-weight:600;font-family:'DM Mono',monospace}
+      #page-messages .sp-info{flex:1;min-width:0}
+      #page-messages .sp-name{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      #page-messages .sp-msg{font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      #page-messages .sp-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+      #page-messages .sp-time{font-size:10px;color:#888;font-family:'DM Mono',monospace}
+      #page-messages .sp-badge{background:#E63329;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;font-family:'DM Mono',monospace;font-weight:600;min-width:16px;text-align:center}
+      #page-messages .sp-area{display:flex;flex-direction:column;min-height:0;background:#fff}
+      #page-messages .sp-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;text-align:center;padding:40px;gap:12px}
+      #page-messages .sp-active{display:none;flex:1;flex-direction:column;min-height:0}
+      #page-messages .sp-head{padding:14px 18px;border-bottom:1px solid #E5E5E5;display:flex;align-items:center;gap:10px;background:#fff}
+      #page-messages .sp-head-info{flex:1}
+      #page-messages .sp-head-name{font-size:14px;font-weight:600}
+      #page-messages .sp-head-meta{font-size:11px;color:#888}
+      #page-messages .sp-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px;background:#FAFAFA}
+      #page-messages .sp-mb{max-width:70%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;word-wrap:break-word}
+      #page-messages .sp-mb.in{background:#fff;border:1px solid #E5E5E5;align-self:flex-start;border-bottom-left-radius:4px}
+      #page-messages .sp-mb.out{background:#0A0A0A;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+      #page-messages .sp-mb.system{align-self:center;background:transparent;font-size:11px;color:#888;padding:4px 12px}
+      #page-messages .sp-mb-time{font-size:9px;opacity:.6;margin-top:4px;font-family:'DM Mono',monospace}
+      #page-messages .sp-input-wrap{padding:14px;border-top:1px solid #E5E5E5;display:flex;gap:8px;background:#fff}
+      #page-messages .sp-input{flex:1;padding:10px 14px;border:1px solid #E5E5E5;border-radius:20px;outline:none;font-family:inherit;font-size:13px;resize:none;max-height:80px}
+      #page-messages .sp-input:focus{border-color:#0A0A0A}
+      #page-messages .sp-send{padding:8px 18px;background:#E63329;color:#fff;border:none;border-radius:20px;cursor:pointer;font-weight:600;font-size:13px}
+      #page-messages .sp-send:hover{background:#C5211C}
+      #page-messages .sp-send:disabled{background:#aaa;cursor:not-allowed}
+      #page-messages .sp-quick{padding:8px 14px;display:flex;gap:6px;border-top:1px solid #EEE;overflow-x:auto;background:#fff}
+      #page-messages .sp-quick-btn{padding:5px 12px;background:#F5F5F5;border:none;border-radius:14px;cursor:pointer;font-size:11px;white-space:nowrap;flex-shrink:0;font-family:inherit}
+      #page-messages .sp-quick-btn:hover{background:#E5E5E5}
+    </style>
+
+    <div class="ph">💬 ข้อความจากลูกค้า</div>
+    <div class="sp-layout">
+      <!-- LEFT -->
+      <div class="sp-side">
+        <div class="sp-side-head">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:13px;font-weight:600">📋 รายการแชท</div>
+            <button onclick="spReload()" style="background:none;border:none;cursor:pointer;font-size:14px" title="โหลดใหม่">🔄</button>
+          </div>
+          <div class="sp-stats">
+            <div class="sp-stat"><div class="sp-stat-v" id="sp-stat-total">—</div><div class="sp-stat-l">ทั้งหมด</div></div>
+            <div class="sp-stat" style="background:#FFF5F5"><div class="sp-stat-v" id="sp-stat-unread" style="color:#E63329">—</div><div class="sp-stat-l">ยังไม่อ่าน</div></div>
+            <div class="sp-stat"><div class="sp-stat-v" id="sp-stat-today">—</div><div class="sp-stat-l">วันนี้</div></div>
+          </div>
+          <div class="sp-filter">
+            <button class="sp-filter-btn on" onclick="spFilter('all',this)">ทั้งหมด</button>
+            <button class="sp-filter-btn" onclick="spFilter('unread',this)">ยังไม่อ่าน</button>
+            <button class="sp-filter-btn" onclick="spFilter('today',this)">วันนี้</button>
+          </div>
+          <input class="sp-search" id="sp-search" placeholder="🔍 ค้นหาชื่อลูกค้า..." oninput="spSearch()">
+        </div>
+        <div class="sp-thread-list" id="sp-thread-list">
+          <div style="padding:40px 20px;text-align:center;color:#888;font-size:12px">⏳ กำลังโหลด...</div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="sp-area">
+        <div class="sp-empty" id="sp-empty">
+          <div style="font-size:64px;opacity:.4">💬</div>
+          <div style="font-size:14px;font-weight:600;color:#666">เลือกการสนทนา</div>
+          <div style="font-size:11px">เลือกลูกค้าจากรายการด้านซ้ายเพื่อเริ่มแชท</div>
+        </div>
+        <div class="sp-active" id="sp-active">
+          <div class="sp-head">
+            <div class="sp-av" id="sp-h-av" style="background:#888">?</div>
+            <div class="sp-head-info">
+              <div class="sp-head-name" id="sp-h-name">—</div>
+              <div class="sp-head-meta" id="sp-h-meta">—</div>
+            </div>
+            <button onclick="spOpenInChat()" style="background:none;border:1px solid #E5E5E5;padding:6px 12px;cursor:pointer;font-size:11px;border-radius:4px">เปิดในหน้าเต็ม ↗</button>
+          </div>
+          <div class="sp-msgs" id="sp-msgs"></div>
+          <div class="sp-quick">
+            <button class="sp-quick-btn" onclick="spQuick('สวัสดีค่ะ ยินดีตอบคำถามนะคะ')">สวัสดี</button>
+            <button class="sp-quick-btn" onclick="spQuick('ขอบคุณที่ติดต่อมาค่ะ')">ขอบคุณ</button>
+            <button class="sp-quick-btn" onclick="spQuick('ขอตรวจสอบสักครู่นะคะ')">ขอตรวจสอบ</button>
+            <button class="sp-quick-btn" onclick="spQuick('สินค้าพร้อมส่งทุกวันค่ะ')">มีของพร้อมส่ง</button>
+            <button class="sp-quick-btn" onclick="spQuick('มีอะไรให้ช่วยอีกไหมคะ?')">มีอะไรอีกไหม?</button>
+          </div>
+          <div class="sp-input-wrap">
+            <textarea class="sp-input" id="sp-input" placeholder="พิมพ์ข้อความตอบกลับ..." rows="1" onkeydown="spKeyDown(event)" oninput="spAutoResize(this)"></textarea>
+            <button class="sp-send" id="sp-send" onclick="spSend()">ส่ง ➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Lazy init
+  if (!_spLoaded) {
+    _spLoaded = true;
+    spInit();
+  } else {
+    spRenderThreads();
+  }
+}
+
+async function spInit(){
+  spLog('init');
+  await spLoadThreads();
+  spSubscribeToList();
+  await spLoadStats();
+}
+
+async function spLoadThreads(){
+  try {
+    if (!_sellerSellerId) {
+      document.getElementById('sp-thread-list').innerHTML =
+        '<div style="padding:40px 20px;text-align:center;color:#E63329;font-size:11px">⚠️ ไม่พบข้อมูลร้านค้า — กรุณา reload</div>';
+      return;
+    }
+    const { data, error } = await _sb.from('chat_threads')
+      .select('*').eq('seller_id', _sellerSellerId)
+      .order('last_at', { ascending: false }).limit(200);
+    if (error) throw error;
+    _spThreads = data || [];
+    spLog('threads:', _spThreads.length);
+    await spHydrate();
+    spRenderThreads();
+  } catch(e){
+    spErr('loadThreads:', e);
+    document.getElementById('sp-thread-list').innerHTML =
+      `<div style="padding:24px;text-align:center;color:#E63329;font-size:11px">โหลดไม่สำเร็จ:<br>${spEsc(e.message||'')}</div>`;
+  }
+}
+
+async function spHydrate(){
+  if (!_spThreads.length) return;
+  const buyerIds = [...new Set(_spThreads.map(t=>t.buyer_id).filter(Boolean))]
+    .filter(id=>!_spUserCache[id]);
+  if (buyerIds.length){
+    const { data } = await _sb.from('users')
+      .select('id,email,display_name,avatar_url,phone').in('id', buyerIds);
+    (data||[]).forEach(u=>_spUserCache[u.id]=u);
+  }
+}
+
+function spRenderThreads(){
+  const list = document.getElementById('sp-thread-list');
+  if (!list) return;
+
+  let filtered = _spThreads;
+  if (_spFilter === 'unread') {
+    filtered = filtered.filter(t => (t.unread_seller||0) > 0 || t.last_sender === 'buyer');
+  } else if (_spFilter === 'today') {
+    const dayAgo = new Date(Date.now()-86400000);
+    filtered = filtered.filter(t => t.last_at && new Date(t.last_at) > dayAgo);
+  }
+  if (_spSearchTerm) {
+    const q = _spSearchTerm.toLowerCase();
+    filtered = filtered.filter(t => {
+      const b = _spUserCache[t.buyer_id];
+      const fields = [b&&b.display_name, b&&b.email, t.last_message].filter(Boolean).join(' ').toLowerCase();
+      return fields.includes(q);
+    });
+  }
+
+  if (!filtered.length) {
+    list.innerHTML = `<div style="padding:40px 20px;text-align:center;color:#888;font-size:11px">
+      ${_spThreads.length === 0 ? 'ยังไม่มีลูกค้าทักมา' : 'ไม่พบรายการที่ตรง filter'}
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => {
+    const buyer = _spUserCache[t.buyer_id] || {};
+    const buyerName = buyer.display_name || buyer.email || 'ลูกค้าไม่ทราบชื่อ';
+    const isUnread = (t.unread_seller||0) > 0 || t.last_sender === 'buyer';
+    const isActive = t.id === _spActiveThreadId;
+    const lastFromBuyer = t.last_sender === 'buyer' ? '👤 ' : (t.last_sender === 'seller' ? '🏪 ' : '');
+    return `<div class="sp-thread ${isActive?'on':''} ${isUnread?'unread':''}" onclick="spOpenThread('${t.id}')">
+      <div class="sp-av" style="background:${spBg(buyerName)}">${spEsc(spAvatar(buyerName))}</div>
+      <div class="sp-info">
+        <div class="sp-name">${spEsc(buyerName)}</div>
+        <div class="sp-msg">${spEsc(lastFromBuyer + (t.last_message||'เริ่มสนทนา...'))}</div>
+      </div>
+      <div class="sp-meta">
+        <span class="sp-time">${spEsc(spFmtTime(t.last_at))}</span>
+        ${(t.unread_seller||0) > 0 ? `<span class="sp-badge">${t.unread_seller}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function spOpenThread(threadId){
+  spLog('open', threadId);
+  if (_spMsgChannel) { _sb.removeChannel(_spMsgChannel); _spMsgChannel = null; }
+
+  _spActiveThreadId = threadId;
+  _spActiveThread = _spThreads.find(t => t.id === threadId);
+  if (!_spActiveThread) {
+    const { data } = await _sb.from('chat_threads').select('*').eq('id', threadId).maybeSingle();
+    _spActiveThread = data; if (!data) return;
+  }
+
+  document.getElementById('sp-empty').style.display = 'none';
+  document.getElementById('sp-active').style.display = 'flex';
+
+  await spHydrate();
+  const buyer = _spUserCache[_spActiveThread.buyer_id] || {};
+  const name = buyer.display_name || buyer.email || 'ลูกค้า';
+  const avEl = document.getElementById('sp-h-av');
+  if (avEl) { avEl.textContent = spAvatar(name); avEl.style.background = spBg(name); }
+  document.getElementById('sp-h-name').textContent = name;
+  const meta = [];
+  if (buyer.email) meta.push('📧 ' + buyer.email);
+  if (buyer.phone) meta.push('📞 ' + buyer.phone);
+  document.getElementById('sp-h-meta').textContent = meta.join(' · ') || '—';
+
+  await spLoadMessages(threadId);
+  spSubscribeToThread(threadId);
+
+  try {
+    await _sb.rpc('mark_thread_read', { p_thread_id: threadId, p_role: 'seller' });
+    if (_spActiveThread.unread_seller) _spActiveThread.unread_seller = 0;
+    spRenderThreads();
+    spLoadStats();
+    spUpdateBadge();
+  } catch(e){}
+
+  setTimeout(()=>{const i=document.getElementById('sp-input');if(i)i.focus();},100);
+}
+
+async function spLoadMessages(threadId){
+  const { data, error } = await _sb.from('chat_messages')
+    .select('*').eq('thread_id', threadId).eq('is_deleted', false)
+    .order('created_at', { ascending: true });
+  if (error) { spErr('msgs:', error); return; }
+  _spMessages = data || [];
+  spRenderMessages();
+}
+
+function spRenderMessages(){
+  const wrap = document.getElementById('sp-msgs');
+  if (!wrap) return;
+  if (!_spMessages.length) {
+    wrap.innerHTML = '<div class="sp-mb system">ยังไม่มีข้อความ — เริ่มแชทกับลูกค้าได้เลย</div>';
+    return;
+  }
+  let html = '', lastDate = '';
+  _spMessages.forEach(m => {
+    const d = new Date(m.created_at);
+    const dateStr = d.toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'});
+    if (dateStr !== lastDate) { html += `<div class="sp-mb system">📅 ${dateStr}</div>`; lastDate = dateStr; }
+    if (m.msg_type === 'system') { html += `<div class="sp-mb system">${spEsc(m.body||'')}</div>`; return; }
+    const isOut = m.sender_type === 'seller';
+    const time = d.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
+    let body = '';
+    if (m.msg_type === 'image' && m.meta && m.meta.image_url) {
+      body = `<img src="${spEsc(m.meta.image_url)}" style="max-width:200px;border-radius:8px;display:block">`;
+    } else if (m.msg_type === 'product' && m.meta) {
+      body = `<div style="cursor:pointer" onclick="window.open('product.html?id=${m.meta.product_id}','_blank')">📦 ${spEsc(m.meta.product_name||'สินค้า')}</div>`;
+    } else {
+      body = spEsc(m.body || '');
+    }
+    html += `<div class="sp-mb ${isOut?'out':'in'}">${body}<div class="sp-mb-time">${time}${isOut?(m.is_read_buyer?' ✓✓':' ✓'):''}</div></div>`;
+  });
+  wrap.innerHTML = html;
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function spSubscribeToThread(threadId){
+  _spMsgChannel = _sb.channel(`sp-msgs-${threadId}`)
+    .on('postgres_changes',
+      { event:'INSERT', schema:'public', table:'chat_messages', filter:`thread_id=eq.${threadId}` },
+      (payload) => {
+        const m = payload.new;
+        if (_spMessages.some(x => x.id === m.id)) return;
+        _spMessages.push(m);
+        spRenderMessages();
+        if (m.sender_type === 'buyer') {
+          _sb.rpc('mark_thread_read', { p_thread_id: threadId, p_role: 'seller' });
+        }
+      })
+    .on('postgres_changes',
+      { event:'UPDATE', schema:'public', table:'chat_messages', filter:`thread_id=eq.${threadId}` },
+      (payload) => {
+        const idx = _spMessages.findIndex(m => m.id === payload.new.id);
+        if (idx >= 0) { _spMessages[idx] = payload.new; spRenderMessages(); }
+      })
+    .subscribe(s => spLog('msg ch:', s));
+}
+
+function spSubscribeToList(){
+  if (_spListChannel) _sb.removeChannel(_spListChannel);
+  if (!_sellerSellerId) return;
+  _spListChannel = _sb.channel('sp-threads-list')
+    .on('postgres_changes',
+      { event:'*', schema:'public', table:'chat_threads', filter:`seller_id=eq.${_sellerSellerId}` },
+      () => { spLoadThreads(); spLoadStats(); spUpdateBadge(); })
+    .subscribe();
+}
+
+async function spSend(){
+  const inp = document.getElementById('sp-input');
+  if (!inp || !_spActiveThreadId) return;
+  const txt = (inp.value||'').trim();
+  if (!txt) return;
+
+  inp.value = ''; inp.style.height = '';
+  const btn = document.getElementById('sp-send');
+  if (btn) btn.disabled = true;
+
+  // ใช้ send_seller_reply RPC (มี permission check)
+  const { data, error } = await _sb.rpc('send_seller_reply', {
+    p_thread_id: _spActiveThreadId,
+    p_body: txt
+  });
+
+  if (btn) btn.disabled = false;
+
+  if (error || (data && data.error)) {
+    const errMsg = error ? error.message : (data.message || data.error);
+    spErr('send:', errMsg);
+    alert('❌ ส่งไม่สำเร็จ\n\n' + errMsg + '\n\nกรุณารัน chat-allinone-rpc-2026-05-07.sql');
+    inp.value = txt;
+    return;
+  }
+  spLog('sent OK, msg_id:', data && data.message_id);
+  if (data && data.message_id) {
+    const { data: msg } = await _sb.from('chat_messages').select('*').eq('id', data.message_id).maybeSingle();
+    if (msg && !_spMessages.some(m => m.id === msg.id)) {
+      _spMessages.push(msg);
+      spRenderMessages();
+    }
+  }
+}
+
+async function spLoadStats(){
+  if (!_sellerSellerId) return;
+  try {
+    const { data } = await _sb.from('chat_threads').select('unread_seller,last_at,last_sender').eq('seller_id', _sellerSellerId);
+    if (!data) return;
+    const total = data.length;
+    const unread = data.reduce((s,t)=>s+(t.unread_seller||0),0);
+    const dayAgo = new Date(Date.now()-86400000);
+    const today = data.filter(t=>t.last_at&&new Date(t.last_at)>dayAgo).length;
+    const e1 = document.getElementById('sp-stat-total'); if (e1) e1.textContent = total;
+    const e2 = document.getElementById('sp-stat-unread'); if (e2) e2.textContent = unread;
+    const e3 = document.getElementById('sp-stat-today'); if (e3) e3.textContent = today;
+  } catch(e){}
+}
+
+// อัปเดต badge เลข 3 ที่ sidebar nav
+async function spUpdateBadge(){
+  if (!_sellerSellerId) return;
+  try {
+    const { data } = await _sb.from('chat_threads').select('unread_seller').eq('seller_id', _sellerSellerId);
+    if (!data) return;
+    const unread = data.reduce((s,t)=>s+(t.unread_seller||0),0);
+    // หา badge ใน sidebar nav (.sni-badge ที่อยู่ใน item ข้อความ)
+    document.querySelectorAll('.sni').forEach(el => {
+      if (el.getAttribute('onclick') && el.getAttribute('onclick').includes("'messages'")) {
+        const badge = el.querySelector('.sni-badge');
+        if (badge) {
+          if (unread > 0) { badge.textContent = unread > 99 ? '99+' : unread; badge.style.display = 'inline-flex'; }
+          else badge.style.display = 'none';
+        }
+      }
+    });
+  } catch(e){}
+}
+
+// Auto-update badge every 30s
+setInterval(()=>{ if(_sellerSellerId) spUpdateBadge(); }, 30000);
+// Initial after 2s
+setTimeout(()=>{ if(_sellerSellerId) spUpdateBadge(); }, 2000);
+
+// Globals
+window.spReload = function(){ _spLoaded = false; renderMessagesLive(); };
+window.spOpenThread = spOpenThread;
+window.spSend = spSend;
+window.spKeyDown = function(e){ if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();spSend();} };
+window.spAutoResize = function(el){ el.style.height=''; el.style.height=Math.min(el.scrollHeight,80)+'px'; };
+window.spQuick = function(t){ const i=document.getElementById('sp-input'); if(i){i.value=t;i.focus();} };
+window.spFilter = function(f,btn){
+  _spFilter = f;
+  document.querySelectorAll('#page-messages .sp-filter-btn').forEach(b=>b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  spRenderThreads();
+};
+window.spSearch = function(){
+  _spSearchTerm = (document.getElementById('sp-search').value||'').trim();
+  spRenderThreads();
+};
+window.spOpenInChat = function(){
+  if (_spActiveThreadId) window.open('chat.html?thread='+_spActiveThreadId+'&as=seller', '_blank');
+};
 
 function renderSettingsLive(){
   const page=$('page-settings'); if(!page) return;
@@ -2084,6 +2529,109 @@ document.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 
+
+<!-- ── Shared Cart Helper (injected 2026-05-07-v2) ── -->
+<script>
+(function(){
+  // ── Read cart fresh from localStorage every time ──
+  function tmGetCart() {
+    try {
+      const raw = localStorage.getItem('tm_cart');
+      const data = JSON.parse(raw || '[]');
+      return Array.isArray(data) ? data : [];
+    } catch(e) { return []; }
+  }
+
+  function tmSaveCart(cart) {
+    try {
+      localStorage.setItem('tm_cart', JSON.stringify(cart));
+      // Trigger update in same tab (storage event only fires for OTHER tabs)
+      if (typeof window.tmUpdateCartBadge === 'function') {
+        window.tmUpdateCartBadge();
+      }
+    } catch(e) { console.warn('tmSaveCart:', e); }
+  }
+
+  // ── Unified Add to Cart ──
+  // params: {id, name, price, img, qty, variants}
+  // ALL pages should call this instead of writing to localStorage directly.
+  function tmAddToCart(item) {
+    if (!item || !item.id) {
+      console.warn('tmAddToCart: missing id');
+      return null;
+    }
+    const cart = tmGetCart();   // ← Always fresh!
+    const id = String(item.id);
+    const qty = Math.max(1, Number(item.qty) || 1);
+    const variants = item.variants || {};
+    const variantsKey = JSON.stringify(variants);
+
+    // Match: same id + same variants
+    const existing = cart.find(c =>
+      String(c.id) === id &&
+      JSON.stringify(c.variants || {}) === variantsKey
+    );
+
+    if (existing) {
+      existing.qty = (Number(existing.qty) || 1) + qty;
+      // อัปเดต fields กรณีของเก่ามี data ขาด
+      if (!existing.name && item.name) existing.name = item.name;
+      if (!existing.img && item.img)   existing.img = item.img;
+      if (!existing.price && item.price) existing.price = Number(item.price);
+    } else {
+      cart.push({
+        id: id,
+        name: item.name || '',
+        price: Number(item.price) || 0,
+        img: item.img || '',
+        qty: qty,
+        variants: variants
+      });
+    }
+
+    tmSaveCart(cart);
+    return cart;
+  }
+
+  // ── Update qty / Remove / Clear ──
+  function tmUpdateCartQty(id, qty, variants) {
+    const cart = tmGetCart();
+    const variantsKey = JSON.stringify(variants || {});
+    const item = cart.find(c =>
+      String(c.id) === String(id) &&
+      JSON.stringify(c.variants || {}) === variantsKey
+    );
+    if (!item) return cart;
+    if (qty <= 0) return tmRemoveFromCart(id, variants);
+    item.qty = Number(qty);
+    tmSaveCart(cart);
+    return cart;
+  }
+
+  function tmRemoveFromCart(id, variants) {
+    const cart = tmGetCart();
+    const variantsKey = JSON.stringify(variants || {});
+    const newCart = cart.filter(c =>
+      !(String(c.id) === String(id) &&
+        JSON.stringify(c.variants || {}) === variantsKey)
+    );
+    tmSaveCart(newCart);
+    return newCart;
+  }
+
+  function tmClearCart() {
+    tmSaveCart([]);
+  }
+
+  // ── Expose globally ──
+  window.tmGetCart = tmGetCart;
+  window.tmSaveCart = tmSaveCart;
+  window.tmAddToCart = tmAddToCart;
+  window.tmUpdateCartQty = tmUpdateCartQty;
+  window.tmRemoveFromCart = tmRemoveFromCart;
+  window.tmClearCart = tmClearCart;
+})();
+</script>
 
 <!-- ── Shared Cart Badge Auto-Update (injected 2026-05-07) ── -->
 <script>
