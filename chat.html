@@ -554,14 +554,30 @@ async function loadUser() {
   }
   LOG('session OK, email:', session.user.email);
 
-  const { data: user, error: userErr } = await sb.from('users')
+  let { data: user, error: userErr } = await sb.from('users')
     .select('id, email, display_name, role, avatar_url')
     .eq('email', session.user.email).maybeSingle();
   if (userErr) { ERR('users select:', userErr); throw userErr; }
+
+  // Auto-create user record ถ้ายังไม่มี (auth user OK แต่ public.users ไม่มี)
   if (!user) {
-    showError('ไม่พบข้อมูลผู้ใช้', 'Email ของคุณยังไม่มีในระบบ users กรุณาติดต่อ admin');
-    throw new Error('USER_NOT_FOUND');
+    LOG('user record not found, auto-creating...');
+    const fallbackName = (session.user.user_metadata && session.user.user_metadata.display_name)
+      || session.user.email.split('@')[0];
+    const { data: created, error: createErr } = await sb.from('users').insert({
+      email: session.user.email,
+      display_name: fallbackName,
+      role: 'user'
+    }).select('id, email, display_name, role, avatar_url').single();
+    if (createErr) {
+      ERR('auto-create user failed:', createErr);
+      showError('ไม่พบข้อมูลผู้ใช้', `ไม่สามารถสร้าง user record อัตโนมัติได้: ${createErr.message}\n\nกรุณาติดต่อ admin หรือรัน auto-create-user-2026-05-07.sql`);
+      throw new Error('USER_NOT_FOUND');
+    }
+    user = created;
+    LOG('auto-created user:', user.id);
   }
+
   _user = user;
   _userCache[user.id] = user;
   LOG('user loaded:', user.id, user.display_name || user.email);
