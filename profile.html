@@ -710,9 +710,9 @@ function setupNavDropdown(name, email, role, ini) {
 async function loadOrders(uid) {
   const el=document.getElementById('orders-list');
   if(!el) return;
-  if(!uid) { el.innerHTML=emptyHtml('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','storefront-live.html'); return; }
+  if(!uid) { el.innerHTML=emptyHtml('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','category.html'); return; }
   const {data:orders}=await sb.from('orders').select('*').eq('user_id',uid).order('created_at',{ascending:false}).limit(5);
-  if(!orders?.length) { el.innerHTML=emptyHtml('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','storefront-live.html'); return; }
+  if(!orders?.length) { el.innerHTML=emptyHtml('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','category.html'); return; }
   const stMap={pending:'รอยืนยัน',confirmed:'ยืนยัน',processing:'กำลังเตรียม',shipped:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า'};
   const scMap={pending:'pill-warn',confirmed:'pill-info',processing:'pill-info',shipped:'pill-info',delivered:'pill-ok',cancelled:'pill-gray',returned:'pill-gray'};
   el.innerHTML=orders.map(o=>`<div class="order-item">
@@ -732,11 +732,11 @@ async function loadOrders(uid) {
 async function loadWishlist(uid) {
   const el=document.getElementById('wish-grid');
   if(!el) return;
-  if(!uid) { el.innerHTML=emptyHtml('❤️','ยังไม่มีรายการโปรด','เลือกสินค้าเลย','storefront-live.html'); return; }
+  if(!uid) { el.innerHTML=emptyHtml('❤️','ยังไม่มีรายการโปรด','เลือกสินค้าเลย','category.html'); return; }
   const {data:wishes}=await sb.from('wishlist').select('id,products(id,name_th,price,thumbnail,images)').eq('user_id',uid).limit(8);
   const cnt=wishes?.length||0;
   setEl('wish-count-title',cnt); setEl('stat-wish',cnt); setEl('sb-wish-count',cnt);
-  if(!cnt) { el.innerHTML=emptyHtml('❤️','ยังไม่มีรายการโปรด','เลือกสินค้าเลย','storefront-live.html'); return; }
+  if(!cnt) { el.innerHTML=emptyHtml('❤️','ยังไม่มีรายการโปรด','เลือกสินค้าเลย','category.html'); return; }
   el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);border:var(--border)">`+wishes.map(w=>{
     const p=w.products; if(!p) return '';
     const thumb=p.thumbnail||p.images?.[0];
@@ -938,15 +938,15 @@ async function loadCats() {
     const parents=allCats.filter(c=>!c.parent_id);
     const track=document.getElementById('catbar-track');
     if(!track||!parents.length) return;
-    const makeItems=()=>`<a class="cb-item on" href="storefront-live.html" style="text-decoration:none">ทั้งหมด</a>`+
-      parents.map(c=>`<a class="cb-item" href="storefront-live.html?cat=${c.id}" style="text-decoration:none">${c.icon||''} ${c.name_th}</a>`).join('');
+    const makeItems=()=>`<a class="cb-item on" href="category.html" style="text-decoration:none">ทั้งหมด</a>`+
+      parents.map(c=>`<a class="cb-item" href="category.html?cat=${c.id}" style="text-decoration:none">${c.icon||''} ${c.name_th}</a>`).join('');
     track.innerHTML=makeItems()+makeItems();
     track.style.animationDuration=Math.max(20,(parents.length+1)*2.5)+'s';
     // dropdown
     const ddg=document.getElementById('cats-dropdown-grid');
     if(ddg) ddg.innerHTML=parents.map((c,i)=>{
       const colors=['#7C3AED','#DB2777','#E8541A','#D97706','#2563EB','#374151','#16A34A','#0891B2'];
-      return `<a href="storefront-live.html?cat=${c.id}" onclick="closeCats()" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:var(--border);border-left:3px solid ${colors[i%colors.length]};text-decoration:none;color:inherit" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''">
+      return `<a href="category.html?cat=${c.id}" onclick="closeCats()" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:var(--border);border-left:3px solid ${colors[i%colors.length]};text-decoration:none;color:inherit" onmouseover="this.style.background='var(--g50)'" onmouseout="this.style.background=''">
         <span style="font-size:18px">${c.icon||'📦'}</span>
         <div><div style="font-size:12px;font-weight:500">${c.name_th}</div><div style="font-family:var(--mono);font-size:9px;color:var(--g400)">${c.product_count||0} รายการ</div></div>
       </a>`;

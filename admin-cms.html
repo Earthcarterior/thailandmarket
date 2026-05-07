@@ -574,7 +574,7 @@ nav { display: block !important; height: auto !important; }
       </div>
       <div class="tb-actions">
         <button class="btn btn-k btn-sm" onclick="showPanel('products');setTimeout(openProductModal,100)">➕ เพิ่มสินค้า</button>
-        <a href="storefront-live.html" target="_blank" class="btn btn-o btn-sm">🌐 ดูหน้าเว็บ</a>
+        <a href="category.html" target="_blank" class="btn btn-o btn-sm">🌐 ดูหน้าเว็บ</a>
       <div class="sb-section" style="margin-top:8px">ตั้งค่า</div>
       <div class="sni" onclick="showPanel('settings')" id="nav-settings"><span class="sni-ico">⚙️</span>Stats &amp; Trust Bar</div>
       </div>
@@ -592,7 +592,7 @@ nav { display: block !important; height: auto !important; }
         <div><div style="font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px">เริ่มใช้งาน</div><div style="font-size:15px;font-weight:500">เพิ่มสินค้าแรก แล้วดูบนหน้าเว็บได้เลย</div></div>
         <div style="display:flex;gap:10px">
           <button class="btn btn-sm" style="background:var(--red);color:var(--white)" onclick="showPanel('products');setTimeout(openProductModal,100)">➕ เพิ่มสินค้า</button>
-          <a href="storefront-live.html" target="_blank" class="btn btn-sm" style="background:rgba(255,255,255,.1);color:var(--white)">🌐 ดูหน้าเว็บ</a>
+          <a href="category.html" target="_blank" class="btn btn-sm" style="background:rgba(255,255,255,.1);color:var(--white)">🌐 ดูหน้าเว็บ</a>
         </div>
       </div>
       <div style="margin-top:24px">
@@ -4300,7 +4300,7 @@ function bnSetLinkType(btn, type) {
   const cfg = {
     url:        { lbl: 'URL ปลายทาง *',     placeholder: 'เช่น /flash-sale.html หรือ https://example.com', help: 'URL จะ redirect เมื่อ user คลิก' },
     category:   { lbl: 'เลือกหมวดสินค้า *',  placeholder: '',                                              help: 'จะไปที่ /category.html?slug=...' },
-    brand:      { lbl: 'ชื่อแบรนด์ *',       placeholder: 'เช่น Samsung, Apple',                            help: 'จะไปที่ /storefront-live.html?brand_name=...' },
+    brand:      { lbl: 'ชื่อแบรนด์ *',       placeholder: 'เช่น Samsung, Apple',                            help: 'จะไปที่ /category.html?brand_name=...' },
     coupon:     { lbl: 'Coupon Code *',     placeholder: 'เช่น WELCOME50',                                 help: 'จะไปที่ /coupon-hub.html?code=...' },
     collection: { lbl: 'Collection Slug *', placeholder: 'เช่น summer-2026',                               help: 'จะไปที่ /category.html?collection=...' },
     article:    { lbl: 'เลือกบทความ *',      placeholder: '',                                              help: 'จะไปที่ /article.html?slug=...' }

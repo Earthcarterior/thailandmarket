@@ -725,7 +725,7 @@ nav, .nav {
   <!-- CATEGORIES -->
   <div class="section-hd">
     <div class="section-title">หมวดหมู่สินค้า</div>
-    <a href="storefront-live.html" class="see-all">ดูทั้งหมด →</a>
+    <a href="category.html" class="see-all">ดูทั้งหมด →</a>
   </div>
   <div class="cats-grid" id="cats-grid">
     <!-- Loaded from Supabase -->
@@ -750,7 +750,7 @@ nav, .nav {
           <option value="price-desc">ราคาสูง→ต่ำ</option>
           <option value="rating">คะแนนสูงสุด</option>
         </select>
-        <a href="storefront-live.html" class="see-all">ดูทั้งหมด →</a>
+        <a href="category.html" class="see-all">ดูทั้งหมด →</a>
       </div>
     </div>
     <!-- Category interest tags (แสดงเมื่อ login) -->
@@ -864,7 +864,7 @@ nav, .nav {
   <!-- BRANDS -->
   <div class="section-hd">
     <div class="section-title">แบรนด์ชั้นนำ</div>
-    <a href="storefront-live.html" class="see-all">ดูทั้งหมด →</a>
+    <a href="category.html" class="see-all">ดูทั้งหมด →</a>
   </div>
   <div class="brands-grid" id="brands-grid">
     <!-- Loaded from Supabase -->
@@ -963,7 +963,7 @@ nav, .nav {
         <h2 style="font-size:26px;font-weight:800;letter-spacing:-0.5px">ร้านค้าเด่นวันนี้</h2>
         <div style="font-size:13px;color:var(--g500);margin-top:4px">ผู้ขายยอดนิยม สินค้าครบ ราคาดี ของแท้ 100%</div>
       </div>
-      <a href="storefront-live.html" style="font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:8px 14px;border:1px solid var(--g200);transition:all 0.15s" onmouseover="this.style.color='var(--black)';this.style.borderColor='var(--black)'" onmouseout="this.style.color='var(--g500)';this.style.borderColor='var(--g200)'">ดูร้านทั้งหมด →</a>
+      <a href="category.html" style="font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:8px 14px;border:1px solid var(--g200);transition:all 0.15s" onmouseover="this.style.color='var(--black)';this.style.borderColor='var(--black)'" onmouseout="this.style.color='var(--g500)';this.style.borderColor='var(--g200)'">ดูร้านทั้งหมด →</a>
     </div>
     <div id="featured-shops-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
       <div style="text-align:center;padding:60px 0;color:var(--g400);grid-column:1/-1;font-size:13px">⏳ กำลังโหลดร้านค้า...</div>
@@ -1061,7 +1061,7 @@ nav, .nav {
       <div style="font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">สินค้าทั้งหมด</div>
       <div style="font-size:13px;color:var(--g500)">ดูสินค้าและบริการทุกหมวดหมู่พร้อม filter และค้นหา</div>
     </div>
-    <a href="storefront-live.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--black);color:var(--white);font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;transition:background .15s" onmouseover="this.style.background='var(--red)'" onmouseout="this.style.background='var(--black)'">
+    <a href="category.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--black);color:var(--white);font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;transition:background .15s" onmouseover="this.style.background='var(--red)'" onmouseout="this.style.background='var(--black)'">
       ดูสินค้าทั้งหมด →
     </a>
   </div>
@@ -1078,7 +1078,7 @@ nav, .nav {
       <div>
         <div class="tf-col-title">ช้อปปิ้ง</div>
         <a href="index.html" class="tf-link">หน้าแรก</a>
-        <a href="storefront-live.html" class="tf-link">สินค้าทั้งหมด</a>
+        <a href="category.html" class="tf-link">สินค้าทั้งหมด</a>
         <a href="flash-sale.html" class="tf-link">Flash Sale</a>
         <a href="live-shopping.html" class="tf-link">Live Shopping</a>
         <a href="brand-day.html" class="tf-link">Brand Day</a>
@@ -1294,7 +1294,7 @@ async function loadCats() {
     } else {
       grid.innerHTML = parents.map((c, i) => {
         const subs = allCats.filter(s => s.parent_id === c.id);
-        return `<a class="cat-tile" href="storefront-live.html?cat=${encodeURIComponent(c.id)}" style="text-decoration:none;color:inherit;display:block">
+        return `<a class="cat-tile" href="category.html?cat=${encodeURIComponent(c.id)}" style="text-decoration:none;color:inherit;display:block">
           <div class="cat-tile-bar" style="background:${colors[i % colors.length]}"></div>
           <span class="cat-ico">${c.icon || '📦'}</span>
           <span class="cat-nm">${c.name_th}</span>
@@ -1307,12 +1307,12 @@ async function loadCats() {
   // ── Catbar (แถบหมวดหมู่ด้านบน) ─────────────────────────────────────────
   const track = document.getElementById('catbar-track');
   if (track) {
-    const allLink = `<a class="catbar-item on" href="storefront-live.html"
+    const allLink = `<a class="catbar-item on" href="category.html"
       style="border-bottom:2px solid var(--red);color:var(--black);text-decoration:none;
              padding:0 14px;height:100%;display:flex;align-items:center;white-space:nowrap;
              font-size:13px;font-weight:500;flex-shrink:0">ทั้งหมด</a>`;
     const catLinks = parents.map(c =>
-      `<a class="catbar-item" href="storefront-live.html?cat=${encodeURIComponent(c.id)}"
+      `<a class="catbar-item" href="category.html?cat=${encodeURIComponent(c.id)}"
         style="padding:0 14px;height:100%;display:flex;align-items:center;white-space:nowrap;
                font-size:13px;text-decoration:none;color:var(--g600);flex-shrink:0;
                transition:color .15s"
@@ -1457,7 +1457,7 @@ function renderCatSections() {
             <div class="csh-title">${cat.name_th}</div>
             <div class="csh-sub">สินค้าแนะนำในหมวดนี้</div>
           </div>
-          <a href="storefront-live.html?cat=${cat.id}">ดูทั้งหมด →</a>
+          <a href="category.html?cat=${cat.id}">ดูทั้งหมด →</a>
         </div>
         <div class="cat-section-body">
           <div class="cat-prods">
@@ -1497,14 +1497,14 @@ async function loadBrands() {
       {icon:'💄',name:"L'Oreal"},{icon:'🐾',name:'Royal Canin'},
     ];
     el.innerHTML = def.map(b => `
-      <div class="brand-card" onclick="location.href='storefront-live.html'">
+      <div class="brand-card" onclick="location.href='category.html'">
         <div class="brand-ico">${b.icon}</div>
         <div class="brand-name">${b.name}</div>
       </div>`).join('');
     return;
   }
   el.innerHTML = brands.map(b => `
-    <div class="brand-card" onclick="location.href='storefront-live.html'">
+    <div class="brand-card" onclick="location.href='category.html'">
       <div class="brand-ico">${b.icon || '🏷️'}</div>
       <div class="brand-name">${b.name}</div>
     </div>`).join('');
@@ -2119,7 +2119,7 @@ async function loadBanners() {
     const lv = b.link_value || '';
     if (lt === 'url')        return lv || '#';
     if (lt === 'category')   return `category.html?slug=${encodeURIComponent(lv)}`;
-    if (lt === 'brand')      return `storefront-live.html?brand_name=${encodeURIComponent(lv)}`;
+    if (lt === 'brand')      return `category.html?brand_name=${encodeURIComponent(lv)}`;
     if (lt === 'coupon')     return `coupon-hub.html?code=${encodeURIComponent(lv)}`;
     if (lt === 'collection') return `category.html?collection=${encodeURIComponent(lv)}`;
     if (lt === 'article')    return `article.html?slug=${encodeURIComponent(lv)}`;

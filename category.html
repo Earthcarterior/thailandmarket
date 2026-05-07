@@ -2,652 +2,1762 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#0A0A0A">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thailand Market — หมวดหมู่</title>
+<meta name="theme-color" content="#0A0A0A">
+<!-- ── CACHE BUSTING ─────────────────────────────────────── -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="version" content="2026-05-07-v2-merged">
+<title>Thailand Market — สินค้าทั้งหมด</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style id="tm-base">
-:root{
-  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
-  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
-  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
-  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
-  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
-  /* legacy compat */
-  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
-  --bg:#FAFAFA;--white-off:#FAFAFA;
-  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
-  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
-  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
-  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
-  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
-  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
-  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
-  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
-  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
-  --sidebar:220px;
-}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" data-cfasync="false"></script>
+<style>
+:root{--black:#0A0A0A;--white:#fff;--red:#E63329;--g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;--g400:#A3A3A3;--g500:#737373;--g600:#525252;--g800:#262626;--green:#16A34A;--amber:#D97706;--font:"DM Sans",system-ui,sans-serif;--mono:"DM Mono",monospace;--border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
+body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;-webkit-font-smoothing:antialiased}
+/* NAV */
+#nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:999}
+.nav-top{max-width:1280px;margin:0 auto;padding:0 24px;height:54px;display:flex;align-items:center;gap:0}
+.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);text-decoration:none;margin-right:32px;flex-shrink:0}.nav-logo .dot{color:var(--red)}
+.nav-search{flex:1;max-width:400px;position:relative}
+.nav-search-inp{width:100%;padding:8px 14px 8px 36px;border:var(--border);font-size:13px;font-family:var(--font);outline:none;background:var(--g50);transition:all .2s}.nav-search-inp:focus{background:var(--white);border-color:var(--black)}
+.nav-search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--g400);font-size:15px;pointer-events:none}
+.nav-actions{display:flex;gap:6px;align-items:center;margin-left:auto}
+.nav-btn{padding:7px 14px;border:var(--border-dark);background:var(--white);color:var(--black);font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.nav-btn:hover{background:var(--black);color:var(--white)}
+.nav-btn.red{background:var(--red);color:var(--white);border-color:var(--red)}.nav-btn.red:hover{background:var(--black);border-color:var(--black)}
+.cat-bar{border-top:var(--border);overflow:hidden}
+.cat-bar-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;overflow-x:auto;scrollbar-width:none;gap:0}
+.cat-bar-inner::-webkit-scrollbar{display:none}
+.cat-item{padding:9px 16px;font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;flex-shrink:0;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font)}
+.cat-item:hover{color:var(--black)}.cat-item.on{color:var(--black);border-bottom-color:var(--red)}
 
-/* ── NAV ── */
-#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
-.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
-.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
-.tn-logo .dot{color:var(--red)}
-.tn-links{display:flex;flex:1;overflow:hidden}
-.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
-.tn-link:hover{color:var(--black)}
-.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
-.tn-search{position:relative;margin-left:auto}
-.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
-.tn-search input:focus{border-color:var(--black)}
-.tn-search input::placeholder{color:var(--g400)}
-.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
-.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
-.tn-btn:hover{color:var(--black)}
-.tn-btn.sell{color:var(--red)}
-.tn-ico{font-size:15px;position:relative;line-height:1}
-.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
-.tn-cats{border-top:var(--border)}
-.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
-.tn-cats-inner::-webkit-scrollbar{display:none}
-.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
-.tn-cat:hover{color:var(--black)}
-.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
+/* HERO */
+.hero{background:var(--black);color:var(--white);padding:48px 24px;text-align:center}
+.hero-tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:12px}
+.hero h1{font-size:48px;font-weight:300;letter-spacing:-.02em;line-height:1;margin-bottom:10px}
+.hero h1 strong{font-weight:700}
+.hero-sub{font-size:14px;color:rgba(255,255,255,.5)}
+.hero-count{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:10px}
+.hero.cat-mode{padding:36px 24px}
+.hero.cat-mode h1{font-size:38px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.hero.cat-mode h1 .hero-emoji{font-size:48px;line-height:1}
 
-/* ── GLOBAL BUTTONS ── */
-.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
-.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
-.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
-.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
-.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
-.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
+/* SUB-CAT TABS (Lazada-style) */
+#subcat-tabs-inner::-webkit-scrollbar{display:none}
+.subcat-tab{padding:13px 18px;font-size:13px;font-weight:500;color:var(--g500);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.subcat-tab:hover{color:var(--black)}
+.subcat-tab.on{color:var(--black);border-bottom-color:var(--red);font-weight:600}
 
-/* old btn-primary / btn-secondary overrides */
-.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.btn-primary:hover{background:var(--g800)!important}
-.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
+/* LAYOUT */
+.layout{max-width:1280px;margin:0 auto;padding:28px 24px;display:grid;grid-template-columns:240px 1fr;gap:28px}
 
-/* legacy btn-cart / btn-buy → new style */
-.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
-.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
-.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
-.btn-buy:hover{background:var(--g800)!important}
-.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
-.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
+/* SIDEBAR FILTERS */
+.filters{height:fit-content;position:sticky;top:95px}
+.filter-group{margin-bottom:24px}
+.filter-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--g500);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.filter-clear{font-size:9px;text-decoration:underline;cursor:pointer;letter-spacing:.04em;color:var(--g400);transition:color .15s}.filter-clear:hover{color:var(--black)}
+.range-inputs{display:flex;gap:8px;align-items:center}
+.range-inp{flex:1;padding:8px 10px;border:var(--border);font-size:13px;font-family:var(--mono);outline:none;transition:border-color .15s}.range-inp:focus{border-color:var(--black)}
+.sort-sel{width:100%;padding:9px 12px;border:var(--border);font-size:13px;font-family:var(--font);outline:none;cursor:pointer;background:var(--white);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23737373' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.cat-list{display:flex;flex-direction:column;gap:2px}
+.cat-filter-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;cursor:pointer;transition:background .15s;font-size:13px;border-left:2px solid transparent}
+.cat-filter-item:hover{background:var(--g50)}.cat-filter-item.on{background:var(--g50);border-left-color:var(--red);font-weight:500}
+.cat-filter-count{font-family:var(--mono);font-size:10px;color:var(--g400)}
+.apply-filter-btn{width:100%;padding:10px;background:var(--black);color:var(--white);border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .15s}.apply-filter-btn:hover{background:var(--g800)}
 
-/* ── CARDS ── */
-.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
-.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
+/* PRODUCTS GRID */
+.products-area{min-height:400px}
+.products-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.products-count{font-family:var(--mono);font-size:11px;color:var(--g400);letter-spacing:.04em;text-transform:uppercase}
+.view-toggle{display:flex;gap:0;border:var(--border)}
+.vt-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--white);border:none;color:var(--g400);font-size:14px;transition:all .15s}
+.vt-btn.on{background:var(--black);color:var(--white)}
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0}
+.prod-card{border:var(--border);margin:-1px 0 0 -1px;cursor:pointer;transition:all .15s;background:var(--white);display:flex;flex-direction:column}
+.prod-card:hover{border-color:var(--black);z-index:1;position:relative}
+.prod-img-wrap{aspect-ratio:1;background:var(--g50);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;font-size:48px}
+.prod-img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.prod-card:hover .prod-img{transform:scale(1.04)}
+.prod-badge{position:absolute;top:8px;left:8px;background:var(--red);color:var(--white);font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:3px 7px;text-transform:uppercase}
+.prod-info{padding:14px;flex:1;display:flex;flex-direction:column}
+.prod-name{font-size:13.5px;font-weight:500;margin-bottom:4px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.prod-cat{font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--g400);margin-bottom:8px}
+.prod-price{font-family:var(--mono);font-size:16px;font-weight:500;color:var(--black);margin-top:auto}
+.prod-price-orig{font-family:var(--mono);font-size:11px;color:var(--g400);text-decoration:line-through;margin-left:6px}
+.prod-disc{font-family:var(--mono);font-size:10px;color:var(--red);margin-left:4px}
+.prod-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.prod-stock{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
+.prod-cart-btn{width:28px;height:28px;border:var(--border-dark);background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:all .15s}
+.prod-cart-btn:hover{background:var(--black);color:var(--white)}
 
-/* ── SECTION ── */
-.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
-.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
-.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
-.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
-.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
-.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
+/* LIST VIEW */
+.prod-list{display:flex;flex-direction:column;border:var(--border)}
+.prod-list-item{display:flex;gap:0;border-bottom:var(--border);cursor:pointer;transition:background .15s}
+.prod-list-item:last-child{border-bottom:none}
+.prod-list-item:hover{background:var(--g50)}
+.prod-list-img{width:100px;flex-shrink:0;background:var(--g50);display:flex;align-items:center;justify-content:center;font-size:36px;border-right:var(--border);overflow:hidden}
+.prod-list-img img{width:100%;height:100%;object-fit:cover}
+.prod-list-info{flex:1;padding:16px 20px;display:flex;align-items:center;gap:20px}
+.prod-list-name{flex:1;font-size:14px;font-weight:500;line-height:1.4}
+.prod-list-price{font-family:var(--mono);font-size:16px;font-weight:500;flex-shrink:0}
 
-/* ── PRODUCT CARDS ── */
-.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
-.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
-.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
-.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
-.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
-.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
-.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
-.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
-.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
-.badge-hot{background:var(--black)!important;color:var(--white)!important}
+/* SKELETON */
+.skeleton{background:linear-gradient(90deg,var(--g100) 25%,var(--g50) 50%,var(--g100) 75%);background-size:200% 100%;animation:shimmer 1.3s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-/* ── PRICE BOX ── */
-.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
-.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
-.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
-.flash-tag{background:var(--red)!important;border-radius:0!important}
+/* EMPTY */
+.empty{text-align:center;padding:80px 24px;grid-column:1/-1}
+.empty-ico{font-size:56px;margin-bottom:16px}
+.empty-txt{font-size:17px;font-weight:500;margin-bottom:6px}
+.empty-sub{font-size:14px;color:var(--g500);margin-bottom:24px}
 
-/* ── NAV OLD → NEW ── */
-.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
-.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
-.nav-search input{border:var(--border)!important;border-radius:0!important}
-.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
-.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
-.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
-.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
-.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
-.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
-.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;gap:6px;padding:32px 0;grid-column:1/-1}
+.page-btn{min-width:36px;height:36px;border:var(--border);background:var(--white);font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0 10px;transition:all .15s}
+.page-btn:hover{border-color:var(--black)}.page-btn.on{background:var(--black);color:var(--white);border-color:var(--black)}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
 
-/* ── FORMS ── */
-.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
-.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
-.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
+/* PRODUCT DETAIL MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:32px 20px;backdrop-filter:blur(4px)}
+.modal-bg.on{display:flex}
+.modal-card{background:var(--white);width:900px;max-width:100%;margin:auto;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+.modal-imgs{background:var(--g50);display:flex;flex-direction:column}
+.modal-main-img{aspect-ratio:1;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:80px;border-bottom:var(--border)}
+.modal-main-img img{width:100%;height:100%;object-fit:contain}
+.modal-thumbs{display:flex;gap:0;overflow-x:auto;border-bottom:var(--border)}
+.modal-thumb{width:70px;height:70px;flex-shrink:0;overflow:hidden;cursor:pointer;border-right:var(--border);opacity:.6;transition:opacity .15s;display:flex;align-items:center;justify-content:center}
+.modal-thumb:hover,.modal-thumb.on{opacity:1}
+.modal-thumb img{width:100%;height:100%;object-fit:cover}
+.modal-info{padding:28px;display:flex;flex-direction:column;overflow-y:auto;max-height:80vh}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--white);border:var(--border-dark);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:1;transition:all .15s}
+.modal-close:hover{background:var(--black);color:var(--white)}
+.modal-cat{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g400);margin-bottom:8px}
+.modal-name{font-size:22px;font-weight:600;line-height:1.3;margin-bottom:8px}
+.modal-price{font-family:var(--mono);font-size:28px;font-weight:500;margin-bottom:4px}
+.modal-compare{font-family:var(--mono);font-size:14px;color:var(--g400);text-decoration:line-through}
+.modal-desc{font-size:13px;color:var(--g600);line-height:1.8;margin:16px 0;flex:1}
+.modal-stock{font-family:var(--mono);font-size:11px;color:var(--g500);margin-bottom:16px;letter-spacing:.04em}
+.qty-row{display:flex;align-items:center;gap:0;border:var(--border-dark);width:fit-content;margin-bottom:16px}
+.qty-btn{width:36px;height:36px;background:var(--white);border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;font-family:var(--font)}
+.qty-btn:hover{background:var(--g100)}.qty-display{width:48px;text-align:center;font-family:var(--mono);font-size:15px;font-weight:500;border-left:var(--border);border-right:var(--border);padding:8px 0}
+.modal-cart-btn{width:100%;padding:13px;background:var(--black);color:var(--white);border:none;font-family:var(--font);font-size:13px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:background .15s;margin-bottom:8px}.modal-cart-btn:hover{background:var(--red)}
+.modal-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{padding:3px 10px;border:var(--border);font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;transition:all .15s}.tag:hover{border-color:var(--black);color:var(--black)}
 
-/* ── STATUS / BADGE ── */
-.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
-.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
-.status-badge,.badge{border-radius:0!important}
+/* NO CONFIG */
+.no-config{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--black);color:var(--white);text-align:center;padding:24px;display:none}
 
-/* ── TABLES ── */
-table{border-collapse:collapse}
-thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
-tbody td{border-bottom:var(--border)!important}
-tbody tr:hover td{background:var(--g50)!important}
+/* TOAST */
+.toasts{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999;pointer-events:none}
+.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:13px;border-left:4px solid var(--red);animation:tIn .2s ease;pointer-events:all}
+.toast.ok{border-left-color:var(--green)}
+@keyframes tIn{from{transform:translateY(6px);opacity:0}to{transform:translateY(0);opacity:1}}
 
-/* ── MODALS ── */
-.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
-.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
-.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
+/* FOOTER */
+footer{background:var(--black);padding:32px 24px;margin-top:60px;border-top:var(--border)}
+.footer-inner{max-width:1280px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.footer-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--white)}.footer-logo .dot{color:var(--red)}
+.footer-copy{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.04em}
+.footer-actions{display:flex;gap:12px}
+.footer-link{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.4);text-decoration:none;transition:color .15s}.footer-link:hover{color:var(--white)}
 
-/* ── SIDEBAR (seller) ── */
-.sidebar,.sb{background:var(--black)!important}
-.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
-.sni-badge{background:var(--red)!important}
-.sb-logo-mark{background:var(--red)!important}
-.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
+/* RESPONSIVE */
+@media(max-width:900px){.layout{grid-template-columns:1fr}.filters{position:static;display:none}.modal-card{grid-template-columns:1fr}.modal-imgs{display:none}}
+@media(max-width:600px){.hero h1{font-size:32px}.prod-grid{grid-template-columns:1fr 1fr}.nav-actions .nav-btn:not(.red){display:none}}
 
-/* ── COLORS: strip all gradients/rounded corners ── */
-[style*="background:linear-gradient"]{background:var(--g50)!important}
-[style*="border-radius"]{border-radius:0!important}
+/* ══════════════════════════════════════════════════
+   FILTER SIDEBAR — Clean Divider Style (ref: IKEA)
+   เส้นแบ่งชัด · Pill sort · Minimal checkbox
+══════════════════════════════════════════════════ */
 
-/* ── TOAST ── */
-.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
-.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
-@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-/* ── FOOTER ── */
-#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
-#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
-#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
-#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
-#tm-footer .tf-logo .dot{color:var(--red)}
-#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
-#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
-#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
-#tm-footer .tf-link:hover{color:var(--white)}
-#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
-
-/* ── RESPONSIVE ── */
-@media(max-width:768px){
-  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
-  .tn-links{display:none}
-  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
+/* ── Sort bar (above filter box) ── */
+.sort-bar{
+  display:flex;align-items:center;gap:6px;
+  flex-wrap:wrap;
+  padding:10px 0;
+  margin-bottom:12px;
+  border-bottom:2px solid var(--black);
 }
-@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
+.sort-bar-lbl{
+  font-family:var(--mono);font-size:9px;font-weight:500;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--g400);flex-shrink:0;margin-right:2px;
+}
+.sort-tab{
+  padding:6px 14px;
+  border:1px solid var(--g200);
+  border-radius:999px;
+  font-family:var(--font);font-size:12px;font-weight:500;
+  cursor:pointer;color:var(--g600);
+  background:var(--white);
+  transition:all .15s;white-space:nowrap;
+}
+.sort-tab:hover{border-color:var(--black);color:var(--black)}
+.sort-tab.on{
+  background:var(--black);color:var(--white);
+  border-color:var(--black);
+}
+
+/* ── Active filter tags ── */
+.active-filters{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.active-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 12px;border-radius:999px;
+  background:var(--black);color:var(--white);
+  font-size:12px;cursor:pointer;transition:background .12s;
+}
+.active-tag:hover{background:var(--red)}
+.active-tag-x{font-size:12px;opacity:.6}
+
+/* ── Main filter box ── */
+.filter-box{
+  border:1px solid var(--g200);
+  background:var(--white);
+  overflow:hidden;
+}
+
+/* Filter box header — black full-width bar */
+.filter-box-head{
+  padding:12px 16px;
+  background:var(--black);color:var(--white);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.filter-box-title{
+  font-family:var(--font);font-size:13px;font-weight:600;
+  letter-spacing:.01em;
+}
+.filter-box-reset{
+  font-size:12px;color:rgba(255,255,255,.5);cursor:pointer;
+  background:none;border:none;padding:0;
+  transition:color .12s;
+}
+.filter-box-reset:hover{color:var(--white)}
+
+/* ── Filter section — thick top border like IKEA ── */
+.filter-section{
+  padding:16px 16px 14px;
+  border-top:2px solid var(--g100);
+}
+.filter-section:first-child{border-top:none}
+
+.filter-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
+}
+.filter-head-title{
+  font-family:var(--font);font-size:13px;font-weight:600;
+  color:var(--black);letter-spacing:-.01em;
+}
+.filter-clear-btn{
+  font-size:12px;color:var(--g400);cursor:pointer;
+  background:none;border:none;padding:0;
+  transition:color .12s;text-decoration:underline;
+  text-underline-offset:2px;
+}
+.filter-clear-btn:hover{color:var(--red)}
+
+/* ── Category checkbox items ── */
+.filter-check-list{display:flex;flex-direction:column;gap:0}
+.filter-check-item{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 4px;cursor:pointer;
+  transition:background .1s;user-select:none;
+  border-radius:3px;
+}
+.filter-check-item:hover{background:var(--g50)}
+.filter-check-item.sub{padding-left:20px}
+.filter-check-item.sub .filter-check-label{font-size:12px;color:var(--g500)}
+
+.filter-check-box{
+  width:18px;height:18px;flex-shrink:0;
+  border:1.5px solid var(--g300);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .12s;background:var(--white);
+  border-radius:3px;
+}
+.filter-check-box.on{background:var(--black);border-color:var(--black)}
+.filter-check-tick{display:none;font-size:10px;color:var(--white);font-weight:700;line-height:1}
+.filter-check-box.on .filter-check-tick{display:block}
+.filter-check-label{flex:1;font-size:13px;color:var(--g700);line-height:1.4}
+.filter-check-count{font-family:var(--mono);font-size:11px;color:var(--g300);flex-shrink:0}
+
+/* ── Price range ── */
+.price-inputs{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.range-inp{
+  flex:1;padding:8px 10px;
+  border:1px solid var(--g200);
+  font-size:13px;font-family:var(--font);
+  outline:none;transition:border-color .15s;
+  min-width:0;border-radius:4px;
+}
+.range-inp:focus{border-color:var(--black)}
+.range-inp::placeholder{color:var(--g300)}
+.price-sep{font-size:13px;color:var(--g300);flex-shrink:0}
+
+/* Price quick chips */
+.price-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.price-chip{
+  padding:5px 12px;
+  border:1px solid var(--g200);border-radius:999px;
+  font-size:12px;font-family:var(--font);
+  cursor:pointer;color:var(--g600);background:var(--white);
+  transition:all .12s;white-space:nowrap;
+}
+.price-chip:hover{border-color:var(--black);color:var(--black)}
+.price-chip.on{background:var(--black);color:var(--white);border-color:var(--black)}
+
+/* Price apply button */
+.price-apply-btn{
+  width:100%;padding:9px;
+  background:var(--black);color:var(--white);border:none;
+  font-family:var(--font);font-size:12px;font-weight:500;
+  cursor:pointer;transition:background .12s;border-radius:4px;
+}
+.price-apply-btn:hover{background:var(--g800)}
+
+/* ── Discount pills ── */
+.discount-pills{display:flex;flex-wrap:wrap;gap:6px}
+.discount-pill{
+  padding:6px 14px;
+  border:1px solid var(--g200);border-radius:999px;
+  font-size:12px;font-weight:500;
+  cursor:pointer;color:var(--g600);background:var(--white);
+  transition:all .12s;
+}
+.discount-pill:hover{border-color:var(--red);color:var(--red)}
+.discount-pill.on{background:var(--red);color:var(--white);border-color:var(--red)}
+
+/* ── Service pill column ── */
+.service-pills{display:flex;flex-direction:column;gap:6px}
+.service-pill{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;
+  border:1px solid var(--g200);border-radius:6px;
+  cursor:pointer;transition:all .12s;background:var(--white);
+  font-size:13px;color:var(--g600);user-select:none;
+}
+.service-pill:hover{border-color:var(--black);color:var(--black)}
+.service-pill.on{border-color:var(--black);background:var(--black);color:var(--white)}
+.service-pill-ico{font-size:15px;flex-shrink:0}
+
+/* ── Rating pill column ── */
+.rating-pills{display:flex;flex-direction:column;gap:6px}
+.rating-pill{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;
+  border:1px solid var(--g200);border-radius:6px;
+  cursor:pointer;transition:all .12s;background:var(--white);
+  user-select:none;
+}
+.rating-pill:hover{border-color:var(--black)}
+.rating-pill.on{border-color:var(--black);background:var(--black)}
+.rating-pill.on .rating-pill-lbl{color:var(--white)}
+.rating-stars{
+  color:var(--amber);font-size:14px;
+  letter-spacing:-1px;flex-shrink:0;width:72px;
+}
+.rating-pill-lbl{font-size:12px;color:var(--g500);transition:color .12s}
+
+>
+
+/* ── Account Nav Button & Dropdown ── */
+.nav-btn.account-btn{position:relative}
+.account-dropdown{
+  position:absolute;top:calc(100% + 4px);right:0;
+  background:var(--white);border:1px solid var(--black);
+  min-width:200px;z-index:9999;
+  display:none;flex-direction:column;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+}
+.account-dropdown.open{display:flex}
+.account-dropdown-header{
+  padding:14px 16px;border-bottom:1px solid var(--g200);
+  background:var(--g50);
+}
+.account-dropdown-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px}
+.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
+.account-dropdown-role{
+  display:inline-block;margin-top:5px;
+  padding:2px 8px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.06em;text-transform:uppercase;
+  background:var(--black);color:var(--white);
+}
+.account-dropdown-role.admin{background:var(--red)}
+.account-dropdown-role.seller{background:#2563EB}
+.dropdown-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 16px;font-size:13px;color:var(--g600);
+  cursor:pointer;transition:all .12s;text-decoration:none;border:none;
+  background:none;font-family:var(--font);width:100%;text-align:left;
+}
+.dropdown-item:hover{background:var(--g50);color:var(--black)}
+.dropdown-item.logout{color:var(--red);border-top:1px solid var(--g200)}
+.dropdown-item.logout:hover{background:#FFF5F5}
+.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
+/* Nav account avatar */
+.nav-avatar{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--black);color:var(--white);
+  font-size:11px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+
+
+/* ── Wishlist Heart Button ── */
+.prod-wish{
+  position:absolute;top:8px;right:8px;
+  width:30px;height:30px;
+  background:rgba(255,255,255,.9);
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:all .2s;
+  z-index:2;
+}
+.prod-wish:hover{background:#fff;transform:scale(1.1)}
+.prod-wish.on{
+  color:var(--red);
+  background:#FFF0F0;
+  font-size:18px;
+}
+.prod-wish.on::after{
+  content:'';
+}
+.prod-wish.loading{opacity:.5;pointer-events:none}
+
+
+/* ── Wish button animation ── */
+.prod-wish {
+  transition: all .2s cubic-bezier(.175,.885,.32,1.275) !important;
+}
+.prod-wish.on {
+  color: #E63329 !important;
+  background: #FFF0F0 !important;
+  animation: wishPop .3s ease;
+}
+@keyframes wishPop {
+  0%   { transform: scale(1) }
+  50%  { transform: scale(1.4) }
+  100% { transform: scale(1) }
+}
+
+.ann{background:var(--black);color:var(--white);text-align:center;padding:8px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
+.ann-dot{color:var(--red)}
+
+
+/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
+.ann {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  flex-direction: row !important;
+}
+nav, .nav {
+  width: 100% !important;
+  min-width: 100% !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+
+
+/* ── GLOBAL NAV FIX ── */
+body { display: block !important; }
+.ann {
+  width: 100% !important; min-width: 100% !important;
+  height: auto !important; max-height: 60px !important;
+  display: flex !important; flex-direction: row !important;
+  flex-shrink: 0 !important;
+}
+nav, .nav { 
+  width: 100% !important; display: block !important;
+  height: auto !important; flex-shrink: 0 !important;
+}
+
 </style>
-<style id="page-css">
+<!-- ═══════════════════════════════════════════════════════════════
+     PRODUCT BADGES — UNIFIED COMPACT STYLE (2026-05-04 v3)
+     แก้ปัญหา v2 ที่ override display ทำให้ทุก badge โผล่หมด
+     v3: ใช้ :not([style*="display:none"]) + ไม่ override display
+═══════════════════════════════════════════════════════════════ -->
+<style id="tm-product-badges-fix">
+/* ── Master rule: ทุก badge บนรูปสินค้า = แถบเล็ก uniform ── 
+   หมายเหตุ: ไม่ override display เพื่อให้ inline style display:none ทำงาน */
+.flash-tag-img,
+.authentic-tag,
+.discount-tag,
+.badge-custom,
+.flash-tag{
+  /* Sizing - แถบเล็ก */
+  font-family:'DM Mono',monospace !important;
+  font-size:10px !important;
+  font-weight:700 !important;
+  letter-spacing:.04em !important;
+  text-transform:uppercase !important;
+  color:#fff !important;
+  padding:3px 8px !important;
+  border-radius:3px !important;
+  line-height:1.2 !important;
+  width:auto !important;
+  height:auto !important;
+  max-width:fit-content !important;
+  min-width:0 !important;
+  white-space:nowrap !important;
+  z-index:5 !important;
+  box-shadow:0 1px 2px rgba(0,0,0,.15) !important;
+  /* ห้าม set display เพื่อให้ JS toggle ได้ */
+  align-items:center;
+  gap:3px;
+}
 
-:root{--primary:#0A0A0A;--accent:#E63329;--teal:#404040;--gold:#F2F2F2;--bg:#FFFFFF;--white:#fff;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;--r8:8px;--r12:12px;--r16:16px}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);font-size:14px}
-.nav{background:var(--primary);position:sticky;top:0;z-index:100}
-.nav-inner{display:flex;align-items:center;gap:12px;padding:11px 20px;max-width:1280px;margin:0 auto}
-.nav-logo{font-family:'DM Sans',sans-serif;font-weight:900;font-size:20px;color:#fff}.nav-logo span{color:var(--accent)}
-.nav-search{flex:1;max-width:500px;position:relative}
-.nav-search input{width:100%;padding:8px 40px 8px 36px;border:none;border-radius:2px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
-.ns-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--g400)}
-.ns-btn{position:absolute;right:0;top:0;bottom:0;background:var(--accent);color:#fff;border:none;padding:0 14px;border-radius:0 2px 2px 0;font-size:12px;cursor:pointer}
-.nav-actions{margin-left:auto;display:flex;gap:8px}
-.nav-btn{padding:6px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:2px;color:rgba(255,255,255,0.75);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
-.nav-btn:hover{background:rgba(255,255,255,0.15);color:#fff}
-/* BREADCRUMB */
-.breadcrumb{max-width:1280px;margin:12px auto 0;padding:0 16px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--g400)}
-.bc-sep{color:var(--g400)}
-.bc-cur{color:var(--g700);font-weight:500}
-/* CATEGORY HERO */
-.cat-hero{background:linear-gradient(135deg,#7F77DD 0%,#534AB7 100%);padding:24px 0 0}
-.ch-inner{max-width:1280px;margin:0 auto;padding:0 16px;display:flex;align-items:flex-end;gap:20px}
-.ch-text{padding-bottom:20px}
-.ch-tag{background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);font-size:11px;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px}
-.ch-title{font-family:'DM Sans',sans-serif;font-weight:900;font-size:36px;color:#fff;margin-bottom:4px;line-height:1.1}
-.ch-sub{font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:14px}
-.ch-stats{display:flex;gap:16px}
-.chs{text-align:center;background:rgba(255,255,255,0.1);padding:8px 14px;border-radius:2px}
-.chs-v{font-family:'DM Sans',sans-serif;font-size:18px;font-weight:700;color:#fff}
-.chs-l{font-size:10px;color:rgba(255,255,255,0.5);margin-top:1px}
-.ch-emoji{font-size:90px;line-height:1;margin-bottom:-4px;opacity:0.7}
-/* SUBCATEGORIES */
-.subcat-row{background:#fff;border-bottom:1px solid var(--g200);overflow-x:auto;scrollbar-width:none}
-.subcat-row::-webkit-scrollbar{display:none}
-.sr-inner{max-width:1280px;margin:0 auto;padding:0 16px;display:flex;gap:0}
-.sc-item{display:flex;align-items:center;gap:7px;padding:12px 16px;cursor:pointer;color:var(--g500);font-size:13px;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s;flex-shrink:0}
-.sc-item:hover{color:var(--g900)}
-.sc-item.active{color:#534AB7;border-bottom-color:#534AB7;font-weight:600}
-.sc-count{font-size:10px;background:var(--g100);color:var(--g500);padding:1px 6px;border-radius:10px}
-/* MAIN LAYOUT */
-.page-layout{max-width:1280px;margin:16px auto;padding:0 16px;display:grid;grid-template-columns:220px 1fr;gap:16px}
-/* SIDEBAR */
-.sidebar{background:var(--white);border:1px solid var(--g200);border-radius:4px;padding:16px;height:fit-content;position:sticky;top:60px}
-.sb-title{font-size:13px;font-weight:700;color:var(--g900);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
-.sb-clear{font-size:11px;color:var(--accent);cursor:pointer;font-weight:400}
-.sb-sec{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--g100)}
-.sb-sec:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-.sb-sec-title{font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:9px}
-.sb-opt{display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;font-size:12.5px;color:var(--g700)}
-.sb-opt input{accent-color:#534AB7;cursor:pointer}
-.sb-cnt{font-size:10px;color:var(--g400);margin-left:auto}
-.price-inputs{display:flex;gap:6px;margin-top:6px}
-.pi{flex:1;padding:6px 8px;border:1px solid var(--g200);border-radius:2px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;text-align:center}
-.pi:focus{border-color:#534AB7}
-.apply-btn{width:100%;margin-top:7px;padding:7px;background:#534AB7;color:#fff;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
-/* RESULTS */
-.results-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.rb-count{font-size:13px;color:var(--g500)}
-.sort-btns{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
-.sort-btn{padding:6px 12px;border:1px solid var(--g200);border-radius:20px;font-size:12px;cursor:pointer;background:#fff;color:var(--g700);font-family:'DM Sans',sans-serif;transition:all 0.15s}
-.sort-btn:hover{border-color:#534AB7;color:#534AB7}
-.sort-btn.active{background:#534AB7;border-color:#534AB7;color:#fff}
-.active-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.at{display:flex;align-items:center;gap:4px;background:#EDE9FE;color:#5B21B6;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
-.at-x{cursor:pointer;font-size:13px}
-/* PRODUCT GRID */
-.prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.prod-card{background:#fff;border-radius:4px;overflow:hidden;cursor:pointer;transition:all 0.2s;border:1px solid var(--g200);position:relative}
-.prod-card:hover{box-shadow:0 5px 18px rgba(0,0,0,0.09);transform:translateY(-2px);border-color:transparent}
-.pc-badges{position:absolute;top:8px;left:8px;z-index:2;display:flex;flex-direction:column;gap:3px}
-.badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;width:fit-content}
-.b-new{background:#DBEAFE;color:#1D4ED8}
-.b-sale{background:#FEE2E2;color:#B91C1C}
-.b-hot{background:#FEF3C7;color:#92400E}
-.b-fs{background:var(--accent);color:#fff}
-.wl-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;background:rgba(255,255,255,0.9);border-radius:50%;font-size:13px;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;z-index:2}
-.pc-img{height:150px;display:flex;align-items:center;justify-content:center;font-size:58px}
-.pc-body{padding:10px 12px 12px}
-.pc-name{font-size:12.5px;font-weight:600;color:var(--g900);line-height:1.4;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.pc-shop{font-size:10px;color:var(--g400);margin-bottom:4px;display:flex;align-items:center;gap:4px}
-.verified{font-size:9px;background:#DCFCE7;color:#15803D;padding:1px 5px;border-radius:3px;font-weight:600}
-.pc-rating{display:flex;align-items:center;gap:4px;margin-bottom:5px}
-.stars{color:#FBBF24;font-size:11px}
-.rc{font-size:10px;color:var(--g400)}
-.pc-price-row{display:flex;align-items:baseline;gap:5px;margin-bottom:4px;flex-wrap:wrap}
-.price{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:800;color:var(--accent)}
-.price-old{font-size:11px;color:var(--g400);text-decoration:line-through}
-.price-disc{font-size:9px;background:#FEE2E2;color:var(--accent);padding:1px 4px;border-radius:3px;font-weight:700}
-.tags-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px}
-.tag-sm{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500}
-.t-free{background:#DCFCE7;color:#15803D}
-.t-install{background:#DBEAFE;color:#1D4ED8}
-.t-pay0{background:#EDE9FE;color:#5B21B6}
-.btn-cart{width:100%;padding:7px;background:var(--primary);color:#fff;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:background 0.2s}
-.btn-cart:hover{background:#534AB7}
-.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:24px}
-.pg{width:36px;height:36px;border:1px solid var(--g200);border-radius:2px;background:#fff;cursor:pointer;font-size:13px;color:var(--g700);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
-.pg:hover{border-color:#534AB7;color:#534AB7}
-.pg.active{background:#534AB7;border-color:#534AB7;color:#fff}
-.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999}
-.toast{background:var(--primary);color:#fff;padding:11px 16px;border-radius:4px;font-size:13px;animation:tIn 0.3s ease}
-@keyframes tIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* ── Background colors per type ── */
+.flash-tag-img,
+.flash-tag{ background:#E63329 !important; }      /* flash = red */
+.authentic-tag{ background:#16A34A !important; }   /* authentic = green */
+.discount-tag{ background:#0A0A0A !important; }    /* discount = black */
+.badge-custom{ background:#F59E0B !important; }    /* custom = orange */
 
+/* ── Position absolute when JS shows them (display becomes block/inline-flex) ── */
+.gallery-main .flash-tag-img{
+  position:absolute !important;
+  top:10px !important; left:10px !important;
+  right:auto !important; bottom:auto !important;
+}
+.gallery-main .authentic-tag{
+  position:absolute !important;
+  top:10px !important; right:10px !important;
+  left:auto !important; bottom:auto !important;
+}
+.gallery-main .discount-tag{
+  position:absolute !important;
+  top:38px !important; left:10px !important;
+  right:auto !important; bottom:auto !important;
+}
+.gallery-main .badge-custom{
+  position:absolute !important;
+  bottom:10px !important; left:10px !important;
+  top:auto !important; right:auto !important;
+}
+
+/* ── Inline badges in flash-row / price-box ── */
+.flash-row .flash-tag,
+.price-box .flash-tag{
+  position:static !important;
+}
+
+/* ── price-save = subtle gray, exclude from forced colors ── */
+.price-save{
+  background:transparent !important;
+  color:var(--g600,#525252) !important;
+  font-size:11px !important;
+  text-transform:none !important;
+  padding:0 !important;
+  box-shadow:none !important;
+  font-family:'DM Sans',sans-serif !important;
+  letter-spacing:0 !important;
+  font-weight:500 !important;
+}
+
+/* ── Children of badges keep parent font-size ── */
+.flash-tag-img *,
+.authentic-tag *,
+.discount-tag *,
+.badge-custom *{
+  font-size:inherit !important;
+  line-height:inherit !important;
+  background:none !important;
+  padding:0 !important;
+  margin:0 !important;
+}
 </style>
-<style id="tm-responsive">
-/* ── Mobile fixes ── */
-@media(max-width:768px){
-  .tn-links{display:none!important}
-  .tn-srch{display:none!important}
-  /* hamburger hint */
-  .tn-top{padding:0 16px}
-  .tn-logo{margin-right:auto}
-  /* sidebar pages on mobile */
-  .app{flex-direction:column}
-  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
-  .sb-logo,.sb-user{flex-basis:100%}
-  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
-  .sb-lbl{display:none}
-  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
-  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
-  .sb-foot{display:none}
-  .main{margin-left:0!important}
-  /* layout grids */
-  .layout{grid-template-columns:1fr!important}
-  .form-row{grid-template-columns:1fr!important}
-  /* tables */
-  table{font-size:12px}
-  td,th{padding:8px 10px!important}
-  /* stat grids */
-  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  [style*="grid-template-columns:repeat(3"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* hero */
-  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
-  .hero-right{display:none}
-  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
-  /* product grids */
-  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* footer */
-  #tm-footer .tf-grid{grid-template-columns:1fr!important}
-  /* wrap padding */
-  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
-}
-@media(max-width:480px){
-  .hero-h1{font-size:36px!important}
-  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
-  .hero-stat-row{grid-template-columns:1fr 1fr}
-}
-/* ── Print friendly ── */
-@media print{
-  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
-  body{font-size:12px}
-}
-/* ── Focus / accessibility ── */
-a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
-  outline:2px solid #0A0A0A;outline-offset:2px
-}
-/* ── Smooth image loading ── */
-img{max-width:100%;height:auto}
-/* ── Selection color ── */
-::selection{background:#0A0A0A;color:#fff}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script>
-window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
-window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
-window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
-</script>
 </head>
 <body>
-<nav id="tm-nav">
-  <div class="tn-top">
-    <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
-    <div class="tn-links">
-      <a href="flash-sale.html" class="tn-link">Flash Sale</a>
-      <a href="live-shopping.html" class="tn-link">Live</a>
-      <a href="brand-day.html" class="tn-link">Brand Day</a>
-      <a href="coupon-hub.html" class="tn-link">Coupon</a>
-      <a href="loyalty-catalog.html" class="tn-link">Loyalty</a>
-      <a href="subscription.html" class="tn-link">TM Plus</a>
-      <a href="b2b-portal.html" class="tn-link">B2B</a>
-      <a href="sitemap.html" class="tn-link" style="margin-left:auto;color:var(--g400)">All Pages</a>
+
+<!-- NO CONFIG -->
+<div id="no-config" class="no-config">
+  <div>
+    <div style="font-size:48px;margin-bottom:16px">⚙️</div>
+    <h2 style="font-size:22px;font-weight:300;margin-bottom:8px">ยังไม่ได้ตั้งค่า</h2>
+    <p style="font-size:14px;color:rgba(255,255,255,.5);margin-bottom:24px">กรอก Supabase URL และ API Key ก่อน</p>
+    <a href="setup.html" style="padding:12px 24px;background:var(--red);color:var(--white);font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none">ตั้งค่าที่นี่ →</a>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="ann">
+  <span><span class="ann-dot">·</span> ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500</span>
+  <span><span class="ann-dot">·</span> FLASH SALE ทุกวัน 10:00 / 14:00 / 20:00</span>
+  <span><span class="ann-dot">·</span> รับคูปองใหม่ทุกวัน</span>
+</div>
+<nav id="nav">
+  <div class="nav-top">
+    <a href="index.html" class="nav-logo">Thailand<span class="dot">.</span>Market</a>
+    <div class="nav-search">
+      <span class="nav-search-ico">🔍</span>
+      <input type="text" class="nav-search-inp" id="search-inp" placeholder="ค้นหาสินค้า บริการ..." oninput="onSearch()">
     </div>
-    <div class="tn-search">
-      <input type="text" placeholder="ค้นหาสินค้า..." onkeydown="if(event.key==='Enter')location.href='search.html'">
-    </div>
-    <div class="tn-acts">
-      <button class="tn-btn" onclick="location.href='wishlist.html'"><span class="tn-ico">♡</span>Saved</button>
-      <button class="tn-btn" onclick="location.href='notification-center.html'"><span class="tn-ico">🔔</span>Alerts</button>
-      <button class="tn-btn" onclick="location.href='checkout.html'"><span class="tn-ico">🛒<span class="tn-dot">3</span></span>Cart</button>
-      <button class="tn-btn" onclick="location.href='profile.html'"><span class="tn-ico">👤</span>Account</button>
-      <button class="tn-btn sell" onclick="location.href='seller-portal.html'"><span class="tn-ico">🏪</span>Sell</button>
+    <div class="nav-actions" style="display:flex;align-items:center;gap:8px">
+      <!-- Account Button + Dropdown -->
+      <div style="position:relative">
+        <button class="nav-btn account-btn" id="account-nav-btn" style="display:flex;align-items:center;gap:6px">
+          <span id="account-ico">👤</span>
+          <span id="account-lbl" style="font-size:11px">Account</span>
+        </button>
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-dropdown-header">
+            <div class="account-dropdown-name" id="dd-name">กำลังโหลด...</div>
+            <div class="account-dropdown-email" id="dd-email"></div>
+            <span class="account-dropdown-role" id="dd-role">Member</span>
+          </div>
+          <a href="profile.html" class="dropdown-item"><span class="dropdown-item-ico">👤</span>โปรไฟล์</a>
+          <a href="order-history.html" class="dropdown-item"><span class="dropdown-item-ico">📦</span>คำสั่งซื้อ</a>
+          <a href="wishlist.html" class="dropdown-item"><span class="dropdown-item-ico">❤️</span>รายการโปรด</a>
+          <a href="seller-portal.html" class="dropdown-item" id="dd-seller" style="display:none"><span class="dropdown-item-ico">🏪</span>Seller Portal</a>
+          <a href="admin-cms.html" class="dropdown-item" id="dd-admin" style="display:none"><span class="dropdown-item-ico">⚙️</span>Admin CMS</a>
+          <button class="dropdown-item logout" id="dd-logout"><span class="dropdown-item-ico">🚪</span>ออกจากระบบ</button>
+        </div>
+      </div>
+      <button class="nav-btn red" onclick="showCart()" id="cart-btn">🛒 ตะกร้า <span id="cart-count">0</span></button>
     </div>
   </div>
-  <div class="tn-cats">
-    <div class="tn-cats-inner">
-      <a href="category.html" class="tn-cat">🏠 Home</a>
-      <a href="category.html" class="tn-cat">👗 Fashion</a>
-      <a href="category.html" class="tn-cat">💄 Beauty</a>
-      <a href="category.html" class="tn-cat">🛒 FMCG</a>
-      <a href="category.html" class="tn-cat">💻 Tech</a>
-      <a href="category.html" class="tn-cat">🚗 Auto</a>
-      <a href="category.html" class="tn-cat">🐾 Pets</a>
-      <a href="category.html" class="tn-cat">📚 Education</a>
+  <div class="cat-bar">
+    <div class="cat-bar-inner" id="cat-bar">
+      <button class="cat-item on" onclick="filterCat(this,'')">ทั้งหมด</button>
     </div>
   </div>
 </nav>
 
-
-
-
-
-
-
-
-
-
-
-<div class="breadcrumb" style="max-width:1280px;margin:12px auto 0;padding:0 20px">
-  <a href="index.html" style="color:var(--g400);text-decoration:none">หน้าแรก</a>
-  <span class="bc-sep">›</span>
-  <span class="bc-cur">บ้านและเฟอร์นิเจอร์</span>
+<!-- BREADCRUMB (visible only when entered with ?slug=...) -->
+<div id="breadcrumb-bar" style="display:none;max-width:1280px;margin:0 auto;padding:14px 24px 0;font-size:12px;color:var(--g500)">
+  <a href="index.html" style="color:var(--g500);text-decoration:none">หน้าแรก</a>
+  <span style="margin:0 8px;color:var(--g300)">›</span>
+  <span id="bc-current" style="color:var(--black);font-weight:500">หมวดหมู่</span>
 </div>
 
-<div class="cat-hero">
-  <div class="ch-inner">
-    <div class="ch-text">
-      <div class="ch-tag">🏠 หมวดหมู่หลัก</div>
-      <div class="ch-title">🏠 บ้าน &<br>เฟอร์นิเจอร์</div>
-      <div class="ch-sub">เฟอร์นิเจอร์, ของแต่งบ้าน, เครื่องใช้ไฟฟ้า, วัสดุก่อสร้าง</div>
-      <div class="ch-stats">
-        <div class="chs"><div class="chs-v">48K+</div><div class="chs-l">สินค้า</div></div>
-        <div class="chs"><div class="chs-v">2.4K</div><div class="chs-l">ร้านค้า</div></div>
-        <div class="chs"><div class="chs-v">ถึงบ้าน</div><div class="chs-l">บริการติดตั้ง</div></div>
-      </div>
+<!-- HERO -->
+<div class="hero" id="hero">
+  <div class="hero-tag" id="hero-tag">Thailand Market Live</div>
+  <h1 id="hero-title">สินค้า<strong>ทั้งหมด</strong></h1>
+  <p class="hero-sub" id="hero-sub">ดึงข้อมูลจาก Supabase แบบ Real-time</p>
+  <div class="hero-count" id="hero-count">กำลังโหลด...</div>
+</div>
+
+<!-- SUB-CATEGORY TABS (shown only when viewing a root category) -->
+<div id="subcat-tabs" style="display:none;background:var(--white);border-bottom:var(--border)">
+  <div style="max-width:1280px;margin:0 auto;padding:0 24px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none">
+    <div id="subcat-tabs-inner" style="display:flex;gap:0">
+      <!-- populated by JS -->
     </div>
-    <div class="ch-emoji">🛋️</div>
   </div>
 </div>
 
-<div class="subcat-row">
-  <div class="sr-inner">
-    <div class="sc-item active" onclick="selSub(this)">ทั้งหมด <span class="sc-count">48,200</span></div>
-    <div class="sc-item" onclick="selSub(this)">🛋️ โซฟา & ที่นั่ง <span class="sc-count">3,240</span></div>
-    <div class="sc-item" onclick="selSub(this)">🛏️ เตียง & ที่นอน <span class="sc-count">2,180</span></div>
-    <div class="sc-item" onclick="selSub(this)">🚿 ห้องน้ำ <span class="sc-count">4,820</span></div>
-    <div class="sc-item" onclick="selSub(this)">🍳 ครัว <span class="sc-count">5,640</span></div>
-    <div class="sc-item" onclick="selSub(this)">💡 แสงสว่าง <span class="sc-count">2,840</span></div>
-    <div class="sc-item" onclick="selSub(this)">🌿 ต้นไม้ & ของแต่งบ้าน <span class="sc-count">6,210</span></div>
-    <div class="sc-item" onclick="selSub(this)">🔧 ช่างและวัสดุ <span class="sc-count">8,420</span></div>
-    <div class="sc-item" onclick="selSub(this)">❄️ เครื่องใช้ไฟฟ้า <span class="sc-count">3,840</span></div>
+<!-- MAIN -->
+<div class="layout" id="main-layout">
+  <!-- FILTERS -->
+  <aside class="filters" id="filters-sidebar" style="width:240px;min-width:200px;display:flex;flex-direction:column;gap:0">
+
+    <!-- Active filter tags -->
+    <div id="active-filters" class="active-filters" style="display:none"></div>
+
+    <!-- ══ SORT PILLS ══ -->
+    <div class="sort-bar">
+      <span class="sort-bar-lbl">เรียง</span>
+      <button class="sort-tab on" onclick="setSort('created_at-desc',this)">ใหม่สุด</button>
+      <button class="sort-tab" onclick="setSort('pop',this)">ขายดี</button>
+      <button class="sort-tab" onclick="setSort('price-asc',this)">ราคา ↑</button>
+      <button class="sort-tab" onclick="setSort('price-desc',this)">ราคา ↓</button>
+      <button class="sort-tab" onclick="setSort('rating',this)">★ คะแนน</button>
+    </div>
+
+    <!-- ══ FILTER BOX ══ -->
+    <div class="filter-box">
+
+      <!-- Header -->
+      <div class="filter-box-head">
+        <div class="filter-box-title">กรองสินค้า</div>
+        <button class="filter-box-reset" onclick="resetAllFilters()">ล้างทั้งหมด ✕</button>
+      </div>
+
+      <!-- หมวดหมู่ -->
+      <div class="filter-section">
+        <div class="filter-head">
+          <div class="filter-head-title">หมวดหมู่</div>
+          <button class="filter-clear-btn" onclick="clearCat()">ล้าง</button>
+        </div>
+        <div id="cat-list-sidebar" class="filter-check-list">
+          <div style="font-size:12px;color:var(--g400);padding:2px 4px">กำลังโหลด...</div>
+        </div>
+      </div>
+
+      <!-- ช่วงราคา -->
+      <div class="filter-section">
+        <div class="filter-head">
+          <div class="filter-head-title">ช่วงราคา (฿)</div>
+          <button class="filter-clear-btn" onclick="clearPrice()">ล้าง</button>
+        </div>
+        <div class="price-inputs">
+          <input type="number" class="range-inp" id="min-price" placeholder="ต่ำสุด" min="0">
+          <span class="price-sep">—</span>
+          <input type="number" class="range-inp" id="max-price" placeholder="สูงสุด" min="0">
+        </div>
+        <div class="price-chips" id="price-chips">
+          <button class="price-chip" onclick="setPrice(0,500,this)">ต่ำกว่า ฿500</button>
+          <button class="price-chip" onclick="setPrice(500,1000,this)">฿500–1K</button>
+          <button class="price-chip" onclick="setPrice(1000,5000,this)">฿1K–5K</button>
+          <button class="price-chip" onclick="setPrice(5000,0,this)">฿5K+</button>
+        </div>
+        <button class="price-apply-btn" onclick="loadProds()">ตกลง</button>
+      </div>
+
+      <!-- แบรนด์ -->
+      <div class="filter-section">
+        <div class="filter-head">
+          <div class="filter-head-title">แบรนด์</div>
+          <button class="filter-clear-btn" onclick="clearBrands()">ล้าง</button>
+        </div>
+        <div id="brand-filter-list" class="filter-check-list">
+          <div style="font-size:12px;color:var(--g400);padding:2px 4px">กำลังโหลด...</div>
+        </div>
+      </div>
+
+      <!-- ส่วนลด -->
+      <div class="filter-section">
+        <div class="filter-head">
+          <div class="filter-head-title">ส่วนลด</div>
+        </div>
+        <div class="discount-pills">
+          <button class="discount-pill" onclick="toggleDiscountPill(this,'10')">10%+</button>
+          <button class="discount-pill" onclick="toggleDiscountPill(this,'20')">20%+</button>
+          <button class="discount-pill" onclick="toggleDiscountPill(this,'30')">30%+</button>
+          <button class="discount-pill" onclick="toggleDiscountPill(this,'50')">50%+</button>
+        </div>
+      </div>
+
+      <!-- บริการ -->
+      <div class="filter-section">
+        <div class="filter-head">
+          <div class="filter-head-title">บริการ</div>
+        </div>
+        <div class="service-pills">
+          <div class="service-pill" onclick="toggleServicePill(this,'free_ship')">
+            <span class="service-pill-ico">🚚</span><span>ส่งฟรี</span>
+          </div>
+          <div class="service-pill" onclick="toggleServicePill(this,'flash')">
+            <span class="service-pill-ico">⚡</span><span>Flash Sale</span>
+          </div>
+          <div class="service-pill" onclick="toggleServicePill(this,'featured')">
+            <span class="service-pill-ico">⭐</span><span>สินค้าแนะนำ</span>
+          </div>
+          <div class="service-pill" onclick="toggleServicePill(this,'verified')">
+            <span class="service-pill-ico">✅</span><span>ร้านค้ายืนยัน</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- คะแนนรีวิว -->
+      <div class="filter-section">
+        <div class="filter-head">
+          <div class="filter-head-title">คะแนนรีวิว</div>
+          <button class="filter-clear-btn" onclick="clearRating()">ล้าง</button>
+        </div>
+        <div class="rating-pills">
+          <div class="rating-pill" onclick="setRatingPill(this,5)">
+            <div class="rating-stars">★★★★★</div>
+            <div class="rating-pill-lbl">5 ดาว</div>
+          </div>
+          <div class="rating-pill" onclick="setRatingPill(this,4)">
+            <div class="rating-stars">★★★★☆</div>
+            <div class="rating-pill-lbl">4+ ดาว</div>
+          </div>
+          <div class="rating-pill" onclick="setRatingPill(this,3)">
+            <div class="rating-stars">★★★☆☆</div>
+            <div class="rating-pill-lbl">3+ ดาว</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /filter-box -->
+  </aside>
+
+  <!-- PRODUCTS -->
+  <div class="products-area">
+    <div class="products-header">
+      <div class="products-count" id="prod-count">กำลังโหลด...</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="view-toggle">
+          <button class="vt-btn on" id="vt-grid" onclick="setView('grid')" title="Grid">⊞</button>
+          <button class="vt-btn" id="vt-list" onclick="setView('list')" title="List">☰</button>
+        </div>
+      </div>
+    </div>
+    <div id="prod-grid" class="prod-grid"></div>
+    <div id="pagination" class="pagination" style="display:none"></div>
   </div>
 </div>
 
-<div class="page-layout">
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="sb-title">ตัวกรอง <span class="sb-clear" onclick="toast('🔄 ล้างตัวกรอง')">ล้างทั้งหมด</span></div>
-    <div class="sb-sec">
-      <div class="sb-sec-title">แบรนด์</div>
-      <label class="sb-opt"><input type="checkbox" checked> IKEA <span class="sb-cnt">1,240</span></label>
-      <label class="sb-opt"><input type="checkbox"> Index <span class="sb-cnt">842</span></label>
-      <label class="sb-opt"><input type="checkbox"> SB Furniture <span class="sb-cnt">620</span></label>
-      <label class="sb-opt"><input type="checkbox"> HomePro <span class="sb-cnt">542</span></label>
-      <label class="sb-opt"><input type="checkbox"> Modernform <span class="sb-cnt">380</span></label>
-    </div>
-    <div class="sb-sec">
-      <div class="sb-sec-title">ช่วงราคา (฿)</div>
-      <div class="price-inputs">
-        <input class="pi" placeholder="ต่ำสุด">
-        <span style="color:var(--g400);line-height:32px">–</span>
-        <input class="pi" placeholder="สูงสุด">
+<!-- PRODUCT MODAL -->
+<div class="modal-bg" id="prod-modal" onclick="if(event.target===this)closeModal()">
+  <div style="position:relative;width:900px;max-width:100%;margin:auto">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-card">
+      <div class="modal-imgs">
+        <div class="modal-main-img" id="modal-main-img"><span id="modal-main-fallback">📦</span></div>
+        <div class="modal-thumbs" id="modal-thumbs"></div>
       </div>
-      <button class="apply-btn" onclick="toast('💰 กรองราคาแล้ว')">ตกลง</button>
-    </div>
-    <div class="sb-sec">
-      <div class="sb-sec-title">วัสดุ</div>
-      <label class="sb-opt"><input type="checkbox"> ไม้จริง <span class="sb-cnt">428</span></label>
-      <label class="sb-opt"><input type="checkbox" checked> ไม้ MDF <span class="sb-cnt">1,842</span></label>
-      <label class="sb-opt"><input type="checkbox"> สแตนเลส <span class="sb-cnt">284</span></label>
-      <label class="sb-opt"><input type="checkbox"> พลาสติก <span class="sb-cnt">620</span></label>
-      <label class="sb-opt"><input type="checkbox"> อลูมิเนียม <span class="sb-cnt">142</span></label>
-    </div>
-    <div class="sb-sec">
-      <div class="sb-sec-title">บริการ</div>
-      <label class="sb-opt"><input type="checkbox" checked> ส่งฟรี</label>
-      <label class="sb-opt"><input type="checkbox"> บริการติดตั้ง</label>
-      <label class="sb-opt"><input type="checkbox"> ผ่อน 0%</label>
-      <label class="sb-opt"><input type="checkbox"> ร้านค้ายืนยัน</label>
-      <label class="sb-opt"><input type="checkbox"> Flash Sale</label>
-    </div>
-    <div class="sb-sec">
-      <div class="sb-sec-title">คะแนนรีวิว</div>
-      <label class="sb-opt"><input type="checkbox"> ★★★★★ 5 <span class="sb-cnt">524</span></label>
-      <label class="sb-opt"><input type="checkbox" checked> ★★★★☆ 4+ <span class="sb-cnt">2,840</span></label>
-      <label class="sb-opt"><input type="checkbox"> ★★★☆☆ 3+ <span class="sb-cnt">4,280</span></label>
-    </div>
-    <div class="sb-sec">
-      <div class="sb-sec-title">สีสินค้า</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px">
-        <div style="width:24px;height:24px;border-radius:50%;background:#F5F5F0;border:1.5px solid var(--g200);cursor:pointer" title="ขาว/ครีม" onclick="toast('สี: ขาว/ครีม')"></div>
-        <div style="width:24px;height:24px;border-radius:50%;background:#8B6914;border:1.5px solid transparent;cursor:pointer" title="น้ำตาลไม้" onclick="toast('สี: น้ำตาลไม้')"></div>
-        <div style="width:24px;height:24px;border-radius:50%;background:#1A1A1A;border:1.5px solid transparent;cursor:pointer" title="ดำ" onclick="toast('สี: ดำ')"></div>
-        <div style="width:24px;height:24px;border-radius:50%;background:#C0C0C0;border:1.5px solid transparent;cursor:pointer" title="เทา" onclick="toast('สี: เทา')"></div>
-        <div style="width:24px;height:24px;border-radius:50%;background:#4A90D9;border:1.5px solid transparent;cursor:pointer" title="น้ำเงิน" onclick="toast('สี: น้ำเงิน')"></div>
-        <div style="width:24px;height:24px;border-radius:50%;background:#6B8F3E;border:1.5px solid transparent;cursor:pointer" title="เขียว" onclick="toast('สี: เขียว')"></div>
+      <div class="modal-info">
+        <div class="modal-cat" id="modal-cat"></div>
+        <h2 class="modal-name" id="modal-name"></h2>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px">
+          <div class="modal-price" id="modal-price"></div>
+          <div class="modal-compare" id="modal-compare"></div>
+          <div id="modal-disc" style="font-family:var(--mono);font-size:12px;color:var(--red)"></div>
+        </div>
+        <div class="modal-stock" id="modal-stock"></div>
+        <p class="modal-desc" id="modal-desc"></p>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <div class="qty-display" id="qty-display">1</div>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+        <button class="modal-cart-btn" onclick="addToCart()">🛒 เพิ่มลงตะกร้า</button>
+        <button class="modal-cart-btn" style="background:var(--white);color:var(--black);border:var(--border-dark)" onclick="viewDetail()">⚡ ซื้อทันที</button>
+        <div class="modal-tags" id="modal-tags"></div>
       </div>
     </div>
-  </div>
-
-  <!-- RESULTS -->
-  <div>
-    <div class="results-bar">
-      <div class="rb-count">พบ <strong>48,204</strong> รายการ ใน บ้านและเฟอร์นิเจอร์</div>
-      <div class="sort-btns">
-        <button class="sort-btn active" onclick="selSort(this)">แนะนำ</button>
-        <button class="sort-btn" onclick="selSort(this)">ขายดี</button>
-        <button class="sort-btn" onclick="selSort(this)">ราคาต่ำ</button>
-        <button class="sort-btn" onclick="selSort(this)">ราคาสูง</button>
-        <button class="sort-btn" onclick="selSort(this)">ใหม่สุด</button>
-      </div>
-    </div>
-    <div class="active-tags">
-      <div class="at">IKEA <span class="at-x" onclick="this.parentElement.remove()">×</span></div>
-      <div class="at">ไม้ MDF <span class="at-x" onclick="this.parentElement.remove()">×</span></div>
-      <div class="at">ส่งฟรี <span class="at-x" onclick="this.parentElement.remove()">×</span></div>
-      <div class="at">4★+ <span class="at-x" onclick="this.parentElement.remove()">×</span></div>
-    </div>
-    <div class="prod-grid" id="prod-grid"></div>
-    <div class="pagination" id="pagi"></div>
   </div>
 </div>
 
-<div class="toast-wrap" id="tw"></div>
-<script>
-const PRODS=[
-  {ico:'🛋️',name:'โซฟา L-shape Nordic 3.2m ผ้า Linen เบจ',shop:'FurnitureTH',verified:true,price:12900,old:19900,disc:35,rating:4.8,rev:842,bg:'#F5F0FF',badge:'hot',tags:['ส่งฟรี','บริการติดตั้ง']},
-  {ico:'🛏️',name:'เตียง Storage Bed ไม้ MDF พร้อมฐานลิ้นชัก ขนาด 6 ฟุต',shop:'IKEA Thailand',verified:true,price:8900,old:12900,disc:31,rating:4.7,rev:1240,bg:'#FFF5F0',badge:'new',tags:['ส่งฟรี','ผ่อน 0%']},
-  {ico:'💡',name:'โคมไฟเพดาน LED Scandinavian 60cm 3 สี',shop:'LightHub',verified:false,price:1490,old:2490,disc:40,rating:4.5,rev:428,bg:'#FFFFF0',badge:'sale',tags:['ส่งฟรี']},
-  {ico:'🌿',name:'ชุดต้นไม้ในบ้าน Monstera + กระถาง 20cm',shop:'GreenLife',verified:false,price:890,old:1290,disc:31,rating:4.6,rev:284,bg:'#F0FFF0',badge:'',tags:['ส่งฟรี']},
-  {ico:'🍳',name:'ชุดเครื่องครัว Nonstick 5 ชิ้น Premium Granite',shop:'KitchenHub',verified:true,price:2490,old:3990,disc:38,rating:4.8,rev:624,bg:'#FFF0F0',badge:'hot',tags:['ส่งฟรี','ผ่อน 0%']},
-  {ico:'🪑',name:'เก้าอี้ทำงาน Ergonomic Mesh หลังพักได้ 135°',shop:'OfficeZone',verified:true,price:4290,old:6990,disc:39,rating:4.9,rev:1842,bg:'#F0F4FF',badge:'flash',tags:['ส่งฟรี','ผ่อน 0%','บริการติดตั้ง']},
-  {ico:'🚿',name:'ชุดก๊อกน้ำฝักบัว Hansgrohe Croma Select',shop:'BathRoom Pro',verified:true,price:6490,old:9900,disc:34,rating:4.7,rev:342,bg:'#EEF9FF',badge:'',tags:['ส่งฟรี','บริการติดตั้ง']},
-  {ico:'🪞',name:'กระจกส่องตัวเต็มตัว Nordic Arch 40x160cm',shop:'HomeStyle',verified:false,price:1890,old:2890,disc:35,rating:4.5,rev:186,bg:'#F5F5F0',badge:'new',tags:['ส่งฟรี']},
-];
-const BADGE_MAP={hot:['b-hot','HOT'],new:['b-new','NEW'],sale:['b-sale','SALE'],flash:['b-fs','⚡FLASH']};
-document.getElementById('prod-grid').innerHTML=PRODS.map(p=>{
-  const bInfo=BADGE_MAP[p.badge]||null;
-  return `<div class="prod-card" onclick="window.location.href='product.html'">
-    <div class="pc-badges">${bInfo?`<span class="badge ${bInfo[0]}">${bInfo[1]}</span>`:''}</div>
-    <button class="wl-btn" onclick="event.stopPropagation();this.textContent=this.textContent==='🤍'?'❤️':'🤍'">🤍</button>
-    <div class="pc-img" style="background:${p.bg}">${p.ico}</div>
-    <div class="pc-body">
-      <div class="pc-name">${p.name}</div>
-      <div class="pc-shop">🏪 ${p.shop} ${p.verified?'<span class="verified">✓ยืนยัน</span>':''}</div>
-      <div class="pc-rating"><span class="stars">★★★★${p.rating>=4.7?'★':'☆'}</span><span class="rc">${p.rating} (${p.rev.toLocaleString()})</span></div>
-      <div class="pc-price-row"><span class="price">฿${p.price.toLocaleString()}</span><span class="price-old">฿${p.old.toLocaleString()}</span><span class="price-disc">-${p.disc}%</span></div>
-      <div class="tags-row">${p.tags.map(t=>`<span class="tag-sm ${t.includes('ส่งฟรี')?'t-free':t.includes('บริการ')?'t-install':'t-pay0'}">${t}</span>`).join('')}</div>
-      <button class="btn-cart" onclick="event.stopPropagation();toast('🛒 เพิ่มลงตะกร้าแล้ว!')">🛒 เพิ่มลงตะกร้า</button>
-    </div></div>`;
-}).join('');
-document.getElementById('pagi').innerHTML=[1,2,3,4,5,'…',120].map((p,i)=>`<button class="pg ${i===0?'active':''}" onclick="selPage(this,${p})">${p}</button>`).join('');
-function selSub(el){document.querySelectorAll('.sc-item').forEach(x=>x.classList.remove('active'));el.classList.add('active');toast('📂 '+el.textContent.trim());}
-function selSort(el){document.querySelectorAll('.sort-btn').forEach(x=>x.classList.remove('active'));el.classList.add('active');toast('↕️ เรียง: '+el.textContent);}
-function selPage(el,p){document.querySelectorAll('.pg').forEach(x=>x.classList.remove('active'));el.classList.add('active');if(p!=='…')window.scrollTo({top:0,behavior:'smooth'});}
-function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),2800);}
-</script>
-
-
-
-
-
-<div class="tm-toast-wrap" id="tmToastWrap"></div>
-<script>
-function tmToast(msg){
-  var w=document.getElementById('tmToastWrap');
-  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
-  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
-  w.appendChild(t);setTimeout(function(){t.remove()},2600);
-}
-</script>
-<footer id="tm-footer">
-  <div class="tf-inner">
-    <div class="tf-grid">
-      <div>
-        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
-        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
-      </div>
-      <div>
-        <div class="tf-title">ช้อปปิ้ง</div>
-        <a href="index.html" class="tf-link">หน้าแรก</a>
-        <a href="category.html" class="tf-link">หมวดหมู่</a>
-        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
-        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
-        <a href="brand-day.html" class="tf-link">Brand Day</a>
-        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
-      </div>
-      <div>
-        <div class="tf-title">บัญชีของฉัน</div>
-        <a href="profile.html" class="tf-link">โปรไฟล์</a>
-        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
-        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
-        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
-        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
-        <a href="returns.html" class="tf-link">คืนสินค้า</a>
-      </div>
-      <div>
-        <div class="tf-title">ผู้ขาย</div>
-        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
-        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
-        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
-        <a href="seller-analytics.html" class="tf-link">Analytics</a>
-        <a href="b2b-portal.html" class="tf-link">B2B</a>
-        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
-      </div>
-      <div>
-        <div class="tf-title">ช่วยเหลือ</div>
-        <a href="help-center.html" class="tf-link">Help Center</a>
-        <a href="chat.html" class="tf-link">แชทกับเรา</a>
-        <a href="subscription.html" class="tf-link">TM Plus</a>
-        <a href="gift-card.html" class="tf-link">Gift Card</a>
-        <a href="sitemap.html" class="tf-link">Site Map</a>
-        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
-      </div>
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">Thailand<span class="dot">.</span>Market</div>
+    <div class="footer-actions">
+      <a href="admin-cms.html" class="footer-link">⚙️ CMS Admin</a>
+      <a href="index.html" class="footer-link">🏠 หน้าหลัก</a>
+      <a href="setup.html" class="footer-link">ตั้งค่า</a>
     </div>
-    <div class="tf-bottom">
-      <span>© 2026 Thailand Market · All rights reserved</span>
-      <span>TH · EN · 🔒 SSL · PCI DSS</span>
-    </div>
+    <div class="footer-copy">Real-time from Supabase · Thailand Market 2026</div>
   </div>
 </footer>
-<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
-<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+
+<div class="toasts" id="toasts"></div>
 
 <script>
-(function loadCMSCategory(){
-  const params=new URLSearchParams(location.search);
-  const cat=params.get('cat')||'';
-  try{
-    const prods=JSON.parse(localStorage.getItem('tm_products')||'[]').filter(p=>p.status==='active'&&(!cat||p.category===cat));
-    if(!prods.length) return;
-    const CATS={home:'🏠 Home & Furniture',fashion:'👗 แฟชั่น',beauty:'💄 Beauty & Health',fmcg:'🛒 FMCG',tech:'💻 Tech & Gadgets',auto:'🚗 ยานยนต์',pets:'🐾 สัตว์เลี้ยง',edu:'📚 การศึกษา',sport:'⚽ กีฬา',travel:'✈️ ท่องเที่ยว',service:'🔧 บริการ'};
-    const emojiMap={home:'🏠',fashion:'👗',beauty:'💄',fmcg:'🛒',tech:'💻',auto:'🚗',pets:'🐾',edu:'📚',sport:'⚽',travel:'✈️',service:'🔧'};
-    const section=document.createElement('div');
-    section.style.cssText='max-width:1280px;margin:0 auto;padding:32px 24px';
-    section.innerHTML=`
-      <div style="font-size:22px;font-weight:300;margin-bottom:20px">${cat?CATS[cat]||cat:'สินค้าทั้งหมด'} <span style="font-family:var(--mono);font-size:13px;color:var(--g400)">(${prods.length} รายการ)</span></div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--g200);border:var(--border)">
-        ${prods.map(p=>{
-          const disc=p.comparePrice&&p.comparePrice>p.price?Math.round((1-p.price/p.comparePrice)*100):0;
-          const img=p.images&&p.images.length>0?`<img src="${p.images[0]}" style="width:100%;height:180px;object-fit:cover;display:block;">`:`<div style="width:100%;height:180px;background:var(--g100);display:flex;align-items:center;justify-content:center;font-size:48px">${emojiMap[p.category]||'📦'}</div>`;
-          return `<div style="border:var(--border);background:var(--white);cursor:pointer" onclick="location.href='product.html?id=${p.id}'">${img}<div style="padding:12px"><div style="font-size:13px;font-weight:500;margin-bottom:4px;line-height:1.4">${p.nameTh}</div><div style="font-family:var(--mono);font-size:15px;font-weight:500">฿${Number(p.price).toLocaleString()}</div>${disc>0?`<div style="font-family:var(--mono);font-size:10px;color:var(--red)">-${disc}%</div>`:''}</div></div>`;
-        }).join('')}
+"use strict";
+const sb = window._sb || supabase.createClient(
+  'https://qmgyimsptzewwyafvjzk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+);
+
+// ── State ─────────────────────────────────────────────────
+let currentCat = '';
+let currentView = 'grid';
+let currentPage = 1;
+let currentSort = 'created_at-desc';
+let currentRating = 0;
+let currentDiscount = 0;
+let currentServices = new Set(); // 'free_ship','flash','featured'
+let selectedBrands = new Set();
+let allCats = [];
+let allBrands = [];
+let cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+let currentProduct = null;
+let qty = 1;
+let searchTimer = null;
+const PAGE = 24;
+
+// ── Toast ──────────────────────────────────────────────────
+function toast(msg, ok=false) {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast' + (ok?' ok':'');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ── Cart ───────────────────────────────────────────────────
+function updateCartUI() {
+  const count = cart.reduce((s,i) => s+(i.qty||1), 0);
+  document.querySelectorAll('.cart-count').forEach(el => el.textContent = count);
+}
+
+function addToCart() {
+  if (!currentProduct) return;
+  const ex = cart.find(i => i.id===currentProduct.id);
+  if (ex) ex.qty = (ex.qty||1)+qty;
+  else cart.push({id:currentProduct.id,name:currentProduct.name_th,price:currentProduct.price,qty,img:currentProduct.thumbnail||''});
+  localStorage.setItem('tm_cart', JSON.stringify(cart));
+  updateCartUI();
+  toast(`✅ เพิ่ม "${currentProduct.name_th}" ×${qty} ลงตะกร้า`, true);
+  closeModal();
+}
+
+function quickAddCart(id,name,price,img) {
+  const ex = cart.find(i=>i.id===id);
+  if(ex) ex.qty=(ex.qty||1)+1;
+  else cart.push({id,name,price:Number(price),qty:1,img:img||''});
+  localStorage.setItem('tm_cart', JSON.stringify(cart));
+  updateCartUI();
+  toast(`✅ ${name} +1`, true);
+}
+
+
+function viewDetail() {
+  if (!currentProduct) return;
+  location.href = 'product.html?id=' + currentProduct.id;
+}
+
+function buyNow() { addToCart(); location.href='cart.html'; }
+
+function doSearch() {
+  const q = document.getElementById('search-inp')?.value?.trim();
+  if (q) { currentPage=1; loadProds(); }
+}
+
+// ── Categories ────────────────────────────────────────────
+async function loadCats() {
+  try {
+    const { data, error } = await sb.from('categories').select('*').eq('is_active',true).order('sort_order');
+    if (error) throw error;
+    allCats = data || [];
+  } catch(e) {
+    console.error('loadCats:', e.message);
+    allCats = [];
+  }
+
+  const parents = allCats.filter(c => !c.parent_id);
+  const children = allCats.filter(c => c.parent_id);
+
+  // Top cat bar
+  const bar = document.getElementById('cat-bar');
+  if (bar) {
+    bar.innerHTML = `<button class="cat-item on" onclick="filterCat(this,'')">ทั้งหมด</button>` +
+      parents.map(p => `<button class="cat-item" onclick="filterCat(this,'${p.id}')">${p.icon||''} ${p.name_th}</button>`).join('');
+  }
+
+  // Sidebar: parent + children as checkboxes
+  const sidebar = document.getElementById('cat-list-sidebar');
+  if (!sidebar) return;
+  let html = '';
+  for (const p of parents) {
+    const subs = children.filter(c => c.parent_id === p.id);
+    const isOn = currentCat === p.id;
+    html += `<div class="filter-check-item" onclick="filterCatSide('${p.id}',this)" style="font-weight:500">
+      <div class="filter-check-box${isOn?' on':''}"><span class="filter-check-tick">✓</span></div>
+      <div class="filter-check-label">${p.icon||''} ${p.name_th}</div>
+      <span class="filter-check-count">${p.product_count||0}</span>
+    </div>`;
+    if (subs.length) {
+      for (const s of subs) {
+        const isSubOn = currentCat === s.id;
+        html += `<div class="filter-check-item" onclick="filterCatSide('${s.id}',this)" style="padding-left:24px;font-size:12px">
+          <div class="filter-check-box${isSubOn?' on':''}"><span class="filter-check-tick">✓</span></div>
+          <div class="filter-check-label">${s.icon||'·'} ${s.name_th}</div>
+          <span class="filter-check-count">${s.product_count||0}</span>
+        </div>`;
+      }
+    }
+  }
+  sidebar.innerHTML = html;
+}
+
+function filterCat(el, catId) {
+  currentCat = catId; currentPage = 1;
+  document.querySelectorAll('.cat-item').forEach(b => b.classList.remove('on'));
+  el?.classList.add('on');
+  // Update URL (push state) เพื่อ browser back ทำงาน
+  if (catId) {
+    const cat = allCats.find(c => c.id === catId);
+    if (cat?.slug) history.replaceState(null, '', `?slug=${encodeURIComponent(cat.slug)}`);
+  } else {
+    history.replaceState(null, '', location.pathname);
+  }
+  renderCategoryUI();
+  loadProds(); updateActiveTags();
+}
+
+function filterCatSide(catId, el) {
+  // Toggle
+  if (currentCat === catId) {
+    currentCat = '';
+  } else {
+    currentCat = catId;
+  }
+  currentPage = 1;
+  // Update URL
+  if (currentCat) {
+    const cat = allCats.find(c => c.id === currentCat);
+    if (cat?.slug) history.replaceState(null, '', `?slug=${encodeURIComponent(cat.slug)}`);
+  } else {
+    history.replaceState(null, '', location.pathname);
+  }
+  renderCategoryUI();
+  loadCats();
+  loadProds();
+  updateActiveTags();
+}
+
+function clearCat() {
+  currentCat=''; currentPage=1;
+  history.replaceState(null, '', location.pathname);
+  renderCategoryUI();
+  loadCats(); loadProds(); updateActiveTags();
+}
+
+// ── Brands ─────────────────────────────────────────────────
+async function loadBrands() {
+  try {
+    const { data } = await sb.from('brands').select('id,name,icon').eq('is_active',true).order('sort_order').limit(10);
+    allBrands = data || [];
+    const el = document.getElementById('brand-filter-list');
+    if (!el || !allBrands.length) {
+      if (el) el.innerHTML = '<div style="font-size:12px;color:var(--g400)">ไม่มีแบรนด์</div>';
+      return;
+    }
+    el.innerHTML = allBrands.map(b => `
+      <div class="filter-check-item" onclick="toggleBrand('${b.id}','${b.name}',this)">
+        <div class="filter-check-box"><span class="filter-check-tick">✓</span></div>
+        <div class="filter-check-label">${b.icon||'🏷️'} ${b.name}</div>
+      </div>`).join('');
+  } catch(e) {
+    const el = document.getElementById('brand-filter-list');
+    if (el) el.innerHTML = '<div style="font-size:11px;color:var(--g400)">เพิ่มแบรนด์ใน admin-cms</div>';
+  }
+}
+
+function toggleBrand(id, name, el) {
+  const box = el.querySelector('.filter-check-box');
+  if (selectedBrands.has(id)) { selectedBrands.delete(id); box.classList.remove('on'); }
+  else { selectedBrands.add(id); box.classList.add('on'); }
+  currentPage=1; loadProds(); updateActiveTags();
+}
+
+function clearBrands() {
+  selectedBrands.clear();
+  document.querySelectorAll('#brand-filter-list .filter-check-box').forEach(b => b.classList.remove('on'));
+  currentPage=1; loadProds(); updateActiveTags();
+}
+
+// ── Price ──────────────────────────────────────────────────
+function setPrice(min, max, el) {
+  document.getElementById('min-price').value = min || '';
+  document.getElementById('max-price').value = max || '';
+  // Highlight chip
+  document.querySelectorAll('.price-chip').forEach(b => b.classList.remove('on'));
+  el?.classList.add('on');
+  currentPage=1; loadProds(); updateActiveTags();
+}
+
+function clearPrice() {
+  document.getElementById('min-price').value = '';
+  document.getElementById('max-price').value = '';
+  currentPage=1; loadProds(); updateActiveTags();
+}
+
+// ── Discount ───────────────────────────────────────────────
+function toggleDiscount(el, pct) { toggleDiscountPill(el, pct); }
+function toggleDiscountPill(el, pct) {
+  if (currentDiscount === Number(pct)) {
+    currentDiscount = 0;
+    document.querySelectorAll('.discount-pill').forEach(b=>b.classList.remove('on'));
+  } else {
+    currentDiscount = Number(pct);
+    document.querySelectorAll('.discount-pill').forEach(b=>b.classList.remove('on'));
+    el.classList.add('on');
+  }
+  currentPage=1; loadProds(); updateActiveTags();
+}
+
+// ── Services ───────────────────────────────────────────────
+function toggleService(el, svc) { toggleServicePill(el, svc); }
+function toggleServicePill(el, svc) {
+  if (currentServices.has(svc)) {
+    currentServices.delete(svc); el.classList.remove('on');
+  } else {
+    currentServices.add(svc); el.classList.add('on');
+  }
+  currentPage=1; loadProds(); updateActiveTags();
+}
+
+// ── Rating ─────────────────────────────────────────────────
+function setRating(el, rating) { setRatingPill(el, rating); }
+function setRatingPill(el, rating) {
+  if (currentRating === rating) {
+    currentRating = 0;
+    document.querySelectorAll('.rating-pill').forEach(b=>b.classList.remove('on'));
+  } else {
+    currentRating = rating;
+    document.querySelectorAll('.rating-pill').forEach(b=>b.classList.remove('on'));
+    el.classList.add('on');
+  }
+  currentPage=1; loadProds(); updateActiveTags();
+}
+
+function clearRating() {
+  currentRating = 0;
+  document.querySelectorAll('.rating-pill').forEach(b=>b.classList.remove('on'));
+  currentPage=1; loadProds(); updateActiveTags();
+}
+
+// ── Sort ───────────────────────────────────────────────────
+function setSort(sort, el) {
+  currentSort = sort; currentPage = 1;
+  document.querySelectorAll('.sort-tab').forEach(b=>b.classList.remove('on'));
+  el?.classList.add('on');
+  loadProds();
+}
+
+// ── Reset All ──────────────────────────────────────────────
+function resetAllFilters() {
+  currentCat=''; currentSort='created_at-desc'; currentRating=0;
+  currentDiscount=0; currentServices.clear(); selectedBrands.clear();
+  document.getElementById('min-price').value='';
+  document.getElementById('max-price').value='';
+  document.getElementById('search-inp').value='';
+  document.querySelectorAll('.filter-check-box.on,.discount-pill.on,.service-pill.on,.rating-pill.on,.price-chip.on').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.sort-tab').forEach(b=>b.classList.remove('on'));
+  document.querySelector('.sort-tab')?.classList.add('on');
+  document.querySelectorAll('.sort-tab').forEach(b=>b.classList.remove('on'));
+  document.querySelector('.sort-tab')?.classList.add('on');
+  document.querySelectorAll('.discount-pill,.service-pill,.rating-pill,.price-chip').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.cat-item').forEach(b=>b.classList.remove('on'));
+  document.querySelector('.cat-item')?.classList.add('on');
+  currentPage=1;
+  loadCats(); loadProds(); updateActiveTags();
+  toast('ล้าง Filter ทั้งหมดแล้ว');
+}
+
+// ── Active filter tags display ─────────────────────────────
+function updateActiveTags() {
+  const container = document.getElementById('active-filters');
+  if (!container) return;
+  const tags = [];
+
+  if (currentCat) {
+    const cat = allCats.find(c=>c.id===currentCat);
+    if (cat) tags.push({label:`${cat.icon||'📂'} ${cat.name_th}`, clear:()=>{currentCat='';loadCats();loadProds();updateActiveTags();}});
+  }
+  const minP = document.getElementById('min-price')?.value;
+  const maxP = document.getElementById('max-price')?.value;
+  if (minP||maxP) tags.push({label:`฿${minP||0}–${maxP||'∞'}`, clear:clearPrice});
+  if (currentRating>0) tags.push({label:`${currentRating}★ ขึ้นไป`, clear:clearRating});
+  if (currentDiscount>0) tags.push({label:`ลด ${currentDiscount}%+`, clear:()=>{currentDiscount=0;document.querySelectorAll('[onclick^="toggleDiscount"] .filter-check-box').forEach(b=>b.classList.remove('on'));currentPage=1;loadProds();updateActiveTags();}});
+  selectedBrands.forEach(id=>{
+    const b=allBrands.find(x=>x.id===id);
+    if(b) tags.push({label:`🏷️ ${b.name}`, clear:()=>{selectedBrands.delete(id);document.querySelectorAll('#brand-filter-list .filter-check-box').forEach(b=>b.classList.remove('on'));currentPage=1;loadProds();updateActiveTags();}});
+  });
+  currentServices.forEach(svc=>{
+    const labels={'free_ship':'ส่งฟรี','flash':'Flash Sale','featured':'แนะนำ'};
+    tags.push({label:labels[svc]||svc, clear:()=>{currentServices.delete(svc);currentPage=1;loadProds();updateActiveTags();}});
+  });
+  const search = document.getElementById('search-inp')?.value?.trim();
+  if(search) tags.push({label:`"${search}"`, clear:()=>{document.getElementById('search-inp').value='';currentPage=1;loadProds();updateActiveTags();}});
+
+  container.style.display = tags.length ? 'flex' : 'none';
+  container.innerHTML = tags.map((t,i) =>
+    `<span class="active-tag" onclick="(${t.clear.toString()})()">${t.label} <span class="active-tag-x">✕</span></span>`
+  ).join('');
+}
+
+// ── Load Products ──────────────────────────────────────────
+async function loadProds() {
+  const grid = document.getElementById('prod-grid');
+  const search = document.getElementById('search-inp')?.value?.trim() || '';
+  const minP = parseFloat(document.getElementById('min-price')?.value) || null;
+  const maxP = parseFloat(document.getElementById('max-price')?.value) || null;
+
+  // Skeleton
+  grid.className = currentView==='grid' ? 'prod-grid' : 'prod-list';
+  grid.innerHTML = Array(8).fill(0).map(()=>
+    `<div class="prod-card"><div class="prod-img skeleton" style="aspect-ratio:1"></div>
+     <div class="prod-info"><div class="skeleton" style="height:14px;margin-bottom:8px"></div>
+     <div class="skeleton" style="height:12px;width:60%"></div></div></div>`
+  ).join('');
+
+  try {
+    let q = sb.from('products')
+      .select('id,name_th,price,compare_price,discount_percent,stock_quantity,images,thumbnail,is_flash_sale,is_featured,rating_avg,rating_count,sold_count,tags,category_id,categories(name_th,icon)', { count:'exact' })
+      .eq('status','active')
+      .range((currentPage-1)*PAGE, currentPage*PAGE-1);
+
+    // Category filter (รวมหมวดย่อย)
+    if (currentCat) {
+      const childIds = allCats.filter(c=>c.parent_id===currentCat).map(c=>c.id);
+      q = q.in('category_id', [currentCat,...childIds]);
+    }
+
+    // Sort
+    if (currentSort==='price-asc')  q=q.order('price',{ascending:true});
+    else if (currentSort==='price-desc') q=q.order('price',{ascending:false});
+    else if (currentSort==='pop')   q=q.order('sold_count',{ascending:false});
+    else if (currentSort==='rating') q=q.order('rating_avg',{ascending:false});
+    else q=q.order('created_at',{ascending:false});
+
+    // Price
+    if (minP!==null) q=q.gte('price',minP);
+    if (maxP!==null) q=q.lte('price',maxP);
+
+    // Search
+    if (search) q=q.or(`name_th.ilike.%${search}%,description.ilike.%${search}%`);
+
+    // Services
+    if (currentServices.has('flash')) q=q.eq('is_flash_sale',true);
+    if (currentServices.has('featured')) q=q.eq('is_featured',true);
+
+    // Rating
+    if (currentRating>0) q=q.gte('rating_avg',currentRating);
+
+    // Discount
+    if (currentDiscount>0) q=q.gte('discount_percent',currentDiscount);
+
+    const { data, error, count } = await q;
+    if (error) throw error;
+
+    // Update count
+    const cat = currentCat ? allCats.find(c=>c.id===currentCat) : null;
+    const catName = cat ? `${cat.name_th}` : 'ทั้งหมด';
+    const filterDesc = [
+      search && `"${search}"`,
+      minP && `฿${minP}+`,
+      currentRating && `${currentRating}★+`,
+    ].filter(Boolean).join(' · ');
+    document.getElementById('prod-count').textContent =
+      `พบ ${(count||0).toLocaleString()} รายการ ใน ${catName}${filterDesc?' · '+filterDesc:''}`;
+    document.getElementById('hero-count').textContent = `${(count||0).toLocaleString()} รายการ`;
+
+    if (!data?.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--g400)">
+        <div style="font-size:48px;margin-bottom:14px">🔍</div>
+        <div style="font-size:15px;font-weight:500;color:var(--g600);margin-bottom:8px">ไม่พบสินค้า</div>
+        <div style="font-size:13px;margin-bottom:20px">ลองเปลี่ยน filter หรือค้นหาด้วยคำอื่น</div>
+        <button onclick="resetAllFilters()" style="padding:10px 22px;background:var(--black);color:var(--white);border:none;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">ล้าง Filter</button>
       </div>`;
-    const nav=document.getElementById('tm-nav')||document.querySelector('nav');
-    if(nav&&nav.parentNode) nav.parentNode.insertBefore(section,nav.nextSibling);
-  } catch(e){}
-  window.addEventListener('storage',e=>{ if(e.key==='tm_products') loadCMSCategory(); });
-})();
+      document.getElementById('pagination').style.display='none';
+      return;
+    }
+
+    // Render
+    if (currentView==='grid') renderGrid(data);
+    else renderList(data);
+
+    // Pagination
+    renderPagination(count||0);
+
+  } catch(e) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--red)">❌ ${e.message}</div>`;
+  }
+}
+
+function renderGrid(data) {
+  const grid = document.getElementById('prod-grid');
+  grid.className = 'prod-grid';
+  grid.innerHTML = data.map(p => {
+    const thumb = p.thumbnail||p.images?.[0];
+    const disc = p.discount_percent || (p.compare_price&&p.compare_price>p.price ? Math.round((1-p.price/p.compare_price)*100):0);
+    const badges = [];
+    if (p.is_flash_sale) badges.push('<div class="prod-badge" style="background:#E63329">⚡ FLASH</div>');
+    else if (disc>=30) badges.push('<div class="prod-badge" style="background:#E63329">SALE</div>');
+    else if (p.is_featured) badges.push('<div class="prod-badge" style="background:#0A0A0A">HOT</div>');
+    else if (new Date()-new Date(p.created_at)<7*86400000) badges.push('<div class="prod-badge" style="background:#0A0A0A">NEW</div>');
+    return `<div class="prod-card" onclick="openProduct('${p.id}')">
+      <div class="prod-img">
+        ${thumb?`<img src="${thumb}" alt="" loading="lazy" onerror="this.style.display='none'">`:`<span style="font-size:60px">📦</span>`}
+        ${badges.join('')}
+        <button class="prod-wish" id="wish-${p.id}" onclick="event.stopPropagation();toggleWish('${p.id}',this)" title="บันทึกสินค้า">♡</button>
+      </div>
+      <div class="prod-info">
+        <div class="prod-cat">${p.categories?.name_th||''}</div>
+        <div class="prod-name">${p.name_th}</div>
+        <div class="prod-rating">
+          <span class="stars">★★★★★</span>
+          <span>${p.rating_avg||5.0}</span>
+          <span class="rating-count">(${(p.rating_count||0).toLocaleString()})</span>
+        </div>
+        <div class="prod-price-row">
+          <div class="prod-price">฿${Number(p.price).toLocaleString()}</div>
+          ${p.compare_price?`<div class="prod-old-price">฿${Number(p.compare_price).toLocaleString()}</div>`:''}
+          ${disc>0?`<div style="font-family:var(--mono);font-size:10px;color:var(--red)">-${disc}%</div>`:''}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
+          <span style="font-size:10px;background:var(--g100);padding:2px 7px;font-family:var(--mono)">ส่งฟรี</span>
+          ${p.is_flash_sale?`<span style="font-size:10px;background:#FFF3EE;color:var(--red);padding:2px 7px;font-family:var(--mono)">Flash</span>`:''}
+        </div>
+        <div class="prod-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:8px">
+          <button class="btn-cart" onclick="event.stopPropagation();quickAddCart('${p.id}','${p.name_th.replace(/'/g,"\'")}',${p.price},'${thumb||''}')">🛒 ตะกร้า</button>
+          <button class="btn-buy" onclick="event.stopPropagation();quickAddCart('${p.id}','${p.name_th.replace(/'/g,"\'")}',${p.price},'');location.href='checkout.html'">ซื้อเลย</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// เรียก refreshWishButtons หลัง render เสร็จ
+function onAfterRender() {
+  if (_wishLoaded) {
+    refreshWishButtons();
+  } else {
+    // ถ้า wish ยังไม่โหลด ให้โหลดใหม่
+    if (_sb) loadUserWishlist();
+  }
+}
+
+function renderList(data) {
+  const grid = document.getElementById('prod-grid');
+  grid.className = 'prod-list';
+  grid.innerHTML = data.map(p => {
+    const thumb = p.thumbnail||p.images?.[0];
+    const disc = p.discount_percent||(p.compare_price&&p.compare_price>p.price?Math.round((1-p.price/p.compare_price)*100):0);
+    return `<div class="prod-list-item" onclick="openProduct('${p.id}')">
+      <div class="prod-list-img">
+        ${thumb?`<img src="${thumb}" alt="" loading="lazy">`:'📦'}
+      </div>
+      <div class="prod-list-info">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:500;margin-bottom:4px">${p.name_th}</div>
+          <div style="font-size:12px;color:var(--g500)">${p.categories?.name_th||''} · ★${p.rating_avg||5} (${p.rating_count||0}) · สต็อก ${p.stock_quantity}</div>
+          <div style="display:flex;gap:4px;margin-top:6px">
+            <span style="font-size:10px;background:var(--g100);padding:2px 7px;font-family:var(--mono)">ส่งฟรี</span>
+            ${p.is_flash_sale?`<span style="font-size:10px;background:#FFF3EE;color:var(--red);padding:2px 7px;font-family:var(--mono)">⚡ Flash</span>`:''}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="prod-list-price">฿${Number(p.price).toLocaleString()}</div>
+          ${p.compare_price?`<div style="font-family:var(--mono);font-size:11px;color:var(--g400);text-decoration:line-through">฿${Number(p.compare_price).toLocaleString()}</div>`:''}
+          ${disc>0?`<div style="font-family:var(--mono);font-size:11px;color:var(--red);margin-bottom:8px">-${disc}%</div>`:''}
+          <button class="btn-cart" style="font-size:11px;padding:6px 12px" onclick="event.stopPropagation();quickAddCart('${p.id}','${p.name_th.replace(/'/g,"\'")}',${p.price},'${thumb||''}')">+ ตะกร้า</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPagination(total) {
+  const pg = document.getElementById('pagination');
+  const totalPages = Math.ceil(total/PAGE);
+  if (totalPages<=1) { pg.style.display='none'; return; }
+  pg.style.display='flex';
+  let html='';
+  if (currentPage>1) html+=`<button class="page-btn" onclick="goPage(${currentPage-1})">‹</button>`;
+  for(let i=1;i<=totalPages;i++){
+    if(i===1||i===totalPages||(i>=currentPage-2&&i<=currentPage+2)) {
+      html+=`<button class="page-btn${i===currentPage?' on':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if(i===currentPage-3||i===currentPage+3) {
+      html+=`<button class="page-btn" disabled>···</button>`;
+    }
+  }
+  if(currentPage<totalPages) html+=`<button class="page-btn" onclick="goPage(${currentPage+1})">›</button>`;
+  pg.innerHTML=html;
+}
+
+function goPage(p) { currentPage=p; loadProds(); window.scrollTo({top:300,behavior:'smooth'}); }
+
+// ── View toggle ────────────────────────────────────────────
+function setView(v) {
+  currentView=v;
+  document.getElementById('vt-grid').classList.toggle('on',v==='grid');
+  document.getElementById('vt-list').classList.toggle('on',v==='list');
+  loadProds();
+}
+
+// ── Product Modal ──────────────────────────────────────────
+async function openProduct(id) {
+  try {
+    const { data } = await sb.from('products').select('*,categories(name_th,icon)').eq('id',id).single();
+    if (!data) return;
+    currentProduct=data; qty=1;
+    document.getElementById('qty-display').textContent='1';
+    const imgs=data.images||[];
+    const mainEl=document.getElementById('modal-main-img');
+    mainEl.innerHTML = imgs.length ? `<img src="${imgs[0]}" style="width:100%;height:100%;object-fit:contain">` : '<span style="font-size:80px">📦</span>';
+    document.getElementById('modal-thumbs').innerHTML = imgs.slice(1).map(u=>
+      `<div class="modal-thumb" onclick="document.getElementById('modal-main-img').innerHTML='<img src=${u} style=width:100%;height:100%;object-fit:contain>'">
+        <img src="${u}" alt="">
+      </div>`
+    ).join('');
+    const disc=data.discount_percent||(data.compare_price>data.price?Math.round((1-data.price/data.compare_price)*100):0);
+    document.getElementById('modal-cat').textContent=`${data.categories?.icon||''} ${data.categories?.name_th||''}`;
+    document.getElementById('modal-name').textContent=data.name_th;
+    document.getElementById('modal-price').textContent=`฿${Number(data.price).toLocaleString()}`;
+    document.getElementById('modal-compare').textContent=data.compare_price?`฿${Number(data.compare_price).toLocaleString()}`:'';
+    document.getElementById('modal-disc').textContent=disc>0?`-${disc}%`:'';
+    document.getElementById('modal-desc').textContent=data.description||'ไม่มีคำอธิบาย';
+    document.getElementById('modal-stock').textContent=`สต็อก ${data.stock_quantity} ชิ้น`;
+    document.getElementById('modal-tags').innerHTML=(data.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('');
+    document.getElementById('prod-modal').classList.add('on');
+    document.body.style.overflow='hidden';
+  } catch(e) { toast('โหลดไม่สำเร็จ: '+e.message); }
+}
+
+function closeModal() { document.getElementById('prod-modal').classList.remove('on'); document.body.style.overflow=''; }
+function changeQty(d) { qty=Math.max(1,Math.min(qty+d,currentProduct?.stock_quantity||99)); document.getElementById('qty-display').textContent=qty; }
+
+// ── Search ─────────────────────────────────────────────────
+function onSearch() {
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(()=>{currentPage=1;loadProds();updateActiveTags();},400);
+}
+
+// ── Init ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  updateCartUI();
+  // URL params
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('slug') || '';
+  const catParam = params.get('cat') || '';
+  const brandName = params.get('brand_name') || '';
+  const collection = params.get('collection') || '';
+  const searchParam = params.get('q') || params.get('search') || '';
+
+  // 1. โหลด categories ก่อน เพื่อให้ resolve slug → uuid ได้
+  await loadCats();
+
+  // 2. ถ้ามี slug → resolve เป็น uuid
+  if (slug) {
+    const matchedCat = allCats.find(c => c.slug === slug);
+    if (matchedCat) {
+      currentCat = matchedCat.id;
+      // อัปเดต cat-bar ให้ active ตรงกับหมวดที่เปิด
+      document.querySelectorAll('.cat-item').forEach(b => {
+        b.classList.toggle('on', b.getAttribute('onclick')?.includes(`'${matchedCat.id}'`) || (matchedCat.parent_id && b.getAttribute('onclick')?.includes(`'${matchedCat.parent_id}'`)));
+      });
+      // ถ้าไม่มีปุ่มที่ on (เช่น sub-cat ไม่อยู่ใน top bar) → ปลด ทั้งหมด ออก
+      if (!document.querySelector('.cat-item.on')) {
+        document.querySelector('.cat-item')?.classList.remove('on');
+      }
+    } else {
+      // slug ไม่เจอ → แสดง warning ใน hero แต่ไม่ block
+      console.warn('[category] slug not found:', slug);
+    }
+  } else if (catParam) {
+    // backward-compat: ?cat=<uuid>
+    currentCat = catParam;
+  }
+
+  // 3. ตั้งค่า search
+  // Priority: ?q= > ?search= > ?brand_name= > ?collection=
+  let initSearch = searchParam;
+  if (!initSearch && brandName) {
+    initSearch = brandName;  // search ด้วยชื่อแบรนด์
+  } else if (!initSearch && collection) {
+    initSearch = collection;
+  }
+  if (initSearch) {
+    const inp = document.getElementById('search-inp');
+    if (inp) inp.value = initSearch;
+  }
+
+  // 4. Render hero + breadcrumb + sub-cats ตาม category ที่เปิด
+  renderCategoryUI();
+
+  // 5. โหลด brands + products
+  await loadBrands();
+  await loadProds();
+  updateActiveTags();
+  loadUserWishlist();
+});
+
+// ── Render Hero / Breadcrumb / Sub-cat Tabs ────────────────
+function renderCategoryUI() {
+  const heroTag = document.getElementById('hero-tag');
+  const heroTitle = document.getElementById('hero-title');
+  const heroSub = document.getElementById('hero-sub');
+  const heroEl = document.getElementById('hero');
+  const bcBar = document.getElementById('breadcrumb-bar');
+  const bcCur = document.getElementById('bc-current');
+  const subTabs = document.getElementById('subcat-tabs');
+  const subInner = document.getElementById('subcat-tabs-inner');
+
+  if (!currentCat) {
+    // หน้าแรก / ทั้งหมด — design เดิม
+    heroEl.classList.remove('cat-mode');
+    heroTag.textContent = 'Thailand Market Live';
+    heroTitle.innerHTML = 'สินค้า<strong>ทั้งหมด</strong>';
+    heroSub.textContent = 'ดึงข้อมูลจาก Supabase แบบ Real-time';
+    bcBar.style.display = 'none';
+    subTabs.style.display = 'none';
+    document.title = 'Thailand Market — สินค้าทั้งหมด';
+    return;
+  }
+
+  const cat = allCats.find(c => c.id === currentCat);
+  if (!cat) return;
+
+  // Cat-mode hero
+  heroEl.classList.add('cat-mode');
+  const isRoot = !cat.parent_id;
+  const emoji = cat.icon || '📦';
+
+  heroTag.textContent = isRoot ? '🏷️ หมวดหมู่หลัก' : '📁 หมวดย่อย';
+  heroTitle.innerHTML = `<span class="hero-emoji">${emoji}</span><strong>${escapeHtml(cat.name_th)}</strong>`;
+
+  // sub: ถ้า root → list child names | ถ้า sub → ชื่อ parent
+  if (isRoot) {
+    const children = allCats.filter(c => c.parent_id === cat.id);
+    heroSub.textContent = children.length
+      ? children.slice(0, 8).map(c => c.name_th).join(' · ') + (children.length > 8 ? '...' : '')
+      : 'พบกับสินค้าหลากหลาย คุณภาพดี ราคาเหมาะสม';
+  } else {
+    const parent = allCats.find(c => c.id === cat.parent_id);
+    heroSub.textContent = parent ? `🏷️ ${parent.name_th}` : '';
+  }
+
+  // Breadcrumb
+  bcBar.style.display = 'block';
+  if (isRoot) {
+    bcCur.textContent = cat.name_th;
+  } else {
+    const parent = allCats.find(c => c.id === cat.parent_id);
+    bcCur.innerHTML = parent
+      ? `<a href="?slug=${encodeURIComponent(parent.slug)}" style="color:var(--g500);text-decoration:none">${escapeHtml(parent.name_th)}</a> <span style="margin:0 8px;color:var(--g300)">›</span> <span style="color:var(--black);font-weight:500">${escapeHtml(cat.name_th)}</span>`
+      : escapeHtml(cat.name_th);
+  }
+
+  document.title = `${cat.name_th} · Thailand Market`;
+
+  // Sub-cat tabs
+  let tabCats = [];
+  let activeId = currentCat;
+  if (isRoot) {
+    // root: แสดง children ของ root นี้
+    tabCats = allCats.filter(c => c.parent_id === cat.id);
+  } else {
+    // sub: แสดง siblings (sub-cats ของ parent เดียวกัน)
+    tabCats = allCats.filter(c => c.parent_id === cat.parent_id);
+  }
+  const parentSlug = isRoot ? cat.slug : allCats.find(c => c.id === cat.parent_id)?.slug;
+  if (tabCats.length) {
+    subTabs.style.display = 'block';
+    let html = `<a class="subcat-tab ${isRoot?'on':''}" href="?slug=${encodeURIComponent(parentSlug||cat.slug)}">📋 ทั้งหมด</a>`;
+    tabCats.forEach(c => {
+      html += `<a class="subcat-tab ${c.id===activeId?'on':''}" href="?slug=${encodeURIComponent(c.slug)}">${c.icon||''} ${escapeHtml(c.name_th)}</a>`;
+    });
+    subInner.innerHTML = html;
+  } else {
+    subTabs.style.display = 'none';
+  }
+}
+
+// helper สำหรับ escape (อยู่ที่ global scope)
+function escapeHtml(s){return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 </script>
 
+<script>
+// ── Account Session & Dropdown ────────────────────────────────
+(async function initAccountNav() {
+  const sbClient = window._sb || (window.supabase
+    ? supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0')
+    : null);
+  if (!sbClient) return;
+
+  const btn   = document.getElementById('account-nav-btn');
+  const drop  = document.getElementById('account-dropdown');
+  if (!btn || !drop) return;
+
+  // ── ดึง session ──
+  const { data: { session } } = await sbClient.auth.getSession();
+
+  if (!session) {
+    // ยังไม่ login — แสดงปุ่มปกติ ไปหน้า login
+    btn.onclick = () => location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search);
+    return;
+  }
+
+  // Login แล้ว — โหลดข้อมูล user
+  const email = session.user.email;
+  const localName = localStorage.getItem('tm_user_name');
+  const localRole = localStorage.getItem('tm_user_role') || 'buyer';
+
+  let displayName = localName || email.split('@')[0];
+  let role = localRole;
+
+  // ดึงจาก DB (ถ้ายังไม่มีใน local)
+  try {
+    const { data: u } = await sbClient.from('users').select('display_name,role').eq('email', email).maybeSingle();
+    if (u) {
+      displayName = u.display_name || displayName;
+      role = u.role || role;
+      localStorage.setItem('tm_user_name', displayName);
+      localStorage.setItem('tm_user_role', role);
+    }
+  } catch(e) {}
+
+  // ── อัปเดต UI ──
+  const ico  = btn.querySelector('.nav-btn-ico');
+  const lbl  = btn.querySelector('.nav-btn-lbl');
+  if (ico) ico.innerHTML = `<div class="nav-avatar">${displayName.charAt(0).toUpperCase()}</div>`;
+  if (lbl) lbl.textContent = displayName.split(' ')[0]; // ชื่อแรก
+
+  // ── Dropdown header ──
+  const dName  = document.getElementById('dd-name');
+  const dEmail = document.getElementById('dd-email');
+  const dRole  = document.getElementById('dd-role');
+  if (dName)  dName.textContent  = displayName;
+  if (dEmail) dEmail.textContent = email;
+  if (dRole) {
+    dRole.textContent = role === 'admin' ? 'Admin' : role === 'seller' ? 'Seller' : 'Member';
+    dRole.className   = 'account-dropdown-role ' + role;
+  }
+
+  // ── Admin/Seller เมนูพิเศษ ──
+  const adminMenu = document.getElementById('dd-admin');
+  const sellerMenu = document.getElementById('dd-seller');
+  if (adminMenu)  adminMenu.style.display = role === 'admin' ? 'flex' : 'none';
+  if (sellerMenu) sellerMenu.style.display = (role === 'seller' || role === 'admin') ? 'flex' : 'none';
+
+  // ── Toggle dropdown ──
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    drop.classList.toggle('open');
+  };
+  document.addEventListener('click', (e) => {
+    if (!btn.contains(e.target)) drop.classList.remove('open');
+  });
+
+  // ── Logout ──
+  const logoutBtn = document.getElementById('dd-logout');
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      await sbClient.auth.signOut();
+      localStorage.removeItem('tm_user_role');
+      localStorage.removeItem('tm_user_name');
+      localStorage.removeItem('tm_user_email');
+      localStorage.removeItem('tm_user_id');
+      localStorage.removeItem('tm_cart');
+      location.href = 'index.html';
+    };
+  }
+})();
+
+// ════════════════════════════════════════════════════════
+//  WISHLIST FUNCTIONS — Supabase Real
+// ════════════════════════════════════════════════════════
+// ── Supabase Init (account session) ────────────────────────────
+let _sb;
+if (window._sb) {
+  _sb = window._sb;
+} else if (window.supabase) {
+  _sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
+  window._sb = _sb;
+} else {
+  // fallback: load SDK then init
+  const _sbScript = document.createElement('script');
+  _sbScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+  _sbScript.onload = () => {
+    _sb = supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
+    window._sb = _sb;
+    loadUserWishlist();
+  };
+  document.head.appendChild(_sbScript);
+  _sb = null;
+}
+let _wishSet = new Set(); // Set ของ product_id ที่ user wish ไว้แล้ว
+let _userId = null;
+let _wishLoaded = false;
+
+// ── โหลด wishlist ของ user ปัจจุบัน ─────────────────────
+async function loadUserWishlist() {
+  if (!_sb) return;
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return; // ยังไม่ login — ข้าม
+
+    const email = session.user.email;
+    // ดึง user id
+    const { data: user } = await _sb.from('users').select('id').eq('email', email).maybeSingle();
+    if (!user) return;
+    _userId = user.id;
+
+    // ดึง wishlist ทั้งหมดของ user
+    const { data: wishes } = await _sb.from('wishlist').select('product_id').eq('user_id', _userId);
+    _wishSet = new Set((wishes || []).map(w => w.product_id));
+    _wishLoaded = true;
+
+    // อัปเดต UI ของปุ่มที่แสดงอยู่
+    refreshWishButtons();
+  } catch(e) {
+    console.log('loadUserWishlist error:', e.message);
+  }
+}
+
+// ── อัปเดตสี ❤ บนหน้า ─────────────────────────────────
+function refreshWishButtons() {
+  document.querySelectorAll('.prod-wish[id^="wish-"]').forEach(btn => {
+    const productId = btn.id.replace('wish-', '');
+    if (_wishSet.has(productId)) {
+      btn.textContent = '❤️';
+      btn.classList.add('on');
+      btn.title = 'บันทึกแล้ว';
+    } else {
+      btn.textContent = '♡';
+      btn.classList.remove('on');
+      btn.title = 'บันทึกสินค้า';
+    }
+  });
+}
+
+// ── Toggle Wishlist ──────────────────────────────────────
+async function toggleWish(productId, btn) {
+  if (!_sb) return;
+
+  // ตรวจ login
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    // ยังไม่ login → redirect
+    toast('🔐 กรุณาเข้าสู่ระบบก่อน');
+    setTimeout(() => location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search), 1200);
+    return;
+  }
+
+  // โหลด userId ถ้ายังไม่มี
+  if (!_userId) {
+    const { data: user } = await _sb.from('users').select('id').eq('email', session.user.email).maybeSingle();
+    if (!user) return;
+    _userId = user.id;
+  }
+
+  const isWished = _wishSet.has(productId);
+
+  // Loading state
+  btn.classList.add('loading');
+
+  try {
+    if (isWished) {
+      // ลบออกจาก wishlist
+      await _sb.from('wishlist').delete()
+        .eq('user_id', _userId)
+        .eq('product_id', productId);
+      _wishSet.delete(productId);
+      btn.textContent = '♡';
+      btn.classList.remove('on');
+      btn.title = 'บันทึกสินค้า';
+      btn.style.transform = 'scale(0.8)';
+      setTimeout(()=>btn.style.transform='', 300);
+      toast('💔 ลบออกจาก Wishlist แล้ว');
+    } else {
+      // เพิ่มเข้า wishlist
+      await _sb.from('wishlist').upsert({
+        user_id: _userId,
+        product_id: productId,
+        created_at: new Date().toISOString()
+      }, { onConflict: 'user_id,product_id' });
+      _wishSet.add(productId);
+      btn.textContent = '❤️';
+      btn.classList.add('on');
+      btn.title = 'บันทึกแล้ว';
+      btn.style.transform = 'scale(1.3)';
+      setTimeout(()=>btn.style.transform='', 300);
+      toast('❤️ บันทึกใน Wishlist แล้ว!', true);
+    }
+  } catch(e) {
+    toast('❌ เกิดข้อผิดพลาด: ' + e.message);
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+</script>
 </body>
-</html>
+</html
