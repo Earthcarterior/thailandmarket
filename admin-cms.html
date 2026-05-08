@@ -583,6 +583,12 @@ nav { display: block !important; height: auto !important; }
         <span class="sni-ico">📰</span> บทความ
       </div>
 
+      <div class="sb-section-lbl">การเงิน</div>
+      <div class="sni" id="nav-payment" onclick="showPanel('payment')" style="position:relative">
+        <span class="sni-ico">💳</span> Payment
+        <span id="payment-pending-badge" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:var(--red,#E63329);color:#fff;font-size:10px;padding:2px 7px;border-radius:9px;font-family:'DM Mono',monospace;font-weight:600;min-width:22px;text-align:center">0</span>
+      </div>
+
       <div class="sb-section-lbl">ระบบ</div>
       <div class="sni" id="nav-settings" onclick="showPanel('settings')">
         <span class="sni-ico">⚙️</span> ตั้งค่าเว็บ
@@ -2057,6 +2063,570 @@ document.addEventListener('DOMContentLoaded', () => {
   // Also try once on load (in case admin lands on this panel)
   setTimeout(() => csUpdateUnreadBadge(), 2000);
 });
+</script>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     PAYMENT MANAGEMENT PANEL — Methods, Accounts, Slips
+     ════════════════════════════════════════════════════════════════════ -->
+<div id="panel-payment" class="panel admin-only" style="padding:0;display:none">
+  <style>
+    #panel-payment .pm-wrap{padding:24px;background:#FAFAFA;min-height:calc(100vh - 80px)}
+    #panel-payment .pm-tabs{display:flex;gap:0;background:#fff;border:1px solid #E5E5E5;margin-bottom:14px}
+    #panel-payment .pm-tab{flex:1;padding:14px;text-align:center;font-size:13px;font-weight:500;cursor:pointer;border-right:1px solid #E5E5E5;color:#666;transition:all .15s}
+    #panel-payment .pm-tab:last-child{border-right:none}
+    #panel-payment .pm-tab:hover{background:#F5F5F5}
+    #panel-payment .pm-tab.on{background:#0A0A0A;color:#fff}
+    #panel-payment .pm-tab .ct{background:#FFF5F5;color:#E63329;font-size:10px;padding:2px 7px;border-radius:8px;margin-left:6px;font-family:'DM Mono',monospace;font-weight:600}
+    #panel-payment .pm-tab.on .ct{background:#fff;color:#E63329}
+    #panel-payment .pm-content{background:#fff;border:1px solid #E5E5E5;padding:18px}
+    #panel-payment .pm-method-card{display:flex;gap:14px;padding:14px;border:1px solid #E5E5E5;margin-bottom:10px;align-items:center;background:#fff;transition:all .15s}
+    #panel-payment .pm-method-card.disabled{opacity:.5;background:#F5F5F5}
+    #panel-payment .pm-method-icon{width:48px;height:48px;background:#F5F5F5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+    #panel-payment .pm-method-info{flex:1;min-width:0}
+    #panel-payment .pm-method-name{font-size:14px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:8px}
+    #panel-payment .pm-method-desc{font-size:11px;color:#666;margin-bottom:5px}
+    #panel-payment .pm-method-meta{display:flex;gap:8px;font-size:10px;font-family:'DM Mono',monospace}
+    #panel-payment .pm-pill{padding:2px 8px;background:#F5F5F5;border-radius:9px;text-transform:uppercase;letter-spacing:.04em}
+    #panel-payment .pm-pill.manual{background:#FFF8E1;color:#856404}
+    #panel-payment .pm-pill.api{background:#D4EDDA;color:#155724}
+    #panel-payment .pm-pill.disabled{background:#F8D7DA;color:#721C24}
+    #panel-payment .pm-method-actions{display:flex;gap:6px;flex-shrink:0}
+    #panel-payment .pm-btn{padding:6px 12px;border:1px solid #E5E5E5;background:#fff;cursor:pointer;font-size:11px;font-family:inherit;border-radius:4px;transition:all .15s}
+    #panel-payment .pm-btn:hover{background:#F5F5F5;border-color:#0A0A0A}
+    #panel-payment .pm-btn.primary{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+    #panel-payment .pm-btn.primary:hover{background:#000}
+    #panel-payment .pm-btn.danger{background:#E63329;color:#fff;border-color:#E63329}
+    #panel-payment .pm-toggle{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
+    #panel-payment .pm-toggle input{opacity:0;width:0;height:0}
+    #panel-payment .pm-toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;transition:.3s;border-radius:24px}
+    #panel-payment .pm-toggle-slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.3s;border-radius:50%}
+    #panel-payment .pm-toggle input:checked + .pm-toggle-slider{background:#10B981}
+    #panel-payment .pm-toggle input:checked + .pm-toggle-slider:before{transform:translateX(18px)}
+    #panel-payment .pm-account-row{display:flex;gap:14px;padding:12px;border:1px solid #E5E5E5;margin-bottom:8px;align-items:center;background:#fff}
+    #panel-payment .pm-account-row.default{border-left:3px solid #10B981;background:#F0FDF4}
+    #panel-payment .pm-slip-row{display:grid;grid-template-columns:80px 1fr auto;gap:14px;padding:14px;border:1px solid #E5E5E5;margin-bottom:10px;background:#fff;align-items:center}
+    #panel-payment .pm-slip-row.pending{border-left:3px solid #F59E0B;background:#FFFBEB}
+    #panel-payment .pm-slip-row.verified{border-left:3px solid #10B981}
+    #panel-payment .pm-slip-row.rejected{border-left:3px solid #E63329;opacity:.7}
+    #panel-payment .pm-slip-img{width:80px;height:80px;background:#F5F5F5;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;overflow:hidden}
+    #panel-payment .pm-slip-img img{width:100%;height:100%;object-fit:cover}
+    #panel-payment .pm-empty{padding:60px 20px;text-align:center;color:#888}
+    #panel-payment .pm-form{padding:14px;background:#FAFAFA;border:1px solid #E5E5E5;margin-bottom:14px;display:none;border-radius:6px}
+    #panel-payment .pm-form.open{display:block}
+    #panel-payment .pm-form input,#panel-payment .pm-form select,#panel-payment .pm-form textarea{width:100%;padding:8px 12px;border:1px solid #E5E5E5;font-family:inherit;font-size:13px;outline:none;margin-bottom:8px}
+    #panel-payment .pm-form label{display:block;font-size:11px;color:#666;margin-bottom:4px;font-weight:500}
+    #panel-payment .pm-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+    #panel-payment .pm-modal{background:#fff;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;border-radius:8px}
+    #panel-payment .pm-modal-head{padding:14px 18px;border-bottom:1px solid #E5E5E5;display:flex;align-items:center;justify-content:space-between}
+    #panel-payment .pm-modal-body{padding:18px}
+  </style>
+
+  <div class="pm-wrap">
+    <h1 style="font-size:24px;margin-bottom:18px">💳 ระบบการชำระเงิน</h1>
+
+    <!-- Tabs -->
+    <div class="pm-tabs">
+      <div class="pm-tab on" data-tab="methods" onclick="pmSwitchTab('methods')">
+        💳 ช่องทางการชำระ
+      </div>
+      <div class="pm-tab" data-tab="accounts" onclick="pmSwitchTab('accounts')">
+        🏦 บัญชีรับเงิน
+      </div>
+      <div class="pm-tab" data-tab="slips" onclick="pmSwitchTab('slips')">
+        🧾 Slip รออนุมัติ
+        <span class="ct" id="pm-pending-count">0</span>
+      </div>
+      <div class="pm-tab" data-tab="settings" onclick="pmSwitchTab('settings')">
+        ⚙️ ตั้งค่า
+      </div>
+    </div>
+
+    <!-- Tab: Methods -->
+    <div id="pm-tab-methods" class="pm-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-size:14px;font-weight:600">เปิด/ปิด ช่องทางการชำระ</div>
+          <div style="font-size:11px;color:#666;margin-top:2px">เปลี่ยนระหว่าง Manual (รับ slip) ↔ API (auto) สำหรับแต่ละช่องทาง</div>
+        </div>
+      </div>
+      <div id="pm-methods-list">
+        <div style="padding:40px;text-align:center;color:#888">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <!-- Tab: Accounts -->
+    <div id="pm-tab-accounts" class="pm-content" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-size:14px;font-weight:600">บัญชีรับเงินของ Thailand Market</div>
+          <div style="font-size:11px;color:#666;margin-top:2px">เพิ่ม QR หรือเลขบัญชีที่ลูกค้าจะโอนเงินเข้า</div>
+        </div>
+        <button class="pm-btn primary" onclick="pmShowAccountForm()">+ เพิ่มบัญชี</button>
+      </div>
+      <div id="pm-account-form-wrap"></div>
+      <div id="pm-accounts-list">
+        <div style="padding:40px;text-align:center;color:#888">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <!-- Tab: Slips -->
+    <div id="pm-tab-slips" class="pm-content" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-size:14px;font-weight:600">Slip การโอนเงิน</div>
+          <div style="font-size:11px;color:#666;margin-top:2px">ตรวจสอบและอนุมัติ slip ที่ลูกค้าอัปโหลด</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="pm-btn" data-filter="pending" onclick="pmFilterSlips('pending',this)">⏳ Pending</button>
+          <button class="pm-btn" data-filter="verified" onclick="pmFilterSlips('verified',this)">✅ Verified</button>
+          <button class="pm-btn" data-filter="rejected" onclick="pmFilterSlips('rejected',this)">❌ Rejected</button>
+          <button class="pm-btn primary" data-filter="all" onclick="pmFilterSlips('all',this)">ทั้งหมด</button>
+        </div>
+      </div>
+      <div id="pm-slips-list">
+        <div style="padding:40px;text-align:center;color:#888">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <!-- Tab: Settings -->
+    <div id="pm-tab-settings" class="pm-content" style="display:none">
+      <div style="font-size:14px;font-weight:600;margin-bottom:14px">ตั้งค่าระบบการชำระเงิน</div>
+      <div id="pm-settings-form">
+        <div style="padding:40px;text-align:center;color:#888">⏳ กำลังโหลด...</div>
+      </div>
+      <div style="margin-top:24px;padding:16px;background:#FFF5F5;border:1px solid #E63329;border-radius:6px">
+        <div style="font-size:13px;font-weight:600;color:#E63329;margin-bottom:8px">⚠️ Emergency: ปิดระบบชำระเงินทั้งหมด</div>
+        <div style="font-size:11px;color:#666;margin-bottom:10px">ใช้ในกรณีฉุกเฉิน — ลูกค้าจะไม่สามารถสั่งซื้อได้</div>
+        <input id="pm-maintenance-msg" placeholder="ข้อความถึงลูกค้า (เช่น: ระบบกำลังปรับปรุง...)" style="width:100%;padding:8px 12px;border:1px solid #E5E5E5;font-size:13px;margin-bottom:10px">
+        <button class="pm-btn danger" onclick="pmEmergencyDisable()">🚨 เปิดโหมดฉุกเฉิน</button>
+        <button class="pm-btn" onclick="pmDisableMaintenance()" style="margin-left:8px">✅ ปิดโหมดฉุกเฉิน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Management Logic -->
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  PAYMENT MANAGEMENT — Admin
+// ════════════════════════════════════════════════════════════════════
+
+let _pmTab = 'methods';
+let _pmMethods = [];
+let _pmAccounts = [];
+let _pmSlips = [];
+let _pmSlipFilter = 'pending';
+let _pmLoaded = false;
+
+function pmLog(...a){ console.log('[payment]', ...a); }
+function pmEsc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function pmFmtMoney(n){ return '฿' + Number(n||0).toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function pmFmtDate(d){
+  if (!d) return '—';
+  return new Date(d).toLocaleString('th-TH', {day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+window.pmSwitchTab = function(tab) {
+  _pmTab = tab;
+  document.querySelectorAll('#panel-payment .pm-tab').forEach(t => {
+    t.classList.toggle('on', t.dataset.tab === tab);
+  });
+  ['methods','accounts','slips','settings'].forEach(t => {
+    const el = document.getElementById('pm-tab-' + t);
+    if (el) el.style.display = (t === tab) ? '' : 'none';
+  });
+  if (tab === 'methods') pmLoadMethods();
+  else if (tab === 'accounts') pmLoadAccounts();
+  else if (tab === 'slips') pmLoadSlips();
+  else if (tab === 'settings') pmLoadSettings();
+};
+
+// ── METHODS ──
+async function pmLoadMethods() {
+  const wrap = document.getElementById('pm-methods-list');
+  if (!wrap) return;
+  const sb = window._sb;
+  try {
+    const { data, error } = await sb.from('payment_methods').select('*').order('sort_order');
+    if (error) throw error;
+    _pmMethods = data || [];
+    pmRenderMethods();
+  } catch(e) {
+    wrap.innerHTML = `<div class="pm-empty">❌ ${pmEsc(e.message)}<br><small>กรุณารัน payment-system-2026-05-08.sql</small></div>`;
+  }
+}
+
+function pmRenderMethods() {
+  const wrap = document.getElementById('pm-methods-list');
+  if (!_pmMethods.length) { wrap.innerHTML = '<div class="pm-empty">ยังไม่มี method</div>'; return; }
+  wrap.innerHTML = _pmMethods.map(m => `
+    <div class="pm-method-card ${m.is_enabled?'':'disabled'}">
+      <div class="pm-method-icon">${pmEsc(m.icon||'💳')}</div>
+      <div class="pm-method-info">
+        <div class="pm-method-name">
+          ${pmEsc(m.name_th)}
+          ${m.badge_text?`<span style="background:${pmEsc(m.badge_color||'#E63329')};color:#fff;font-size:9px;padding:2px 6px;border-radius:3px">${pmEsc(m.badge_text)}</span>`:''}
+        </div>
+        <div class="pm-method-desc">${pmEsc(m.description_th||'')}</div>
+        <div class="pm-method-meta">
+          <span class="pm-pill ${m.mode}">${pmEsc(m.mode)}</span>
+          <span class="pm-pill">${pmEsc(m.code)}</span>
+          ${m.requires_slip?'<span class="pm-pill">🧾 ต้องใช้ slip</span>':''}
+        </div>
+      </div>
+      <div class="pm-method-actions">
+        <select onchange="pmSwitchMode('${m.code}',this.value)" style="padding:6px;font-size:11px;border:1px solid #E5E5E5">
+          <option value="manual" ${m.mode==='manual'?'selected':''}>Manual</option>
+          <option value="api" ${m.mode==='api'?'selected':''}>API</option>
+          <option value="disabled" ${m.mode==='disabled'?'selected':''}>Disabled</option>
+        </select>
+        <label class="pm-toggle" title="${m.is_enabled?'ปิด':'เปิด'} ${pmEsc(m.name_th)}">
+          <input type="checkbox" ${m.is_enabled?'checked':''} onchange="pmToggleMethod('${m.code}',this.checked)">
+          <span class="pm-toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.pmToggleMethod = async function(code, enabled) {
+  const { data, error } = await window._sb.rpc('toggle_payment_method', { p_code: code, p_enabled: enabled });
+  if (error || (data && data.error)) {
+    alert('❌ ' + (error?.message || data.error));
+    pmLoadMethods();
+    return;
+  }
+  pmLoadMethods();
+};
+
+window.pmSwitchMode = async function(code, mode) {
+  const { data, error } = await window._sb.rpc('switch_payment_mode', { p_code: code, p_mode: mode });
+  if (error || (data && data.error)) {
+    alert('❌ ' + (error?.message || data.error));
+    pmLoadMethods();
+    return;
+  }
+  pmLoadMethods();
+};
+
+// ── ACCOUNTS ──
+async function pmLoadAccounts() {
+  const wrap = document.getElementById('pm-accounts-list');
+  if (!wrap) return;
+  const sb = window._sb;
+  try {
+    if (!_pmMethods.length) await pmLoadMethods();
+    const { data, error } = await sb.from('admin_payment_accounts')
+      .select('*').order('created_at', {ascending:false});
+    if (error) throw error;
+    _pmAccounts = data || [];
+    pmRenderAccounts();
+  } catch(e) {
+    wrap.innerHTML = `<div class="pm-empty">❌ ${pmEsc(e.message)}</div>`;
+  }
+}
+
+function pmRenderAccounts() {
+  const wrap = document.getElementById('pm-accounts-list');
+  if (!_pmAccounts.length) {
+    wrap.innerHTML = '<div class="pm-empty">ยังไม่มีบัญชี — คลิก "+ เพิ่มบัญชี" เพื่อเพิ่ม</div>';
+    return;
+  }
+  const methodMap = {};
+  _pmMethods.forEach(m => methodMap[m.id] = m);
+  wrap.innerHTML = _pmAccounts.map(a => {
+    const method = methodMap[a.method_id] || {};
+    return `
+      <div class="pm-account-row ${a.is_default?'default':''}">
+        <div style="font-size:24px">${pmEsc(method.icon||'🏦')}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px">${pmEsc(a.account_name)}</div>
+          ${a.bank_name?`<div style="font-size:12px;color:#666">${pmEsc(a.bank_name)} ${a.account_number?'· '+pmEsc(a.account_number):''}</div>`:''}
+          ${a.promptpay_id?`<div style="font-size:12px;color:#666">PromptPay: ${pmEsc(a.promptpay_id)}</div>`:''}
+          <div style="font-size:10px;color:#888;font-family:monospace;margin-top:2px">${pmEsc(method.name_th||'?')} · ${a.is_default?'⭐ Default':''} · ${a.is_active?'🟢 Active':'⚫ Inactive'}</div>
+        </div>
+        ${a.qr_image_url?`<img src="${pmEsc(a.qr_image_url)}" style="width:60px;height:60px;object-fit:cover;border:1px solid #E5E5E5;border-radius:4px;cursor:pointer" onclick="window.open('${pmEsc(a.qr_image_url)}','_blank')">`:''}
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${!a.is_default?`<button class="pm-btn" onclick="pmSetDefault('${a.id}','${a.method_id}')">ตั้งเป็น default</button>`:''}
+          <button class="pm-btn" onclick="pmEditAccount('${a.id}')">แก้ไข</button>
+          <button class="pm-btn danger" onclick="pmDeleteAccount('${a.id}')">ลบ</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.pmShowAccountForm = function(account) {
+  const wrap = document.getElementById('pm-account-form-wrap');
+  const isEdit = !!account;
+  const a = account || {};
+  wrap.innerHTML = `
+    <div class="pm-form open">
+      <div style="font-weight:600;margin-bottom:12px">${isEdit?'แก้ไขบัญชี':'เพิ่มบัญชีใหม่'}</div>
+      <label>ช่องทาง</label>
+      <select id="pmf-method">
+        ${_pmMethods.filter(m=>m.type==='qr_promptpay'||m.type==='bank_transfer').map(m=>`
+          <option value="${m.id}" ${a.method_id===m.id?'selected':''}>${pmEsc(m.name_th)}</option>
+        `).join('')}
+      </select>
+      <label>ชื่อบัญชี / เจ้าของ</label>
+      <input id="pmf-name" placeholder="Thailand Market Co., Ltd." value="${pmEsc(a.account_name||'Thailand Market')}">
+      <label>ธนาคาร (สำหรับโอนผ่านธนาคาร)</label>
+      <input id="pmf-bank" placeholder="KBank / SCB / BBL ..." value="${pmEsc(a.bank_name||'')}">
+      <label>เลขบัญชี</label>
+      <input id="pmf-accnum" placeholder="123-4-56789-0" value="${pmEsc(a.account_number||'')}">
+      <label>PromptPay ID (เบอร์ / เลข 13 หลัก / เลขนิติฯ)</label>
+      <input id="pmf-promptpay" placeholder="0812345678" value="${pmEsc(a.promptpay_id||'')}">
+      <label>QR Image URL (ไม่บังคับ — ถ้ามีรูป QR static)</label>
+      <input id="pmf-qr" placeholder="https://..." value="${pmEsc(a.qr_image_url||'')}">
+      <label style="display:flex;align-items:center;gap:6px;margin-top:8px">
+        <input type="checkbox" id="pmf-default" ${a.is_default?'checked':''} style="width:auto;margin:0"> ตั้งเป็นบัญชี default
+      </label>
+      <label style="display:flex;align-items:center;gap:6px">
+        <input type="checkbox" id="pmf-active" ${a.is_active!==false?'checked':''} style="width:auto;margin:0"> Active
+      </label>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="pm-btn primary" onclick="pmSaveAccount('${a.id||''}')">💾 บันทึก</button>
+        <button class="pm-btn" onclick="document.getElementById('pm-account-form-wrap').innerHTML=''">ยกเลิก</button>
+      </div>
+    </div>
+  `;
+};
+
+window.pmSaveAccount = async function(id) {
+  const payload = {
+    method_id: document.getElementById('pmf-method').value,
+    account_name: document.getElementById('pmf-name').value.trim(),
+    bank_name: document.getElementById('pmf-bank').value.trim() || null,
+    account_number: document.getElementById('pmf-accnum').value.trim() || null,
+    promptpay_id: document.getElementById('pmf-promptpay').value.trim() || null,
+    qr_image_url: document.getElementById('pmf-qr').value.trim() || null,
+    is_default: document.getElementById('pmf-default').checked,
+    is_active: document.getElementById('pmf-active').checked,
+    updated_at: new Date().toISOString()
+  };
+  if (!payload.account_name) { alert('กรุณากรอกชื่อบัญชี'); return; }
+  const sb = window._sb;
+  let r;
+  // ถ้าตั้งเป็น default → unset อื่นๆ ใน method เดียวกัน
+  if (payload.is_default) {
+    await sb.from('admin_payment_accounts')
+      .update({ is_default: false })
+      .eq('method_id', payload.method_id);
+  }
+  if (id) {
+    r = await sb.from('admin_payment_accounts').update(payload).eq('id', id);
+  } else {
+    r = await sb.from('admin_payment_accounts').insert(payload);
+  }
+  if (r.error) { alert('❌ ' + r.error.message); return; }
+  document.getElementById('pm-account-form-wrap').innerHTML = '';
+  pmLoadAccounts();
+};
+
+window.pmEditAccount = function(id) {
+  const a = _pmAccounts.find(x => x.id === id);
+  if (a) pmShowAccountForm(a);
+};
+
+window.pmDeleteAccount = async function(id) {
+  if (!confirm('ลบบัญชีนี้?')) return;
+  const { error } = await window._sb.from('admin_payment_accounts').delete().eq('id', id);
+  if (error) { alert('❌ ' + error.message); return; }
+  pmLoadAccounts();
+};
+
+window.pmSetDefault = async function(id, methodId) {
+  const sb = window._sb;
+  await sb.from('admin_payment_accounts').update({ is_default: false }).eq('method_id', methodId);
+  await sb.from('admin_payment_accounts').update({ is_default: true }).eq('id', id);
+  pmLoadAccounts();
+};
+
+
+// ── SLIPS ──
+async function pmLoadSlips() {
+  const wrap = document.getElementById('pm-slips-list');
+  if (!wrap) return;
+  const sb = window._sb;
+  try {
+    let q = sb.from('payment_slips')
+      .select('*, orders(id,order_number,total,user_id), users(display_name,email,phone)')
+      .order('created_at', { ascending: false }).limit(100);
+    if (_pmSlipFilter !== 'all') q = q.eq('status', _pmSlipFilter);
+    const { data, error } = await q;
+    if (error) throw error;
+    _pmSlips = data || [];
+    pmRenderSlips();
+    pmUpdatePendingBadge();
+  } catch(e) {
+    wrap.innerHTML = `<div class="pm-empty">❌ ${pmEsc(e.message)}</div>`;
+  }
+}
+
+function pmRenderSlips() {
+  const wrap = document.getElementById('pm-slips-list');
+  if (!_pmSlips.length) {
+    wrap.innerHTML = '<div class="pm-empty">ไม่มี slip ในหมวดนี้</div>';
+    return;
+  }
+  wrap.innerHTML = _pmSlips.map(s => {
+    const order = s.orders || {};
+    const user = s.users || {};
+    return `
+      <div class="pm-slip-row ${s.status}">
+        <div class="pm-slip-img" onclick="${s.slip_image_url?`window.open('${pmEsc(s.slip_image_url)}','_blank')`:''}">
+          ${s.slip_image_url?`<img src="${pmEsc(s.slip_image_url)}">`:'🧾'}
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:3px">
+            #${pmEsc(order.order_number || s.order_id?.slice(0,8) || '?')}
+            <span style="font-family:monospace;color:#666;font-weight:400;font-size:11px;margin-left:6px">${pmFmtDate(s.created_at)}</span>
+          </div>
+          <div style="font-size:12px;color:#666">👤 ${pmEsc(user.display_name || user.email || 'Unknown')} ${user.phone?'· 📞 '+pmEsc(user.phone):''}</div>
+          <div style="font-size:13px;font-weight:500;margin-top:3px">💰 ${pmFmtMoney(s.amount || order.total || 0)}</div>
+          ${s.transferred_at?`<div style="font-size:11px;color:#666">⏰ โอน: ${pmFmtDate(s.transferred_at)}</div>`:''}
+          ${s.reference_number?`<div style="font-size:11px;color:#666;font-family:monospace">Ref: ${pmEsc(s.reference_number)}</div>`:''}
+          ${s.reject_reason?`<div style="font-size:11px;color:#E63329;margin-top:3px">❌ ${pmEsc(s.reject_reason)}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <span class="pm-pill ${s.status==='pending'?'manual':s.status==='verified'?'api':'disabled'}" style="font-size:10px">${s.status}</span>
+          ${s.status==='pending'?`
+            <button class="pm-btn primary" onclick="pmVerifySlip('${s.id}','verified')" style="font-size:11px">✅ อนุมัติ</button>
+            <button class="pm-btn danger" onclick="pmVerifySlip('${s.id}','rejected')" style="font-size:11px">❌ ปฏิเสธ</button>
+          `:''}
+          <a href="admin-cms.html?panel=orders&order=${pmEsc(s.order_id)}" class="pm-btn" style="font-size:11px;text-decoration:none">ดู order</a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.pmFilterSlips = function(filter, btn) {
+  _pmSlipFilter = filter;
+  document.querySelectorAll('#pm-tab-slips .pm-btn[data-filter]').forEach(b => {
+    b.classList.toggle('primary', b.dataset.filter === filter);
+  });
+  pmLoadSlips();
+};
+
+window.pmVerifySlip = async function(id, status) {
+  let reason = null;
+  if (status === 'rejected') {
+    reason = prompt('เหตุผลการปฏิเสธ:');
+    if (reason === null) return;
+  }
+  const { data, error } = await window._sb.rpc('verify_payment_slip', {
+    p_slip_id: id, p_status: status, p_reason: reason
+  });
+  if (error || (data && data.error)) {
+    alert('❌ ' + (error?.message || data.error));
+    return;
+  }
+  pmLoadSlips();
+};
+
+async function pmUpdatePendingBadge() {
+  const sb = window._sb;
+  try {
+    const { count } = await sb.from('payment_slips')
+      .select('*', { count: 'exact', head: true }).eq('status', 'pending');
+    const badges = ['pm-pending-count', 'payment-pending-badge'];
+    badges.forEach(bid => {
+      const el = document.getElementById(bid);
+      if (!el) return;
+      if (count > 0) {
+        el.textContent = count > 99 ? '99+' : count;
+        el.style.display = bid==='payment-pending-badge'?'inline-flex':'';
+      } else {
+        if (bid === 'payment-pending-badge') el.style.display = 'none';
+        else el.textContent = '0';
+      }
+    });
+  } catch(e) {}
+}
+
+
+// ── SETTINGS ──
+async function pmLoadSettings() {
+  const wrap = document.getElementById('pm-settings-form');
+  if (!wrap) return;
+  const sb = window._sb;
+  const { data } = await sb.from('payment_settings').select('*').eq('id', 1).maybeSingle();
+  const s = data || {};
+  wrap.innerHTML = `
+    <div style="display:grid;gap:14px;max-width:600px">
+      <div>
+        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="ps-manual" ${s.manual_mode_enabled?'checked':''}> เปิด Manual Mode (รับ slip)</label>
+      </div>
+      <div>
+        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="ps-api" ${s.api_mode_enabled?'checked':''}> เปิด API Mode (เชื่อมต่อ payment provider)</label>
+      </div>
+      <div>
+        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="ps-slip-req" ${s.slip_upload_required!==false?'checked':''}> บังคับให้ลูกค้าอัปโหลด slip</label>
+      </div>
+      <div>
+        <label style="font-size:11px;color:#666">เวลา timeout (นาที — auto-cancel หลังจาก)</label>
+        <input id="ps-timeout" type="number" value="${s.payment_timeout_minutes||60}" style="width:100px;padding:6px 10px;border:1px solid #E5E5E5">
+      </div>
+      <div>
+        <label style="font-size:11px;color:#666">Commission % (สำหรับ payout ในอนาคต)</label>
+        <input id="ps-commission" type="number" step="0.01" value="${s.default_commission_percent||5.00}" style="width:100px;padding:6px 10px;border:1px solid #E5E5E5">
+      </div>
+      <div style="margin-top:12px">
+        <button class="pm-btn primary" onclick="pmSaveSettings()">💾 บันทึก</button>
+      </div>
+    </div>
+  `;
+}
+
+window.pmSaveSettings = async function() {
+  const payload = {
+    id: 1,
+    manual_mode_enabled: document.getElementById('ps-manual').checked,
+    api_mode_enabled: document.getElementById('ps-api').checked,
+    slip_upload_required: document.getElementById('ps-slip-req').checked,
+    payment_timeout_minutes: parseInt(document.getElementById('ps-timeout').value) || 60,
+    default_commission_percent: parseFloat(document.getElementById('ps-commission').value) || 5.00,
+    updated_at: new Date().toISOString()
+  };
+  const { error } = await window._sb.from('payment_settings').upsert(payload);
+  if (error) { alert('❌ ' + error.message); return; }
+  alert('✅ บันทึกแล้ว');
+};
+
+window.pmEmergencyDisable = async function() {
+  const msg = document.getElementById('pm-maintenance-msg').value.trim();
+  if (!confirm('ยืนยันเปิดโหมดฉุกเฉิน?\nลูกค้าจะไม่สามารถสั่งซื้อได้!')) return;
+  const { data, error } = await window._sb.rpc('emergency_disable_all_payments', { p_message: msg || null });
+  if (error || (data && data.error)) { alert('❌ ' + (error?.message || data.error)); return; }
+  alert('🚨 เปิดโหมดฉุกเฉินแล้ว');
+  pmLoadSettings();
+};
+
+window.pmDisableMaintenance = async function() {
+  const { error } = await window._sb.from('payment_settings').update({
+    maintenance_mode: false, maintenance_message: null, updated_at: new Date().toISOString()
+  }).eq('id', 1);
+  if (error) { alert('❌ ' + error.message); return; }
+  alert('✅ ปิดโหมดฉุกเฉินแล้ว');
+  pmLoadSettings();
+};
+
+// Auto-init when panel shown
+(function hookPaymentPanel(){
+  const orig = window.showPanel;
+  if (typeof orig !== 'function') return;
+  window.showPanel = function(name){
+    const r = orig.apply(this, arguments);
+    if (name === 'payment') pmSwitchTab(_pmTab || 'methods');
+    return r;
+  };
+  // Initial badge load
+  setTimeout(()=>pmUpdatePendingBadge(), 2000);
+  setInterval(()=>pmUpdatePendingBadge(), 30000);
+})();
 </script>
 
 

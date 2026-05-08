@@ -610,6 +610,9 @@ img{max-width:100%;height:auto}
       <div class="sec-title">💳 วิธีชำระเงิน</div>
       <div class="pay-method-grid" id="pay-methods"></div>
 
+      <!-- Dynamic pay details (QR/account info + slip upload) — แสดงตาม method ที่เลือก -->
+      <div id="pay-details" style="margin-top:14px"></div>
+
       <!-- CREDIT CARD FORM (shown when card selected) -->
       <div id="card-form" style="display:none">
         <div class="fg">
@@ -722,15 +725,156 @@ img{max-width:100%;height:auto}
 // ── DATA — populated from Supabase by loadCheckoutData() ──
 const CART = [];
 const ADDRS = [];
-const PAYS=[
-  {ico:'💳',name:'บัตรเครดิต/เดบิต',sub:'Visa, Mastercard, JCB',id:'credit'},
-  {ico:'📱',name:'QR PromptPay',sub:'สแกนจ่ายได้เลย',id:'qr'},
-  {ico:'🏦',name:'ผ่อน 0% นาน 12 เดือน',sub:'KBank, SCB, KTC',id:'install'},
-  {ico:'🏪',name:'Counter Service',sub:'7-Eleven, Family Mart',id:'counter'},
-];
+// Dynamic PAYS — load จาก DB (admin จัดการที่ Payment panel)
+let PAYS = [];           // จะถูก populate ตอน loadPaymentMethods()
+let _PAY_DETAILS = {};   // method.id → full record (รวม account info)
 
 let couponApplied=false,couponDiscount=0;
-let selPay='credit';
+let selPay = null;       // จะ default เป็นตัวแรกหลัง load
+let _uploadedSlipUrl = null;
+let _slipAmount = null;
+let _slipRefNumber = null;
+let _slipTransferredAt = null;
+
+async function loadPaymentMethods() {
+  try {
+    const { data, error } = await _sbCO.rpc('get_available_payment_methods');
+    if (error) throw error;
+    if (!data || !data.length) {
+      document.getElementById('pay-methods').innerHTML = `
+        <div style="padding:24px;text-align:center;color:#E63329;background:#FFF5F5;border:1px solid #E63329;border-radius:6px">
+          ⚠️ ขณะนี้ยังไม่เปิดให้สั่งซื้อ<br><small style="color:#666">Admin ยังไม่ได้ตั้งค่าช่องทางการชำระเงิน</small>
+        </div>`;
+      return;
+    }
+    // group by id (RPC อาจ return หลายแถวถ้ามีหลาย account)
+    const byId = {};
+    data.forEach(row => {
+      if (!byId[row.id]) {
+        byId[row.id] = {
+          id: row.id, code: row.code, name: row.name_th, ico: row.icon || '💳',
+          sub: row.description_th || '', mode: row.mode,
+          requires_slip: row.requires_slip, badge: row.badge_text, badge_color: row.badge_color,
+          accounts: []
+        };
+      }
+      if (row.account_id) {
+        byId[row.id].accounts.push({
+          id: row.account_id, name: row.account_name,
+          bank: row.bank_name, num: row.account_number,
+          promptpay: row.promptpay_id, qr_url: row.qr_image_url
+        });
+      }
+    });
+    PAYS = Object.values(byId);
+    PAYS.forEach(p => _PAY_DETAILS[p.id] = p);
+    if (!selPay && PAYS.length) selPay = PAYS[0].id;
+    buildPays();
+    renderPayDetails();
+  } catch(e) {
+    console.error('loadPaymentMethods:', e);
+    document.getElementById('pay-methods').innerHTML = `
+      <div style="padding:24px;text-align:center;color:#E63329">
+        ❌ โหลดวิธีชำระเงินไม่สำเร็จ: ${e.message}<br>
+        <small>กรุณาแจ้ง admin ให้รัน payment-system-2026-05-08.sql</small>
+      </div>`;
+  }
+}
+
+function renderPayDetails() {
+  const el = document.getElementById('pay-details');
+  if (!el) return;
+  const p = _PAY_DETAILS[selPay];
+  if (!p) { el.innerHTML = ''; return; }
+
+  // กรณี COD — ไม่ต้อง upload slip
+  if (p.code === 'cod' || !p.requires_slip) {
+    el.innerHTML = `
+      <div style="padding:16px;background:#F0FDF4;border:1px solid #10B981;border-radius:6px;font-size:13px">
+        ✅ ${p.code === 'cod' ? 'ชำระเงินสดเมื่อได้รับสินค้า — ไม่ต้องโอนล่วงหน้า' : 'ไม่ต้องอัปโหลด slip'}
+      </div>`;
+    _uploadedSlipUrl = null;
+    return;
+  }
+
+  // กรณี API mode — ผ่าน gateway
+  if (p.mode === 'api') {
+    el.innerHTML = `
+      <div style="padding:16px;background:#F0F4FF;border:1px solid #3B82F6;border-radius:6px;font-size:13px">
+        🔐 ระบบจะ redirect ไป payment gateway ตอนกด "ยืนยันคำสั่งซื้อ"
+      </div>`;
+    return;
+  }
+
+  // Manual mode — แสดงบัญชี + slip upload
+  const acc = p.accounts[0];
+  if (!acc) {
+    el.innerHTML = `
+      <div style="padding:16px;background:#FFF5F5;border:1px solid #E63329;border-radius:6px;font-size:13px;color:#E63329">
+        ⚠️ ยังไม่ได้ตั้งค่าบัญชีรับเงินสำหรับช่องทางนี้
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="padding:18px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:6px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">📋 ข้อมูลบัญชีสำหรับโอนเงิน</div>
+      <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px">
+        ${acc.qr_url ? `
+          <div style="flex-shrink:0;width:140px;text-align:center">
+            <img src="${acc.qr_url}" style="width:140px;height:140px;object-fit:contain;border:1px solid #E5E5E5;background:#fff;border-radius:4px;cursor:pointer" onclick="window.open('${acc.qr_url}','_blank')">
+            <div style="font-size:10px;color:#666;margin-top:4px">คลิกเพื่อขยาย</div>
+          </div>
+        ` : ''}
+        <div style="flex:1;font-size:13px;line-height:1.7">
+          <div><strong>👤 ชื่อบัญชี:</strong> ${acc.name || '—'}</div>
+          ${acc.bank ? `<div><strong>🏦 ธนาคาร:</strong> ${acc.bank}</div>` : ''}
+          ${acc.num ? `<div><strong>🔢 เลขบัญชี:</strong> <span style="font-family:monospace;font-weight:600">${acc.num}</span> <button onclick="navigator.clipboard.writeText('${acc.num.replace(/[^0-9]/g,'')}');toast('📋 คัดลอกแล้ว')" style="margin-left:6px;padding:2px 8px;border:1px solid #E5E5E5;background:#fff;cursor:pointer;font-size:11px">คัดลอก</button></div>` : ''}
+          ${acc.promptpay ? `<div><strong>📱 PromptPay:</strong> <span style="font-family:monospace;font-weight:600">${acc.promptpay}</span></div>` : ''}
+        </div>
+      </div>
+
+      <div style="border-top:1px dashed #E5E5E5;padding-top:14px;margin-top:6px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">📤 อัปโหลด slip การโอนเงิน</div>
+        <input type="file" id="slip-file" accept="image/*" onchange="onSlipSelected(this)" style="margin-bottom:8px;font-size:12px">
+        <div id="slip-preview" style="margin-bottom:8px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div>
+            <label style="font-size:11px;color:#666">จำนวนเงินที่โอน (บาท)</label>
+            <input id="slip-amount" type="number" step="0.01" placeholder="0.00" oninput="_slipAmount=parseFloat(this.value)" style="width:100%;padding:6px 10px;border:1px solid #E5E5E5;font-size:13px;margin-top:2px">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#666">เวลาที่โอน</label>
+            <input id="slip-time" type="datetime-local" oninput="_slipTransferredAt=this.value" style="width:100%;padding:6px 10px;border:1px solid #E5E5E5;font-size:13px;margin-top:2px">
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <label style="font-size:11px;color:#666">เลขอ้างอิง (ถ้ามี)</label>
+          <input id="slip-ref" placeholder="REF123456" oninput="_slipRefNumber=this.value" style="width:100%;padding:6px 10px;border:1px solid #E5E5E5;font-size:13px;margin-top:2px">
+        </div>
+        <div style="margin-top:10px;padding:8px;background:#FFFBEB;border-left:3px solid #F59E0B;font-size:11px;color:#92400E">
+          ⏱️ คำสั่งซื้อจะถูกยืนยันหลัง admin ตรวจสอบ slip (ใช้เวลาประมาณ 5-30 นาที)
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+window.onSlipSelected = function(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  // อ่านไฟล์เป็น data URL (จะอัปโหลดจริงไป Supabase Storage ตอนกด confirm)
+  const reader = new FileReader();
+  reader.onload = e => {
+    _uploadedSlipUrl = e.target.result;  // base64 data url ชั่วคราว
+    document.getElementById('slip-preview').innerHTML = `
+      <img src="${e.target.result}" style="max-width:200px;max-height:200px;border:1px solid #E5E5E5;border-radius:4px;display:block">
+    `;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.renderPayDetails = renderPayDetails;
 
 function buildCart(){
   document.getElementById('cart-items').innerHTML=CART.map((it,i)=>`<div class="cart-item">
@@ -783,12 +927,14 @@ function buildPays(){
   </div>`).join('');
 }
 function selPayMethod(id){
-  selPay=id;buildPays();
-  document.getElementById('card-form').style.display=id==='credit'?'block':'none';
-  document.getElementById('qr-form').style.display=id==='qr'?'block':'none';
-  document.getElementById('inst-form').style.display=id==='install'?'block':'none';
-  document.getElementById('inst-summary').style.display=id==='install'?'block':'none';
-  toast({credit:'💳 เลือกบัตรเครดิต/เดบิต',qr:'📱 เลือก QR PromptPay',install:'📅 เลือกผ่อนชำระ 0%',counter:'🏪 เลือก Counter Service'}[id]||'✅');
+  selPay=id;
+  buildPays();
+  // ซ่อน form เก่า (credit/qr/install/inst-summary) — เราใช้ pay-details แทน
+  ['card-form','qr-form','inst-form','inst-summary'].forEach(elId => {
+    const el = document.getElementById(elId);
+    if (el) el.style.display = 'none';
+  });
+  renderPayDetails();
 }
 
 // updateTotal moved to PATCH section below — uses _appliedCoupons
@@ -1093,6 +1239,14 @@ async function doCheckout(){
     };
   }
 
+  // ── Validation: ตรวจ slip ถ้า method นี้ require ──
+  const selectedMethod = _PAY_DETAILS[selPay];
+  const needsSlip = selectedMethod && selectedMethod.requires_slip && selectedMethod.mode === 'manual';
+  if (needsSlip && !_uploadedSlipUrl) {
+    toast('⚠️ กรุณาอัปโหลด slip การโอนเงิน');
+    return;
+  }
+
   // คำนวณยอด
   const sub = CART.reduce((s,it)=>s+it.price*it.qty, 0);
   const couponDisc = (typeof _appliedCoupons!=='undefined'?_appliedCoupons:[]).reduce((s,c)=>s+(c.discount||0), 0);
@@ -1139,7 +1293,7 @@ async function doCheckout(){
     });
 
     // 3. payment record
-    const payMethodLabel = {credit:'บัตรเครดิต/เดบิต',qr:'QR PromptPay',install:'ผ่อน 0% นาน 12 เดือน',counter:'Counter Service'}[selPay]||selPay;
+    const payMethodLabel = selectedMethod ? selectedMethod.name : selPay;
     const payInsert = {
       order_id: order.id, user_id: user.id,
       method: selPay, amount: total,
@@ -1150,6 +1304,41 @@ async function doCheckout(){
     if(selPay==='counter') payInsert.counter_ref = String(Date.now()).slice(-13).padStart(13,'0');
     const { error:pErr } = await _sbCO.from('payments').insert(payInsert);
     if(pErr) console.warn('payment insert:', pErr.message);
+
+    // 3.5. payment_slip — ถ้า manual mode + อัปโหลด slip
+    if (needsSlip && _uploadedSlipUrl) {
+      try {
+        // upload slip image to Supabase storage (bucket: slips)
+        let slipUrl = _uploadedSlipUrl;
+        if (_uploadedSlipUrl.startsWith('data:')) {
+          // Convert data URL → Blob → upload to storage
+          const res = await fetch(_uploadedSlipUrl);
+          const blob = await res.blob();
+          const ext = (blob.type.split('/')[1] || 'jpg').split(';')[0];
+          const fileName = `${order.id}-${Date.now()}.${ext}`;
+          const { data:upData, error:upErr } = await _sbCO.storage.from('slips').upload(fileName, blob, { upsert: true });
+          if (!upErr && upData) {
+            const { data: pub } = _sbCO.storage.from('slips').getPublicUrl(upData.path);
+            slipUrl = pub.publicUrl;
+          } else {
+            console.warn('slip storage upload failed, keeping data url:', upErr);
+          }
+        }
+        const slipInsert = {
+          order_id: order.id,
+          user_id: user.id,
+          method_id: selectedMethod.id,
+          account_id: (selectedMethod.accounts && selectedMethod.accounts[0]) ? selectedMethod.accounts[0].id : null,
+          slip_image_url: slipUrl,
+          amount: _slipAmount || total,
+          transferred_at: _slipTransferredAt ? new Date(_slipTransferredAt).toISOString() : null,
+          reference_number: _slipRefNumber || null,
+          status: 'pending'
+        };
+        const { error:sErr } = await _sbCO.from('payment_slips').insert(slipInsert);
+        if (sErr) console.warn('slip insert:', sErr.message);
+      } catch(e) { console.warn('slip upload exception:', e); }
+    }
 
     // 4. notification
     await _sbCO.from('notifications').insert({
@@ -1468,7 +1657,8 @@ async function loadCheckoutData() {
     buildAddrs();
   }
 
-  buildPays();
+  // Load payment methods จาก DB (admin จัดการที่ Payment panel)
+  await loadPaymentMethods();
   updateTotal();
 }
 
