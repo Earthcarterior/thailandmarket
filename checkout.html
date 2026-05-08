@@ -1061,12 +1061,20 @@ async function doCheckout(){
   if(!selectedAddr){toast('⚠️ กรุณาเลือกที่อยู่จัดส่ง');return;}
 
   // ดึง user
-  const { data:{ user } } = await _sbCO.auth.getUser();
-  if(!user){
+  const { data:{ user: authUser } } = await _sbCO.auth.getUser();
+  if(!authUser){
     toast('⚠️ กรุณาเข้าสู่ระบบก่อน');
     setTimeout(()=>location.href='login.html?from=checkout.html',1200);
     return;
   }
+
+  // ใช้ helper หา public.users.id (auto-create ถ้าไม่มี)
+  const publicUserId = await getPublicUserId();
+  if (!publicUserId) {
+    toast('❌ ไม่สามารถหาข้อมูลผู้ใช้ — กรุณา login ใหม่');
+    return;
+  }
+  const user = { id: publicUserId, email: authUser.email };  // user.id คือ public.users.id (สำหรับ FK)
 
   // เก็บข้อมูลบัตร (เฉพาะ credit method) — เก็บแค่ 4 ตัวท้าย
   let cardData = {};
@@ -1299,12 +1307,47 @@ function toast(msg, type) {
 })();
 
 
+// ── Helper: หา public.users.id (สำหรับ FK) จาก auth session ──
+let _cachedPublicUserId = null;
+async function getPublicUserId() {
+  if (_cachedPublicUserId) return _cachedPublicUserId;
+  try {
+    const { data: { user: authUser } } = await _sbCO.auth.getUser();
+    if (!authUser) return null;
+    let { data } = await _sbCO.from('users').select('id').eq('email', authUser.email).maybeSingle();
+    if (!data) {
+      // Auto-create
+      const fallbackName = (authUser.user_metadata && authUser.user_metadata.display_name) || authUser.email.split('@')[0];
+      const { data: created, error } = await _sbCO.from('users').insert({
+        email: authUser.email, display_name: fallbackName, role: 'buyer'
+      }).select('id').maybeSingle();
+      if (!error || error.message.includes('duplicate')) {
+        if (!created) {
+          const { data: r } = await _sbCO.from('users').select('id').eq('email', authUser.email).maybeSingle();
+          data = r;
+        } else {
+          data = created;
+        }
+      }
+    }
+    if (data) _cachedPublicUserId = data.id;
+    return _cachedPublicUserId;
+  } catch(e) { console.warn('getPublicUserId:', e); return null; }
+}
+window.getPublicUserId = getPublicUserId;
+
+
 // ── Load cart + addresses from Supabase ───────────────────
 async function loadCheckoutData() {
   let user = null;
   try {
     const { data:{ user: u } } = await _sbCO.auth.getUser();
     user = u;
+    // Set public user id ใน cache จาก email
+    if (u) {
+      const pid = await getPublicUserId();
+      if (pid) user = { ...u, id: pid };  // override id with public.users.id
+    }
   } catch(e) { /* anon */ }
 
   // ── 1. CART: try Supabase cart_items first, fallback to localStorage ──
@@ -1459,11 +1502,11 @@ async function changeQty(idx, delta) {
 
   // ── Best-effort sync to Supabase if logged in ──
   try {
-    const { data:{ user } } = await _sbCO.auth.getUser();
-    if (user && CART[idx].id) {
+    const pid = await getPublicUserId();
+    if (pid && CART[idx].id) {
       await _sbCO.from('cart_items')
         .update({ quantity: CART[idx].qty })
-        .eq('user_id', user.id).eq('product_id', CART[idx].id);
+        .eq('user_id', pid).eq('product_id', CART[idx].id);
     }
   } catch(e) { /* silent */ }
 }
@@ -1495,10 +1538,10 @@ async function removeItem(idx) {
 
   // ── Best-effort sync to Supabase ──
   try {
-    const { data:{ user } } = await _sbCO.auth.getUser();
-    if (user && removed?.id) {
+    const pid = await getPublicUserId();
+    if (pid && removed?.id) {
       await _sbCO.from('cart_items').delete()
-        .eq('user_id', user.id).eq('product_id', removed.id);
+        .eq('user_id', pid).eq('product_id', removed.id);
     }
   } catch(e) { /* silent */ }
   toast('🗑️ ลบสินค้าออกแล้ว');
@@ -1546,9 +1589,10 @@ async function placeOrder() {
   const { data:{ session } } = await _sbCO.auth.getSession();
   if (!session) { toast('⚠️ กรุณาเข้าสู่ระบบก่อน'); setTimeout(()=>location.href='login.html?from=checkout.html',1200); return; }
   
-  const email = session.user.email;
-  const { data:user } = await _sbCO.from('users').select('id').eq('email',email).maybeSingle();
-  if (!user) { toast('❌ ไม่พบข้อมูลผู้ใช้'); return; }
+  // ใช้ helper ที่ auto-create ถ้าไม่มี
+  const pid = await getPublicUserId();
+  if (!pid) { toast('❌ ไม่สามารถหาข้อมูลผู้ใช้'); return; }
+  const user = { id: pid };
   
   // ดึง form values
   const name   = document.getElementById('ship-name')?.value?.trim() || '';
