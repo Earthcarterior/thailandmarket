@@ -798,26 +798,143 @@ nav, .nav {
 
   <!-- PRODUCTS -->
   <div class="page" id="page-products">
-    <div class="ph">📦 สินค้าทั้งหมด</div>
-    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-      <button class="btn-p" onclick="goto('add-product',null)">➕ เพิ่มสินค้าใหม่</button>
-      <button class="btn-o" onclick="toast('📥 Import CSV — กรุณาใช้ Export ก่อนเป็น template','info')">📥 นำเข้า CSV</button>
-      <button class="btn-o" onclick="exportCSV()">📤 Export CSV</button>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <select id="prod-cat-filter" class="fi" style="width:auto;padding:6px 10px;font-size:11px" onchange="filterProdCat(this.value)">
-          <option value="">ทุกหมวดหมู่</option>
-          <option>Home & Furniture</option><option>แฟชั่น</option><option>Beauty & Health</option>
-          <option>FMCG & อาหาร</option><option>Tech & Gadgets</option><option>ยานยนต์</option>
-          <option>สัตว์เลี้ยง</option><option>การศึกษา</option>
-        </select>
-        <select class="fi" style="width:auto;padding:6px 10px;font-size:11px">
-          <option>ทุกสถานะ</option><option>วางขาย</option><option>หมด</option><option>หยุดขาย</option>
-        </select>
+    <style>
+      #page-products .pr-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;gap:14px;flex-wrap:wrap}
+      #page-products .pr-title{font-size:24px;font-weight:600;margin-bottom:4px}
+      #page-products .pr-sub{font-size:11px;font-family:'DM Mono',monospace;color:#888;text-transform:uppercase;letter-spacing:.08em}
+      #page-products .pr-actions{display:flex;gap:8px}
+      #page-products .pr-btn{padding:10px 16px;border:1px solid #E5E5E5;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.04em}
+      #page-products .pr-btn:hover{background:#FAFAFA}
+      #page-products .pr-btn.primary{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+      #page-products .pr-btn.primary:hover{background:#222}
+      
+      /* Dashboard stats */
+      #page-products .pr-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+      #page-products .pr-stat{padding:18px;background:#fff;border:1px solid #E5E5E5;border-radius:6px;cursor:pointer;transition:all .15s}
+      #page-products .pr-stat:hover{border-color:#0A0A0A}
+      #page-products .pr-stat.on{border-color:#E63329;background:#FFF5F5}
+      #page-products .pr-stat-l{font-size:10px;font-family:'DM Mono',monospace;color:#888;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+      #page-products .pr-stat-v{font-size:34px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:-.5px;line-height:1}
+      #page-products .pr-stat-v.green{color:#10B981}
+      #page-products .pr-stat-v.amber{color:#F59E0B}
+      #page-products .pr-stat-v.red{color:#EF4444}
+      #page-products .pr-stat-v.gray{color:#737373}
+      
+      /* Filter bar */
+      #page-products .pr-filter{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;padding:14px;background:#fff;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:14px}
+      #page-products .pr-search,#page-products .pr-select{padding:10px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px;font-family:inherit;background:#fff}
+      #page-products .pr-search{background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg>") no-repeat 12px center;padding-left:36px}
+      
+      /* Table */
+      #page-products .pr-table-wrap{background:#fff;border:1px solid #E5E5E5;border-radius:6px;overflow:hidden}
+      #page-products .pr-table{width:100%;border-collapse:collapse}
+      #page-products .pr-table th{padding:14px 16px;background:#FAFAFA;text-align:left;font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-family:'DM Mono',monospace;border-bottom:1px solid #E5E5E5}
+      #page-products .pr-table td{padding:16px;border-bottom:1px solid #F0F0F0;vertical-align:middle;font-size:13px}
+      #page-products .pr-table tr:last-child td{border-bottom:none}
+      #page-products .pr-table tr:hover td{background:#FAFAFA}
+      #page-products .pr-sku{display:inline-block;padding:4px 10px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:3px;font-family:'DM Mono',monospace;font-size:11px;color:#525252;letter-spacing:.04em}
+      #page-products .pr-name{font-size:13px;font-weight:500}
+      #page-products .pr-price{font-family:'DM Mono',monospace;font-weight:500;text-align:right}
+      #page-products .pr-stock{font-family:'DM Mono',monospace;font-weight:600;text-align:center;font-size:14px}
+      #page-products .pr-stock.low{color:#F59E0B}
+      #page-products .pr-stock.out{color:#EF4444}
+      #page-products .pr-sold{font-family:'DM Mono',monospace;color:#666;text-align:center}
+      #page-products .pr-status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+      #page-products .pr-status.live{background:#D1FAE5;color:#065F46}
+      #page-products .pr-status.low{background:#FEF3C7;color:#92400E}
+      #page-products .pr-status.out{background:#FEE2E2;color:#991B1B}
+      #page-products .pr-status.unlisted{background:#F5F5F5;color:#525252}
+      #page-products .pr-status.violation{background:#FEE2E2;color:#991B1B}
+      #page-products .pr-status::before{content:'●';font-size:8px}
+      #page-products .pr-edit{padding:6px 12px;background:transparent;border:none;cursor:pointer;font-size:12px;color:#525252;font-family:inherit}
+      #page-products .pr-edit:hover{color:#0A0A0A;background:#F5F5F5;border-radius:4px}
+      #page-products .pr-cb{width:16px;height:16px;cursor:pointer;accent-color:#E63329}
+      #page-products .pr-empty{padding:60px;text-align:center;color:#888;font-size:13px}
+    </style>
+    
+    <div class="pr-header">
+      <div>
+        <div class="pr-title">📦 สินค้าของฉัน</div>
+        <div class="pr-sub" id="pr-subtitle">PRODUCT CATALOG · — ACTIVE / — OUT OF STOCK</div>
+      </div>
+      <div class="pr-actions">
+        <button class="pr-btn" onclick="exportCSV('products')">📤 EXPORT CSV</button>
+        <button class="pr-btn" onclick="toast('📥 Import CSV — กรุณาใช้ Export ก่อนเป็น template','info')">⬆ IMPORT CSV</button>
+        <button class="pr-btn primary" onclick="goto('add-product',null)">+ เพิ่มสินค้า</button>
       </div>
     </div>
-    <div class="card">
-      <table><thead><tr><th style="width:32%">สินค้า</th><th style="width:14%">หมวด</th><th style="width:13%">ราคา</th><th style="width:11%">สต็อก</th><th style="width:11%">ขายแล้ว</th><th style="width:11%">สถานะ</th><th style="width:8%"></th></tr></thead>
-      <tbody id="prod-table"></tbody></table>
+    
+    <!-- Dashboard Stats -->
+    <div class="pr-stats">
+      <div class="pr-stat on" data-pr-filter="all" onclick="prFilter('all')">
+        <div class="pr-stat-l">ALL</div>
+        <div class="pr-stat-v" id="pr-stat-all">—</div>
+      </div>
+      <div class="pr-stat" data-pr-filter="live" onclick="prFilter('live')">
+        <div class="pr-stat-l">LIVE</div>
+        <div class="pr-stat-v green" id="pr-stat-live">—</div>
+      </div>
+      <div class="pr-stat" data-pr-filter="out" onclick="prFilter('out')">
+        <div class="pr-stat-l">OUT OF STOCK</div>
+        <div class="pr-stat-v amber" id="pr-stat-out">—</div>
+      </div>
+      <div class="pr-stat" data-pr-filter="violation" onclick="prFilter('violation')">
+        <div class="pr-stat-l">VIOLATION</div>
+        <div class="pr-stat-v red" id="pr-stat-violation">—</div>
+      </div>
+      <div class="pr-stat" data-pr-filter="unlisted" onclick="prFilter('unlisted')">
+        <div class="pr-stat-l">UNLISTED</div>
+        <div class="pr-stat-v gray" id="pr-stat-unlisted">—</div>
+      </div>
+    </div>
+    
+    <!-- Filter Bar -->
+    <div class="pr-filter">
+      <input type="text" class="pr-search" placeholder="ค้นหาชื่อ / SKU / Parent SKU" id="pr-search" oninput="prSearch(this.value)">
+      <select class="pr-select" id="pr-cat-filter" onchange="prFilterCat(this.value)">
+        <option value="">หมวดหมู่ทั้งหมด</option>
+      </select>
+      <select class="pr-select" id="pr-sort" onchange="prSort(this.value)">
+        <option value="best">เรียง: ขายดี</option>
+        <option value="new">เรียง: ใหม่ล่าสุด</option>
+        <option value="price_asc">เรียง: ราคาน้อย-มาก</option>
+        <option value="price_desc">เรียง: ราคามาก-น้อย</option>
+        <option value="stock_asc">เรียง: สต็อกน้อย-มาก</option>
+      </select>
+      <button class="pr-btn" onclick="toast('🔧 ตัวกรองขั้นสูง','info')">▼ ตัวกรอง</button>
+    </div>
+    
+    <!-- Bulk Action Bar (โผล่เมื่อมีของเลือก) -->
+    <div id="pr-bulk-bar" style="display:none;padding:12px 16px;background:#0A0A0A;color:#fff;border-radius:6px;margin-bottom:10px;align-items:center;gap:14px;justify-content:space-between">
+      <div style="font-size:13px"><strong id="pr-bulk-count">0</strong> รายการที่เลือก</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="prBulkExport()" style="padding:7px 14px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit">📤 Export CSV</button>
+        <button onclick="prBulkSetStatus('active')" style="padding:7px 14px;background:#10B981;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit">✅ เปิดขาย</button>
+        <button onclick="prBulkSetStatus('inactive')" style="padding:7px 14px;background:#737373;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit">⊘ ปิดขาย</button>
+        <button onclick="prBulkDelete()" style="padding:7px 14px;background:#E63329;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit">🗑️ ลบ</button>
+        <button onclick="prClearSelection()" style="padding:7px 14px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit">✕ ยกเลิก</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="pr-table-wrap">
+      <table class="pr-table">
+        <thead>
+          <tr>
+            <th style="width:40px"><input type="checkbox" class="pr-cb" id="pr-cb-all" onchange="prToggleAll(this.checked)"></th>
+            <th style="width:140px">SKU</th>
+            <th>สินค้า</th>
+            <th style="width:120px;text-align:right">ราคา</th>
+            <th style="width:80px;text-align:center">สต็อก</th>
+            <th style="width:100px;text-align:center">ขาย 30D</th>
+            <th style="width:120px">สถานะ</th>
+            <th style="width:80px"></th>
+          </tr>
+        </thead>
+        <tbody id="prod-table">
+          <tr><td colspan="8" class="pr-empty">⏳ กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -2881,12 +2998,31 @@ async function loadSellerData() {
 async function loadSellerProducts() {
   try {
     let q = _sb.from('products')
-      .select('id,name_th,name_en,slug,price,compare_price,discount_percent,stock_quantity,sold_count,status,rating_avg,rating_count,thumbnail,images,category_id,categories(name_th,icon),seller_id,sku,brand,tags,is_flash_sale,flash_price,is_featured,created_at,updated_at')
+      .select('id,name_th,name_en,slug,price,compare_price,discount_percent,stock_quantity,sold_count,status,rating_avg,rating_count,thumbnail,images,category_id,categories(name_th,icon),seller_id,sku,brand,tags,is_flash_sale,flash_price,is_featured,violation_reason,created_at,updated_at')
       .order('created_at',{ ascending:false }).limit(200);
     if (_sellerSellerId) q = q.eq('seller_id', _sellerSellerId);
     const { data, error } = await q;
     if (error) throw error;
     _sellerProds = data || [];
+    
+    // Compute sold_30d from order_items (last 30 days)
+    try {
+      const since = new Date(Date.now() - 30*86400000).toISOString();
+      const productIds = _sellerProds.map(p => p.id);
+      if (productIds.length) {
+        const { data: items } = await _sb.from('order_items')
+          .select('product_id,quantity,orders!inner(created_at,status)')
+          .in('product_id', productIds)
+          .gte('orders.created_at', since)
+          .not('orders.status', 'in', '(cancelled,refunded)');
+        const sold30 = {};
+        (items || []).forEach(it => {
+          sold30[it.product_id] = (sold30[it.product_id] || 0) + (it.quantity || 0);
+        });
+        _sellerProds.forEach(p => p.sold_30d = sold30[p.id] || 0);
+      }
+    } catch(e) { console.warn('sold_30d:', e); }
+    
     _sellerStats = {
       ..._sellerStats,
       totalProducts:  _sellerProds.length,
@@ -2896,14 +3032,6 @@ async function loadSellerProducts() {
       totalSold:      _sellerProds.reduce((s,p)=>s+(p.sold_count||0),0),
       flashCount:     _sellerProds.filter(p=>p.is_flash_sale).length,
     };
-    // rebuild cat filter
-    const sel = $('prod-cat-filter');
-    if (sel) {
-      while(sel.options.length>1) sel.remove(1);
-      [...new Set(_sellerProds.map(p=>p.categories?.name_th).filter(Boolean))].forEach(c=>{
-        const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o);
-      });
-    }
   } catch(e) { console.error('loadSellerProducts:',e); }
 }
 
@@ -3018,41 +3146,239 @@ function renderDashboardLive() {
 // ════════════════════════════════════════════════════════════════════════════
 //  PRODUCTS PAGE
 // ════════════════════════════════════════════════════════════════════════════
+// State for product page filters
+let _prFilter = 'all';        // all/live/out/violation/unlisted
+let _prSearch = '';
+let _prCatFilter = '';
+let _prSort = 'best';
+
 function renderProdsLive() {
   const tbl = $('prod-table'); if (!tbl) return;
-  const stC={active:'#16A34A',inactive:'#737373',draft:'#D97706',pending_review:'#2563EB'};
-  const stB={active:'#DCFCE7',inactive:'#F2F2F2',draft:'#FEF3C7',pending_review:'#DBEAFE'};
-  const stL={active:'เปิดขาย',inactive:'ปิด',draft:'แบบร่าง',pending_review:'รออนุมัติ'};
-  if (!_sellerProds.length) {
-    tbl.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:48px;color:#888"><div style="font-size:40px;margin-bottom:10px">📦</div><div style="font-weight:500;margin-bottom:10px">ยังไม่มีสินค้า</div><button onclick="goto('add-product',null)" style="background:#E63329;color:#fff;border:none;padding:10px 24px;cursor:pointer;font-size:13px">➕ เพิ่มสินค้าแรก</button></td></tr>`;
+  
+  // Compute stats
+  const stats = {all:0, live:0, out:0, violation:0, unlisted:0};
+  _sellerProds.forEach(p => {
+    stats.all++;
+    const stock = p.stock_quantity || 0;
+    if (stock === 0) stats.out++;
+    if (p.status === 'inactive' || p.status === 'draft') stats.unlisted++;
+    else if (p.violation_reason) stats.violation++;
+    else if (stock > 0) stats.live++;
+  });
+  
+  // Update stat cards
+  $('pr-stat-all').textContent = stats.all;
+  $('pr-stat-live').textContent = stats.live;
+  $('pr-stat-out').textContent = stats.out;
+  $('pr-stat-violation').textContent = stats.violation;
+  $('pr-stat-unlisted').textContent = stats.unlisted;
+  
+  // Update subtitle
+  const subEl = $('pr-subtitle');
+  if (subEl) subEl.textContent = `PRODUCT CATALOG · ${stats.live} ACTIVE / ${stats.out} OUT OF STOCK`;
+  
+  // Populate category filter dropdown (once)
+  const catSel = $('pr-cat-filter');
+  if (catSel && catSel.options.length <= 1) {
+    const cats = [...new Set(_sellerProds.map(p => p.categories?.name_th).filter(Boolean))].sort();
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      catSel.appendChild(opt);
+    });
+  }
+  
+  // Apply filters
+  let list = _sellerProds.slice();
+  
+  // Filter by tab
+  if (_prFilter !== 'all') {
+    list = list.filter(p => {
+      const stock = p.stock_quantity || 0;
+      if (_prFilter === 'live') return stock > 0 && p.status === 'active' && !p.violation_reason;
+      if (_prFilter === 'out') return stock === 0;
+      if (_prFilter === 'violation') return !!p.violation_reason;
+      if (_prFilter === 'unlisted') return p.status === 'inactive' || p.status === 'draft';
+      return true;
+    });
+  }
+  
+  // Search
+  if (_prSearch) {
+    const q = _prSearch.toLowerCase();
+    list = list.filter(p => 
+      (p.name_th || '').toLowerCase().includes(q) || 
+      (p.name_en || '').toLowerCase().includes(q) ||
+      (p.sku || '').toLowerCase().includes(q) ||
+      p.id.toLowerCase().includes(q)
+    );
+  }
+  
+  // Category filter
+  if (_prCatFilter) list = list.filter(p => p.categories?.name_th === _prCatFilter);
+  
+  // Sort
+  if (_prSort === 'best') list.sort((a,b) => (b.sold_count||0) - (a.sold_count||0));
+  else if (_prSort === 'new') list.sort((a,b) => new Date(b.created_at||0) - new Date(a.created_at||0));
+  else if (_prSort === 'price_asc') list.sort((a,b) => (a.price||0) - (b.price||0));
+  else if (_prSort === 'price_desc') list.sort((a,b) => (b.price||0) - (a.price||0));
+  else if (_prSort === 'stock_asc') list.sort((a,b) => (a.stock_quantity||0) - (b.stock_quantity||0));
+  
+  // Empty state
+  if (!list.length) {
+    if (_sellerProds.length === 0) {
+      tbl.innerHTML = `<tr><td colspan="8" class="pr-empty">
+        <div style="font-size:48px;margin-bottom:14px;opacity:.4">📦</div>
+        <div style="font-weight:500;margin-bottom:12px;color:#333">ยังไม่มีสินค้า</div>
+        <button onclick="goto('add-product',null)" class="pr-btn primary">+ เพิ่มสินค้าแรก</button>
+      </td></tr>`;
+    } else {
+      tbl.innerHTML = `<tr><td colspan="8" class="pr-empty">ไม่พบสินค้าที่ตรงกับเงื่อนไข</td></tr>`;
+    }
     return;
   }
-  tbl.innerHTML=_sellerProds.map(p=>`
-    <tr style="border-bottom:1px solid #F2F2F2;cursor:pointer" onclick="openProductEdit('${p.id}')">
-      <td style="padding:10px 12px"><div style="display:flex;align-items:center;gap:10px">
-        <div style="width:44px;height:44px;background:#F2F2F2;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #E5E5E5">
-          ${p.thumbnail?`<img src="${p.thumbnail}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.parentElement.innerHTML='📦'">`:'📦'}</div>
-        <div style="min-width:0"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">${p.name_th}</div>
-          <div style="font-size:10px;color:#888;font-family:monospace;margin-top:2px">${p.sku?'SKU: '+p.sku:'ID: '+p.id.slice(0,8)}</div></div></div></td>
-      <td style="padding:10px 12px"><span style="background:#F2F2F2;font-size:10px;padding:2px 8px;font-family:monospace">${p.categories?.icon||''} ${p.categories?.name_th||'—'}</span></td>
-      <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(p.price)}${p.compare_price>p.price?`<div style="font-size:10px;color:#888;text-decoration:line-through">${fmtB(p.compare_price)}</div>`:''}</td>
-      <td style="padding:10px 12px;font-family:monospace;font-size:12px;font-weight:600;color:${(p.stock_quantity||0)<=0?'#E63329':(p.stock_quantity||0)<=10?'#D97706':'#16A34A'}">
-        ${(p.stock_quantity||0)<=0?'❌ หมด':fmt(p.stock_quantity)+' ชิ้น'}
-        ${(p.stock_quantity||0)>0&&(p.stock_quantity||0)<=10?'<div style="font-size:10px;color:#D97706">⚠️ ใกล้หมด</div>':''}</td>
-      <td style="padding:10px 12px;font-family:monospace;font-size:12px">${fmt(p.sold_count)}</td>
-      <td style="padding:10px 12px"><span style="background:${stB[p.status]||'#F2F2F2'};color:${stC[p.status]||'#888'};font-size:10px;font-family:monospace;padding:3px 10px">${stL[p.status]||p.status}</span></td>
-      <td style="padding:10px 12px;white-space:nowrap">
-        <button onclick="event.stopPropagation();openProductEdit('${p.id}')" style="background:none;border:1px solid #E5E5E5;padding:4px 8px;font-size:11px;cursor:pointer;margin-right:4px">✏️</button>
-        <button onclick="event.stopPropagation();confirmDeleteProduct('${p.id}','${p.name_th.replace(/'/g,String.fromCharCode(39)).replace(/"/g,'&quot;')}')" style="background:none;border:1px solid #FFCDD2;color:#E63329;padding:4px 8px;font-size:11px;cursor:pointer">🗑️</button>
+  
+  // Render rows
+  tbl.innerHTML = list.map(p => {
+    const stock = p.stock_quantity || 0;
+    const sku = p.sku || ('EMB-' + (p.id || '').slice(0,8).toUpperCase());
+    
+    // Determine status pill
+    let statusClass = 'live', statusLabel = 'LIVE';
+    if (p.violation_reason) { statusClass = 'violation'; statusLabel = 'VIOLATION'; }
+    else if (stock === 0) { statusClass = 'out'; statusLabel = 'OUT'; }
+    else if (stock > 0 && stock <= 10) { statusClass = 'low'; statusLabel = 'LOW'; }
+    else if (p.status === 'inactive' || p.status === 'draft') { statusClass = 'unlisted'; statusLabel = 'UNLISTED'; }
+    
+    // Stock color class
+    const stockCls = stock === 0 ? 'out' : (stock <= 10 ? 'low' : '');
+    
+    return `<tr onclick="openProductEdit('${p.id}')" style="cursor:pointer">
+      <td onclick="event.stopPropagation()"><input type="checkbox" class="pr-cb pr-cb-item" value="${p.id}" onchange="prUpdateBulkBar()"></td>
+      <td><span class="pr-sku">${sfEsc(sku)}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:12px">
+          ${p.thumbnail ? `<div style="width:36px;height:36px;background:#F5F5F5;border-radius:4px;overflow:hidden;flex-shrink:0"><img src="${p.thumbnail}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.parentElement.innerHTML='📦'"></div>` : ''}
+          <div class="pr-name">${sfEsc(p.name_th || '—')}</div>
+        </div>
       </td>
-    </tr>`).join('');
+      <td class="pr-price">${fmtB(p.price)}${p.compare_price > p.price ? `<div style="font-size:10px;color:#888;text-decoration:line-through;font-weight:400">${fmtB(p.compare_price)}</div>` : ''}</td>
+      <td class="pr-stock ${stockCls}">${stock}</td>
+      <td class="pr-sold">${fmt(p.sold_30d || p.sold_count || 0)}</td>
+      <td><span class="pr-status ${statusClass}">${statusLabel}</span></td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="pr-edit" onclick="openProductEdit('${p.id}')" title="แก้ไข">✏️</button>
+        <button class="pr-edit" onclick="confirmDeleteProduct('${p.id}','${(p.name_th||'').replace(/'/g,String.fromCharCode(39)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/&quot;/g,'&quot;')}')" title="ลบ" style="color:#E63329">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
+window.prFilter = function(filter) {
+  _prFilter = filter;
+  document.querySelectorAll('#page-products .pr-stat').forEach(s => s.classList.toggle('on', s.dataset.prFilter === filter));
+  renderProdsLive();
+};
+
+window.prSearch = function(q) {
+  _prSearch = q.trim();
+  renderProdsLive();
+};
+
+window.prFilterCat = function(cat) {
+  _prCatFilter = cat;
+  renderProdsLive();
+};
+
+window.prSort = function(sort) {
+  _prSort = sort;
+  renderProdsLive();
+};
+
+window.prToggleAll = function(checked) {
+  document.querySelectorAll('#page-products .pr-cb-item').forEach(cb => cb.checked = checked);
+  prUpdateBulkBar();
+};
+
+window.prUpdateBulkBar = function() {
+  const checked = document.querySelectorAll('#page-products .pr-cb-item:checked');
+  const bar = document.getElementById('pr-bulk-bar');
+  if (!bar) return;
+  if (checked.length > 0) {
+    bar.style.display = 'flex';
+    document.getElementById('pr-bulk-count').textContent = checked.length;
+  } else {
+    bar.style.display = 'none';
+  }
+};
+
+window.prGetSelectedIds = function() {
+  return [...document.querySelectorAll('#page-products .pr-cb-item:checked')].map(cb => cb.value);
+};
+
+window.prClearSelection = function() {
+  document.querySelectorAll('#page-products .pr-cb-item').forEach(cb => cb.checked = false);
+  const allCb = document.getElementById('pr-cb-all');
+  if (allCb) allCb.checked = false;
+  prUpdateBulkBar();
+};
+
+window.prBulkExport = function() {
+  const ids = prGetSelectedIds();
+  if (!ids.length) return;
+  const selected = _sellerProds.filter(p => ids.includes(p.id));
+  // Use existing exportCSV but with filtered data
+  const csv = ['id,sku,name_th,price,compare_price,stock_quantity,sold_count,status'].concat(
+    selected.map(p => [
+      p.id, p.sku || '', `"${(p.name_th||'').replace(/"/g,'""')}"`,
+      p.price || 0, p.compare_price || '', p.stock_quantity || 0,
+      p.sold_count || 0, p.status || ''
+    ].join(','))
+  ).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `products-selected-${Date.now()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  toast('📤 Export สำเร็จ ' + ids.length + ' รายการ', 'ok');
+};
+
+window.prBulkSetStatus = async function(newStatus) {
+  const ids = prGetSelectedIds();
+  if (!ids.length) return;
+  if (!confirm(`เปลี่ยนสถานะ ${ids.length} รายการเป็น "${newStatus==='active'?'เปิดขาย':'ปิดขาย'}"?`)) return;
+  try {
+    const { error } = await _sb.from('products').update({status:newStatus, updated_at: new Date().toISOString()}).in('id', ids);
+    if (error) throw error;
+    toast(`✅ อัปเดต ${ids.length} รายการแล้ว`, 'ok');
+    prClearSelection();
+    await loadSellerProducts();
+    renderProdsLive();
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
+};
+
+window.prBulkDelete = async function() {
+  const ids = prGetSelectedIds();
+  if (!ids.length) return;
+  if (!confirm(`⚠️ ลบ ${ids.length} รายการ?\n\nการลบไม่สามารถย้อนกลับได้`)) return;
+  try {
+    const { error } = await _sb.from('products').delete().in('id', ids);
+    if (error) throw error;
+    toast(`🗑️ ลบ ${ids.length} รายการแล้ว`, 'ok');
+    prClearSelection();
+    await loadSellerProducts();
+    renderProdsLive();
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
+};
+
+// Backward compat
 function filterProdCat(catName) {
-  const orig=_sellerProds;
-  if (!catName) { renderProdsLive(); return; }
-  _sellerProds=_sellerProds.filter(p=>p.categories?.name_th===catName);
-  renderProdsLive(); _sellerProds=orig;
+  _prCatFilter = catName;
+  renderProdsLive();
 }
 
 // ════════════════════════════════════════════════════════════════════════════
