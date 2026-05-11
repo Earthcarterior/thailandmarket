@@ -1271,26 +1271,229 @@ nav, .nav {
        ════════════════════════════════════════════════════════════════ -->
   <div class="page" id="page-shipping">
     <style>
-      #page-shipping .sh-card{display:flex;gap:14px;padding:14px;background:#fff;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:10px;align-items:center}
-      #page-shipping .sh-icon{width:50px;height:50px;background:#F5F5F5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-      #page-shipping .sh-info{flex:1}
-      #page-shipping .sh-name{font-size:14px;font-weight:600;margin-bottom:3px}
-      #page-shipping .sh-meta{font-size:11px;color:#666;line-height:1.6}
-      #page-shipping .sh-actions{display:flex;gap:8px;align-items:center}
-      #page-shipping .sh-toggle{position:relative;width:42px;height:24px;display:inline-block;cursor:pointer}
+      #page-shipping .sh-tabs{display:flex;gap:2px;border-bottom:1px solid #E5E5E5;margin-bottom:18px;overflow-x:auto;scrollbar-width:none}
+      #page-shipping .sh-tabs::-webkit-scrollbar{display:none}
+      #page-shipping .sh-tab{padding:11px 18px;background:transparent;border:none;cursor:pointer;font-size:13px;color:#666;font-family:inherit;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
+      #page-shipping .sh-tab.on{color:#E63329;font-weight:600;border-bottom-color:#E63329}
+      #page-shipping .sh-panel{display:none}
+      #page-shipping .sh-panel.on{display:block}
+      #page-shipping .sh-info-bar{padding:14px;background:#EFF6FF;border:1px solid #3B82F6;border-radius:6px;margin-bottom:14px;font-size:12px;color:#1E40AF;display:flex;gap:10px;align-items:center}
+      #page-shipping .sh-card{background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:18px;position:relative}
+      #page-shipping .sh-card.primary{border-color:#E63329}
+      #page-shipping .sh-card-tags{position:absolute;top:12px;right:12px;display:flex;gap:6px}
+      #page-shipping .sh-pill{padding:3px 10px;border-radius:9px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.04em}
+      #page-shipping .sh-pill.primary{background:#E63329;color:#fff}
+      #page-shipping .sh-pill.outline{background:#F5F5F5;color:#666;border:1px solid #E5E5E5}
+      #page-shipping .sh-label{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.08em;color:#888;text-transform:uppercase;margin-bottom:6px}
+      #page-shipping .sh-card-name{font-size:14px;font-weight:600;margin-bottom:4px}
+      #page-shipping .sh-card-body{font-size:12px;color:#666;line-height:1.7}
+      #page-shipping .sh-card-actions{display:flex;gap:8px;margin-top:14px}
+      #page-shipping .sh-btn{padding:7px 14px;border:1px solid #E5E5E5;background:#fff;border-radius:4px;cursor:pointer;font-size:11px;font-family:inherit}
+      #page-shipping .sh-btn:hover{background:#F5F5F5}
+      #page-shipping .sh-btn-add{padding:11px 18px;background:#fff;border:1px solid #E5E5E5;border-radius:6px;cursor:pointer;font-size:12px;color:#666;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+      #page-shipping .sh-btn-add:hover{border-color:#E63329;color:#E63329}
+      #page-shipping .sh-courier-card{display:flex;gap:14px;padding:14px;background:#fff;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:10px;align-items:center}
+      #page-shipping .sh-courier-icon{width:50px;height:50px;background:#F5F5F5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+      #page-shipping .sh-courier-info{flex:1;min-width:0}
+      #page-shipping .sh-courier-name{font-size:14px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:8px}
+      #page-shipping .sh-courier-meta{font-size:11px;color:#666;line-height:1.6;font-family:'DM Mono',monospace}
+      #page-shipping .sh-courier-actions{display:flex;gap:10px;align-items:center}
+      #page-shipping .sh-toggle{position:relative;width:42px;height:24px;display:inline-block;cursor:pointer;flex-shrink:0}
       #page-shipping .sh-toggle input{opacity:0;width:0;height:0}
       #page-shipping .sh-toggle-slider{position:absolute;inset:0;background:#ccc;border-radius:12px;transition:.3s}
       #page-shipping .sh-toggle-slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
       #page-shipping .sh-toggle input:checked + .sh-toggle-slider{background:#10B981}
       #page-shipping .sh-toggle input:checked + .sh-toggle-slider:before{transform:translateX(18px)}
-      #page-shipping .sh-free-input{padding:6px 10px;border:1px solid #E5E5E5;border-radius:4px;font-size:12px;width:120px;font-family:'DM Mono',monospace}
+      #page-shipping .sh-input{padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px;font-family:inherit;width:100%;margin-bottom:8px}
+      #page-shipping .sh-input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      #page-shipping .sh-form-label{font-size:11px;color:#666;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;font-weight:500}
+      #page-shipping .sh-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+      #page-shipping .sh-modal.on{display:flex}
+      #page-shipping .sh-modal-body{background:#fff;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;border-radius:8px;padding:24px}
+      #page-shipping .sh-modal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+      #page-shipping .sh-day-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+      #page-shipping .sh-day-pill{padding:6px 12px;border:1px solid #E5E5E5;border-radius:4px;cursor:pointer;font-size:11px;background:#fff;font-family:inherit}
+      #page-shipping .sh-day-pill.on{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
     </style>
     <div class="ph">🚚 การจัดส่ง</div>
-    <div style="padding:14px;background:#EFF6FF;border:1px solid #3B82F6;border-radius:6px;margin-bottom:14px;font-size:12px;color:#1E40AF">
-      💡 เลือกขนส่งที่ร้านรองรับ + ตั้งราคาฟรีค่าส่งเมื่อยอดถึงเกณฑ์
+    <div class="ps">SHIPPING CONFIGURATION</div>
+
+    <!-- TABS -->
+    <div class="sh-tabs">
+      <button class="sh-tab on" data-tab="addresses" onclick="shTab('addresses')">📍 จัดการที่อยู่</button>
+      <button class="sh-tab" data-tab="couriers" onclick="shTab('couriers')">🚚 ช่องทางจัดส่ง</button>
+      <button class="sh-tab" data-tab="pickup" onclick="shTab('pickup')">⏰ เวลาเข้ารับ</button>
+      <button class="sh-tab" data-tab="insurance" onclick="shTab('insurance')">🛡️ คุ้มครองพัสดุ</button>
+      <button class="sh-tab" data-tab="saver" onclick="shTab('saver')">💰 โปรแกรมประหยัดค่าจัดส่ง</button>
     </div>
-    <div id="sh-couriers-list">
-      <div style="padding:40px;text-align:center;color:#888">⏳ กำลังโหลด...</div>
+
+    <!-- TAB 1: ADDRESSES -->
+    <div class="sh-panel on" id="sh-panel-addresses">
+      <div class="sh-info-bar">
+        💡 ที่อยู่ที่ตั้งเป็นค่าหลักจะใช้สำหรับการเข้ารับสินค้าและการคืนสินค้า
+      </div>
+      <div id="sh-addresses-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-bottom:14px"></div>
+      <button class="sh-btn-add" onclick="shOpenAddrModal()">+ เพิ่มที่อยู่</button>
+    </div>
+
+    <!-- TAB 2: COURIERS -->
+    <div class="sh-panel" id="sh-panel-couriers">
+      <div class="sh-info-bar">
+        💡 เลือกขนส่งที่ร้านรองรับ + ตั้งราคาเอง — ลูกค้าจะเห็นตัวเลือกเหล่านี้ตอน checkout
+      </div>
+      <div id="sh-couriers-list">
+        <div style="padding:40px;text-align:center;color:#888">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <!-- TAB 3: PICKUP TIME -->
+    <div class="sh-panel" id="sh-panel-pickup">
+      <div class="sh-info-bar">
+        ⏰ กำหนดวันและเวลาที่ courier สามารถเข้ารับสินค้า — applied to ทุก address
+      </div>
+      <div class="sh-card">
+        <div class="sh-label">วันที่รับสินค้า</div>
+        <div class="sh-day-pills" id="sh-pickup-days">
+          <button class="sh-day-pill on" data-d="mon">จันทร์</button>
+          <button class="sh-day-pill on" data-d="tue">อังคาร</button>
+          <button class="sh-day-pill on" data-d="wed">พุธ</button>
+          <button class="sh-day-pill on" data-d="thu">พฤหัสบดี</button>
+          <button class="sh-day-pill on" data-d="fri">ศุกร์</button>
+          <button class="sh-day-pill" data-d="sat">เสาร์</button>
+          <button class="sh-day-pill" data-d="sun">อาทิตย์</button>
+        </div>
+        <div class="sh-input-row" style="margin-top:14px">
+          <div>
+            <span class="sh-form-label">เวลาเริ่ม</span>
+            <input type="time" class="sh-input" id="sh-pickup-from" value="09:00">
+          </div>
+          <div>
+            <span class="sh-form-label">เวลาสิ้นสุด</span>
+            <input type="time" class="sh-input" id="sh-pickup-to" value="17:00">
+          </div>
+        </div>
+        <button class="sh-btn" style="background:#0A0A0A;color:#fff;border-color:#0A0A0A;padding:10px 18px" onclick="shSavePickup()">💾 บันทึก</button>
+      </div>
+      <div class="sh-card" style="margin-top:14px">
+        <div class="sh-label">เวลาเตรียมส่ง (Preparation time)</div>
+        <div style="font-size:12px;color:#666;margin-bottom:10px">เวลาที่ใช้ในการแพ็คสินค้าก่อนส่ง — มีผลต่อ Account Health</div>
+        <select class="sh-input" id="sh-prep-days" onchange="shSavePrep()">
+          <option value="0">ส่งทันที (วันเดียวกัน)</option>
+          <option value="1" selected>1 วันทำการ</option>
+          <option value="2">2 วันทำการ</option>
+          <option value="3">3 วันทำการ</option>
+          <option value="5">5 วันทำการ</option>
+          <option value="7">7 วันทำการ</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TAB 4: INSURANCE -->
+    <div class="sh-panel" id="sh-panel-insurance">
+      <div class="sh-info-bar">
+        🛡️ คุ้มครองพัสดุระหว่างจัดส่ง — ค่าเบี้ยคิดจาก % ของมูลค่าสินค้า
+      </div>
+      <div class="sh-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div>
+            <div style="font-size:14px;font-weight:600">เปิดใช้บริการคุ้มครองพัสดุ</div>
+            <div style="font-size:11px;color:#666;margin-top:3px">ลูกค้าเลือกซื้อ insurance ได้ตอน checkout</div>
+          </div>
+          <label class="sh-toggle"><input type="checkbox" id="sh-ins-enabled"><span class="sh-toggle-slider"></span></label>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+          <div>
+            <span class="sh-form-label">อัตราเบี้ย (% ของมูลค่า)</span>
+            <input type="number" step="0.1" min="0" max="10" class="sh-input" id="sh-ins-rate" value="1.0" placeholder="1.0">
+          </div>
+          <div>
+            <span class="sh-form-label">ขั้นต่ำที่เปิดใช้ (฿)</span>
+            <input type="number" min="0" class="sh-input" id="sh-ins-min" value="1000" placeholder="1000">
+          </div>
+        </div>
+        <button class="sh-btn" style="background:#0A0A0A;color:#fff;border-color:#0A0A0A;padding:10px 18px" onclick="shSaveInsurance()">💾 บันทึก</button>
+      </div>
+    </div>
+
+    <!-- TAB 5: SAVER PROGRAM -->
+    <div class="sh-panel" id="sh-panel-saver">
+      <div class="sh-info-bar">
+        💰 โปรแกรมฟรีค่าจัดส่งสำหรับลูกค้า — เพิ่มยอดขาย แต่ร้านรับภาระค่าส่งเอง
+      </div>
+      <div class="sh-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div>
+            <div style="font-size:14px;font-weight:600">ฟรีค่าจัดส่งเมื่อยอดถึงเกณฑ์</div>
+            <div style="font-size:11px;color:#666;margin-top:3px">ลูกค้าเห็น "🚚 ฟรีค่าส่ง" บนสินค้าทุกชิ้นที่ตรงเกณฑ์</div>
+          </div>
+          <label class="sh-toggle"><input type="checkbox" id="sh-free-enabled"><span class="sh-toggle-slider"></span></label>
+        </div>
+        <div style="margin-top:14px">
+          <span class="sh-form-label">ยอดขั้นต่ำ (฿)</span>
+          <input type="number" min="0" class="sh-input" id="sh-free-threshold" value="500" placeholder="500">
+        </div>
+        <div>
+          <span class="sh-form-label">ใช้กับขนส่งใด</span>
+          <select class="sh-input" id="sh-free-courier">
+            <option value="">ทุกขนส่ง</option>
+          </select>
+        </div>
+        <button class="sh-btn" style="background:#0A0A0A;color:#fff;border-color:#0A0A0A;padding:10px 18px" onclick="shSaveSaver()">💾 บันทึก</button>
+      </div>
+    </div>
+
+    <!-- ADDRESS MODAL -->
+    <div class="sh-modal" id="sh-addr-modal" onclick="if(event.target===this)shCloseAddrModal()">
+      <div class="sh-modal-body">
+        <div class="sh-modal-h">
+          <div style="font-size:16px;font-weight:600" id="sh-addr-modal-title">เพิ่มที่อยู่</div>
+          <button onclick="shCloseAddrModal()" style="background:none;border:none;font-size:22px;cursor:pointer">×</button>
+        </div>
+        <input type="hidden" id="sh-addr-id">
+        <span class="sh-form-label">ป้ายชื่อ (เช่น "โกดังหลัก")</span>
+        <input class="sh-input" id="sh-addr-label" placeholder="โกดังหลัก">
+        <div class="sh-input-row">
+          <div>
+            <span class="sh-form-label">ผู้ติดต่อ *</span>
+            <input class="sh-input" id="sh-addr-name" placeholder="คุณ ณัฐวุฒิ">
+          </div>
+          <div>
+            <span class="sh-form-label">เบอร์โทร *</span>
+            <input class="sh-input" id="sh-addr-phone" placeholder="081-234-5678">
+          </div>
+        </div>
+        <span class="sh-form-label">ที่อยู่ *</span>
+        <input class="sh-input" id="sh-addr-line" placeholder="88/12 ซ.รามคำแหง 24">
+        <div class="sh-input-row">
+          <div>
+            <span class="sh-form-label">ตำบล/แขวง</span>
+            <input class="sh-input" id="sh-addr-subdistrict" placeholder="หัวหมาก">
+          </div>
+          <div>
+            <span class="sh-form-label">เขต/อำเภอ *</span>
+            <input class="sh-input" id="sh-addr-district" placeholder="บางกะปิ">
+          </div>
+        </div>
+        <div class="sh-input-row">
+          <div>
+            <span class="sh-form-label">จังหวัด *</span>
+            <input class="sh-input" id="sh-addr-province" placeholder="กรุงเทพฯ">
+          </div>
+          <div>
+            <span class="sh-form-label">รหัสไปรษณีย์ *</span>
+            <input class="sh-input" id="sh-addr-postal" placeholder="10240" maxlength="5">
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;margin:14px 0">
+          <label style="display:flex;gap:6px;align-items:center;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-addr-pickup" checked> ใช้สำหรับเข้ารับ</label>
+          <label style="display:flex;gap:6px;align-items:center;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-addr-return" checked> ใช้สำหรับรับคืน</label>
+          <label style="display:flex;gap:6px;align-items:center;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-addr-default"> ตั้งเป็นค่าหลัก</label>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="sh-btn" onclick="shCloseAddrModal()">ยกเลิก</button>
+          <button class="sh-btn" style="background:#E63329;color:#fff;border-color:#E63329" onclick="shSaveAddr()">💾 บันทึก</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3354,18 +3557,7 @@ function renderPromotionsLive(){
   </div></div>`;
 }
 
-function renderShippingLive(){
-  const page=$('page-shipping'); if(!page) return;
-  const shipped=_sellerOrders.filter(o=>o.status==='shipped');
-  let cont=page.querySelector('.ship-content');if(!cont){cont=document.createElement('div');cont.className='ship-content';page.appendChild(cont);}
-  cont.innerHTML=`<div style="padding:24px">
-    <div style="font-size:13px;font-weight:600;margin-bottom:16px">🚚 สินค้ากำลังจัดส่ง (${shipped.length} รายการ)</div>
-    ${shipped.length?`<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#F9FAFB;border-bottom:2px solid #E5E5E5">
-      <th style="padding:10px;text-align:left;font-size:12px">รหัสออเดอร์</th><th style="padding:10px;text-align:left;font-size:12px">ลูกค้า</th><th style="padding:10px;text-align:left;font-size:12px">เลขพัสดุ</th><th style="padding:10px;text-align:center;font-size:12px">จัดการ</th></tr></thead>
-      <tbody>${shipped.map(o=>`<tr style="border-bottom:1px solid #F2F2F2"><td style="padding:10px;font-family:monospace;font-size:11px">${o.order_number||o.id.slice(0,8)}</td><td style="padding:10px;font-size:12px">${o.shipping_name||'—'}</td><td style="padding:10px;font-family:monospace;font-size:11px">${o.tracking_number||'<span style="color:#888">ยังไม่ระบุ</span>'}</td><td style="padding:10px;text-align:center"><button onclick="shipOrder('${o.id}')" style="background:#0891B2;color:#fff;border:none;padding:4px 12px;font-size:11px;cursor:pointer">อัปเดต</button></td></tr>`).join('')}
-      </tbody></table>`:'<div style="text-align:center;padding:32px;color:#888">ไม่มีสินค้าที่กำลังจัดส่ง</div>'}
-  </div>`;
-}
+// renderShippingLive moved below — TMS-style 5 tabs
 
 function renderCustomersLive(){
   const page=$('page-customers'); if(!page) return;
@@ -4793,69 +4985,329 @@ window.mkSaveFollowPrize = async function() {
 // ════════════════════════════════════════════════════════════════════
 // SHIPPING
 // ════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════
+// SHIPPING — TMS-style 5 tabs: addresses / couriers / pickup / insurance / saver
+// ════════════════════════════════════════════════════════════════════
+let _shAddresses = [];
+let _shCouriers = [];
+let _shSellerCouriers = {};
+let _shSettings = {};
+let _shCurrentTab = 'addresses';
+
 async function renderShippingLive() {
-  const wrap = document.getElementById('sh-couriers-list');
-  if (!wrap || !_sellerSellerId) return;
+  if (!_sellerSellerId) return;
+  await shLoadAll();
+}
+
+async function shLoadAll() {
   try {
-    const [couriersRes, sellerCouriersRes] = await Promise.all([
-      _sb.from('couriers').select('*').order('sort_order'),
-      _sb.from('seller_couriers').select('*').eq('seller_id', _sellerSellerId)
+    const [addrRes, courRes, scRes, settRes] = await Promise.all([
+      _sb.from('seller_addresses').select('*').eq('seller_id', _sellerSellerId).order('is_default', {ascending:false}),
+      _sb.from('couriers').select('*').eq('is_active', true).order('sort_order'),
+      _sb.from('seller_couriers').select('*').eq('seller_id', _sellerSellerId),
+      _sb.from('seller_shipping_settings').select('*').eq('seller_id', _sellerSellerId).maybeSingle()
     ]);
-    if (couriersRes.error) throw couriersRes.error;
-    const couriers = couriersRes.data || [];
-    const sellerCouriers = {};
-    (sellerCouriersRes.data || []).forEach(sc => sellerCouriers[sc.courier_id] = sc);
-
-    if (!couriers.length) { wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#E63329">⚠️ ยังไม่มีรายการขนส่ง — กรุณารัน seller-features-master-2026-05-08.sql</div>'; return; }
-
-    wrap.innerHTML = couriers.map(c => {
-      const sc = sellerCouriers[c.id];
-      const enabled = !!sc?.is_enabled;
-      const freeMin = sc?.free_shipping_min || 0;
-      return `<div class="sh-card">
-        <div class="sh-icon">${c.code==='kerry'?'📦':c.code==='flash'?'⚡':c.code==='thaipost'?'📮':c.code==='jt'?'🚚':c.code==='scg'?'🏗️':c.code==='grab'?'🛵':'📦'}</div>
-        <div class="sh-info">
-          <div class="sh-name">${sfEsc(c.name_th)}</div>
-          <div class="sh-meta">
-            ${sfMoney(c.base_price)} + ${sfMoney(c.per_kg_price)}/kg · ${c.estimated_days_min}-${c.estimated_days_max} วัน
-            ${c.cod_supported?'· COD ฿'+c.cod_fee:''}
-          </div>
-        </div>
-        <div class="sh-actions">
-          <div style="font-size:11px;color:#666;display:flex;align-items:center;gap:6px">
-            ฟรีเมื่อยอดเกิน
-            <input class="sh-free-input" type="number" min="0" value="${freeMin}" id="sh-free-${c.id}" placeholder="0">
-          </div>
-          <label class="sh-toggle">
-            <input type="checkbox" ${enabled?'checked':''} onchange="shToggle('${c.id}',this.checked)">
-            <span class="sh-toggle-slider"></span>
-          </label>
-        </div>
-      </div>`;
-    }).join('');
-
-    // Save free-min on change
-    couriers.forEach(c => {
-      const input = document.getElementById('sh-free-' + c.id);
-      if (input) input.addEventListener('change', () => shSetFreeMin(c.id, input.value));
-    });
+    
+    _shAddresses = addrRes.data || [];
+    _shCouriers = courRes.data || [];
+    _shSellerCouriers = {};
+    (scRes.data || []).forEach(sc => _shSellerCouriers[sc.courier_id] = sc);
+    _shSettings = settRes.data || {};
+    
+    shRenderAddresses();
+    shRenderCouriers();
+    shRenderPickup();
+    shRenderInsurance();
+    shRenderSaver();
   } catch(e) {
-    wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#E63329">❌ ${sfEsc(e.message)}</div>`;
+    console.warn('shipping load:', e);
+    const wrap = document.getElementById('sh-couriers-list');
+    if (wrap) wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#E63329">❌ ${sfEsc(e.message)}<br><small>กรุณารัน shipping-system-2026-05-11.sql</small></div>`;
+    const wrap2 = document.getElementById('sh-addresses-grid');
+    if (wrap2) wrap2.innerHTML = `<div style="grid-column:1/-1;padding:30px;text-align:center;color:#E63329">❌ ${sfEsc(e.message)}<br><small>กรุณารัน shipping-system-2026-05-11.sql</small></div>`;
   }
 }
 
-window.shToggle = async function(courierId, enabled) {
-  const { error } = await _sb.from('seller_couriers').upsert({
-    seller_id: _sellerSellerId, courier_id: courierId, is_enabled: enabled
-  }, { onConflict: 'seller_id,courier_id' });
-  if (error) alert('❌ ' + error.message);
+window.shTab = function(tab) {
+  _shCurrentTab = tab;
+  document.querySelectorAll('#page-shipping .sh-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('#page-shipping .sh-panel').forEach(p => p.classList.toggle('on', p.id === 'sh-panel-' + tab));
 };
-window.shSetFreeMin = async function(courierId, val) {
-  const v = parseFloat(val) || 0;
-  const { error } = await _sb.from('seller_couriers').upsert({
-    seller_id: _sellerSellerId, courier_id: courierId, free_shipping_min: v
-  }, { onConflict: 'seller_id,courier_id' });
-  if (error) alert('❌ ' + error.message);
+
+// ─── TAB: ADDRESSES ───
+function shRenderAddresses() {
+  const wrap = document.getElementById('sh-addresses-grid');
+  if (!wrap) return;
+  if (!_shAddresses.length) {
+    wrap.innerHTML = '<div style="grid-column:1/-1;padding:30px;text-align:center;color:#888;background:#FAFAFA;border-radius:6px">📍 ยังไม่มีที่อยู่ — กดปุ่ม + เพิ่มที่อยู่ ด้านล่าง</div>';
+    return;
+  }
+  wrap.innerHTML = _shAddresses.map(a => {
+    const tags = [];
+    if (a.is_default) tags.push('<span class="sh-pill primary">DEFAULT</span>');
+    if (a.is_pickup) tags.push('<span class="sh-pill outline">เข้ารับ</span>');
+    if (a.is_return) tags.push('<span class="sh-pill outline">รับคืน</span>');
+    return `<div class="sh-card ${a.is_default?'primary':''}">
+      <div class="sh-card-tags">${tags.join('')}</div>
+      <div class="sh-label">${a.is_default ? 'PICKUP & RETURN' : 'SECONDARY'}</div>
+      <div class="sh-card-name">${sfEsc(a.label || 'ที่อยู่')}</div>
+      <div class="sh-card-body">
+        ${sfEsc(a.contact_name)}<br>
+        ${sfEsc(a.address_line)} ${sfEsc(a.subdistrict||'')}<br>
+        ${sfEsc(a.district)} ${sfEsc(a.province)} ${sfEsc(a.postal_code)} · ${sfEsc(a.phone)}
+      </div>
+      <div class="sh-card-actions">
+        <button class="sh-btn" onclick="shEditAddr('${a.id}')">แก้ไข</button>
+        ${!a.is_default ? `<button class="sh-btn" onclick="shSetDefault('${a.id}')">ตั้งเป็นค่าหลัก</button>` : ''}
+        <button class="sh-btn" onclick="shDeleteAddr('${a.id}')" style="color:#E63329">ลบ</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.shOpenAddrModal = function() {
+  document.getElementById('sh-addr-id').value = '';
+  document.getElementById('sh-addr-modal-title').textContent = '+ เพิ่มที่อยู่';
+  ['label','name','phone','line','subdistrict','district','province','postal'].forEach(k => {
+    const el = document.getElementById('sh-addr-'+k);
+    if (el) el.value = '';
+  });
+  document.getElementById('sh-addr-pickup').checked = true;
+  document.getElementById('sh-addr-return').checked = true;
+  document.getElementById('sh-addr-default').checked = false;
+  document.getElementById('sh-addr-modal').classList.add('on');
+};
+
+window.shCloseAddrModal = function() {
+  document.getElementById('sh-addr-modal').classList.remove('on');
+};
+
+window.shEditAddr = function(id) {
+  const a = _shAddresses.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('sh-addr-id').value = a.id;
+  document.getElementById('sh-addr-modal-title').textContent = '✏️ แก้ไขที่อยู่';
+  document.getElementById('sh-addr-label').value = a.label || '';
+  document.getElementById('sh-addr-name').value = a.contact_name || '';
+  document.getElementById('sh-addr-phone').value = a.phone || '';
+  document.getElementById('sh-addr-line').value = a.address_line || '';
+  document.getElementById('sh-addr-subdistrict').value = a.subdistrict || '';
+  document.getElementById('sh-addr-district').value = a.district || '';
+  document.getElementById('sh-addr-province').value = a.province || '';
+  document.getElementById('sh-addr-postal').value = a.postal_code || '';
+  document.getElementById('sh-addr-pickup').checked = !!a.is_pickup;
+  document.getElementById('sh-addr-return').checked = !!a.is_return;
+  document.getElementById('sh-addr-default').checked = !!a.is_default;
+  document.getElementById('sh-addr-modal').classList.add('on');
+};
+
+window.shSaveAddr = async function() {
+  const id = document.getElementById('sh-addr-id').value;
+  const payload = {
+    seller_id: _sellerSellerId,
+    label: document.getElementById('sh-addr-label').value.trim() || null,
+    contact_name: document.getElementById('sh-addr-name').value.trim(),
+    phone: document.getElementById('sh-addr-phone').value.trim(),
+    address_line: document.getElementById('sh-addr-line').value.trim(),
+    subdistrict: document.getElementById('sh-addr-subdistrict').value.trim() || null,
+    district: document.getElementById('sh-addr-district').value.trim(),
+    province: document.getElementById('sh-addr-province').value.trim(),
+    postal_code: document.getElementById('sh-addr-postal').value.trim(),
+    is_pickup: document.getElementById('sh-addr-pickup').checked,
+    is_return: document.getElementById('sh-addr-return').checked,
+    is_default: document.getElementById('sh-addr-default').checked,
+    updated_at: new Date().toISOString()
+  };
+  if (!payload.contact_name || !payload.phone || !payload.address_line || !payload.district || !payload.province || !payload.postal_code) {
+    alert('กรุณากรอกข้อมูลให้ครบ (* คือบังคับ)'); return;
+  }
+  
+  try {
+    // If setting default, unset others
+    if (payload.is_default) {
+      await _sb.from('seller_addresses').update({is_default:false}).eq('seller_id', _sellerSellerId);
+    }
+    
+    if (id) {
+      const { error } = await _sb.from('seller_addresses').update(payload).eq('id', id);
+      if (error) throw error;
+    } else {
+      const { error } = await _sb.from('seller_addresses').insert(payload);
+      if (error) throw error;
+    }
+    
+    shCloseAddrModal();
+    await shLoadAll();
+    alert('✅ บันทึกที่อยู่แล้ว');
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
+};
+
+window.shSetDefault = async function(id) {
+  try {
+    await _sb.from('seller_addresses').update({is_default:false}).eq('seller_id', _sellerSellerId);
+    await _sb.from('seller_addresses').update({is_default:true}).eq('id', id);
+    await shLoadAll();
+  } catch(e) { alert('❌ ' + e.message); }
+};
+
+window.shDeleteAddr = async function(id) {
+  if (!confirm('ลบที่อยู่นี้?')) return;
+  try {
+    await _sb.from('seller_addresses').delete().eq('id', id);
+    await shLoadAll();
+  } catch(e) { alert('❌ ' + e.message); }
+};
+
+// ─── TAB: COURIERS ───
+function shRenderCouriers() {
+  const wrap = document.getElementById('sh-couriers-list');
+  if (!wrap) return;
+  if (!_shCouriers.length) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#E63329">⚠️ ยังไม่มีรายการขนส่ง — กรุณารัน shipping-system-2026-05-11.sql</div>';
+    return;
+  }
+  wrap.innerHTML = _shCouriers.map(c => {
+    const sc = _shSellerCouriers[c.id];
+    const enabled = !!sc?.is_enabled;
+    const customPrice = sc?.custom_base_price ?? c.base_price;
+    const freeThreshold = sc?.free_shipping_threshold ?? '';
+    return `<div class="sh-courier-card">
+      <div class="sh-courier-icon">${c.logo_url || '📦'}</div>
+      <div class="sh-courier-info">
+        <div class="sh-courier-name">${sfEsc(c.name_th)}${c.has_cod?' <span class="sh-pill outline" style="font-size:9px;padding:1px 6px">COD</span>':''}</div>
+        <div class="sh-courier-meta">
+          ${sfMoney(c.base_price)} + ${sfMoney(c.price_per_kg)}/kg · ${c.est_delivery_min}-${c.est_delivery_max} วัน
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;align-items:center;font-size:11px">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#666">ราคา:</span>
+            <input type="number" min="0" value="${customPrice}" id="sh-c-price-${c.id}" style="width:70px;padding:4px 8px;border:1px solid #E5E5E5;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px" onchange="shUpdateCourier('${c.id}','custom_base_price',this.value)">
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#666">ฟรีเมื่อยอด:</span>
+            <input type="number" min="0" value="${freeThreshold}" id="sh-c-free-${c.id}" placeholder="ไม่มี" style="width:80px;padding:4px 8px;border:1px solid #E5E5E5;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px" onchange="shUpdateCourier('${c.id}','free_shipping_threshold',this.value)">
+          </div>
+        </div>
+      </div>
+      <div class="sh-courier-actions">
+        <label class="sh-toggle">
+          <input type="checkbox" ${enabled?'checked':''} onchange="shToggleCourier('${c.id}',this.checked)">
+          <span class="sh-toggle-slider"></span>
+        </label>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.shToggleCourier = async function(courierId, enabled) {
+  try {
+    await _sb.from('seller_couriers').upsert({
+      seller_id: _sellerSellerId, courier_id: courierId, is_enabled: enabled,
+      updated_at: new Date().toISOString()
+    }, {onConflict:'seller_id,courier_id'});
+  } catch(e) { alert('❌ ' + e.message); }
+};
+
+window.shUpdateCourier = async function(courierId, field, value) {
+  const v = value === '' ? null : parseFloat(value);
+  const update = {seller_id: _sellerSellerId, courier_id: courierId, [field]: v, updated_at: new Date().toISOString()};
+  try {
+    await _sb.from('seller_couriers').upsert(update, {onConflict:'seller_id,courier_id'});
+  } catch(e) { alert('❌ ' + e.message); }
+};
+
+// ─── TAB: PICKUP TIME ───
+function shRenderPickup() {
+  // Use first default pickup address for pickup_days
+  const defAddr = _shAddresses.find(a => a.is_default && a.is_pickup) || _shAddresses[0];
+  if (defAddr && defAddr.pickup_days) {
+    document.querySelectorAll('#sh-pickup-days .sh-day-pill').forEach(b => {
+      b.classList.toggle('on', defAddr.pickup_days.includes(b.dataset.d));
+    });
+  }
+  if (defAddr) {
+    if (defAddr.pickup_time_from) document.getElementById('sh-pickup-from').value = defAddr.pickup_time_from.slice(0,5);
+    if (defAddr.pickup_time_to) document.getElementById('sh-pickup-to').value = defAddr.pickup_time_to.slice(0,5);
+  }
+  // Toggle day pills
+  document.querySelectorAll('#sh-pickup-days .sh-day-pill').forEach(b => {
+    b.onclick = () => b.classList.toggle('on');
+  });
+  // Prep days
+  if (_shSettings.preparation_days !== undefined) {
+    document.getElementById('sh-prep-days').value = _shSettings.preparation_days;
+  }
+}
+
+window.shSavePickup = async function() {
+  const days = [...document.querySelectorAll('#sh-pickup-days .sh-day-pill.on')].map(b => b.dataset.d);
+  const from = document.getElementById('sh-pickup-from').value;
+  const to = document.getElementById('sh-pickup-to').value;
+  try {
+    // Update all pickup addresses
+    await _sb.from('seller_addresses').update({
+      pickup_days: days, pickup_time_from: from, pickup_time_to: to,
+      updated_at: new Date().toISOString()
+    }).eq('seller_id', _sellerSellerId).eq('is_pickup', true);
+    alert('✅ บันทึกเวลาเข้ารับแล้ว');
+  } catch(e) { alert('❌ ' + e.message); }
+};
+
+window.shSavePrep = async function() {
+  const days = parseInt(document.getElementById('sh-prep-days').value);
+  try {
+    await _sb.from('seller_shipping_settings').upsert({
+      seller_id: _sellerSellerId, preparation_days: days,
+      updated_at: new Date().toISOString()
+    }, {onConflict:'seller_id'});
+  } catch(e) { alert('❌ ' + e.message); }
+};
+
+// ─── TAB: INSURANCE ───
+function shRenderInsurance() {
+  document.getElementById('sh-ins-enabled').checked = !!_shSettings.insurance_enabled;
+  document.getElementById('sh-ins-rate').value = _shSettings.insurance_rate ?? 1.0;
+  document.getElementById('sh-ins-min').value = _shSettings.insurance_min_amount ?? 1000;
+}
+
+window.shSaveInsurance = async function() {
+  const payload = {
+    seller_id: _sellerSellerId,
+    insurance_enabled: document.getElementById('sh-ins-enabled').checked,
+    insurance_rate: parseFloat(document.getElementById('sh-ins-rate').value) || 1.0,
+    insurance_min_amount: parseFloat(document.getElementById('sh-ins-min').value) || 1000,
+    updated_at: new Date().toISOString()
+  };
+  try {
+    await _sb.from('seller_shipping_settings').upsert(payload, {onConflict:'seller_id'});
+    alert('✅ บันทึกการคุ้มครองพัสดุแล้ว');
+  } catch(e) { alert('❌ ' + e.message); }
+};
+
+// ─── TAB: SAVER PROGRAM ───
+function shRenderSaver() {
+  document.getElementById('sh-free-enabled').checked = !!_shSettings.free_shipping_enabled;
+  document.getElementById('sh-free-threshold').value = _shSettings.free_shipping_threshold ?? 500;
+  // populate courier dropdown
+  const select = document.getElementById('sh-free-courier');
+  select.innerHTML = '<option value="">ทุกขนส่ง</option>' + 
+    _shCouriers.map(c => `<option value="${c.id}" ${_shSettings.free_shipping_courier_id===c.id?'selected':''}>${sfEsc(c.name_th)}</option>`).join('');
+}
+
+window.shSaveSaver = async function() {
+  const payload = {
+    seller_id: _sellerSellerId,
+    free_shipping_enabled: document.getElementById('sh-free-enabled').checked,
+    free_shipping_threshold: parseFloat(document.getElementById('sh-free-threshold').value) || 500,
+    free_shipping_courier_id: document.getElementById('sh-free-courier').value || null,
+    updated_at: new Date().toISOString()
+  };
+  try {
+    await _sb.from('seller_shipping_settings').upsert(payload, {onConflict:'seller_id'});
+    alert('✅ บันทึก Saver Program แล้ว');
+  } catch(e) { alert('❌ ' + e.message); }
 };
 
 
