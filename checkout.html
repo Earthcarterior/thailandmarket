@@ -605,6 +605,14 @@ img{max-width:100%;height:auto}
       <button class="add-addr-btn" onclick="toast('➕ เพิ่มที่อยู่ใหม่')">+ เพิ่มที่อยู่ใหม่</button>
     </div>
 
+    <!-- SHIPPING METHOD (per seller) -->
+    <div class="card" id="ship-section">
+      <div class="sec-title">🚚 วิธีจัดส่ง</div>
+      <div id="ship-methods-wrap">
+        <div style="padding:20px;text-align:center;color:#888;font-size:12px">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
+
     <!-- PAYMENT -->
     <div class="card" id="pay-section">
       <div class="sec-title">💳 วิธีชำระเงิน</div>
@@ -1122,12 +1130,15 @@ function renderAppliedCoupons() {
 }
 
 // override updateTotal เพื่อให้รวม coupon discount + update ทุก field ของ summary
+let _selectedShipping = null;  // {courier_id, price, ...}
+
 function updateTotal(){
   const sub = CART.reduce((s,it) => s + it.price * it.qty, 0);
   const oldSub = CART.reduce((s,it) => s + (it.old||it.price) * it.qty, 0);
   const productDisc = Math.max(0, oldSub - sub);
   const couponDisc = _appliedCoupons.reduce((s,c) => s + (c.discount||0), 0);
-  const total = Math.max(0, sub - couponDisc);
+  const shipping = _selectedShipping ? parseFloat(_selectedShipping.price || 0) : 0;
+  const total = Math.max(0, sub - couponDisc + shipping);
 
   // Cart count label
   const countEl = document.getElementById('cart-count-label');
@@ -1137,7 +1148,7 @@ function updateTotal(){
   const subEl = document.getElementById('subtotal-val');
   if (subEl) subEl.textContent = '฿' + oldSub.toLocaleString();
 
-  // Product discount row — only show when there is a discount
+  // Product discount row
   const discRow = document.getElementById('discount-row');
   const discVal = document.getElementById('discount-val');
   if (discRow && discVal) {
@@ -1149,10 +1160,118 @@ function updateTotal(){
     }
   }
 
+  // Shipping
+  const shipEl = document.getElementById('ship-val');
+  if (shipEl) {
+    if (shipping > 0) {
+      shipEl.innerHTML = '฿' + shipping.toLocaleString();
+    } else if (_selectedShipping && _selectedShipping.is_free) {
+      shipEl.innerHTML = '฿0 <span style="font-size:10px;background:#D1FAE5;color:#065F46;padding:1px 6px;border-radius:3px;font-weight:600">ฟรี</span>';
+    } else {
+      shipEl.innerHTML = '<span style="color:#888;font-size:11px">รอเลือกวิธีจัดส่ง</span>';
+    }
+  }
+
   // Total
   const totalEl = document.getElementById('total-val');
   if (totalEl) totalEl.textContent = '฿' + total.toLocaleString();
 }
+
+
+// ─── Shipping methods per seller (group cart by seller) ───
+async function loadShippingMethods() {
+  const wrap = document.getElementById('ship-methods-wrap');
+  if (!wrap) return;
+  const sb = window._sbCO || window.sb;
+  if (!sb) { wrap.innerHTML = '<div style="padding:14px;color:#E63329">⚠️ Supabase ยังไม่พร้อม</div>'; return; }
+  
+  if (!CART.length) { wrap.innerHTML = '<div style="padding:14px;color:#888;text-align:center;font-size:12px">ตะกร้าว่าง</div>'; return; }
+  
+  try {
+    // Get seller_id ของแต่ละสินค้าใน cart
+    const productIds = [...new Set(CART.map(c => c.id))];
+    const { data: products } = await sb.from('products').select('id,seller_id').in('id', productIds);
+    
+    // Group by seller
+    const bySeller = {};
+    (products || []).forEach(p => {
+      if (!p.seller_id) return;
+      if (!bySeller[p.seller_id]) bySeller[p.seller_id] = {subtotal: 0};
+      const items = CART.filter(c => c.id === p.id);
+      items.forEach(it => { bySeller[p.seller_id].subtotal += it.price * it.qty; });
+    });
+    
+    const sellerIds = Object.keys(bySeller);
+    if (!sellerIds.length) {
+      wrap.innerHTML = '<div style="padding:14px;color:#888;text-align:center;font-size:12px">ไม่พบข้อมูลร้านค้า</div>';
+      return;
+    }
+    
+    // Fetch seller names + couriers for each seller
+    const { data: sellers } = await sb.from('sellers').select('id,shop_name').in('id', sellerIds);
+    const sellerMap = {};
+    (sellers || []).forEach(s => sellerMap[s.id] = s);
+    
+    // For each seller, fetch couriers
+    const sellerCouriers = await Promise.all(sellerIds.map(sid => 
+      sb.rpc('get_seller_couriers', {p_seller_id: sid, p_subtotal: bySeller[sid].subtotal})
+        .then(r => ({sellerId: sid, couriers: r.data || []}))
+    ));
+    
+    // Render
+    let html = '';
+    sellerCouriers.forEach(({sellerId, couriers}) => {
+      const seller = sellerMap[sellerId] || {shop_name: 'ร้านค้า'};
+      html += `<div style="margin-bottom:14px">
+        <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:600">🏪 ${escapeHtmlCO(seller.shop_name)}</div>`;
+      if (!couriers.length) {
+        html += `<div style="padding:10px;background:#FEF3C7;border:1px solid #F59E0B;border-radius:4px;font-size:12px;color:#92400E">⚠️ ร้านนี้ยังไม่ได้ตั้งค่าวิธีจัดส่ง</div>`;
+      } else {
+        html += couriers.map((c, idx) => {
+          const checked = idx === 0 ? 'checked' : '';
+          const priceStr = c.is_free ? '<span style="color:#10B981;font-weight:600">ฟรี!</span>' : `฿${parseFloat(c.price).toLocaleString('th-TH')}`;
+          const days = c.est_min === c.est_max ? c.est_min : `${c.est_min}-${c.est_max}`;
+          return `<label style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--g200);border-radius:4px;margin-bottom:6px;cursor:pointer;background:#fff" onclick="selectShipping('${sellerId}','${c.courier_id}',${c.price},${c.is_free},'${escapeHtmlCO(c.code)}','${escapeHtmlCO(c.name_th)}')">
+            <div style="display:flex;gap:10px;align-items:center">
+              <input type="radio" name="ship-${sellerId}" ${checked}>
+              <div style="font-size:16px">${c.logo_url||'📦'}</div>
+              <div>
+                <div style="font-size:13px;font-weight:500">${escapeHtmlCO(c.name_th)}${c.has_cod?' · COD':''}</div>
+                <div style="font-size:11px;color:#888;font-family:monospace">ส่งใน ${days} วัน</div>
+              </div>
+            </div>
+            <div style="font-family:monospace;font-size:13px">${priceStr}</div>
+          </label>`;
+        }).join('');
+        // Auto-select first one
+        if (couriers[0]) {
+          _selectedShipping = {
+            seller_id: sellerId,
+            courier_id: couriers[0].courier_id,
+            price: couriers[0].price,
+            is_free: couriers[0].is_free,
+            code: couriers[0].code,
+            name_th: couriers[0].name_th
+          };
+        }
+      }
+      html += '</div>';
+    });
+    
+    wrap.innerHTML = html;
+    updateTotal();
+  } catch(e) {
+    console.warn('shipping load:', e);
+    wrap.innerHTML = `<div style="padding:14px;color:#E63329;font-size:12px">❌ ${escapeHtmlCO(e.message)}<br><small>กรุณารัน shipping-system-2026-05-11.sql</small></div>`;
+  }
+}
+
+function escapeHtmlCO(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+window.selectShipping = function(sellerId, courierId, price, isFree, code, nameTh) {
+  _selectedShipping = {seller_id: sellerId, courier_id: courierId, price: price, is_free: isFree, code: code, name_th: nameTh};
+  updateTotal();
+};
 
 // auto-suggest คูปองที่ใช้ได้ → เปิดเป็น chip ใต้กล่อง input
 async function loadSuggestedCoupons() {
@@ -1295,10 +1414,12 @@ async function doCheckout(){
     return;
   }
 
-  // คำนวณยอด
+  // คำนวณยอด — ใช้ shipping ที่ลูกค้าเลือก
   const sub = CART.reduce((s,it)=>s+it.price*it.qty, 0);
   const couponDisc = (typeof _appliedCoupons!=='undefined'?_appliedCoupons:[]).reduce((s,c)=>s+(c.discount||0), 0);
-  const shipping = sub>=500 ? 0 : 50;
+  const shipping = _selectedShipping ? (parseFloat(_selectedShipping.price) || 0) : 0;
+  const courierCode = _selectedShipping ? _selectedShipping.code : null;
+  const courierName = _selectedShipping ? _selectedShipping.name_th : null;
   const total = Math.max(0, sub - couponDisc + shipping);
 
   // สร้าง order_number — TM-YYYY-XXX
@@ -1317,6 +1438,8 @@ async function doCheckout(){
       subtotal: sub,
       discount: couponDisc,
       shipping_fee: shipping,
+      shipping_method: courierCode,            // courier code (kerry, flash, etc.)
+      shipping_method_name: courierName,       // display name
       total: total,
       payment_method: selPay,
       shipping_address: {
@@ -1728,6 +1851,7 @@ async function loadCheckoutData() {
 
   // Load payment methods จาก DB (admin จัดการที่ Payment panel)
   await loadPaymentMethods();
+  await loadShippingMethods();
   updateTotal();
 }
 

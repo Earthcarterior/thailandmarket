@@ -994,10 +994,18 @@ window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
       <button class="btn-cart" onclick="addToCart()">🛒 เพิ่มลงตะกร้า</button>
       <button class="btn-wishlist" id="wl-btn" onclick="toggleWishlist()">❤️ บันทึกเป็น Wishlist</button>
       <button class="btn-wishlist" onclick="contactSeller()" style="border-color:#3B82F6;color:#3B82F6">💬 ติดต่อร้านค้า</button>
+      <button class="btn-wishlist" id="follow-shop-btn" onclick="toggleFollowShop()" style="border-color:#F59E0B;color:#F59E0B">⭐ ติดตามร้าน</button>
     </div>
 
     <!-- SERVICES (dynamic) -->
     <div class="service-row" id="service-row"></div>
+
+    <!-- SHIPPING OPTIONS FROM SELLER -->
+    <div id="seller-shipping-box" style="display:none;border:1px solid var(--g200);padding:14px;margin-bottom:14px;background:#FAFAFA;border-radius:4px">
+      <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-weight:600">🚚 ตัวเลือกการจัดส่งจากร้านนี้</div>
+      <div id="seller-shipping-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div id="seller-pickup-from" style="margin-top:10px;font-size:11px;color:#888;border-top:1px solid var(--g200);padding-top:8px;font-family:monospace"></div>
+    </div>
 
     <!-- SHARE -->
     <div class="share-row">
@@ -1315,6 +1323,7 @@ function renderProduct() {
 
   // Service grid (dynamic based on what data exists)
   renderServices(p);
+  renderSellerShipping(p);
 
   // Description body + highlights + video
   renderDescription(p);
@@ -1348,6 +1357,51 @@ function selVariant(el, optName, value, idx) {
   _selectedVariants[optName] = value;
   const sel = document.getElementById('vo-sel-' + idx);
   if (sel) sel.textContent = value;
+}
+
+async function renderSellerShipping(p) {
+  if (!p.seller_id) return;
+  const box = document.getElementById('seller-shipping-box');
+  const list = document.getElementById('seller-shipping-list');
+  const fromEl = document.getElementById('seller-pickup-from');
+  if (!box || !list) return;
+
+  try {
+    const subtotal = parseFloat(p.price || 0);
+    // Fetch couriers + pickup address ใน parallel
+    const [couriersRes, pickupRes] = await Promise.all([
+      sb.rpc('get_seller_couriers', {p_seller_id: p.seller_id, p_subtotal: subtotal}),
+      sb.rpc('get_seller_pickup_address', {p_seller_id: p.seller_id})
+    ]);
+    
+    const couriers = couriersRes.data || [];
+    if (!couriers.length) { box.style.display = 'none'; return; }
+    
+    box.style.display = 'block';
+    list.innerHTML = couriers.map(c => {
+      const priceStr = c.is_free ? '<span style="color:#10B981;font-weight:600">ฟรี!</span>' : `฿${parseFloat(c.price).toLocaleString('th-TH')}`;
+      const days = c.est_min === c.est_max ? c.est_min : `${c.est_min}-${c.est_max}`;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#fff;border:1px solid var(--g200);border-radius:4px;font-size:12px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:16px">${c.logo_url || '📦'}</span>
+          <div>
+            <div style="font-weight:500">${escapeHtml(c.name_th)}${c.has_cod?' · COD':''}</div>
+            <div style="font-size:10px;color:#888;font-family:monospace">ส่งใน ${days} วัน${c.notes?' · '+escapeHtml(c.notes):''}</div>
+          </div>
+        </div>
+        <div style="font-family:monospace;font-size:13px">${priceStr}</div>
+      </div>`;
+    }).join('');
+    
+    // Pickup info
+    const pickup = pickupRes.data;
+    if (pickup) {
+      fromEl.textContent = `📍 ส่งจาก: ${pickup.district || ''} ${pickup.province || ''}`;
+    }
+  } catch(e) {
+    console.warn('shipping load:', e);
+    box.style.display = 'none';
+  }
 }
 
 function renderServices(p) {
@@ -2215,5 +2269,164 @@ loadProduct();
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
+<!-- ════════════════════════════════════════════════════════════════════
+     FOLLOW SHOP + VOUCHER DISPLAY — 2026-05-08
+     ════════════════════════════════════════════════════════════════════ -->
+<script id="product-follow-vouchers">
+(function(){
+  const sb = window._sb || window.sb;
+  if (!sb) return;
+  let _isFollowing = false;
+  let _currentSellerId = null;
+
+  function getSellerId() {
+    // Look for sellerId from URL/dataset/etc
+    return _currentSellerId || (window.PRODUCT_DATA && window.PRODUCT_DATA.seller_id);
+  }
+
+  async function getPublicUserId() {
+    const { data: { user: authUser } } = await sb.auth.getUser();
+    if (!authUser) return null;
+    const { data } = await sb.from('users').select('id').eq('email', authUser.email).maybeSingle();
+    return data ? data.id : null;
+  }
+
+  // Check if currently following
+  async function checkFollowStatus() {
+    const sellerId = getSellerId();
+    if (!sellerId) return;
+    const userId = await getPublicUserId();
+    if (!userId) return;
+    const { data } = await sb.from('shop_followers')
+      .select('id').eq('seller_id', sellerId).eq('user_id', userId).maybeSingle();
+    _isFollowing = !!data;
+    updateFollowBtn();
+  }
+
+  function updateFollowBtn() {
+    const btn = document.getElementById('follow-shop-btn');
+    if (!btn) return;
+    if (_isFollowing) {
+      btn.innerHTML = '✅ กำลังติดตาม';
+      btn.style.background = '#F59E0B';
+      btn.style.color = '#fff';
+    } else {
+      btn.innerHTML = '⭐ ติดตามร้าน';
+      btn.style.background = '#fff';
+      btn.style.color = '#F59E0B';
+    }
+  }
+
+  // Toggle
+  window.toggleFollowShop = async function() {
+    const sellerId = getSellerId();
+    if (!sellerId) { alert('ไม่พบข้อมูลร้านค้า'); return; }
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { alert('กรุณาเข้าสู่ระบบก่อน'); location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search); return; }
+    const { data, error } = await sb.rpc('toggle_follow_shop', { p_seller_id: sellerId });
+    if (error || (data && data.error)) {
+      alert('❌ ' + (error?.message || data.error));
+      return;
+    }
+    _isFollowing = data.following;
+    updateFollowBtn();
+    if (_isFollowing) {
+      alert('⭐ ติดตามร้านแล้ว!\nคุณจะได้รับการแจ้งเตือนเมื่อมีโปรโมชันใหม่');
+      // Try to claim follow_prize voucher
+      tryClaimFollowPrize(sellerId);
+    }
+  };
+
+  // Auto-claim follow prize
+  async function tryClaimFollowPrize(sellerId) {
+    const { data: prizes } = await sb.from('shop_vouchers')
+      .select('id,name_th,discount_value,discount_type')
+      .eq('seller_id', sellerId).eq('voucher_type', 'follow_prize').eq('status', 'active');
+    if (!prizes || !prizes.length) return;
+    for (const p of prizes) {
+      const { data } = await sb.rpc('claim_voucher', { p_voucher_id: p.id });
+      if (data && data.success) {
+        const discStr = p.discount_type === 'percent' ? p.discount_value + '%' : '฿' + p.discount_value;
+        alert(`🎁 รับ Follow Prize แล้ว!\n\n"${p.name_th}"\nส่วนลด: ${discStr}\n\nใช้งานได้ในหน้า checkout`);
+        break; // Only claim 1
+      }
+    }
+  }
+
+  // Load shop vouchers (display ใน product page ในอนาคต)
+  async function loadShopVouchers() {
+    const sellerId = getSellerId();
+    if (!sellerId) return;
+    try {
+      const { data } = await sb.from('shop_vouchers')
+        .select('id,code,name_th,discount_value,discount_type,min_order_amount,valid_until')
+        .eq('seller_id', sellerId)
+        .eq('status', 'active')
+        .neq('voucher_type', 'follow_prize')
+        .or('valid_until.is.null,valid_until.gte.' + new Date().toISOString())
+        .limit(5);
+      if (!data || !data.length) return;
+      // Display ใน sidebar หรือ banner
+      const container = document.querySelector('.action-btns');
+      if (!container) return;
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'margin-top:14px;padding:12px;background:#FFF8E1;border:1px solid #F59E0B;border-radius:6px';
+      wrap.innerHTML = `
+        <div style="font-size:12px;font-weight:600;color:#92400E;margin-bottom:8px">🎟️ คูปองส่วนลดของร้าน</div>
+        ${data.map(v => {
+          const disc = v.discount_type === 'percent' ? `ลด ${v.discount_value}%` : `ลด ฿${v.discount_value}`;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;background:#fff;margin-bottom:5px;border-radius:4px">
+            <div>
+              <div style="font-size:12px;font-weight:500">${v.name_th}</div>
+              <div style="font-size:10px;color:#666">${disc} · ขั้นต่ำ ฿${v.min_order_amount||0}</div>
+            </div>
+            <button onclick="claimShopVoucher('${v.id}')" style="padding:4px 10px;background:#F59E0B;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:11px">เก็บ</button>
+          </div>`;
+        }).join('')}
+      `;
+      container.parentNode.insertBefore(wrap, container.nextSibling);
+    } catch(e) { console.warn('shop vouchers:', e); }
+  }
+
+  window.claimShopVoucher = async function(voucherId) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { alert('กรุณาเข้าสู่ระบบก่อน'); return; }
+    const { data, error } = await sb.rpc('claim_voucher', { p_voucher_id: voucherId });
+    if (error) { alert('❌ ' + error.message); return; }
+    if (data && data.error) {
+      const msgs = {ALREADY_CLAIMED:'คุณเก็บ voucher นี้แล้ว', VOUCHER_EXPIRED:'voucher หมดอายุแล้ว', VOUCHER_NOT_ACTIVE:'voucher ไม่พร้อมใช้งาน'};
+      alert('⚠️ ' + (msgs[data.error] || data.error));
+      return;
+    }
+    alert('✅ เก็บ voucher แล้ว! ใช้งานได้ในหน้า checkout');
+  };
+
+  // Init เมื่อ product loaded
+  function init() {
+    // Try to extract seller_id จาก global
+    const tries = [
+      () => window.PRODUCT_DATA && window.PRODUCT_DATA.seller_id,
+      () => window._currentProduct && window._currentProduct.seller_id,
+      () => document.querySelector('[data-seller-id]')?.dataset.sellerId
+    ];
+    for (const fn of tries) {
+      try { const v = fn(); if (v) { _currentSellerId = v; break; } } catch(e){}
+    }
+    if (_currentSellerId) {
+      checkFollowStatus();
+      loadShopVouchers();
+    }
+  }
+
+  // Wait for product data
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    init();
+    if (_currentSellerId || attempts > 20) clearInterval(interval);
+  }, 500);
+})();
+</script>
+
 </body>
 </html>
