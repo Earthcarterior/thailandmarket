@@ -590,6 +590,17 @@ nav { display: block !important; height: auto !important; }
       </div>
 
       <div class="sb-section-lbl">ระบบ</div>
+      <div class="sni" id="nav-audit" onclick="showPanel('audit')">
+        <span class="sni-ico">📋</span> Audit Logs
+      </div>
+      <div class="sni" id="nav-payouts" onclick="showPanel('payouts')" style="position:relative">
+        <span class="sni-ico">💰</span> Payout Requests
+        <span class="sni-badge" id="payouts-badge" style="display:none;background:#F59E0B">0</span>
+      </div>
+      <div class="sni" id="nav-kyc" onclick="showPanel('kyc')" style="position:relative">
+        <span class="sni-ico">✅</span> KYC Review
+        <span class="sni-badge" id="kyc-badge" style="display:none;background:#3B82F6">0</span>
+      </div>
       <div class="sni" id="nav-settings" onclick="showPanel('settings')">
         <span class="sni-ico">⚙️</span> ตั้งค่าเว็บ
       </div>
@@ -640,6 +651,114 @@ nav { display: block !important; height: auto !important; }
     </div>
 
     <!-- ── PRODUCTS ── -->
+    <!-- ════════════════════════════════════════════════════════════════════
+         ORDERS PANEL — Full order management for admin
+         ════════════════════════════════════════════════════════════════════ -->
+    <div id="panel-orders" class="panel" style="padding:24px;display:none">
+      <style>
+        #panel-orders .or-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+        #panel-orders .or-stat{padding:14px;background:#fff;border:1px solid #E5E5E5;border-radius:6px}
+        #panel-orders .or-stat-l{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+        #panel-orders .or-stat-v{font-size:22px;font-weight:600;font-family:'DM Mono',monospace}
+        #panel-orders .or-stat.unpaid .or-stat-v{color:#F59E0B}
+        #panel-orders .or-stat.paid .or-stat-v{color:#10B981}
+        #panel-orders .or-stat.cancel .or-stat-v{color:#E63329}
+        #panel-orders .or-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+        #panel-orders .or-search{flex:1;min-width:200px;padding:8px 14px;border:1px solid #E5E5E5;font-size:13px;outline:none;border-radius:4px}
+        #panel-orders .or-filter{padding:8px 14px;border:1px solid #E5E5E5;background:#fff;font-size:13px;cursor:pointer;border-radius:4px;font-family:inherit}
+        #panel-orders .or-filter.on{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+        #panel-orders .or-table{width:100%;background:#fff;border:1px solid #E5E5E5;border-collapse:collapse}
+        #panel-orders .or-table th{text-align:left;padding:10px 12px;background:#FAFAFA;border-bottom:1px solid #E5E5E5;font-size:11px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+        #panel-orders .or-table td{padding:12px;border-bottom:1px solid #F0F0F0;font-size:13px;vertical-align:middle}
+        #panel-orders .or-table tr:hover{background:#FAFAFA;cursor:pointer}
+        #panel-orders .or-num{font-family:'DM Mono',monospace;font-weight:600;font-size:12px}
+        #panel-orders .or-pill{display:inline-block;padding:3px 9px;border-radius:9px;font-size:10px;font-family:'DM Mono',monospace;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+        #panel-orders .or-pill.pending{background:#FFF8E1;color:#856404}
+        #panel-orders .or-pill.paid{background:#D4EDDA;color:#155724}
+        #panel-orders .or-pill.shipped{background:#E0F2FE;color:#075985}
+        #panel-orders .or-pill.delivered{background:#DCFCE7;color:#166534}
+        #panel-orders .or-pill.cancelled{background:#F8D7DA;color:#721C24}
+        #panel-orders .or-pill.refunded{background:#F3E8FF;color:#6B21A8}
+        #panel-orders .or-actions{display:flex;gap:4px}
+        #panel-orders .or-btn{padding:5px 10px;border:1px solid #E5E5E5;background:#fff;cursor:pointer;font-size:11px;border-radius:4px;font-family:inherit;transition:all .15s}
+        #panel-orders .or-btn:hover{background:#F5F5F5;border-color:#0A0A0A}
+        #panel-orders .or-btn.primary{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+        #panel-orders .or-btn.danger{background:#E63329;color:#fff;border-color:#E63329}
+        #panel-orders .or-btn.success{background:#10B981;color:#fff;border-color:#10B981}
+        #panel-orders .or-empty{padding:60px;text-align:center;color:#888}
+        /* Modal */
+        #or-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+        #or-modal-overlay.on{display:flex}
+        #or-modal{background:#fff;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;border-radius:8px}
+        #or-modal-head{padding:16px 20px;border-bottom:1px solid #E5E5E5;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+        #or-modal-body{padding:20px}
+        .or-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #F0F0F0;font-size:13px}
+        .or-row-l{color:#666}
+        .or-row-r{font-weight:500}
+        .or-section{margin-bottom:18px}
+        .or-section-title{font-size:13px;font-weight:600;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #E5E5E5}
+        .or-item{display:flex;gap:10px;padding:10px;background:#FAFAFA;border-radius:4px;margin-bottom:6px;font-size:12px}
+      </style>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h1 style="font-size:22px;font-weight:600">📦 จัดการออเดอร์</h1>
+        <button class="or-btn" onclick="orLoad()">🔄 โหลดใหม่</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="or-stats">
+        <div class="or-stat">
+          <div class="or-stat-l">ทั้งหมด</div>
+          <div class="or-stat-v" id="or-stat-total">—</div>
+        </div>
+        <div class="or-stat unpaid">
+          <div class="or-stat-l">รอชำระเงิน</div>
+          <div class="or-stat-v" id="or-stat-pending">—</div>
+        </div>
+        <div class="or-stat paid">
+          <div class="or-stat-l">ชำระแล้ว</div>
+          <div class="or-stat-v" id="or-stat-paid">—</div>
+        </div>
+        <div class="or-stat">
+          <div class="or-stat-l">จัดส่งแล้ว</div>
+          <div class="or-stat-v" id="or-stat-shipped">—</div>
+        </div>
+        <div class="or-stat cancel">
+          <div class="or-stat-l">ยกเลิก</div>
+          <div class="or-stat-v" id="or-stat-cancelled">—</div>
+        </div>
+      </div>
+
+      <!-- Filter toolbar -->
+      <div class="or-toolbar">
+        <input class="or-search" id="or-search" placeholder="🔍 ค้นหาเลขออเดอร์ / ชื่อลูกค้า / email..." oninput="orFilter()">
+        <button class="or-filter on" data-status="all" onclick="orSetStatus('all',this)">ทั้งหมด</button>
+        <button class="or-filter" data-status="pending" onclick="orSetStatus('pending',this)">รอชำระ</button>
+        <button class="or-filter" data-status="paid" onclick="orSetStatus('paid',this)">ชำระแล้ว</button>
+        <button class="or-filter" data-status="shipped" onclick="orSetStatus('shipped',this)">จัดส่งแล้ว</button>
+        <button class="or-filter" data-status="delivered" onclick="orSetStatus('delivered',this)">ส่งสำเร็จ</button>
+        <button class="or-filter" data-status="cancelled" onclick="orSetStatus('cancelled',this)">ยกเลิก</button>
+      </div>
+
+      <!-- Orders table -->
+      <div id="or-list-wrap">
+        <div class="or-empty">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <!-- Order detail modal -->
+    <div id="or-modal-overlay" onclick="if(event.target===this)orCloseModal()">
+      <div id="or-modal">
+        <div id="or-modal-head">
+          <div style="font-size:16px;font-weight:600" id="or-modal-title">รายละเอียดออเดอร์</div>
+          <button onclick="orCloseModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#666">×</button>
+        </div>
+        <div id="or-modal-body">
+          <div style="text-align:center;padding:40px;color:#888">⏳ กำลังโหลด...</div>
+        </div>
+      </div>
+    </div>
+
     <div id="panel-products" class="panel" style="padding:24px">
       <div class="table-header">
         <div class="search-row">
@@ -2630,6 +2749,617 @@ window.pmDisableMaintenance = async function() {
 </script>
 
 
+<!-- ════════════════════════════════════════════════════════════════════
+     AUDIT LOGS PANEL
+     ════════════════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════════════
+     PAYOUT REQUESTS PANEL
+     ════════════════════════════════════════════════════════════════════ -->
+<div id="panel-payouts" class="panel admin-only" style="padding:0;display:none">
+  <style>
+    #panel-payouts .pp-wrap{padding:24px;background:#FAFAFA;min-height:calc(100vh - 80px)}
+    #panel-payouts .pp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+    #panel-payouts .pp-stat{padding:14px;background:#fff;border:1px solid #E5E5E5;border-radius:6px}
+    #panel-payouts .pp-stat-l{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+    #panel-payouts .pp-stat-v{font-size:22px;font-weight:600;font-family:'DM Mono',monospace}
+    #panel-payouts .pp-tabs{display:flex;gap:6px;margin-bottom:14px}
+    #panel-payouts .pp-tab{padding:8px 14px;border:1px solid #E5E5E5;background:#fff;border-radius:4px;cursor:pointer;font-size:12px}
+    #panel-payouts .pp-tab.on{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+    #panel-payouts .pp-card{padding:14px;background:#fff;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:10px;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+    #panel-payouts .pp-card.pending{border-left:4px solid #F59E0B}
+    #panel-payouts .pp-card.paid{border-left:4px solid #10B981;opacity:.85}
+    #panel-payouts .pp-card.rejected{border-left:4px solid #E63329;opacity:.7}
+    #panel-payouts .pp-amount{font-size:22px;font-weight:700;font-family:'DM Mono',monospace}
+    #panel-payouts .pp-bank{font-size:11px;color:#666;font-family:'DM Mono',monospace}
+    #panel-payouts .pp-actions{display:flex;flex-direction:column;gap:6px}
+    #panel-payouts .pp-btn{padding:7px 14px;border:1px solid #E5E5E5;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit}
+    #panel-payouts .pp-btn.primary{background:#10B981;color:#fff;border-color:#10B981}
+    #panel-payouts .pp-btn.danger{background:#E63329;color:#fff;border-color:#E63329}
+    #panel-payouts .pp-pill{display:inline-block;padding:2px 8px;border-radius:9px;font-size:10px;font-family:'DM Mono',monospace}
+    #panel-payouts .pp-pill.pending{background:#FEF3C7;color:#92400E}
+    #panel-payouts .pp-pill.paid{background:#D1FAE5;color:#065F46}
+    #panel-payouts .pp-pill.rejected{background:#FEE2E2;color:#991B1B}
+  </style>
+  <div class="pp-wrap">
+    <h1 style="font-size:22px;margin-bottom:14px">💰 Payout Requests</h1>
+
+    <div class="pp-stats">
+      <div class="pp-stat"><div class="pp-stat-l">รออนุมัติ</div><div class="pp-stat-v" id="pp-stat-pending" style="color:#F59E0B">—</div></div>
+      <div class="pp-stat"><div class="pp-stat-l">ยอดรอจ่าย</div><div class="pp-stat-v" id="pp-stat-pending-amt" style="color:#F59E0B">—</div></div>
+      <div class="pp-stat"><div class="pp-stat-l">จ่ายแล้ว (เดือนนี้)</div><div class="pp-stat-v" id="pp-stat-paid-month" style="color:#10B981">—</div></div>
+      <div class="pp-stat"><div class="pp-stat-l">รวมที่จ่าย</div><div class="pp-stat-v" id="pp-stat-total" style="color:#3B82F6">—</div></div>
+    </div>
+
+    <div class="pp-tabs">
+      <div class="pp-tab on" data-pp="pending" onclick="ppFilter('pending',this)">⏳ รออนุมัติ</div>
+      <div class="pp-tab" data-pp="paid" onclick="ppFilter('paid',this)">✅ จ่ายแล้ว</div>
+      <div class="pp-tab" data-pp="rejected" onclick="ppFilter('rejected',this)">❌ ปฏิเสธ</div>
+      <div class="pp-tab" data-pp="all" onclick="ppFilter('all',this)">ทั้งหมด</div>
+    </div>
+
+    <div id="pp-list-wrap"><div style="padding:30px;text-align:center;color:#888">⏳ กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<script id="payouts-panel-logic">
+let _ppRequests = [];
+let _ppFilter = 'pending';
+let _ppSellers = {};
+
+async function ppLoad() {
+  const wrap = document.getElementById('pp-list-wrap');
+  const sb = window._sb || window.sb;
+  if (!sb) return;
+  
+  try {
+    const { data, error } = await sb.from('payout_requests').select('*').order('created_at', {ascending:false}).limit(500);
+    if (error) throw error;
+    _ppRequests = data || [];
+    
+    // Hydrate sellers
+    const sellerIds = [...new Set(_ppRequests.map(r => r.seller_id))];
+    if (sellerIds.length) {
+      const { data: sellers } = await sb.from('sellers').select('id,shop_name').in('id', sellerIds);
+      _ppSellers = {};
+      (sellers || []).forEach(s => _ppSellers[s.id] = s);
+    }
+    
+    ppUpdateStats();
+    ppRender();
+  } catch(e) {
+    wrap.innerHTML = `<div style="padding:30px;text-align:center;color:#E63329">❌ ${(e.message||'').replace(/</g,'&lt;')}<br><small>กรุณารัน pack-BC-2026-05-08.sql</small></div>`;
+  }
+}
+
+function ppUpdateStats() {
+  const pending = _ppRequests.filter(r => r.status === 'pending');
+  const pendingAmt = pending.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+  
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+  const paidThisMonth = _ppRequests.filter(r => r.status === 'paid' && new Date(r.paid_at||r.updated_at) >= monthStart);
+  const paidMonthAmt = paidThisMonth.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+  
+  const totalPaid = _ppRequests.filter(r => r.status === 'paid').reduce((s,r) => s + parseFloat(r.amount||0), 0);
+  
+  document.getElementById('pp-stat-pending').textContent = pending.length;
+  document.getElementById('pp-stat-pending-amt').textContent = '฿' + pendingAmt.toLocaleString('th-TH');
+  document.getElementById('pp-stat-paid-month').textContent = '฿' + paidMonthAmt.toLocaleString('th-TH');
+  document.getElementById('pp-stat-total').textContent = '฿' + totalPaid.toLocaleString('th-TH');
+  
+  // Sidebar badge
+  const badge = document.getElementById('payouts-badge');
+  if (badge) {
+    if (pending.length > 0) { badge.textContent = pending.length; badge.style.display = 'inline-flex'; }
+    else badge.style.display = 'none';
+  }
+}
+
+function ppEsc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function ppFmt(d){ if(!d)return '—'; return new Date(d).toLocaleString('th-TH', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+
+function ppRender() {
+  const wrap = document.getElementById('pp-list-wrap');
+  let filtered = _ppRequests;
+  if (_ppFilter !== 'all') filtered = filtered.filter(r => r.status === _ppFilter);
+  if (!filtered.length) { wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#888">ไม่มีคำขอในหมวดนี้</div>'; return; }
+  
+  wrap.innerHTML = filtered.map(r => {
+    const seller = _ppSellers[r.seller_id] || {};
+    return `<div class="pp-card ${r.status}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div>
+            <div class="pp-amount">฿${parseFloat(r.amount).toLocaleString('th-TH')}</div>
+            <div style="font-size:12px;color:#666">📦 ${ppEsc(seller.shop_name||'—')} · ${ppFmt(r.created_at)}</div>
+          </div>
+          <span class="pp-pill ${r.status}">${r.status}</span>
+        </div>
+        <div class="pp-bank">
+          <div>🏦 ${ppEsc(r.bank_name||'PromptPay')}</div>
+          ${r.bank_account_number?`<div>เลขบัญชี: ${ppEsc(r.bank_account_number)}</div>`:''}
+          ${r.bank_account_name?`<div>ชื่อบัญชี: ${ppEsc(r.bank_account_name)}</div>`:''}
+          ${r.promptpay_id?`<div>PromptPay: ${ppEsc(r.promptpay_id)}</div>`:''}
+        </div>
+        ${r.review_note?`<div style="margin-top:8px;padding:8px;background:#FAFAFA;border-radius:4px;font-size:11px"><strong>หมายเหตุ:</strong> ${ppEsc(r.review_note)}</div>`:''}
+        ${r.payment_reference?`<div style="margin-top:6px;font-size:11px;color:#666">📝 Payment ref: ${ppEsc(r.payment_reference)}</div>`:''}
+      </div>
+      <div class="pp-actions">
+        ${r.status==='pending'?`
+          <button class="pp-btn primary" onclick="ppApprove('${r.id}', ${r.amount})">✅ จ่ายแล้ว</button>
+          <button class="pp-btn danger" onclick="ppReject('${r.id}')">❌ ปฏิเสธ</button>
+        `:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.ppFilter = function(filter, btn) {
+  _ppFilter = filter;
+  document.querySelectorAll('#panel-payouts .pp-tab').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  ppRender();
+};
+
+window.ppApprove = async function(id, amount) {
+  const ref = prompt(`บันทึกการโอน ฿${amount}\n\npayment reference (transaction id หรือ slip number):`);
+  if (!ref) return;
+  const sb = window._sb || window.sb;
+  const { error } = await sb.rpc('admin_complete_payout', {p_request_id: id, p_payment_ref: ref});
+  if (error) { alert('❌ ' + error.message); return; }
+  alert('✅ บันทึกการจ่ายเงินแล้ว');
+  ppLoad();
+};
+
+window.ppReject = async function(id) {
+  const reason = prompt('เหตุผลในการปฏิเสธ:');
+  if (!reason) return;
+  const sb = window._sb || window.sb;
+  const { error } = await sb.rpc('admin_reject_payout', {p_request_id: id, p_reason: reason});
+  if (error) { alert('❌ ' + error.message); return; }
+  alert('✅ ปฏิเสธคำขอแล้ว — เงินคืนสู่ available balance');
+  ppLoad();
+};
+
+(function hookPayouts(){
+  const orig = window.showPanel;
+  if (typeof orig !== 'function') return;
+  window.showPanel = function(name) {
+    const r = orig.apply(this, arguments);
+    if (name === 'payouts') ppLoad();
+    return r;
+  };
+})();
+
+// Auto-poll badge
+async function ppUpdateBadge() {
+  const sb = window._sb || window.sb;
+  if (!sb) return;
+  try {
+    const { count } = await sb.from('payout_requests').select('*', {count:'exact', head:true}).eq('status','pending');
+    const badge = document.getElementById('payouts-badge');
+    if (badge) {
+      if (count > 0) { badge.textContent = count; badge.style.display = 'inline-flex'; }
+      else badge.style.display = 'none';
+    }
+  } catch(e) {}
+}
+setTimeout(ppUpdateBadge, 4000);
+setInterval(ppUpdateBadge, 60000);
+</script>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     KYC REVIEW PANEL
+     ════════════════════════════════════════════════════════════════════ -->
+<div id="panel-kyc" class="panel admin-only" style="padding:0;display:none">
+  <style>
+    #panel-kyc .kr-wrap{padding:24px;background:#FAFAFA;min-height:calc(100vh - 80px)}
+    #panel-kyc .kr-tabs{display:flex;gap:6px;margin-bottom:14px}
+    #panel-kyc .kr-tab{padding:8px 14px;border:1px solid #E5E5E5;background:#fff;border-radius:4px;cursor:pointer;font-size:12px}
+    #panel-kyc .kr-tab.on{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+    #panel-kyc .kr-card{padding:16px;background:#fff;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:10px}
+    #panel-kyc .kr-card.pending{border-left:4px solid #F59E0B}
+    #panel-kyc .kr-card.approved{border-left:4px solid #10B981}
+    #panel-kyc .kr-card.rejected{border-left:4px solid #E63329}
+    #panel-kyc .kr-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    #panel-kyc .kr-pill{padding:3px 10px;border-radius:9px;font-size:10px;font-family:'DM Mono',monospace}
+    #panel-kyc .kr-pill.pending{background:#FEF3C7;color:#92400E}
+    #panel-kyc .kr-pill.approved{background:#D1FAE5;color:#065F46}
+    #panel-kyc .kr-pill.rejected{background:#FEE2E2;color:#991B1B}
+    #panel-kyc .kr-info-grid{display:grid;grid-template-columns:140px 1fr;gap:6px 14px;font-size:12px;margin-bottom:10px}
+    #panel-kyc .kr-info-grid div:nth-child(odd){color:#666}
+    #panel-kyc .kr-docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:10px 0}
+    #panel-kyc .kr-doc{aspect-ratio:1;background:#F5F5F5;border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;border:1px solid #E5E5E5}
+    #panel-kyc .kr-doc img{width:100%;height:100%;object-fit:cover}
+    #panel-kyc .kr-actions{display:flex;gap:6px;margin-top:10px}
+    #panel-kyc .kr-btn{padding:8px 14px;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500}
+    #panel-kyc .kr-btn.approve{background:#10B981;color:#fff}
+    #panel-kyc .kr-btn.reject{background:#E63329;color:#fff}
+  </style>
+  <div class="kr-wrap">
+    <h1 style="font-size:22px;margin-bottom:14px">✅ KYC Verification Review</h1>
+
+    <div class="kr-tabs">
+      <div class="kr-tab on" data-kr="pending" onclick="krFilter('pending',this)">⏳ รอตรวจ</div>
+      <div class="kr-tab" data-kr="approved" onclick="krFilter('approved',this)">✅ อนุมัติ</div>
+      <div class="kr-tab" data-kr="rejected" onclick="krFilter('rejected',this)">❌ ปฏิเสธ</div>
+      <div class="kr-tab" data-kr="all" onclick="krFilter('all',this)">ทั้งหมด</div>
+    </div>
+
+    <div id="kr-list-wrap"><div style="padding:30px;text-align:center;color:#888">⏳ กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<script id="kyc-panel-logic">
+let _krList = [];
+let _krFilter = 'pending';
+let _krSellers = {};
+
+function krEsc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function krFmt(d){ if(!d)return '—'; return new Date(d).toLocaleString('th-TH', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+
+async function krLoad() {
+  const wrap = document.getElementById('kr-list-wrap');
+  const sb = window._sb || window.sb;
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.from('shop_verifications').select('*').order('submitted_at', {ascending:false}).limit(500);
+    if (error) throw error;
+    _krList = data || [];
+    
+    const sellerIds = [...new Set(_krList.map(k => k.seller_id))];
+    if (sellerIds.length) {
+      const { data: sellers } = await sb.from('sellers').select('id,shop_name,user_id').in('id', sellerIds);
+      _krSellers = {};
+      (sellers || []).forEach(s => _krSellers[s.id] = s);
+    }
+    
+    krUpdateBadge();
+    krRender();
+  } catch(e) {
+    wrap.innerHTML = `<div style="padding:30px;text-align:center;color:#E63329">❌ ${krEsc(e.message)}<br><small>กรุณารัน pack-BC-2026-05-08.sql</small></div>`;
+  }
+}
+
+function krUpdateBadge() {
+  const pending = _krList.filter(k => k.status === 'pending').length;
+  const badge = document.getElementById('kyc-badge');
+  if (badge) {
+    if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline-flex'; }
+    else badge.style.display = 'none';
+  }
+}
+
+function krRender() {
+  const wrap = document.getElementById('kr-list-wrap');
+  let filtered = _krList;
+  if (_krFilter !== 'all') filtered = filtered.filter(k => k.status === _krFilter);
+  if (!filtered.length) { wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#888">ไม่มีคำขอในหมวดนี้</div>'; return; }
+  
+  wrap.innerHTML = filtered.map(k => {
+    const seller = _krSellers[k.seller_id] || {};
+    const docs = [
+      {label:'ID Front', url:k.id_card_front_url},
+      {label:'ID Back', url:k.id_card_back_url},
+      {label:'Selfie+ID', url:k.selfie_with_id_url},
+      {label:'Cert', url:k.business_certificate_url},
+      {label:'Bank Book', url:k.bank_book_url}
+    ].filter(d => d.url);
+    
+    return `<div class="kr-card ${k.status}">
+      <div class="kr-head">
+        <div>
+          <div style="font-size:16px;font-weight:600">${krEsc(seller.shop_name||'—')}</div>
+          <div style="font-size:11px;color:#666;font-family:'DM Mono',monospace">submitted ${krFmt(k.submitted_at)}</div>
+        </div>
+        <span class="kr-pill ${k.status}">${k.status}</span>
+      </div>
+      
+      <div class="kr-info-grid">
+        <div>ชื่อ-สกุล</div><div><strong>${krEsc(k.full_name)}</strong></div>
+        <div>เลขบัตร ปชช</div><div style="font-family:'DM Mono',monospace">${krEsc(k.national_id||'')}</div>
+        <div>ประเภทกิจการ</div><div>${krEsc(k.business_type||'')}</div>
+        ${k.business_name?`<div>ชื่อบริษัท</div><div>${krEsc(k.business_name)}</div>`:''}
+        ${k.business_tax_id?`<div>เลขผู้เสียภาษี</div><div style="font-family:'DM Mono',monospace">${krEsc(k.business_tax_id)}</div>`:''}
+        <div>ที่อยู่</div><div>${krEsc(k.address_line||'')} ${krEsc(k.district||'')} ${krEsc(k.province||'')} ${krEsc(k.postal_code||'')}</div>
+        ${k.rejection_reason?`<div style="color:#E63329">เหตุผลปฏิเสธ</div><div style="color:#E63329">${krEsc(k.rejection_reason)}</div>`:''}
+        ${k.approved_until?`<div>หมดอายุ</div><div>${krFmt(k.approved_until)}</div>`:''}
+      </div>
+      
+      <div class="kr-docs">
+        ${docs.map(d => `<div class="kr-doc" onclick="window.open('${krEsc(d.url)}','_blank')" title="${krEsc(d.label)}"><img src="${krEsc(d.url)}" onerror="this.parentElement.innerHTML='⚠️ ' + this.parentElement.title"></div>`).join('')}
+      </div>
+      
+      ${k.status === 'pending' ? `
+        <div class="kr-actions">
+          <button class="kr-btn approve" onclick="krDecide('${k.id}','approved')">✅ อนุมัติ</button>
+          <button class="kr-btn reject" onclick="krDecide('${k.id}','rejected')">❌ ปฏิเสธ</button>
+        </div>
+      ` : ''}
+    </div>`;
+  }).join('');
+}
+
+window.krFilter = function(filter, btn) {
+  _krFilter = filter;
+  document.querySelectorAll('#panel-kyc .kr-tab').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  krRender();
+};
+
+window.krDecide = async function(id, decision) {
+  let reason = null;
+  if (decision === 'rejected') {
+    reason = prompt('เหตุผลในการปฏิเสธ:');
+    if (!reason) return;
+  } else {
+    if (!confirm('อนุมัติ KYC?\nผู้ใช้จะได้รับ Verified Badge')) return;
+  }
+  const sb = window._sb || window.sb;
+  const { error } = await sb.rpc('admin_decide_kyc', {p_verification_id: id, p_decision: decision, p_reason: reason});
+  if (error) { alert('❌ ' + error.message); return; }
+  alert(decision === 'approved' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธแล้ว');
+  krLoad();
+};
+
+(function hookKYC(){
+  const orig = window.showPanel;
+  if (typeof orig !== 'function') return;
+  window.showPanel = function(name) {
+    const r = orig.apply(this, arguments);
+    if (name === 'kyc') krLoad();
+    return r;
+  };
+})();
+
+// Auto-poll badge
+async function krBadgeLoop() {
+  const sb = window._sb || window.sb;
+  if (!sb) return;
+  try {
+    const { count } = await sb.from('shop_verifications').select('*', {count:'exact', head:true}).eq('status','pending');
+    const badge = document.getElementById('kyc-badge');
+    if (badge) {
+      if (count > 0) { badge.textContent = count; badge.style.display = 'inline-flex'; }
+      else badge.style.display = 'none';
+    }
+  } catch(e) {}
+}
+setTimeout(krBadgeLoop, 5000);
+setInterval(krBadgeLoop, 60000);
+</script>
+
+
+<div id="panel-audit" class="panel admin-only" style="padding:0;display:none">
+  <style>
+    #panel-audit .au-wrap{padding:24px;background:#FAFAFA;min-height:calc(100vh - 80px)}
+    #panel-audit .au-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+    #panel-audit .au-stat{padding:14px;background:#fff;border:1px solid #E5E5E5;border-radius:6px}
+    #panel-audit .au-stat-l{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+    #panel-audit .au-stat-v{font-size:22px;font-weight:600;font-family:'DM Mono',monospace}
+    #panel-audit .au-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+    #panel-audit .au-search,#panel-audit .au-select{padding:8px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:12px;font-family:inherit}
+    #panel-audit .au-search{flex:1;min-width:200px}
+    #panel-audit .au-table{width:100%;background:#fff;border:1px solid #E5E5E5;border-collapse:collapse;font-size:12px}
+    #panel-audit .au-table th{padding:10px;background:#FAFAFA;text-align:left;font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+    #panel-audit .au-table td{padding:10px;border-bottom:1px solid #F0F0F0;vertical-align:top}
+    #panel-audit .au-table tr:hover{background:#FAFAFA;cursor:pointer}
+    #panel-audit .au-pill{display:inline-block;padding:2px 8px;border-radius:9px;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.04em}
+    #panel-audit .au-pill.insert{background:#D1FAE5;color:#065F46}
+    #panel-audit .au-pill.update{background:#DBEAFE;color:#1E40AF}
+    #panel-audit .au-pill.delete{background:#FEE2E2;color:#991B1B}
+    #panel-audit .au-pill.transition{background:#F3E8FF;color:#6B21A8}
+    #panel-audit .au-pill.success{background:#D1FAE5;color:#065F46}
+    #panel-audit .au-pill.failure{background:#FEE2E2;color:#991B1B}
+    #panel-audit .au-pill.blocked{background:#FEF3C7;color:#92400E}
+    #panel-audit .au-role{display:inline-block;padding:2px 6px;font-size:10px;background:#F5F5F5;color:#666;border-radius:3px;font-family:'DM Mono',monospace}
+    #panel-audit .au-role.admin{background:#FFE4E6;color:#9F1239}
+    #panel-audit .au-role.seller{background:#DBEAFE;color:#1E40AF}
+    /* Modal */
+    #au-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+    #au-modal-overlay.on{display:flex}
+    #au-modal{background:#fff;width:100%;max-width:760px;max-height:90vh;overflow-y:auto;border-radius:8px}
+    #au-modal-head{padding:14px 18px;border-bottom:1px solid #E5E5E5;display:flex;justify-content:space-between;align-items:center}
+    #au-modal-body{padding:18px}
+    #au-modal pre{background:#0A0A0A;color:#10B981;padding:12px;border-radius:4px;font-size:11px;line-height:1.6;overflow-x:auto;font-family:'DM Mono',monospace}
+    #panel-audit .au-empty{padding:60px;text-align:center;color:#888}
+  </style>
+
+  <div class="au-wrap">
+    <h1 style="font-size:22px;margin-bottom:14px;display:flex;align-items:center;gap:10px">📋 Audit Logs <span style="font-size:11px;color:#666;font-weight:400">— ติดตามทุก sensitive operation</span></h1>
+
+    <!-- Stats -->
+    <div class="au-stats">
+      <div class="au-stat"><div class="au-stat-l">วันนี้</div><div class="au-stat-v" id="au-stat-today">—</div></div>
+      <div class="au-stat"><div class="au-stat-l">7 วันล่าสุด</div><div class="au-stat-v" id="au-stat-week">—</div></div>
+      <div class="au-stat"><div class="au-stat-l">การลบ (วันนี้)</div><div class="au-stat-v" id="au-stat-deletes" style="color:#E63329">—</div></div>
+      <div class="au-stat"><div class="au-stat-l">ทั้งหมด (30 วัน)</div><div class="au-stat-v" id="au-stat-total">—</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="au-toolbar">
+      <input class="au-search" id="au-search" placeholder="🔍 ค้นหา email / action / resource..." oninput="auFilter()">
+      <select class="au-select" id="au-action-filter" onchange="auLoad()">
+        <option value="">ทุก action</option>
+        <option value="insert">Insert</option>
+        <option value="update">Update</option>
+        <option value="delete">Delete</option>
+        <option value="transition">Transition</option>
+      </select>
+      <select class="au-select" id="au-resource-filter" onchange="auLoad()">
+        <option value="">ทุก resource</option>
+        <option value="products">Products</option>
+        <option value="orders">Orders</option>
+        <option value="sellers">Sellers</option>
+        <option value="shop_vouchers">Vouchers</option>
+        <option value="payment_methods">Payment Methods</option>
+      </select>
+      <select class="au-select" id="au-time-filter" onchange="auLoad()">
+        <option value="1">วันนี้</option>
+        <option value="7" selected>7 วัน</option>
+        <option value="30">30 วัน</option>
+        <option value="90">90 วัน</option>
+      </select>
+      <button class="pm-btn" onclick="auLoad()">🔄 โหลด</button>
+    </div>
+
+    <div id="au-list-wrap">
+      <div class="au-empty">⏳ กำลังโหลด...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Audit log detail modal -->
+<div id="au-modal-overlay" onclick="if(event.target===this)auCloseModal()">
+  <div id="au-modal">
+    <div id="au-modal-head">
+      <div style="font-weight:600;font-size:15px" id="au-modal-title">Audit Detail</div>
+      <button onclick="auCloseModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#666">×</button>
+    </div>
+    <div id="au-modal-body"><div style="padding:30px;text-align:center;color:#888">⏳</div></div>
+  </div>
+</div>
+
+<script id="audit-panel-logic">
+let _auLogs = [];
+let _auSearch = '';
+
+function auEsc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function auFmt(d){ if(!d)return '—'; return new Date(d).toLocaleString('th-TH', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+
+async function auLoad() {
+  const wrap = document.getElementById('au-list-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="au-empty">⏳ กำลังโหลด...</div>';
+
+  const sb = window._sb || window.sb;
+  if (!sb) { wrap.innerHTML = '<div class="au-empty">❌ ไม่พบ supabase client</div>'; return; }
+
+  const days = parseInt(document.getElementById('au-time-filter').value) || 7;
+  const since = new Date(Date.now() - days * 86400000).toISOString();
+  const actionFilter = document.getElementById('au-action-filter').value;
+  const resourceFilter = document.getElementById('au-resource-filter').value;
+
+  try {
+    let q = sb.from('audit_logs').select('*').gte('created_at', since).order('created_at', {ascending:false}).limit(500);
+    if (actionFilter) q = q.like('action', '%.' + actionFilter);
+    if (resourceFilter) q = q.eq('resource_type', resourceFilter);
+
+    const { data, error } = await q;
+    if (error) throw error;
+    _auLogs = data || [];
+    auRender();
+    auUpdateStats();
+  } catch(e) {
+    wrap.innerHTML = `<div class="au-empty" style="color:#E63329">❌ ${auEsc(e.message)}<br><small>กรุณารัน pack-A-foundation-2026-05-08.sql</small></div>`;
+  }
+}
+
+async function auUpdateStats() {
+  const sb = window._sb || window.sb;
+  try {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayStr = today.toISOString();
+    const weekStr = new Date(Date.now() - 7*86400000).toISOString();
+    const monthStr = new Date(Date.now() - 30*86400000).toISOString();
+    
+    const [{ count: c1 }, { count: c2 }, { count: c3 }, { count: c4 }] = await Promise.all([
+      sb.from('audit_logs').select('*', {count:'exact', head:true}).gte('created_at', todayStr),
+      sb.from('audit_logs').select('*', {count:'exact', head:true}).gte('created_at', weekStr),
+      sb.from('audit_logs').select('*', {count:'exact', head:true}).gte('created_at', todayStr).like('action', '%.delete'),
+      sb.from('audit_logs').select('*', {count:'exact', head:true}).gte('created_at', monthStr),
+    ]);
+    document.getElementById('au-stat-today').textContent = c1 || 0;
+    document.getElementById('au-stat-week').textContent = c2 || 0;
+    document.getElementById('au-stat-deletes').textContent = c3 || 0;
+    document.getElementById('au-stat-total').textContent = c4 || 0;
+  } catch(e) {}
+}
+
+function auRender() {
+  const wrap = document.getElementById('au-list-wrap');
+  let filtered = _auLogs;
+  if (_auSearch) {
+    const q = _auSearch.toLowerCase();
+    filtered = filtered.filter(l => {
+      const f = [l.user_email, l.action, l.resource_type, l.resource_id].filter(Boolean).join(' ').toLowerCase();
+      return f.includes(q);
+    });
+  }
+  if (!filtered.length) { wrap.innerHTML = '<div class="au-empty">ไม่พบ audit log</div>'; return; }
+  let html = '<table class="au-table"><thead><tr><th>เวลา</th><th>User</th><th>Action</th><th>Resource</th><th>Status</th><th></th></tr></thead><tbody>';
+  filtered.forEach(l => {
+    const op = (l.action||'').split('.').pop() || '';
+    html += `<tr onclick="auShowDetail('${l.id}')">
+      <td><div style="font-family:'DM Mono',monospace">${auFmt(l.created_at)}</div></td>
+      <td>
+        <div style="font-weight:500">${auEsc(l.user_email||'system')}</div>
+        ${l.user_role?`<span class="au-role ${l.user_role}">${l.user_role}</span>`:''}
+      </td>
+      <td>
+        <div style="font-family:'DM Mono',monospace;font-size:11px">${auEsc(l.action)}</div>
+        <span class="au-pill ${op}">${op}</span>
+      </td>
+      <td>
+        <div style="font-weight:500">${auEsc(l.resource_type||'')}</div>
+        <div style="font-size:10px;color:#888;font-family:'DM Mono',monospace">${auEsc((l.resource_id||'').slice(0,12))}${l.resource_id?'…':''}</div>
+      </td>
+      <td><span class="au-pill ${l.status||'success'}">${l.status||'success'}</span></td>
+      <td><button class="pm-btn" onclick="event.stopPropagation();auShowDetail('${l.id}')">👁️ ดู</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+window.auFilter = function() { _auSearch = document.getElementById('au-search').value.trim(); auRender(); };
+
+window.auShowDetail = function(id) {
+  const log = _auLogs.find(l => l.id === id);
+  if (!log) return;
+  document.getElementById('au-modal-overlay').classList.add('on');
+  document.getElementById('au-modal-title').textContent = '📋 ' + log.action;
+  
+  let bodyHtml = `
+    <div style="display:grid;grid-template-columns:130px 1fr;gap:6px 14px;font-size:12px;margin-bottom:14px">
+      <div style="color:#666">เวลา</div><div style="font-family:'DM Mono',monospace">${auFmt(log.created_at)}</div>
+      <div style="color:#666">User</div><div>${auEsc(log.user_email||'system')} ${log.user_role?`<span class="au-role ${log.user_role}">${log.user_role}</span>`:''}</div>
+      <div style="color:#666">User ID</div><div style="font-family:'DM Mono',monospace;font-size:10px">${auEsc(log.user_id||'—')}</div>
+      <div style="color:#666">Action</div><div style="font-family:'DM Mono',monospace">${auEsc(log.action)}</div>
+      <div style="color:#666">Resource</div><div>${auEsc(log.resource_type)} <span style="font-family:'DM Mono',monospace;font-size:10px;color:#888">${auEsc(log.resource_id||'')}</span></div>
+      <div style="color:#666">Status</div><div><span class="au-pill ${log.status||'success'}">${log.status||'success'}</span></div>
+      ${log.error_message?`<div style="color:#666">Error</div><div style="color:#E63329">${auEsc(log.error_message)}</div>`:''}
+      ${log.ip_address?`<div style="color:#666">IP</div><div style="font-family:'DM Mono',monospace">${auEsc(log.ip_address)}</div>`:''}
+    </div>
+  `;
+  
+  if (log.before_data) {
+    bodyHtml += `<div style="margin-top:12px"><div style="font-weight:600;font-size:12px;margin-bottom:6px;color:#E63329">📤 ก่อน (BEFORE)</div><pre>${auEsc(JSON.stringify(log.before_data, null, 2))}</pre></div>`;
+  }
+  if (log.after_data) {
+    bodyHtml += `<div style="margin-top:12px"><div style="font-weight:600;font-size:12px;margin-bottom:6px;color:#10B981">📥 หลัง (AFTER)</div><pre>${auEsc(JSON.stringify(log.after_data, null, 2))}</pre></div>`;
+  }
+  if (log.metadata) {
+    bodyHtml += `<div style="margin-top:12px"><div style="font-weight:600;font-size:12px;margin-bottom:6px">📎 Metadata</div><pre>${auEsc(JSON.stringify(log.metadata, null, 2))}</pre></div>`;
+  }
+  document.getElementById('au-modal-body').innerHTML = bodyHtml;
+};
+
+window.auCloseModal = function() { document.getElementById('au-modal-overlay').classList.remove('on'); };
+
+// Hook into showPanel
+(function hookAudit(){
+  const orig = window.showPanel;
+  if (typeof orig !== 'function') return;
+  window.showPanel = function(name) {
+    const r = orig.apply(this, arguments);
+    if (name === 'audit') auLoad();
+    return r;
+  };
+})();
+</script>
+
+
 <div id="panel-settings" class="panel" style="padding:24px;display:none">
 
       <div class="alert alert-ok" style="margin-bottom:20px">
@@ -3294,6 +4024,7 @@ function showPanel(name) {
 
   if (name === 'products') loadProducts();
   if (name === 'approve') loadPending();
+  if (name === 'orders') orLoad();
   if (name === 'users') loadUsers();
   if (name === 'categories') loadCategories();
   if (name === 'settings') loadSettings();
@@ -6766,5 +7497,334 @@ window.showApp = function(user, role) {
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
+<!-- ════════════════════════════════════════════════════════════════════
+     ORDERS PANEL LOGIC
+     ════════════════════════════════════════════════════════════════════ -->
+<script id="orders-panel-logic">
+let _orOrders = [];
+let _orStatusFilter = 'all';
+let _orSearchTerm = '';
+let _orUsersCache = {};
+
+function orLog(...a){ console.log('[orders]', ...a); }
+function orEsc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function orFmtMoney(n){ return '฿' + Number(n||0).toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:2}); }
+function orFmtDate(d){
+  if (!d) return '—';
+  return new Date(d).toLocaleString('th-TH', {day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+async function orLoad() {
+  const wrap = document.getElementById('or-list-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="or-empty">⏳ กำลังโหลด...</div>';
+
+  const sb = window.sb || window._sb;
+  if (!sb) { wrap.innerHTML = '<div class="or-empty">❌ ไม่พบ supabase client</div>'; return; }
+
+  try {
+    const { data, error } = await sb.from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (error) throw error;
+    _orOrders = data || [];
+    orLog('loaded:', _orOrders.length);
+    await orHydrateUsers();
+    orRender();
+    orRenderStats();
+  } catch(e) {
+    orLog('load error:', e);
+    wrap.innerHTML = `<div class="or-empty" style="color:#E63329">❌ โหลดไม่สำเร็จ:<br>${orEsc(e.message)}</div>`;
+  }
+}
+
+async function orHydrateUsers() {
+  if (!_orOrders.length) return;
+  const sb = window.sb || window._sb;
+  const userIds = [...new Set(_orOrders.map(o => o.user_id).filter(Boolean))]
+    .filter(id => !_orUsersCache[id]);
+  if (!userIds.length) return;
+  const { data } = await sb.from('users')
+    .select('id,email,display_name,phone').in('id', userIds);
+  (data || []).forEach(u => _orUsersCache[u.id] = u);
+}
+
+function orRenderStats() {
+  const stats = {
+    total: _orOrders.length,
+    pending: 0, paid: 0, shipped: 0, cancelled: 0
+  };
+  _orOrders.forEach(o => {
+    const s = (o.status || 'pending').toLowerCase();
+    const ps = (o.payment_status || '').toLowerCase();
+    if (s === 'cancelled' || s === 'refunded') stats.cancelled++;
+    else if (s === 'shipped' || s === 'delivered') stats.shipped++;
+    else if (ps === 'paid' || s === 'paid' || s === 'processing') stats.paid++;
+    else stats.pending++;
+  });
+  ['total','pending','paid','shipped','cancelled'].forEach(k => {
+    const el = document.getElementById('or-stat-' + k);
+    if (el) el.textContent = stats[k];
+  });
+}
+
+function orRender() {
+  const wrap = document.getElementById('or-list-wrap');
+  if (!wrap) return;
+
+  // Filter
+  let filtered = _orOrders;
+  if (_orStatusFilter !== 'all') {
+    filtered = filtered.filter(o => {
+      const s = (o.status || 'pending').toLowerCase();
+      const ps = (o.payment_status || '').toLowerCase();
+      if (_orStatusFilter === 'pending') return s === 'pending' && ps !== 'paid';
+      if (_orStatusFilter === 'paid') return ps === 'paid' || s === 'paid' || s === 'processing';
+      return s === _orStatusFilter;
+    });
+  }
+  if (_orSearchTerm) {
+    const q = _orSearchTerm.toLowerCase();
+    filtered = filtered.filter(o => {
+      const u = _orUsersCache[o.user_id] || {};
+      const fields = [o.order_number, u.display_name, u.email, u.phone, o.id?.slice(0,8)]
+        .filter(Boolean).join(' ').toLowerCase();
+      return fields.includes(q);
+    });
+  }
+
+  if (!filtered.length) {
+    wrap.innerHTML = '<div class="or-empty">ไม่พบออเดอร์ในเงื่อนไขนี้</div>';
+    return;
+  }
+
+  let html = `<table class="or-table">
+    <thead><tr>
+      <th>เลขออเดอร์</th>
+      <th>ลูกค้า</th>
+      <th>วันที่</th>
+      <th>ยอดรวม</th>
+      <th>การชำระ</th>
+      <th>สถานะ</th>
+      <th></th>
+    </tr></thead><tbody>`;
+
+  filtered.forEach(o => {
+    const u = _orUsersCache[o.user_id] || {};
+    const userName = u.display_name || u.email || 'ลูกค้าไม่ทราบชื่อ';
+    const status = (o.status || 'pending').toLowerCase();
+    const paymentStatus = (o.payment_status || (status === 'pending' ? 'pending' : 'paid')).toLowerCase();
+    const itemCount = Array.isArray(o.items) ? o.items.length : 0;
+    html += `<tr onclick="orShowDetail('${o.id}')">
+      <td>
+        <div class="or-num">${orEsc(o.order_number || o.id?.slice(0,8))}</div>
+        <div style="font-size:10px;color:#888">${itemCount} รายการ</div>
+      </td>
+      <td>
+        <div style="font-weight:500">${orEsc(userName)}</div>
+        <div style="font-size:10px;color:#888">${orEsc(u.email || '')}</div>
+      </td>
+      <td><div style="font-size:11px;color:#666">${orFmtDate(o.created_at)}</div></td>
+      <td><strong>${orFmtMoney(o.total)}</strong></td>
+      <td><span class="or-pill ${paymentStatus}">${paymentStatus}</span></td>
+      <td><span class="or-pill ${status}">${status}</span></td>
+      <td onclick="event.stopPropagation()">
+        <div class="or-actions">
+          <button class="or-btn primary" onclick="orShowDetail('${o.id}')">👁️ ดู</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+window.orSetStatus = function(status, btn) {
+  _orStatusFilter = status;
+  document.querySelectorAll('#panel-orders .or-filter').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  orRender();
+};
+window.orFilter = function() {
+  _orSearchTerm = (document.getElementById('or-search').value || '').trim();
+  orRender();
+};
+window.orLoad = orLoad;
+
+// ── Order detail modal ──
+window.orShowDetail = async function(orderId) {
+  const overlay = document.getElementById('or-modal-overlay');
+  const body = document.getElementById('or-modal-body');
+  const title = document.getElementById('or-modal-title');
+  if (!overlay) return;
+  overlay.classList.add('on');
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:#888">⏳ กำลังโหลด...</div>';
+
+  const sb = window.sb || window._sb;
+  try {
+    const order = _orOrders.find(o => o.id === orderId);
+    if (!order) { body.innerHTML = '<div style="text-align:center;padding:40px">ไม่พบออเดอร์</div>'; return; }
+
+    title.textContent = '📦 ' + (order.order_number || orderId.slice(0,8));
+
+    // ดึง slip ถ้ามี
+    const { data: slips } = await sb.from('payment_slips')
+      .select('*').eq('order_id', orderId).order('created_at', {ascending:false});
+    const latestSlip = (slips && slips.length) ? slips[0] : null;
+
+    // ดึง user
+    const u = _orUsersCache[order.user_id] || {};
+    const addr = order.shipping_address || {};
+    const items = Array.isArray(order.items) ? order.items : [];
+    const status = (order.status || 'pending').toLowerCase();
+    const paymentStatus = (order.payment_status || 'pending').toLowerCase();
+
+    body.innerHTML = `
+      <div class="or-section">
+        <div class="or-section-title">📋 ข้อมูลทั่วไป</div>
+        <div class="or-row"><div class="or-row-l">เลขออเดอร์</div><div class="or-row-r">${orEsc(order.order_number || '—')}</div></div>
+        <div class="or-row"><div class="or-row-l">วันที่สั่ง</div><div class="or-row-r">${orFmtDate(order.created_at)}</div></div>
+        <div class="or-row"><div class="or-row-l">สถานะออเดอร์</div><div class="or-row-r"><span class="or-pill ${status}">${status}</span></div></div>
+        <div class="or-row"><div class="or-row-l">การชำระเงิน</div><div class="or-row-r"><span class="or-pill ${paymentStatus}">${paymentStatus}</span></div></div>
+        <div class="or-row"><div class="or-row-l">วิธีชำระ</div><div class="or-row-r">${orEsc(order.payment_method || '—')}</div></div>
+        ${order.paid_at ? `<div class="or-row"><div class="or-row-l">ชำระเมื่อ</div><div class="or-row-r">${orFmtDate(order.paid_at)}</div></div>` : ''}
+      </div>
+
+      <div class="or-section">
+        <div class="or-section-title">👤 ลูกค้า</div>
+        <div class="or-row"><div class="or-row-l">ชื่อ</div><div class="or-row-r">${orEsc(u.display_name || '—')}</div></div>
+        <div class="or-row"><div class="or-row-l">Email</div><div class="or-row-r">${orEsc(u.email || '—')}</div></div>
+        <div class="or-row"><div class="or-row-l">เบอร์โทร</div><div class="or-row-r">${orEsc(u.phone || addr.phone || '—')}</div></div>
+      </div>
+
+      <div class="or-section">
+        <div class="or-section-title">📍 ที่อยู่จัดส่ง</div>
+        <div style="font-size:13px;line-height:1.6;background:#FAFAFA;padding:10px;border-radius:4px">
+          <strong>${orEsc(addr.name || '—')}</strong><br>
+          ${orEsc(addr.detail || '—')}<br>
+          ${addr.tag ? `<span style="background:#E5E5E5;padding:2px 8px;border-radius:3px;font-size:10px;margin-top:4px;display:inline-block">${orEsc(addr.tag)}</span>` : ''}
+        </div>
+      </div>
+
+      <div class="or-section">
+        <div class="or-section-title">🛒 รายการสินค้า (${items.length})</div>
+        ${items.map(it => `
+          <div class="or-item">
+            <div style="flex:1">
+              <div style="font-weight:500">${orEsc(it.name || '—')}</div>
+              ${it.variant ? `<div style="font-size:11px;color:#888">${orEsc(it.variant)}</div>` : ''}
+              ${it.shop ? `<div style="font-size:10px;color:#666">🏪 ${orEsc(it.shop)}</div>` : ''}
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;color:#888">${it.qty || 1} × ${orFmtMoney(it.price)}</div>
+              <div style="font-weight:600">${orFmtMoney(it.subtotal || (it.price * (it.qty || 1)))}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="or-section">
+        <div class="or-section-title">💰 สรุปยอด</div>
+        <div class="or-row"><div class="or-row-l">ยอดสินค้า</div><div class="or-row-r">${orFmtMoney(order.subtotal)}</div></div>
+        ${order.discount > 0 ? `<div class="or-row" style="color:#10B981"><div class="or-row-l">ส่วนลด</div><div class="or-row-r">-${orFmtMoney(order.discount)}</div></div>` : ''}
+        <div class="or-row"><div class="or-row-l">ค่าจัดส่ง</div><div class="or-row-r">${order.shipping_fee > 0 ? orFmtMoney(order.shipping_fee) : 'ฟรี'}</div></div>
+        <div class="or-row" style="font-size:15px;font-weight:600;border-bottom:none;border-top:1px solid #E5E5E5;margin-top:6px;padding-top:10px">
+          <div class="or-row-l">ยอดรวม</div><div class="or-row-r" style="color:#E63329">${orFmtMoney(order.total)}</div>
+        </div>
+      </div>
+
+      ${latestSlip ? `
+      <div class="or-section">
+        <div class="or-section-title">🧾 Slip การโอนเงิน</div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          ${latestSlip.slip_image_url ? `
+            <img src="${orEsc(latestSlip.slip_image_url)}" style="width:120px;height:160px;object-fit:cover;border:1px solid #E5E5E5;border-radius:4px;cursor:pointer" onclick="window.open('${orEsc(latestSlip.slip_image_url)}','_blank')">
+          ` : '<div style="width:120px;height:160px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:32px">🧾</div>'}
+          <div style="flex:1;font-size:12px;line-height:1.7">
+            <div><strong>สถานะ:</strong> <span class="or-pill ${latestSlip.status}">${latestSlip.status}</span></div>
+            ${latestSlip.amount ? `<div><strong>ยอดที่โอน:</strong> ${orFmtMoney(latestSlip.amount)}</div>` : ''}
+            ${latestSlip.transferred_at ? `<div><strong>เวลาโอน:</strong> ${orFmtDate(latestSlip.transferred_at)}</div>` : ''}
+            ${latestSlip.reference_number ? `<div><strong>เลขอ้างอิง:</strong> ${orEsc(latestSlip.reference_number)}</div>` : ''}
+            ${latestSlip.reject_reason ? `<div style="color:#E63329"><strong>เหตุปฏิเสธ:</strong> ${orEsc(latestSlip.reject_reason)}</div>` : ''}
+            ${latestSlip.status === 'pending' ? `
+              <div style="margin-top:10px;display:flex;gap:6px">
+                <button class="or-btn success" onclick="orVerifySlip('${latestSlip.id}','verified','${order.id}')">✅ อนุมัติ</button>
+                <button class="or-btn danger" onclick="orVerifySlip('${latestSlip.id}','rejected','${order.id}')">❌ ปฏิเสธ</button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+      ` : (order.payment_method !== 'cod' ? '<div class="or-section"><div class="or-section-title">🧾 Slip</div><div style="color:#888;font-size:12px">ลูกค้ายังไม่ได้อัปโหลด slip</div></div>' : '')}
+
+      ${order.notes ? `
+      <div class="or-section">
+        <div class="or-section-title">📝 หมายเหตุ</div>
+        <div style="background:#FFFBEB;padding:10px;border-radius:4px;font-size:12px">${orEsc(order.notes)}</div>
+      </div>
+      ` : ''}
+
+      <!-- Action buttons -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid #E5E5E5">
+        <select id="or-status-change" style="padding:6px 10px;border:1px solid #E5E5E5;font-size:12px">
+          <option value="">เปลี่ยนสถานะ...</option>
+          <option value="pending" ${status==='pending'?'selected':''}>รอชำระ</option>
+          <option value="paid" ${status==='paid'?'selected':''}>ชำระแล้ว</option>
+          <option value="processing" ${status==='processing'?'selected':''}>กำลังเตรียมจัดส่ง</option>
+          <option value="shipped" ${status==='shipped'?'selected':''}>จัดส่งแล้ว</option>
+          <option value="delivered" ${status==='delivered'?'selected':''}>ส่งสำเร็จ</option>
+          <option value="cancelled" ${status==='cancelled'?'selected':''}>ยกเลิก</option>
+          <option value="refunded" ${status==='refunded'?'selected':''}>คืนเงิน</option>
+        </select>
+        <button class="or-btn primary" onclick="orChangeStatus('${order.id}')">บันทึกสถานะ</button>
+      </div>
+    `;
+  } catch(e) {
+    orLog('detail error:', e);
+    body.innerHTML = `<div style="text-align:center;padding:40px;color:#E63329">❌ โหลดไม่สำเร็จ: ${orEsc(e.message)}</div>`;
+  }
+};
+
+window.orCloseModal = function() {
+  document.getElementById('or-modal-overlay').classList.remove('on');
+};
+
+window.orChangeStatus = async function(orderId) {
+  const newStatus = document.getElementById('or-status-change').value;
+  if (!newStatus) { alert('กรุณาเลือกสถานะ'); return; }
+  const sb = window.sb || window._sb;
+  const updates = { status: newStatus, updated_at: new Date().toISOString() };
+  if (newStatus === 'paid' && !_orOrders.find(o=>o.id===orderId)?.paid_at) {
+    updates.paid_at = new Date().toISOString();
+    updates.payment_status = 'paid';
+  }
+  const { error } = await sb.from('orders').update(updates).eq('id', orderId);
+  if (error) { alert('❌ ' + error.message); return; }
+  alert('✅ อัปเดตสถานะแล้ว');
+  await orLoad();
+  orShowDetail(orderId);
+};
+
+window.orVerifySlip = async function(slipId, status, orderId) {
+  let reason = null;
+  if (status === 'rejected') {
+    reason = prompt('เหตุผลการปฏิเสธ:');
+    if (reason === null) return;
+  }
+  const sb = window.sb || window._sb;
+  const { data, error } = await sb.rpc('verify_payment_slip', {
+    p_slip_id: slipId, p_status: status, p_reason: reason
+  });
+  if (error || (data && data.error)) {
+    alert('❌ ' + (error?.message || data.error));
+    return;
+  }
+  alert('✅ ' + (status === 'verified' ? 'อนุมัติ' : 'ปฏิเสธ') + 'แล้ว');
+  await orLoad();
+  orShowDetail(orderId);
+};
+</script>
+
 </body>
 </html>

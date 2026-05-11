@@ -671,6 +671,10 @@ img{max-width:100%;height:auto}
           <button class="coupon-btn" onclick="applyCoupon()">ใช้โค้ด</button>
         </div>
         <div id="coup-applied" style="display:none" class="coupon-applied">✅ ใช้โค้ด <strong id="coup-code-display">FLASH10</strong> — ส่วนลด <strong id="coup-disc-display">฿349</strong></div>
+        
+        <!-- My claimed vouchers (จาก follow prize / claimed shop voucher) -->
+        <div id="my-claimed-vouchers" style="margin-top:10px"></div>
+        
         <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
           <span style="font-size:11px;background:#FEF3C7;color:#92400E;padding:3px 8px;border-radius:4px;cursor:pointer" onclick="prefillCoupon('FREESHIP')">🚚 FREESHIP</span>
           <span style="font-size:11px;background:#DCFCE7;color:#065F46;padding:3px 8px;border-radius:4px;cursor:pointer" onclick="prefillCoupon('GOLD500')">💰 GOLD500</span>
@@ -966,6 +970,50 @@ async function applyCoupon(){
   const subtotal = CART.reduce((s,it) => s + it.price * it.qty, 0);
 
   try {
+    // ── 1. ลอง shop_voucher ก่อน (ใหม่ — voucher ของ seller) ──
+    // ดึง seller_id จาก cart (สมมติว่ามี 1 seller ต่อ checkout — ใช้ของชิ้นแรก)
+    let cartSellerId = null;
+    if (CART.length > 0 && CART[0].seller_id) cartSellerId = CART[0].seller_id;
+    if (!cartSellerId) {
+      // ลองดึงจาก product
+      const firstProductId = CART[0]?.id;
+      if (firstProductId) {
+        const { data: p } = await sb.from('products').select('seller_id').eq('id', firstProductId).maybeSingle();
+        if (p) cartSellerId = p.seller_id;
+      }
+    }
+
+    if (cartSellerId) {
+      const { data: voucherResult } = await sb.rpc('apply_voucher', {
+        p_code: code, p_seller_id: cartSellerId, p_order_amount: subtotal
+      });
+      if (voucherResult && voucherResult.success) {
+        // เก็บเป็น shop voucher
+        _appliedCoupons.push({
+          id: voucherResult.voucher_id,
+          code: voucherResult.code,
+          name: voucherResult.name,
+          discount: voucherResult.discount,
+          type: voucherResult.discount_type,
+          stackable: true,  // shop vouchers stack with platform coupons
+          icon: '🎟️',
+          source: 'shop_voucher'
+        });
+        inp.value = '';
+        renderAppliedCoupons();
+        updateTotal();
+        toast('✅ ใช้โค้ดร้าน "' + voucherResult.name + '" ได้รับส่วนลด ฿' + voucherResult.discount);
+        return;
+      }
+      // ถ้า error specific (เช่น MIN_NOT_MET) แสดงข้อความ
+      if (voucherResult && voucherResult.error && voucherResult.error !== 'VOUCHER_NOT_FOUND') {
+        toast('⚠️ ' + (voucherResult.message || voucherResult.error));
+        return;
+      }
+      // ถ้า VOUCHER_NOT_FOUND — fall through ไปลอง platform coupon
+    }
+
+    // ── 2. ลอง platform coupon (admin-wide) ──
     const { data: { user } } = await sb.auth.getUser();
 
     let result = null;
@@ -1362,6 +1410,27 @@ async function doCheckout(){
     await _sbCO.from('cart_items').delete().eq('user_id', user.id);
     localStorage.removeItem('tm_cart');
     localStorage.removeItem('tm_cart_guest');
+
+    // 6.5. Redeem shop_vouchers ที่ใช้ใน checkout นี้
+    try {
+      const shopVouchers = (_appliedCoupons || []).filter(c => c.source === 'shop_voucher');
+      for (const v of shopVouchers) {
+        await _sbCO.rpc('redeem_voucher', { p_voucher_id: v.id, p_order_id: order.id });
+      }
+    } catch(e) { console.warn('redeem voucher:', e); }
+
+    // 6.6. PACK B — บันทึก order payment เข้า escrow ledger
+    // (Platform fee 5% หัก, ที่เหลือเข้า escrow รอ release 7 วันหลัง delivered)
+    try {
+      const { data: payRes, error: payErr } = await _sbCO.rpc('record_order_payment', { 
+        p_order_id: order.id, p_platform_fee_percent: 5.0 
+      });
+      if (payErr) {
+        console.warn('record_order_payment:', payErr.message);
+      } else if (payRes && payRes.success) {
+        console.log('💰 escrow updated:', payRes);
+      }
+    } catch(e) { console.warn('record_order_payment exception:', e); }
 
     // 7. redirect → payment-result
     toast('✅ สั่งซื้อสำเร็จ!');
@@ -2074,5 +2143,63 @@ document.addEventListener('DOMContentLoaded', loadCheckoutData);
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
+<!-- ════════════════════════════════════════════════════════════════════
+     CLAIMED VOUCHERS DISPLAY — show vouchers user claimed (from follow prize, etc.)
+     ════════════════════════════════════════════════════════════════════ -->
+<script id="claimed-vouchers-loader">
+(async function loadMyClaimedVouchers(){
+  if (!window._sb) return;
+  // Wait until cart loaded
+  let tries = 0;
+  while (typeof CART === 'undefined' && tries < 20) { await new Promise(r=>setTimeout(r, 200)); tries++; }
+  
+  try {
+    const { data: { session } } = await window._sb.auth.getSession();
+    if (!session) return;
+    
+    const { data, error } = await window._sb.rpc('get_my_claimed_vouchers');
+    if (error) { console.warn('claimed vouchers:', error.message); return; }
+    if (!data || !data.length) return;
+
+    const wrap = document.getElementById('my-claimed-vouchers');
+    if (!wrap) return;
+
+    // Filter เฉพาะ vouchers ของ seller ใน cart
+    let cartSellerId = null;
+    if (typeof CART !== 'undefined' && CART.length > 0 && CART[0].seller_id) cartSellerId = CART[0].seller_id;
+    if (!cartSellerId && typeof CART !== 'undefined' && CART[0]?.id) {
+      const { data: p } = await window._sb.from('products').select('seller_id').eq('id', CART[0].id).maybeSingle();
+      if (p) cartSellerId = p.seller_id;
+    }
+    
+    const relevant = cartSellerId ? data.filter(v => v.seller_id === cartSellerId) : data;
+    if (!relevant.length) return;
+
+    wrap.innerHTML = `
+      <div style="padding:10px;background:#FFF8E1;border:1px solid #F59E0B;border-radius:4px">
+        <div style="font-size:11px;font-weight:600;color:#92400E;margin-bottom:6px">⭐ คุณมี ${relevant.length} โค้ดที่เก็บไว้:</div>
+        ${relevant.map(v => {
+          const disc = v.discount_type === 'percent' ? `ลด ${v.discount_value}%` : `ลด ฿${v.discount_value}`;
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;background:#fff;margin-bottom:4px;border-radius:3px;font-size:11px">
+            <div>
+              <strong>${escapeHtml(v.code)}</strong> · ${escapeHtml(v.name_th)}
+              <div style="font-size:10px;color:#666">${disc} · ขั้นต่ำ ฿${v.min_order_amount||0}${v.shop_name?` · ${escapeHtml(v.shop_name)}`:''}</div>
+            </div>
+            <button onclick="useMyVoucher('${escapeHtml(v.code)}')" style="padding:4px 10px;background:#F59E0B;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:10px">ใช้</button>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+  } catch(e) { console.warn('load claimed vouchers:', e); }
+})();
+
+function escapeHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+window.useMyVoucher = function(code) {
+  const inp = document.getElementById('coup-input');
+  if (inp) { inp.value = code; if (typeof applyCoupon === 'function') applyCoupon(); }
+};
+</script>
+
 </body>
 </html>
