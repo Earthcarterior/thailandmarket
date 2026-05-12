@@ -1013,14 +1013,22 @@ nav, .nav {
           </div>
         </div>
         <div class="card">
-          <div class="ct" style="margin-bottom:12px;font-weight:600">รูปภาพสินค้า</div>
-          <div class="upload-zone" id="ap-upload-zone" onclick="document.getElementById('ap-img-input').click()">
+          <div class="ct" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-weight:600">รูปภาพสินค้า</span>
+            <span id="ap-img-count" style="font-size:11px;color:#888;font-family:'DM Mono',monospace">0 / 5</span>
+          </div>
+          <div class="upload-zone" id="ap-upload-zone" 
+               onclick="document.getElementById('ap-img-input').click()"
+               ondragover="event.preventDefault();this.style.borderColor='#E63329';this.style.background='#FFF5F5'"
+               ondragleave="this.style.borderColor='';this.style.background=''"
+               ondrop="onImgDrop(event)">
             <input type="file" id="ap-img-input" accept="image/*" multiple style="display:none" onchange="previewImages(this)">
             <div style="font-size:28px;margin-bottom:6px">📸</div>
-            <div style="font-size:13px;font-weight:500;color:var(--g700)">คลิกหรือลากรูปมาวาง</div>
-            <div style="font-size:11px;color:var(--g400);margin-top:3px">JPG, PNG, WebP · สูงสุด 5MB · แนะนำ 800×800px</div>
+            <div style="font-size:13px;font-weight:500;color:var(--g700)">คลิก หรือ ลากรูปมาวาง</div>
+            <div style="font-size:11px;color:var(--g400);margin-top:3px">JPG / PNG / WebP · 1-5 รูป · สูงสุด 5MB/รูป · แนะนำ 800×800px</div>
+            <div style="font-size:10px;color:#10B981;margin-top:6px;font-family:'DM Mono',monospace">รูปแรก = รูปหลัก (Thumbnail)</div>
           </div>
-          <div id="ap-img-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
+          <div id="ap-img-preview" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px"></div>
         </div>
       </div>
 
@@ -3587,19 +3595,43 @@ async function submitNewProduct(){
     const g=id=>$(id)?.value?.trim()||null;
     const cp=parseFloat($('ap-compare-price')?.value)||null;
     const disc=cp&&cp>price?Math.round((1-price/cp)*100):0;
-    let thumbnail=null;
-    if(_uploadedImages.length){
-      try{
-        const file=_uploadedImages[0];
-        const ext=file.name.split('.').pop()||'jpg';
-        const path='products/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
-        const{error:upErr}=await _sb.storage.from('product-images').upload(path,file,{upsert:true,contentType:file.type});
-        if(!upErr){const{data:u}=_sb.storage.from('product-images').getPublicUrl(path);thumbnail=u?.publicUrl;}
-      }catch(ie){console.warn('img upload:',ie);}
+    let thumbnail = null;
+    const imageUrls = [];
+    
+    if (_uploadedImages.length) {
+      if (btn) btn.textContent = `⏳ อัปโหลดรูป 0/${_uploadedImages.length}...`;
+      
+      for (let i = 0; i < _uploadedImages.length; i++) {
+        const item = _uploadedImages[i];
+        // ถ้าเป็น string = URL เดิม (edit mode) → ใช้ตรงๆ
+        if (typeof item === 'string') {
+          imageUrls.push(item);
+          continue;
+        }
+        // ไม่ใช่ File → ข้าม
+        if (!(item instanceof File) && !(item instanceof Blob)) continue;
+        
+        try {
+          const ext = (item.name || 'img').split('.').pop() || 'jpg';
+          const path = 'products/' + Date.now() + '-' + i + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+          const { error: upErr } = await _sb.storage.from('product-images').upload(path, item, {upsert: true, contentType: item.type});
+          if (!upErr) {
+            const { data: u } = _sb.storage.from('product-images').getPublicUrl(path);
+            if (u?.publicUrl) imageUrls.push(u.publicUrl);
+          } else {
+            console.warn('upload img #'+i+':', upErr);
+          }
+          if (btn) btn.textContent = `⏳ อัปโหลดรูป ${i+1}/${_uploadedImages.length}...`;
+        } catch(ie) { console.warn('img upload #'+i+':', ie); }
+      }
+      
+      thumbnail = imageUrls[0] || null;
+      if (btn) btn.textContent = '⏳ กำลังบันทึก...';
     }
     const slug=g('ap-slug')||(name_th.toLowerCase().replace(/[^a-z0-9ก-๙\s]/g,'').replace(/\s+/g,'-').slice(0,60)+'-'+Date.now());
     const payload={name_th,price,stock_quantity:stock,category_id:_selectedCatId,name_en:g('ap-name-en')||name_th,description:g('ap-desc'),compare_price:cp,discount_percent:disc,sku:g('ap-sku'),brand:g('ap-brand'),tags:g('ap-tags')?g('ap-tags').split(',').map(t=>t.trim()).filter(Boolean):null,status:$('ap-status')?.value||'active',slug,weight:parseFloat($('ap-weight')?.value)||null,updated_at:new Date().toISOString()};
     if(thumbnail) payload.thumbnail=thumbnail;
+    if(imageUrls.length) payload.images=imageUrls;
     if(_sellerSellerId) payload.seller_id=_sellerSellerId;
     // [PATCH 2026-05-02] ลบ user_id ออก — schema products ไม่มี column นี้
     // (เคยทำให้เกิด error: Could not find the 'user_id' column of 'products' in the schema cache)
@@ -3649,6 +3681,15 @@ function openProductEdit(productId){
     const te=$('ap-tags');if(te)te.value=(p.tags||[]).join(', ');
     const btn=$('ap-submit-btn');if(btn){btn.dataset.editId=productId;btn.textContent='💾 บันทึกการแก้ไข';}
     
+    // โหลดรูปเดิม (เป็น URL strings)
+    _uploadedImages = [];
+    if (Array.isArray(p.images) && p.images.length) {
+      _uploadedImages = p.images.slice(0, MAX_PRODUCT_IMAGES);
+    } else if (p.thumbnail) {
+      _uploadedImages = [p.thumbnail];
+    }
+    renderImgPreview();
+    
     // โหลด couriers ที่เคยเลือกของสินค้านี้
     try {
       const { data: pc } = await _sb.from('product_couriers').select('courier_id').eq('product_id', productId);
@@ -3673,9 +3714,9 @@ function clearProductForm(){
   const bs=$('ap-brand-id');if(bs)bs.value='';
   const bi=$('ap-brand');if(bi)bi.style.display='none';
   const se=$('ap-status');if(se)se.value='active';
-  const pv=$('ap-img-preview');if(pv)pv.innerHTML='';
   const ii=$('ap-img-input');if(ii)ii.value='';
   _uploadedImages=[];_selectedCatId=null;
+  if (typeof renderImgPreview === 'function') renderImgPreview();
   const btn=$('ap-submit-btn');if(btn){delete btn.dataset.editId;btn.textContent='💾 บันทึกสินค้า';}
   document.querySelectorAll('#cat-chips-ap .cat-chip').forEach(c=>c.classList.remove('active-chip'));
   const sw=$('ap-sub-cats');if(sw)sw.innerHTML='';
@@ -3766,17 +3807,85 @@ function onBrandChange(){
   else{inp.style.display='none';inp.value='';}
 }
 
+const MAX_PRODUCT_IMAGES = 5;
+
 function previewImages(input){
-  if(!input.files?.length) return;
-  _uploadedImages=Array.from(input.files);
-  const pv=$('ap-img-preview'); if(!pv) return;
-  pv.innerHTML=_uploadedImages.map((f,i)=>{
-    const url=URL.createObjectURL(f);
-    return `<div style="position:relative;width:80px;height:80px;display:inline-block;margin:4px"><img src="${url}" style="width:80px;height:80px;object-fit:cover;border:1px solid #E5E5E5"><button onclick="removeImg(${i})" style="position:absolute;top:2px;right:2px;background:#E63329;color:#fff;border:none;width:18px;height:18px;cursor:pointer;font-size:10px;line-height:1;padding:0">✕</button></div>`;
+  if(!input.files?.length) { renderImgPreview(); return; }
+  
+  const newFiles = Array.from(input.files);
+  const remaining = MAX_PRODUCT_IMAGES - _uploadedImages.length;
+  
+  if (newFiles.length > remaining) {
+    toast(`⚠️ เพิ่มได้อีก ${remaining} รูป (สูงสุด ${MAX_PRODUCT_IMAGES})`,'error');
+  }
+  
+  // เพิ่มเฉพาะที่เหลือ + ตรวจ size + type
+  const accepted = [];
+  for (const f of newFiles.slice(0, remaining)) {
+    if (f.size > 5 * 1024 * 1024) {
+      toast(`⚠️ ${f.name}: ใหญ่เกิน 5MB`,'error');
+      continue;
+    }
+    if (!f.type.startsWith('image/')) {
+      toast(`⚠️ ${f.name}: ไม่ใช่รูปภาพ`,'error');
+      continue;
+    }
+    accepted.push(f);
+  }
+  
+  _uploadedImages = _uploadedImages.concat(accepted);
+  // Clear input value เพื่อให้ select รูปเดิมซ้ำได้
+  if (input && input.tagName === 'INPUT') input.value = '';
+  
+  renderImgPreview();
+}
+
+function renderImgPreview() {
+  const pv = $('ap-img-preview'); if (!pv) return;
+  const count = _uploadedImages.length;
+  const countEl = $('ap-img-count');
+  if (countEl) {
+    countEl.textContent = `${count} / ${MAX_PRODUCT_IMAGES}`;
+    countEl.style.color = count === 0 ? '#888' : count >= MAX_PRODUCT_IMAGES ? '#E63329' : '#10B981';
+  }
+  
+  if (count === 0) { pv.innerHTML = ''; return; }
+  
+  pv.innerHTML = _uploadedImages.map((f, i) => {
+    // f อาจเป็น File หรือ URL string (จาก openProductEdit)
+    const url = typeof f === 'string' ? f : URL.createObjectURL(f);
+    const isFile = typeof f !== 'string';
+    return `<div style="position:relative;aspect-ratio:1;background:#FAFAFA;border:1px solid ${i===0?'#E63329':'#E5E5E5'};border-radius:6px;overflow:hidden">
+      ${i===0 ? '<div style="position:absolute;top:4px;left:4px;background:#E63329;color:#fff;padding:2px 6px;font-size:9px;font-family:monospace;letter-spacing:.5px;border-radius:3px;z-index:2">MAIN</div>' : ''}
+      <img src="${url}" style="width:100%;height:100%;object-fit:cover" ${isFile?`onload="if(this.src.startsWith('blob:'))setTimeout(()=>URL.revokeObjectURL(this.src), 30000)"`:''}>
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:10px;text-align:center;padding:2px;font-family:'DM Mono',monospace">#${i+1}${isFile?'':' (เดิม)'}</div>
+      <button onclick="event.stopPropagation();removeImg(${i})" style="position:absolute;top:4px;right:4px;background:#E63329;color:#fff;border:none;width:22px;height:22px;cursor:pointer;font-size:11px;line-height:1;padding:0;border-radius:50%;font-weight:600;z-index:2">✕</button>
+      ${i > 0 ? `<button onclick="event.stopPropagation();moveImgFirst(${i})" title="ตั้งเป็นรูปหลัก" style="position:absolute;bottom:24px;left:4px;background:rgba(255,255,255,.95);color:#0A0A0A;border:1px solid #E5E5E5;padding:3px 7px;font-size:10px;cursor:pointer;border-radius:3px;font-family:'DM Mono',monospace;z-index:2">⭐ MAIN</button>` : ''}
+    </div>`;
   }).join('');
 }
 
-function removeImg(idx){_uploadedImages.splice(idx,1);previewImages({files:_uploadedImages});}
+function removeImg(idx) {
+  _uploadedImages.splice(idx, 1);
+  renderImgPreview();
+}
+
+function moveImgFirst(idx) {
+  if (idx === 0 || idx >= _uploadedImages.length) return;
+  const item = _uploadedImages.splice(idx, 1)[0];
+  _uploadedImages.unshift(item);
+  renderImgPreview();
+  toast('⭐ ตั้งเป็นรูปหลักแล้ว','ok');
+}
+
+function onImgDrop(e) {
+  e.preventDefault();
+  const zone = $('ap-upload-zone');
+  if (zone) { zone.style.borderColor = ''; zone.style.background = ''; }
+  const files = Array.from(e.dataTransfer.files);
+  if (!files.length) return;
+  previewImages({files, tagName: 'DROP'});
+}
 
 // slug auto-gen
 document.addEventListener('input',e=>{
