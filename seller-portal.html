@@ -1038,16 +1038,13 @@ nav, .nav {
             <input class="fi" id="ap-dim-l" type="number" placeholder="ยาว">
             <input class="fi" id="ap-dim-h" type="number" placeholder="สูง">
           </div>
-          <div class="ct" style="font-size:11px;color:var(--g500);margin-bottom:8px">บริการจัดส่ง</div>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;font-size:13px">
-            <input type="checkbox" id="ap-kerry" checked> Kerry Express
-          </label>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;font-size:13px">
-            <input type="checkbox" id="ap-flash" checked> Flash Express
-          </label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-            <input type="checkbox" id="ap-scg"> SCG Logistics
-          </label>
+          <div class="ct" style="font-size:11px;color:var(--g500);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+            <span>บริการจัดส่ง</span>
+            <a onclick="goto('shipping',null)" style="font-size:10px;color:#3B82F6;cursor:pointer;text-decoration:none">⚙️ จัดการ →</a>
+          </div>
+          <div id="ap-couriers" style="display:flex;flex-direction:column;gap:6px">
+            <div style="padding:14px;text-align:center;color:#888;font-size:12px;background:#FAFAFA;border-radius:4px">⏳ กำลังโหลด...</div>
+          </div>
         </div>
         <div class="card" style="margin-bottom:12px">
           <div class="ct" style="margin-bottom:12px;font-weight:600">โปรโมชัน</div>
@@ -3608,16 +3605,31 @@ async function submitNewProduct(){
     // (เคยทำให้เกิด error: Could not find the 'user_id' column of 'products' in the schema cache)
     // ถ้าต้องการเก็บ brand_id ให้ uncomment บรรทัดล่าง:
     if(g('ap-brand-id')) payload.brand_id=g('ap-brand-id');
-    let err;
+    let err, savedId = editId;
     if(editId){
       ({error:err}=await _sb.from('products').update(payload).eq('id',editId));
       if(!err) toast('✅ แก้ไขสินค้าสำเร็จ!','ok');
     } else {
       payload.rating_avg=0;payload.rating_count=0;payload.sold_count=0;payload.is_featured=false;payload.is_flash_sale=false;payload.created_at=new Date().toISOString();
-      ({error:err}=await _sb.from('products').insert(payload));
-      if(!err) toast('✅ เพิ่มสินค้าสำเร็จ!','ok');
+      const {data:inserted, error:iErr} = await _sb.from('products').insert(payload).select('id').single();
+      err = iErr;
+      if(!err) { savedId = inserted?.id; toast('✅ เพิ่มสินค้าสำเร็จ!','ok'); }
     }
     if(err) throw err;
+    
+    // ─── บันทึก couriers ที่เลือก ───
+    if (savedId) {
+      try {
+        const courierIds = getSelectedCourierIds();
+        // ลบของเก่าก่อน (ถ้า edit)
+        await _sb.from('product_couriers').delete().eq('product_id', savedId);
+        // ใส่ของใหม่
+        if (courierIds.length) {
+          const rows = courierIds.map(cid => ({product_id: savedId, courier_id: cid}));
+          await _sb.from('product_couriers').insert(rows);
+        }
+      } catch(ce) { console.warn('save product couriers:', ce); }
+    }
     const re=$('ap-result'); if(re) re.innerHTML='<span style="color:#16A34A;font-size:12px">✅ บันทึกแล้ว กำลังไปหน้าสินค้า...</span>';
     await loadSellerProducts();
     setTimeout(()=>{clearProductForm();goto('products',document.querySelector('.sni[onclick*="products"]'));},1500);
@@ -3630,12 +3642,20 @@ async function submitNewProduct(){
 function openProductEdit(productId){
   const p=_sellerProds.find(x=>x.id===productId); if(!p) return;
   goto('add-product',document.querySelector('.sni[onclick*="add-product"]'));
-  setTimeout(()=>{
+  setTimeout(async ()=>{
     const sv=(id,v)=>{const e=$(id);if(e)e.value=v||'';};
     sv('ap-name-th',p.name_th);sv('ap-name-en',p.name_en);sv('ap-price',p.price);sv('ap-compare-price',p.compare_price);sv('ap-stock',p.stock_quantity);sv('ap-sku',p.sku);sv('ap-brand',p.brand);sv('ap-status',p.status||'active');sv('ap-slug',p.slug);sv('ap-weight',p.weight);
     const de=$('ap-desc');if(de)de.value=p.description||'';
     const te=$('ap-tags');if(te)te.value=(p.tags||[]).join(', ');
     const btn=$('ap-submit-btn');if(btn){btn.dataset.editId=productId;btn.textContent='💾 บันทึกการแก้ไข';}
+    
+    // โหลด couriers ที่เคยเลือกของสินค้านี้
+    try {
+      const { data: pc } = await _sb.from('product_couriers').select('courier_id').eq('product_id', productId);
+      const courierIds = (pc || []).map(x => x.courier_id);
+      await loadCouriersForProduct(courierIds);
+    } catch(e) { await loadCouriersForProduct(); }
+    
     toast('✏️ แก้ไขสินค้า: '+p.name_th);
   },350);
 }
@@ -3660,7 +3680,66 @@ function clearProductForm(){
   document.querySelectorAll('#cat-chips-ap .cat-chip').forEach(c=>c.classList.remove('active-chip'));
   const sw=$('ap-sub-cats');if(sw)sw.innerHTML='';
   const re=$('ap-result');if(re)re.innerHTML='';
+  loadCouriersForProduct();
 }
+
+// ─── โหลดบริการจัดส่งของร้าน (เฉพาะที่ enabled ใน "การจัดส่ง") ───
+async function loadCouriersForProduct(selectedCourierIds = null) {
+  const wrap = $('ap-couriers');
+  if (!wrap || !_sellerSellerId) return;
+  
+  try {
+    // ดึง couriers ที่ seller enabled แล้ว
+    const { data: scList, error } = await _sb.from('seller_couriers')
+      .select('courier_id, is_enabled, is_default, custom_base_price, couriers(id, code, name_th, logo_url, base_price, est_delivery_min, est_delivery_max, has_cod)')
+      .eq('seller_id', _sellerSellerId)
+      .eq('is_enabled', true);
+    
+    if (error) throw error;
+    
+    if (!scList || !scList.length) {
+      wrap.innerHTML = `<div style="padding:14px;background:#FEF3C7;border:1px solid #F59E0B;border-radius:4px;font-size:12px;color:#92400E">
+        ⚠️ ยังไม่ได้ตั้งค่าขนส่ง<br>
+        <a onclick="goto('shipping',null)" style="color:#E63329;cursor:pointer;font-weight:600;text-decoration:underline">→ ไปตั้งค่าที่หน้า "การจัดส่ง"</a>
+      </div>`;
+      return;
+    }
+    
+    // Determine pre-selected: ถ้า edit mode ใช้ selectedCourierIds, ถ้าเพิ่มใหม่ → tick ทุกอันที่ enabled
+    const selected = new Set();
+    if (selectedCourierIds && Array.isArray(selectedCourierIds)) {
+      selectedCourierIds.forEach(id => selected.add(id));
+    } else {
+      // default: tick ทุกอันที่ enabled
+      scList.forEach(sc => selected.add(sc.courier_id));
+    }
+    
+    wrap.innerHTML = scList.map(sc => {
+      const c = sc.couriers || {};
+      const isChecked = selected.has(sc.courier_id);
+      const price = sc.custom_base_price ?? c.base_price ?? 0;
+      const days = c.est_delivery_min === c.est_delivery_max ? c.est_delivery_min : `${c.est_delivery_min}-${c.est_delivery_max}`;
+      return `<label style="display:flex;align-items:center;gap:10px;padding:10px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:4px;cursor:pointer;font-size:13px" onclick="event.stopPropagation()">
+        <input type="checkbox" class="ap-courier-cb" value="${sc.courier_id}" ${isChecked?'checked':''}>
+        <span style="font-size:18px">${c.logo_url || '📦'}</span>
+        <div style="flex:1">
+          <div style="font-weight:500">${c.name_th || 'Courier'}${c.has_cod?' <span style="font-size:9px;background:#DBEAFE;color:#1E40AF;padding:1px 5px;border-radius:3px;margin-left:4px">COD</span>':''}</div>
+          <div style="font-size:10px;color:#888;font-family:'DM Mono',monospace;margin-top:2px">฿${price} · ${days} วัน</div>
+        </div>
+      </label>`;
+    }).join('');
+  } catch(e) {
+    console.warn('loadCouriersForProduct:', e);
+    wrap.innerHTML = `<div style="padding:14px;background:#FEE2E2;border:1px solid #EF4444;border-radius:4px;font-size:12px;color:#991B1B">
+      ❌ โหลดบริการจัดส่งไม่ได้: ${e.message}<br>
+      <small>กรุณารัน shipping-system SQL</small>
+    </div>`;
+  }
+}
+
+window.getSelectedCourierIds = function() {
+  return [...document.querySelectorAll('#ap-couriers .ap-courier-cb:checked')].map(cb => cb.value);
+};
 
 // [PATCH 2026-05-02] โหลดรายชื่อแบรนด์สำหรับ dropdown
 async function loadBrandsForSeller(){
