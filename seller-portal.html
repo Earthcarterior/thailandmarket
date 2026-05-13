@@ -607,13 +607,13 @@ nav, .nav {
 
     <div class="sb-sec-lbl">🛒 ออเดอร์</div>
     <div class="sni" onclick="goto('orders',this)"><span class="sni-ico">📋</span>ออเดอร์ทั้งหมด<span class="sni-badge">12</span></div>
-    <div class="sni" onclick="goto('bulk',this)"><span class="sni-ico">📦</span>จัดส่งแบบชุด</div>
     <div class="sni" onclick="goto('returns',this)" style="position:relative"><span class="sni-ico">↩️</span>คืนเงิน/คืนสินค้า<span class="sni-badge" id="returns-badge" style="display:none">0</span></div>
 
     <div class="sb-sec-lbl">📦 สินค้า</div>
     <div class="sni" onclick="goto('products',this)"><span class="sni-ico">📦</span>สินค้าของฉัน</div>
     <div class="sni" onclick="goto('add-product',this)"><span class="sni-ico">➕</span>เพิ่มสินค้าใหม่</div>
     <div class="sni" onclick="goto('inventory',this)"><span class="sni-ico">🏭</span>จัดการสต็อก</div>
+    <div class="sni" onclick="goto('bulk',this)"><span class="sni-ico">📊</span>จัดการเป็นกลุ่ม</div>
     <div class="sni" onclick="goto('categories',this)"><span class="sni-ico">🗂️</span>หมวดหมู่</div>
     <div class="sni" onclick="goto('product-ai',this)"><span class="sni-ico">🤖</span>AI ช่วยปรับสินค้า<span class="sni-badge" style="background:#7C3AED">AI</span></div>
 
@@ -1795,7 +1795,7 @@ nav, .nav {
       #page-bulk .bk-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
       @media(max-width:900px){#page-bulk .bk-grid{grid-template-columns:1fr}}
     </style>
-    <div class="ph">📊 Bulk / Excel Operations</div>
+    <div class="ph">📊 จัดการสินค้าเป็นกลุ่ม</div>
 
     <div class="bk-grid">
       <!-- Export -->
@@ -2887,7 +2887,7 @@ window.goto = function(view, el) {
     shop:'🏪 โปรไฟล์ร้าน', notifications:'🔔 แจ้งเตือน',
     settings:'⚙️ ตั้งค่า', promotions:'🎟️ โปรโมชัน',
     shipping:'🚚 การจัดส่ง', customers:'👥 ลูกค้า', messages:'💬 ข้อความ',
-    returns:'↩️ คำขอคืนสินค้า', decoration:'🎨 ตกแต่งร้าน', bulk:'📊 Bulk Operations',
+    returns:'↩️ คำขอคืนสินค้า', decoration:'🎨 ตกแต่งร้าน', bulk:'📊 จัดการสินค้าเป็นกลุ่ม',
     finance:'💰 การเงิน', missions:'🎯 Seller Missions', members:'👨‍💼 ทีมงาน', kyc:'✅ ยืนยันตัวตน',
     health:'💎 Account Health', 'product-ai':'🤖 AI ช่วยปรับสินค้า',
     'marketing-hub':'🎯 Marketing Centre', ads:'📣 TMS Ads', live:'🔴 Live & Video',
