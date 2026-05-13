@@ -607,6 +607,7 @@ nav, .nav {
 
     <div class="sb-sec-lbl">🛒 ออเดอร์</div>
     <div class="sni" onclick="goto('orders',this)"><span class="sni-ico">📋</span>ออเดอร์ทั้งหมด<span class="sni-badge">12</span></div>
+    <div class="sni" onclick="goto('ship-pending',this)"><span class="sni-ico">📮</span>สินค้าที่ต้องจัดส่ง<span class="sni-badge" id="ship-pending-badge" style="display:none">0</span></div>
     <div class="sni" onclick="goto('returns',this)" style="position:relative"><span class="sni-ico">↩️</span>คืนเงิน/คืนสินค้า<span class="sni-badge" id="returns-badge" style="display:none">0</span></div>
 
     <div class="sb-sec-lbl">📦 สินค้า</div>
@@ -2651,6 +2652,236 @@ nav, .nav {
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════════════════════════
+       SHIP-PENDING — สินค้าที่ต้องจัดส่ง (Shopee/SPX-style 2 tabs)
+       ════════════════════════════════════════════════════════════════ -->
+  <div class="page" id="page-ship-pending">
+    <style>
+      #page-ship-pending .sp-tabs{display:flex;gap:2px;border-bottom:1px solid #E5E5E5;margin-bottom:18px}
+      #page-ship-pending .sp-tab{padding:11px 18px;background:transparent;border:none;cursor:pointer;font-size:13px;color:#666;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px}
+      #page-ship-pending .sp-tab.on{color:#E63329;font-weight:600;border-bottom-color:#E63329}
+      #page-ship-pending .sp-panel{display:none}
+      #page-ship-pending .sp-panel.on{display:block}
+      #page-ship-pending .sp-layout{display:grid;grid-template-columns:1fr 360px;gap:14px}
+      #page-ship-pending .sp-main{background:#fff;border:1px solid #E5E5E5;border-radius:6px;padding:18px}
+      #page-ship-pending .sp-side{background:#fff;border:1px solid #E5E5E5;border-radius:6px;padding:18px;align-self:flex-start;position:sticky;top:80px}
+      #page-ship-pending .sp-row{display:flex;gap:14px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+      #page-ship-pending .sp-label{font-size:12px;color:#525252;font-weight:500;flex-shrink:0;min-width:140px}
+      #page-ship-pending .sp-pill{padding:7px 14px;border:1px solid #E5E5E5;border-radius:18px;cursor:pointer;font-size:12px;background:#fff;font-family:inherit;white-space:nowrap}
+      #page-ship-pending .sp-pill:hover{border-color:#E63329;color:#E63329}
+      #page-ship-pending .sp-pill.on{background:#FFF5F5;border-color:#E63329;color:#E63329;font-weight:500}
+      #page-ship-pending .sp-pill .ct{color:#888;font-weight:400;font-family:'DM Mono',monospace;margin-left:2px;font-size:11px}
+      #page-ship-pending .sp-pill.on .ct{color:#E63329}
+      #page-ship-pending .sp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px}
+      #page-ship-pending .sp-table th{padding:12px 10px;background:#FAFAFA;text-align:left;font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.04em;font-weight:600;border-bottom:1px solid #E5E5E5;font-family:'DM Mono',monospace}
+      #page-ship-pending .sp-table td{padding:14px 10px;border-bottom:1px solid #F0F0F0;vertical-align:middle}
+      #page-ship-pending .sp-empty{padding:60px;text-align:center;color:#888}
+      #page-ship-pending .sp-empty-img{width:80px;height:80px;background:#FAFAFA;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:14px;opacity:.5}
+      #page-ship-pending .sp-sort-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#FAFAFA;border-radius:4px;font-size:12px;margin-top:14px}
+      #page-ship-pending .sp-pickup-box{background:#FFF5F5;border:1px solid #FECACA;border-radius:6px;padding:14px;margin-bottom:12px}
+      #page-ship-pending .sp-pickup-h{font-size:11px;color:#888;font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:6px;letter-spacing:.06em;display:flex;justify-content:space-between}
+      #page-ship-pending .sp-addr-body{font-size:12px;line-height:1.7;color:#333}
+      #page-ship-pending .sp-link{color:#E63329;cursor:pointer;font-size:11px;text-decoration:none;font-weight:500}
+      #page-ship-pending .sp-link:hover{text-decoration:underline}
+      #page-ship-pending .sp-input{padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px;font-family:inherit;width:100%;background:#fff}
+      #page-ship-pending .sp-btn{padding:11px 16px;background:#FBBF77;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;width:100%;margin-top:8px}
+      #page-ship-pending .sp-btn.primary{background:#E63329}
+      #page-ship-pending .sp-btn:hover{opacity:.9}
+      #page-ship-pending .sp-fee-note{font-size:11px;color:#666;margin-top:8px;line-height:1.6}
+      #page-ship-pending .sp-fee-note b{color:#E63329}
+      #page-ship-pending .sp-drop-box{margin-top:18px;padding-top:18px;border-top:1px solid #E5E5E5}
+      #page-ship-pending .sp-doc-check{display:flex;align-items:center;gap:10px;padding:10px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:4px;margin-bottom:6px;cursor:pointer;font-size:12px}
+      #page-ship-pending .sp-doc-check input{accent-color:#E63329}
+      #page-ship-pending .sp-doc-check.on{background:#FFF5F5;border-color:#FECACA}
+      #page-ship-pending .sp-fmt{display:flex;gap:14px;font-size:12px;padding:8px 0}
+      #page-ship-pending .sp-fmt label{display:flex;align-items:center;gap:6px;cursor:pointer}
+      #page-ship-pending .sp-status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ccc;margin-right:4px}
+      #page-ship-pending .sp-status-dot.ok{background:#10B981}
+      #page-ship-pending .sp-thumb{width:40px;height:40px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle}
+      #page-ship-pending .sp-thumb img{width:100%;height:100%;object-fit:cover}
+      #page-ship-pending .sp-courier-chip{font-size:12px;line-height:1.5}
+      #page-ship-pending .sp-courier-chip b{font-weight:500}
+      #page-ship-pending .sp-tracking{color:#10B981;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer}
+      #page-ship-pending .sp-tracking:hover{text-decoration:underline}
+    </style>
+    <div class="ph">📮 สินค้าที่ต้องจัดส่ง</div>
+    <div class="ps">PENDING SHIPMENT · จัดส่ง + พิมพ์เอกสาร</div>
+    
+    <!-- TABS -->
+    <div class="sp-tabs">
+      <button class="sp-tab on" data-sptab="pending" onclick="spTab('pending')">📦 สินค้าที่ต้องจัดส่ง</button>
+      <button class="sp-tab" data-sptab="docs" onclick="spTab('docs')">📄 สร้างเอกสาร</button>
+    </div>
+    
+    <!-- ───────── TAB 1: PENDING SHIPMENT ───────── -->
+    <div class="sp-panel on" id="sp-panel-pending">
+      <div class="sp-layout">
+        <!-- MAIN -->
+        <div class="sp-main">
+          <!-- Urgency filter -->
+          <div class="sp-row">
+            <div class="sp-label">ความเร่งด่วนในการจัดส่ง</div>
+            <button class="sp-pill on" data-urg="all" onclick="spSetUrg('all')">ทั้งหมด</button>
+            <button class="sp-pill" data-urg="late" onclick="spSetUrg('late')">จัดส่งล่าช้า <span class="ct" id="sp-cnt-late">(0)</span></button>
+            <button class="sp-pill" data-urg="today" onclick="spSetUrg('today')">ส่งภายในวันนี้ <span class="ct" id="sp-cnt-today">(0)</span></button>
+            <button class="sp-pill" data-urg="tmrw" onclick="spSetUrg('tmrw')">ส่งภายในวันพรุ่งนี้ <span class="ct" id="sp-cnt-tmrw">(0)</span></button>
+          </div>
+          
+          <!-- Courier filter -->
+          <div class="sp-row" id="sp-courier-pills">
+            <div class="sp-label">ช่องทางการจัดส่ง</div>
+            <button class="sp-pill on" data-courier="all" onclick="spSetCourier('all')">ทั้งหมด <span class="ct" id="sp-cnt-cour-all">(0)</span></button>
+            <!-- Dynamic couriers appended here -->
+          </div>
+          
+          <a class="sp-link" onclick="alert('ตัวกรองเพิ่ม — coming soon')">ดูตัวกรองเพิ่ม ⌄</a>
+          
+          <!-- Sort & count bar -->
+          <div class="sp-sort-bar">
+            <span><b id="sp-total-count">0</b> พัสดุ</span>
+            <span style="color:#666;font-size:11px;font-family:'DM Mono',monospace">↕ เรียงลำดับโดย: จัดส่งภายในวันที่ (เริ่มจากเก่าสุด)</span>
+          </div>
+          
+          <!-- Table -->
+          <div style="overflow-x:auto">
+            <table class="sp-table">
+              <thead>
+                <tr>
+                  <th style="width:40px"><input type="checkbox" id="sp-cb-all" onchange="spToggleAll(this.checked)" style="accent-color:#E63329"></th>
+                  <th>สินค้า</th>
+                  <th>หมายเลขคำสั่งซื้อ</th>
+                  <th>ผู้ซื้อ</th>
+                  <th>ช่องทาง</th>
+                  <th>เวลาที่ยืนยันคำสั่งซื้อ</th>
+                  <th>สถานะการสั่งซื้อ</th>
+                </tr>
+              </thead>
+              <tbody id="sp-list">
+                <tr><td colspan="7" class="sp-empty"><div class="sp-empty-img">📄</div><div>ไม่มีข้อมูล</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- SIDE: ทำการนัดรับเป็นชุด -->
+        <div class="sp-side">
+          <div style="font-size:14px;font-weight:600;margin-bottom:12px">ทำการนัดรับเป็นชุด</div>
+          <div style="font-size:12px;color:#888;margin-bottom:10px"><b id="sp-selected-count">0</b> parcels selected</div>
+          
+          <div class="sp-pickup-box">
+            <div class="sp-pickup-h">
+              <span>Pickup</span>
+              <span style="background:#E63329;color:#fff;padding:2px 8px;border-radius:3px;font-family:'DM Mono',monospace;font-size:9px">นัดรับ</span>
+            </div>
+            <div style="font-size:11px;color:#666;margin-bottom:6px">ที่อยู่ในการรับสินค้า <a class="sp-link" onclick="goto('shipping',null)" style="float:right">เปลี่ยน</a></div>
+            <div class="sp-addr-body" id="sp-pickup-addr">⏳ กำลังโหลด...</div>
+          </div>
+          
+          <div style="margin-top:14px">
+            <label style="font-size:11px;color:#666;display:block;margin-bottom:4px">วันเข้ารับสินค้า</label>
+            <select class="sp-input" id="sp-pickup-date">
+              <option value="">Select</option>
+            </select>
+          </div>
+          <div style="font-size:11px;color:#666;margin-top:8px;line-height:1.6">พนักงานขนส่งจะเข้ารับสินค้าในช่วงเวลาที่คุณเลือก<br><a class="sp-link" onclick="alert('รายละเอียดเวลาเข้ารับ')">ดูรายละเอียด</a></div>
+          
+          <button class="sp-btn" onclick="spArrangePickup('all')">ทำการนัดรับคำสั่งซื้อทั้งหมดนี้</button>
+          
+          <div class="sp-fee-note">
+            ค่าบริการเข้ารับสินค้า (Pickup Fee) <b>30 บาท/วัน</b> (กรณีน้อยกว่า 6 ชิ้น/วัน) <a class="sp-link" onclick="alert('PRIME details')">อ่านเพิ่มเติม</a> ร้าน PRIME ที่ครบสิทธิ์จะได้รับการยกเว้น
+          </div>
+          
+          <!-- Drop off box -->
+          <div class="sp-drop-box">
+            <div style="font-size:14px;font-weight:600;margin-bottom:10px">Drop off</div>
+            <div style="font-size:11px;color:#666;margin-bottom:6px">สาขาใกล้เคียง</div>
+            <div class="sp-addr-body" id="sp-dropoff-addr">SPX Express – Shipsmile คลังอุปกรณ์ทำเล็บฟันล้าน (1.2km)<br>133 พุทธมณฑลสาย1 ปากซอย31 แขวง บางระมาด เขต ตลิ่งชัน กทม. 10170</div>
+            <a class="sp-link" onclick="alert('แสดงสาขาทั้งหมดในแผนที่ — coming soon')" style="display:block;margin-top:6px">ดูสาขาทั้งหมดในแผนที่</a>
+            <button class="sp-btn primary" onclick="spDropOff('all')">ทำการจัดส่งสินค้าทั้งหมดนี้ที่สาขา</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ───────── TAB 2: CREATE DOCUMENTS ───────── -->
+    <div class="sp-panel" id="sp-panel-docs">
+      <div class="sp-layout">
+        <div class="sp-main">
+          <!-- Filters -->
+          <div class="sp-row">
+            <div class="sp-label">สถานะคำสั่งซื้อ</div>
+            <button class="sp-pill on" data-dstat="all" onclick="spDocStat('all')">ทั้งหมด</button>
+            <button class="sp-pill" data-dstat="doing" onclick="spDocStat('doing')">ดำเนินการแล้ว <span class="ct">(0)</span></button>
+            <button class="sp-pill" data-dstat="pending" onclick="spDocStat('pending')">ยังไม่ดำเนินการ <span class="ct">(0)</span></button>
+          </div>
+          <div class="sp-row">
+            <div class="sp-label">ความเร่งด่วน</div>
+            <button class="sp-pill on" data-durg="all" onclick="spDocUrg('all')">ทั้งหมด</button>
+            <button class="sp-pill" data-durg="late" onclick="spDocUrg('late')">จัดส่งล่าช้า <span class="ct">(0)</span></button>
+            <button class="sp-pill" data-durg="today" onclick="spDocUrg('today')">ส่งภายในวันนี้ <span class="ct">(0)</span></button>
+            <button class="sp-pill" data-durg="tmrw" onclick="spDocUrg('tmrw')">ส่งภายในวันพรุ่งนี้ <span class="ct">(2)</span></button>
+          </div>
+          <a class="sp-link" onclick="alert('ตัวกรองเพิ่ม')">ดูตัวกรองเพิ่ม ⌄</a>
+          
+          <div class="sp-sort-bar">
+            <span><b id="sp-doc-count">0</b> พัสดุ</span>
+            <span style="color:#666;font-size:11px;font-family:'DM Mono',monospace">↕ เรียงลำดับโดย: จัดส่งภายในวันที่ (เริ่มจากเก่าสุด)</span>
+          </div>
+          
+          <div style="overflow-x:auto">
+            <table class="sp-table">
+              <thead>
+                <tr>
+                  <th style="width:40px"><input type="checkbox" id="sp-doc-cb-all" onchange="spDocToggleAll(this.checked)" style="accent-color:#E63329"></th>
+                  <th>สินค้า</th>
+                  <th>หมายเลขคำสั่งซื้อ</th>
+                  <th>ผู้ซื้อ</th>
+                  <th>ช่องทาง</th>
+                  <th>หมายเลขติดตามพัสดุ</th>
+                  <th>เวลาที่ยืนยันคำสั่งซื้อ</th>
+                  <th>เวลานัดรับสินค้า</th>
+                  <th>พิมพ์แล้ว</th>
+                </tr>
+              </thead>
+              <tbody id="sp-doc-list">
+                <tr><td colspan="9" class="sp-empty"><div class="sp-empty-img">📄</div><div>ไม่มีข้อมูล</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- SIDE: Document creation -->
+        <div class="sp-side">
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px">สร้างเอกสารการจัดส่งพัสดุ</div>
+          <div style="font-size:11px;color:#E63329;margin-bottom:14px">Select the parcels to generate shipping documents</div>
+          
+          <label class="sp-doc-check"><input type="checkbox" id="sp-doc-picklist"> Picklist</label>
+          <label class="sp-doc-check"><input type="checkbox" id="sp-doc-cover-packing"> ใบปะหน้าพัสดุ & Packing List</label>
+          <label class="sp-doc-check"><input type="checkbox" id="sp-doc-cover"> ใบปะหน้าพัสดุ</label>
+          <label class="sp-doc-check on"><input type="checkbox" id="sp-doc-packing" checked> Packing List</label>
+          
+          <div class="sp-fmt">
+            <label><input type="radio" name="sp-fmt" value="pdf" checked> PDF</label>
+            <label><input type="radio" name="sp-fmt" value="excel"> Excel</label>
+          </div>
+          
+          <div style="font-size:11px;color:#666;margin:14px 0 6px">รายละเอียดเอกสารที่จะพิมพ์</div>
+          <div style="display:flex;gap:6px;align-items:center;font-size:12px;padding:8px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:4px">📋 <span>Packing List</span></div>
+          
+          <button class="sp-btn primary" onclick="spGenerateDocs()" style="margin-top:14px">🖨️ สร้างเอกสารที่เลือก</button>
+          
+          <div style="font-size:11px;color:#888;margin-top:8px;line-height:1.6">* กรุณาอนุญาตให้ Shopee เปิดหน้าต่างใหม่เพื่อดูตัวอย่างเอกสารก่อนพิมพ์</div>
+          
+          <div class="sp-drop-box">
+            <div style="font-size:14px;font-weight:600;margin-bottom:10px">ใบยืนยันการจัดส่ง</div>
+            <div style="font-size:11px;color:#666;margin-bottom:10px">พิมพ์ใบยืนยันการจัดส่ง</div>
+            <button class="sp-btn primary" onclick="spGenerateConfirm()">📄 สร้างใบยืนยันการจัดส่ง</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="page" id="page-settings">
     <style>
       #page-settings .st-section{background:#fff;border:1px solid #E5E5E5;padding:18px;border-radius:6px;margin-bottom:14px}
@@ -2888,6 +3119,7 @@ window.goto = function(view, el) {
     settings:'⚙️ ตั้งค่า', promotions:'🎟️ โปรโมชัน',
     shipping:'🚚 การจัดส่ง', customers:'👥 ลูกค้า', messages:'💬 ข้อความ',
     returns:'↩️ คำขอคืนสินค้า', decoration:'🎨 ตกแต่งร้าน', bulk:'📊 จัดการสินค้าเป็นกลุ่ม',
+    'ship-pending':'📮 สินค้าที่ต้องจัดส่ง',
     finance:'💰 การเงิน', missions:'🎯 Seller Missions', members:'👨‍💼 ทีมงาน', kyc:'✅ ยืนยันตัวตน',
     health:'💎 Account Health', 'product-ai':'🤖 AI ช่วยปรับสินค้า',
     'marketing-hub':'🎯 Marketing Centre', ads:'📣 TMS Ads', live:'🔴 Live & Video',
@@ -2903,6 +3135,7 @@ window.goto = function(view, el) {
     case 'add-product':  clearProductForm(); loadCategoriesForProduct(); loadBrandsForSeller(); break;
     case 'categories':   loadSellerCategories(); break;
     case 'orders':       loadSellerOrders().then(renderOrdersLive); break;
+    case 'ship-pending':  renderShipPendingLive(); break;
     case 'flash':        renderFlashLive(); break;
     case 'finance':      renderFinanceLive(); break;
     case 'reviews':      loadSellerReviews().then(renderReviewsLive); break;
@@ -7388,6 +7621,435 @@ window.saveVacation = async function() {
 };
 
 // ═══ SECURITY ═══
+// ════════════════════════════════════════════════════════════════════
+// SHIP-PENDING — สินค้าที่ต้องจัดส่ง (Shopee/SPX-style)
+// ════════════════════════════════════════════════════════════════════
+let _spOrders = [];
+let _spUrgFilter = 'all';        // all / late / today / tmrw
+let _spCourierFilter = 'all';
+let _spActiveTab = 'pending';
+let _spDocStat = 'all';
+let _spDocUrg = 'all';
+let _spPickupAddr = null;
+
+async function renderShipPendingLive() {
+  if (!_sellerSellerId) return;
+  await Promise.all([spLoadOrders(), spLoadPickupAddr(), spLoadCouriers(), spLoadPickupDates()]);
+  spRenderUrgCounts();
+  spRenderCourierPills();
+  spRenderTable();
+  spUpdateSidebarBadge();
+}
+
+async function spLoadOrders() {
+  try {
+    // ดึง orders ของ seller ที่ยังต้องส่ง (paid / processing / pending)
+    // ใช้ approach: ดึง products ของ seller → ดึง order_items ที่ใช้ products เหล่านี้ → ดึง orders
+    const { data: prods } = await _sb.from('products').select('id').eq('seller_id', _sellerSellerId);
+    const pIds = (prods || []).map(p => p.id);
+    if (!pIds.length) { _spOrders = []; return; }
+    
+    const { data: items } = await _sb.from('order_items').select('order_id,product_id,quantity,subtotal,name,thumbnail,products(thumbnail,name_th)').in('product_id', pIds);
+    const orderIdsSet = new Set((items || []).map(i => i.order_id));
+    const orderIds = [...orderIdsSet];
+    if (!orderIds.length) { _spOrders = []; return; }
+    
+    const { data: orders } = await _sb.from('orders')
+      .select('id,order_number,status,total,shipping_method,shipping_method_name,shipping_address,tracking_number,created_at,paid_at')
+      .in('id', orderIds)
+      .in('status', ['paid', 'processing'])
+      .order('created_at', {ascending: true});
+    
+    // Map items to orders
+    const itemsByOrder = {};
+    (items || []).forEach(it => {
+      if (!itemsByOrder[it.order_id]) itemsByOrder[it.order_id] = [];
+      itemsByOrder[it.order_id].push(it);
+    });
+    
+    _spOrders = (orders || []).map(o => ({...o, items: itemsByOrder[o.id] || []}));
+  } catch(e) {
+    console.warn('spLoadOrders:', e);
+    _spOrders = [];
+  }
+}
+
+async function spLoadPickupAddr() {
+  try {
+    const { data } = await _sb.rpc('get_seller_pickup_address', {p_seller_id: _sellerSellerId});
+    _spPickupAddr = data;
+  } catch(e) { _spPickupAddr = null; }
+}
+
+async function spLoadCouriers() {
+  try {
+    const { data } = await _sb.from('seller_couriers')
+      .select('courier_id,is_enabled,couriers(id,name_th,code)')
+      .eq('seller_id', _sellerSellerId).eq('is_enabled', true);
+    window._spCouriers = (data || []).map(d => d.couriers).filter(Boolean);
+  } catch(e) { window._spCouriers = []; }
+}
+
+function spLoadPickupDates() {
+  // Generate next 7 days (skip Sun if needed based on seller_addresses.pickup_days)
+  const sel = $('sp-pickup-date');
+  if (!sel) return;
+  const today = new Date();
+  const opts = ['<option value="">Select</option>'];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today.getTime() + i * 86400000);
+    const yyyy = d.getFullYear(), mm = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
+    const dayName = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'][d.getDay()];
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const label = i === 0 ? 'วันนี้' : i === 1 ? 'พรุ่งนี้' : dayName;
+    opts.push(`<option value="${dateStr}">${label} (${dd}/${mm}/${yyyy})</option>`);
+  }
+  sel.innerHTML = opts.join('');
+}
+
+function _spUrgencyOf(order) {
+  // เวลาเตรียมส่ง: ใช้ paid_at + 2 วัน เป็น deadline
+  const ref = order.paid_at || order.created_at;
+  if (!ref) return 'all';
+  const deadline = new Date(ref).getTime() + 2 * 86400000;
+  const now = Date.now();
+  const oneDay = 86400000;
+  if (deadline < now) return 'late';
+  if (deadline < now + oneDay) return 'today';
+  if (deadline < now + 2 * oneDay) return 'tmrw';
+  return 'future';
+}
+
+function spRenderUrgCounts() {
+  const cnt = {late: 0, today: 0, tmrw: 0};
+  _spOrders.forEach(o => {
+    const u = _spUrgencyOf(o);
+    if (cnt[u] !== undefined) cnt[u]++;
+  });
+  $('sp-cnt-late') && ($('sp-cnt-late').textContent = '(' + cnt.late + ')');
+  $('sp-cnt-today') && ($('sp-cnt-today').textContent = '(' + cnt.today + ')');
+  $('sp-cnt-tmrw') && ($('sp-cnt-tmrw').textContent = '(' + cnt.tmrw + ')');
+}
+
+function spRenderCourierPills() {
+  const wrap = $('sp-courier-pills');
+  if (!wrap) return;
+  const couriers = window._spCouriers || [];
+  // Remove existing dynamic pills (keep label + "all")
+  [...wrap.querySelectorAll('.sp-pill')].forEach((p, idx) => { if (idx > 0) p.remove(); });
+  
+  // Count orders per courier
+  const cnt = {};
+  _spOrders.forEach(o => {
+    const c = o.shipping_method || 'unknown';
+    cnt[c] = (cnt[c] || 0) + 1;
+  });
+  
+  $('sp-cnt-cour-all') && ($('sp-cnt-cour-all').textContent = '(' + _spOrders.length + ')');
+  
+  couriers.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'sp-pill';
+    btn.dataset.courier = c.code;
+    btn.onclick = () => spSetCourier(c.code);
+    const count = cnt[c.code] || 0;
+    btn.innerHTML = `${c.name_th} <span class="ct">(${count})</span>`;
+    wrap.appendChild(btn);
+  });
+}
+
+function spRenderTable() {
+  const tbl = $('sp-list');
+  if (!tbl) return;
+  
+  let list = _spOrders.slice();
+  
+  // Apply urgency filter
+  if (_spUrgFilter !== 'all') {
+    list = list.filter(o => _spUrgencyOf(o) === _spUrgFilter);
+  }
+  // Apply courier filter
+  if (_spCourierFilter !== 'all') {
+    list = list.filter(o => o.shipping_method === _spCourierFilter);
+  }
+  
+  $('sp-total-count') && ($('sp-total-count').textContent = list.length);
+  
+  if (!list.length) {
+    tbl.innerHTML = `<tr><td colspan="7" class="sp-empty"><div class="sp-empty-img">📄</div><div>ไม่มีข้อมูล</div></td></tr>`;
+    return;
+  }
+  
+  tbl.innerHTML = list.map(o => {
+    const items = o.items || [];
+    const item = items[0];
+    const itemsHtml = items.slice(0, 1).map(it => `
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="sp-thumb">${(it.thumbnail || it.products?.thumbnail) ? `<img src="${sfEsc(it.thumbnail || it.products?.thumbnail)}">` : '📦'}</div>
+        <div style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sfEsc(it.name || it.products?.name_th || '—')}${items.length > 1 ? ' <span style="color:#888">+ '+(items.length-1)+'</span>' : ''}</div>
+      </div>`).join('');
+    
+    const addr = o.shipping_address || {};
+    const buyer = addr.name || '—';
+    const confirmed = o.paid_at || o.created_at;
+    const cfDate = confirmed ? new Date(confirmed) : null;
+    const cfStr = cfDate ? `${String(cfDate.getDate()).padStart(2,'0')}/${String(cfDate.getMonth()+1).padStart(2,'0')}/${cfDate.getFullYear()} ${String(cfDate.getHours()).padStart(2,'0')}:${String(cfDate.getMinutes()).padStart(2,'0')}` : '—';
+    
+    return `<tr>
+      <td><input type="checkbox" class="sp-cb-item" value="${o.id}" onchange="spUpdateSelCount()" style="accent-color:#E63329"></td>
+      <td>${itemsHtml}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${sfEsc(o.order_number || o.id.slice(0,12).toUpperCase())}</td>
+      <td style="font-size:12px">${sfEsc(buyer)}</td>
+      <td><div class="sp-courier-chip">
+        <b>${sfEsc(o.shipping_method_name || o.shipping_method || '—')}</b><br>
+        <span style="font-size:10px;color:#888">Standard Delivery - ส่งธรรมดาในประเทศ</span>
+      </div></td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${cfStr}</td>
+      <td style="font-size:11px;color:#888;line-height:1.5">เพื่อหลีกเลี่ยงการส่งสินค้าซ้ำคุณต้อง / นัดรับสินค้าก่อน <span style="color:#E63329">${cfDate ? new Date(cfDate.getTime() + 2*86400000).toLocaleDateString('th-TH') : ''}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function spUpdateSelCount() {
+  const checked = [...document.querySelectorAll('#sp-list .sp-cb-item:checked')];
+  $('sp-selected-count') && ($('sp-selected-count').textContent = checked.length);
+}
+
+function spUpdateSidebarBadge() {
+  const badge = $('ship-pending-badge');
+  if (!badge) return;
+  if (_spOrders.length > 0) { badge.style.display = ''; badge.textContent = _spOrders.length; }
+  else badge.style.display = 'none';
+  
+  // Update pickup address display
+  const addrEl = $('sp-pickup-addr');
+  if (addrEl) {
+    if (_spPickupAddr) {
+      const a = _spPickupAddr;
+      addrEl.innerHTML = `<b>${sfEsc(a.label || 'ที่อยู่หลัก')}</b> <span style="background:#E63329;color:#fff;padding:1px 6px;font-size:9px;border-radius:3px;font-family:monospace;margin-left:4px">นัดรับ</span><br>
+        ${sfEsc(a.contact_name || '')} ${sfEsc(a.phone || '')}<br>
+        ${sfEsc(a.address_line || '')}<br>
+        ${sfEsc(a.subdistrict || '')} ${sfEsc(a.district || '')}<br>
+        ${sfEsc(a.province || '')} ${sfEsc(a.postal_code || '')}`;
+    } else {
+      addrEl.innerHTML = '<span style="color:#888">ยังไม่ได้ตั้งที่อยู่ — <a class="sp-link" onclick="goto(\'shipping\',null)">ไปตั้งค่า</a></span>';
+    }
+  }
+}
+
+window.spTab = function(tab) {
+  _spActiveTab = tab;
+  document.querySelectorAll('#page-ship-pending .sp-tab').forEach(b => b.classList.toggle('on', b.dataset.sptab === tab));
+  document.querySelectorAll('#page-ship-pending .sp-panel').forEach(p => p.classList.toggle('on', p.id === 'sp-panel-' + tab));
+  if (tab === 'docs') spRenderDocsTable();
+};
+
+window.spSetUrg = function(u) {
+  _spUrgFilter = u;
+  document.querySelectorAll('#sp-panel-pending [data-urg]').forEach(b => b.classList.toggle('on', b.dataset.urg === u));
+  spRenderTable();
+};
+
+window.spSetCourier = function(c) {
+  _spCourierFilter = c;
+  document.querySelectorAll('#sp-courier-pills [data-courier]').forEach(b => b.classList.toggle('on', b.dataset.courier === c));
+  spRenderTable();
+};
+
+window.spToggleAll = function(checked) {
+  document.querySelectorAll('#sp-list .sp-cb-item').forEach(cb => cb.checked = checked);
+  spUpdateSelCount();
+};
+
+window.spArrangePickup = async function(scope) {
+  const ids = scope === 'all' 
+    ? _spOrders.filter(o => {
+        if (_spUrgFilter !== 'all' && _spUrgencyOf(o) !== _spUrgFilter) return false;
+        if (_spCourierFilter !== 'all' && o.shipping_method !== _spCourierFilter) return false;
+        return true;
+      }).map(o => o.id)
+    : [...document.querySelectorAll('#sp-list .sp-cb-item:checked')].map(cb => cb.value);
+  
+  if (!ids.length) { toast('⚠️ ไม่มีพัสดุที่จะนัดรับ','error'); return; }
+  const pickupDate = $('sp-pickup-date')?.value;
+  if (!pickupDate) { toast('⚠️ กรุณาเลือกวันเข้ารับ','error'); return; }
+  
+  if (!confirm(`นัดรับ ${ids.length} พัสดุ ในวันที่ ${pickupDate}?`)) return;
+  
+  try {
+    // Update orders → status = processing + add tracking
+    for (const id of ids) {
+      await _sb.from('orders').update({
+        status: 'processing',
+        tracking_number: 'TH' + Math.random().toString().slice(2,11) + 'TH',
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+    }
+    toast(`✅ นัดรับ ${ids.length} พัสดุสำเร็จ`,'ok');
+    await renderShipPendingLive();
+  } catch(e) { toast('❌ ' + e.message,'error'); }
+};
+
+window.spDropOff = async function(scope) {
+  const ids = scope === 'all'
+    ? _spOrders.filter(o => {
+        if (_spUrgFilter !== 'all' && _spUrgencyOf(o) !== _spUrgFilter) return false;
+        if (_spCourierFilter !== 'all' && o.shipping_method !== _spCourierFilter) return false;
+        return true;
+      }).map(o => o.id)
+    : [...document.querySelectorAll('#sp-list .sp-cb-item:checked')].map(cb => cb.value);
+  
+  if (!ids.length) { toast('⚠️ ไม่มีพัสดุ','error'); return; }
+  if (!confirm(`ทำการจัดส่ง ${ids.length} พัสดุที่สาขา?`)) return;
+  
+  try {
+    for (const id of ids) {
+      await _sb.from('orders').update({
+        status: 'shipped',
+        shipped_at: new Date().toISOString(),
+        tracking_number: 'TH' + Math.random().toString().slice(2,11) + 'DO',
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+    }
+    toast(`✅ จัดส่งสำเร็จ ${ids.length} พัสดุ`,'ok');
+    await renderShipPendingLive();
+  } catch(e) { toast('❌ ' + e.message,'error'); }
+};
+
+// ─── Tab 2: Documents ───
+function spRenderDocsTable() {
+  const tbl = $('sp-doc-list');
+  if (!tbl) return;
+  
+  // For docs tab — show orders ที่ status = processing (นัดรับแล้ว) หรือ paid (ยังไม่นัด)
+  let list = _spOrders.slice();
+  
+  $('sp-doc-count') && ($('sp-doc-count').textContent = list.length);
+  
+  if (!list.length) {
+    tbl.innerHTML = `<tr><td colspan="9" class="sp-empty"><div class="sp-empty-img">📄</div><div>ไม่มีข้อมูล</div></td></tr>`;
+    return;
+  }
+  
+  tbl.innerHTML = list.map(o => {
+    const items = o.items || [];
+    const item = items[0];
+    const itemsHtml = item ? `
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="sp-thumb">${(item.thumbnail || item.products?.thumbnail) ? `<img src="${sfEsc(item.thumbnail || item.products?.thumbnail)}">` : '📦'}</div>
+        <div style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sfEsc(item.name || item.products?.name_th || '—')}</div>
+      </div>` : '—';
+    const addr = o.shipping_address || {};
+    const buyer = addr.name || '—';
+    const cfDate = o.paid_at || o.created_at;
+    const cfStr = cfDate ? new Date(cfDate).toLocaleDateString('th-TH') + ' ' + new Date(cfDate).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '—';
+    
+    return `<tr>
+      <td><input type="checkbox" class="sp-doc-cb-item" value="${o.id}" style="accent-color:#E63329"></td>
+      <td>${itemsHtml}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${sfEsc(o.order_number || o.id.slice(0,12).toUpperCase())}</td>
+      <td style="font-size:12px">${sfEsc(buyer)}</td>
+      <td><div class="sp-courier-chip">
+        <b>${sfEsc(o.shipping_method_name || o.shipping_method || '—')}</b><br>
+        <span style="font-size:10px;color:#888">Standard Delivery</span>
+      </div></td>
+      <td>${o.tracking_number ? `<span class="sp-tracking" onclick="toast('📦 Tracking: ${sfEsc(o.tracking_number)}','info')">${sfEsc(o.tracking_number)}</span>` : '<span style="color:#888;font-size:11px">—</span>'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${cfStr}</td>
+      <td style="font-size:11px;color:#888">—</td>
+      <td style="font-size:11px;line-height:1.6">
+        <div><span class="sp-status-dot"></span>ใบปะหน้าพัสดุ</div>
+        <div><span class="sp-status-dot"></span>Packing List</div>
+        <div><span class="sp-status-dot"></span>Picklist</div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+window.spDocStat = function(s) {
+  _spDocStat = s;
+  document.querySelectorAll('#sp-panel-docs [data-dstat]').forEach(b => b.classList.toggle('on', b.dataset.dstat === s));
+  spRenderDocsTable();
+};
+
+window.spDocUrg = function(u) {
+  _spDocUrg = u;
+  document.querySelectorAll('#sp-panel-docs [data-durg]').forEach(b => b.classList.toggle('on', b.dataset.durg === u));
+  spRenderDocsTable();
+};
+
+window.spDocToggleAll = function(checked) {
+  document.querySelectorAll('#sp-doc-list .sp-doc-cb-item').forEach(cb => cb.checked = checked);
+};
+
+window.spGenerateDocs = function() {
+  const ids = [...document.querySelectorAll('#sp-doc-list .sp-doc-cb-item:checked')].map(cb => cb.value);
+  if (!ids.length) { toast('⚠️ กรุณาเลือกพัสดุก่อน','error'); return; }
+  
+  const docs = [];
+  if ($('sp-doc-picklist')?.checked) docs.push('Picklist');
+  if ($('sp-doc-cover-packing')?.checked) docs.push('ใบปะหน้าพัสดุ & Packing List');
+  if ($('sp-doc-cover')?.checked) docs.push('ใบปะหน้าพัสดุ');
+  if ($('sp-doc-packing')?.checked) docs.push('Packing List');
+  
+  if (!docs.length) { toast('⚠️ กรุณาเลือกประเภทเอกสาร','error'); return; }
+  
+  const fmt = document.querySelector('input[name="sp-fmt"]:checked')?.value || 'pdf';
+  toast(`🖨️ สร้าง ${docs.join(' + ')} (${fmt.toUpperCase()}) ${ids.length} พัสดุ — กรุณารอ`, 'ok');
+  
+  // Open print preview ในหน้าต่างใหม่
+  setTimeout(() => spOpenDocPreview(ids, docs, fmt), 500);
+};
+
+function spOpenDocPreview(ids, docs, fmt) {
+  const w = window.open('', '_blank', 'width=800,height=900');
+  if (!w) { toast('⚠️ โปรดเปิด popup blocker','error'); return; }
+  
+  const orders = _spOrders.filter(o => ids.includes(o.id));
+  const docHtml = orders.map(o => {
+    const addr = o.shipping_address || {};
+    const items = o.items || [];
+    return `
+      <div style="page-break-after:always;padding:30px;font-family:sans-serif">
+        <div style="border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between">
+            <div>
+              <div style="font-size:18px;font-weight:bold">${sfEsc(o.shipping_method_name || 'Courier')}</div>
+              <div style="font-size:11px">Order: ${sfEsc(o.order_number || o.id)}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:monospace;font-size:14px">${sfEsc(o.tracking_number || '—')}</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;color:#666">ผู้รับ:</div>
+          <div style="font-weight:bold">${sfEsc(addr.name || '—')}</div>
+          <div style="font-size:12px">${sfEsc(addr.detail || '')}</div>
+        </div>
+        <div style="margin-top:18px">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="background:#f5f5f5"><th style="padding:6px;border:1px solid #ddd;text-align:left">สินค้า</th><th style="padding:6px;border:1px solid #ddd">จำนวน</th></tr></thead>
+            <tbody>
+              ${items.map(it => `<tr><td style="padding:6px;border:1px solid #ddd">${sfEsc(it.name || '—')}</td><td style="padding:6px;border:1px solid #ddd;text-align:center">${it.quantity || 1}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }).join('');
+  
+  w.document.write(`<html><head><title>${docs.join(' + ')}</title></head><body>
+    <div style="padding:10px;background:#FEF3C7;color:#92400E;font-size:13px;border-bottom:1px solid #F59E0B">
+      📄 ${docs.join(' + ')} (${fmt.toUpperCase()}) · ${orders.length} parcels · <a onclick="window.print()" style="color:#E63329;cursor:pointer">🖨️ พิมพ์</a>
+    </div>
+    ${docHtml}
+  </body></html>`);
+  w.document.close();
+}
+
+window.spGenerateConfirm = function() {
+  toast('📄 สร้างใบยืนยันการจัดส่ง — coming soon','info');
+};
+
 async function renderSecurityLive() {
   try {
     // Get user info
