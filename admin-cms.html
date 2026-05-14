@@ -4795,13 +4795,20 @@ async function loadUsers(search = '') {
 
     const tbody = document.getElementById('users-tbody');
     if (!data?.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-ico">👥</div><div class="empty-txt">ยังไม่มีผู้ใช้</div></div></td></tr>'; return; }
+    const roleColor = { admin:'#E63329', seller:'#2563EB', buyer:'#16A34A' };
     tbody.innerHTML = data.map(u => {
       const dt = new Date(u.created_at).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'});
-      const roleMap = { admin:'🔴 Admin', seller:'🟡 Seller', buyer:'🟢 Buyer' };
-      return `<tr>
+      const rc = roleColor[u.role] || '#888';
+      return `<tr id="users-row-${u.id}">
         <td style="font-family:var(--mono);font-size:12px">${u.email||'—'}</td>
         <td>${u.display_name||'—'}</td>
-        <td><span class="pill pill-gray">${roleMap[u.role]||u.role}</span></td>
+        <td>
+          <select onchange="setUserRole('${u.id}', this.value)" style="background:${rc}15;color:${rc};border:1px solid ${rc}40;padding:3px 8px;font-size:11px;font-family:monospace;cursor:pointer">
+            <option value="buyer" ${u.role==='buyer'||!u.role?'selected':''}>🟢 Buyer</option>
+            <option value="seller" ${u.role==='seller'?'selected':''}>🟡 Seller</option>
+            <option value="admin" ${u.role==='admin'?'selected':''}>🔴 Admin</option>
+          </select>
+        </td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--g500)">${dt}</td>
         <td><span class="pill ${u.is_active?'pill-ok':'pill-red'}">${u.is_active?'Active':'Suspended'}</span></td>
         <td>
@@ -4818,6 +4825,7 @@ async function toggleUserStatus(id, isActive, email) {
   if (error) { toast('เกิดข้อผิดพลาด: ' + error.message, 'error'); return; }
   toast(`${isActive?'ระงับ':'ปลดระงับ'}บัญชีแล้ว`, 'success');
   loadUsers();
+  if (typeof loadMembers === 'function') loadMembers();
 }
 
 function openInviteModal() { document.getElementById('invite-modal').classList.add('on'); }
@@ -7226,9 +7234,38 @@ async function loadMembers(filter = '', search = '') {
 }
 
 async function setUserRole(userId, newRole) {
+  // อัปเดต role + ถ้าเป็น seller ให้ ensure มี sellers row
   const { error } = await sb.from('users').update({ role: newRole, updated_at: new Date().toISOString() }).eq('id', userId);
   if (error) { toast('❌ ' + error.message); return; }
+
+  // ถ้าเปลี่ยนเป็น seller → สร้าง sellers row + link seller_id (ถ้ายังไม่มี)
+  if (newRole === 'seller') {
+    try {
+      const { data: u } = await sb.from('users').select('id,email,display_name,seller_id').eq('id', userId).maybeSingle();
+      if (u && !u.seller_id) {
+        // หา seller ที่มี user_id ตรงกัน หรือสร้างใหม่
+        let { data: existingSeller } = await sb.from('sellers').select('id').eq('user_id', userId).maybeSingle();
+        if (!existingSeller) {
+          const { data: newSeller } = await sb.from('sellers').insert({
+            user_id: userId,
+            shop_name: (u.display_name || u.email.split('@')[0]) + ' Shop',
+            status: 'active',
+            created_at: new Date().toISOString()
+          }).select('id').maybeSingle();
+          existingSeller = newSeller;
+        }
+        if (existingSeller) {
+          await sb.from('users').update({ seller_id: existingSeller.id }).eq('id', userId);
+        }
+      }
+    } catch(e) { console.warn('ensure seller row:', e); }
+  }
+
   toast(`✅ เปลี่ยน Role เป็น ${newRole} แล้ว`, 'ok');
+
+  // ── SYNC: refresh ทั้ง 2 panel ── 
+  if (typeof loadUsers === 'function') loadUsers();
+  if (typeof loadMembers === 'function') loadMembers();
 }
 
 async function banUser(userId) {
@@ -7236,16 +7273,16 @@ async function banUser(userId) {
   const { error } = await sb.from('users').update({ is_active: false, updated_at: new Date().toISOString() }).eq('id', userId);
   if (error) { toast('❌ ' + error.message); return; }
   toast('✅ ระงับ User แล้ว');
-  const row = document.getElementById('user-row-' + userId);
-  if (row) row.style.background = '#FEF2F2';
-  loadMembers();
+  if (typeof loadMembers === 'function') loadMembers();
+  if (typeof loadUsers === 'function') loadUsers();
 }
 
 async function unbanUser(userId) {
   const { error } = await sb.from('users').update({ is_active: true, updated_at: new Date().toISOString() }).eq('id', userId);
   if (error) { toast('❌ ' + error.message); return; }
   toast('✅ เปิดการใช้งาน User แล้ว');
-  loadMembers();
+  if (typeof loadMembers === 'function') loadMembers();
+  if (typeof loadUsers === 'function') loadUsers();
 }
 
 async function forceConfirmUser(userId) {
