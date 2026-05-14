@@ -771,6 +771,13 @@ img{max-width:100%;height:auto}
 <div class="toast-wrap" id="tw"></div>
 
 <script>
+// ── SUPABASE CLIENT — init ก่อนทุกอย่าง (กัน TDZ) ──
+const _sbCO = (window._sb) || supabase.createClient(
+  'https://qmgyimsptzewwyafvjzk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+);
+window._sb = _sbCO;
+
 // ── DATA — populated from Supabase by loadCheckoutData() ──
 const CART = [];
 const ADDRS = [];
@@ -1277,8 +1284,16 @@ function updateTotal(){
 async function loadShippingMethods() {
   const wrap = document.getElementById('ship-methods-wrap');
   if (!wrap) return;
-  const sb = window._sbCO || window.sb;
-  if (!sb) { wrap.innerHTML = '<div style="padding:14px;color:#E63329">⚠️ Supabase ยังไม่พร้อม</div>'; return; }
+  // resolve client อย่างปลอดภัย — กัน TDZ ถ้า _sbCO ยังไม่ถูก init
+  let sb = null;
+  try { sb = _sbCO; } catch(e) {}
+  if (!sb) sb = window._sb || window._sbCO || null;
+  if (!sb) {
+    // _sbCO ยังไม่พร้อม → retry อีกครั้งหลัง init เสร็จ
+    wrap.innerHTML = '<div style="padding:14px;text-align:center;color:#888;font-size:12px">⏳ กำลังเตรียมข้อมูล...</div>';
+    setTimeout(loadShippingMethods, 300);
+    return;
+  }
   
   if (!CART.length) { wrap.innerHTML = '<div style="padding:14px;color:#888;text-align:center;font-size:12px">ตะกร้าว่าง</div>'; return; }
   
@@ -1734,8 +1749,8 @@ function tmToast(msg){
 <script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
 
 <script>
-const _sbCO = (window._sb) || supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
-window._sb = _sbCO;
+// _sbCO ถูก init แล้วใน block แรก — block นี้ใช้ window._sb ต่อได้เลย
+window._sb = window._sb || supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
 
 function toast(msg, type) {
   const w=document.getElementById('tw')||document.getElementById('toast-wrap');
