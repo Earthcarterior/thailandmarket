@@ -738,21 +738,43 @@ async function loadOrders(uid) {
   const el=document.getElementById('orders-list');
   if(!el) return;
   if(!uid) { el.innerHTML=emptyHtml('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','category.html'); return; }
-  const {data:orders}=await sb.from('orders').select('*').eq('user_id',uid).order('created_at',{ascending:false}).limit(5);
+
+  // orders.user_id เก็บด้วย public.users.id — ลองทั้ง uid ที่ส่งมา + auth.uid() เผื่อข้อมูลเก่า
+  let orders = null;
+  const idsToTry = [...new Set([uid, currentAuthId].filter(Boolean))];
+  for (const tryId of idsToTry) {
+    const res = await sb.from('orders').select('*').eq('user_id',tryId).order('created_at',{ascending:false}).limit(5);
+    if (res.error) continue;
+    if (res.data && res.data.length) { orders = res.data; break; }
+    if (!orders) orders = res.data;
+  }
   if(!orders?.length) { el.innerHTML=emptyHtml('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','category.html'); return; }
-  const stMap={pending:'รอยืนยัน',confirmed:'ยืนยัน',processing:'กำลังเตรียม',shipped:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า'};
-  const scMap={pending:'pill-warn',confirmed:'pill-info',processing:'pill-info',shipped:'pill-info',delivered:'pill-ok',cancelled:'pill-gray',returned:'pill-gray'};
-  el.innerHTML=orders.map(o=>`<div class="order-item">
+
+  // status map — ตรงกับ order-history.html
+  const stMap={pending:'รอชำระเงิน',paid:'ชำระแล้ว',confirmed:'ยืนยัน',preparing:'กำลังเตรียม',processing:'กำลังเตรียม',shipping:'กำลังส่ง',shipped:'กำลังส่ง',delivered:'สำเร็จ',completed:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า'};
+  const scMap={pending:'pill-warn',paid:'pill-info',confirmed:'pill-info',preparing:'pill-info',processing:'pill-info',shipping:'pill-info',shipped:'pill-info',delivered:'pill-ok',completed:'pill-ok',cancelled:'pill-gray',returned:'pill-gray'};
+  el.innerHTML=orders.map(o=>{
+    // ออเดอร์เก่าเขียน total_amount, ออเดอร์ใหม่เขียน total — เอาค่าที่ไม่ใช่ 0
+    const orderTotal = Number(o.total) || Number(o.total_amount) || Number(o.grand_total) || Number(o.subtotal) || 0;
+    // ชื่อสินค้า + จำนวน — ดึงจาก items (เหมือน order-history.html)
+    const items = Array.isArray(o.items) ? o.items : [];
+    const names = items.map(i=>i.name||i.name_th||'').filter(Boolean);
+    const itemSummary = names.slice(0,2).join(', ') + (names.length>2?` และอีก ${names.length-2} รายการ`:'') || '(ไม่มีรายการสินค้า)';
+    const totalQty = items.reduce((s,i)=>s+(i.qty||1), 0);
+    return `<div class="order-item">
     <div class="oi-top"><div class="oi-num">${o.order_number||o.id.slice(0,8).toUpperCase()}</div>
     <div class="oi-date">· ${new Date(o.created_at).toLocaleDateString('th-TH')}</div>
     <div style="margin-left:auto"><span class="pill ${scMap[o.status]||'pill-gray'}">${stMap[o.status]||o.status}</span></div></div>
-    <div class="oi-bot"><div class="oi-total">฿${Number(o.total_amount).toLocaleString()}</div>
+    <div style="font-size:13px;color:#404040;margin:8px 0 2px;line-height:1.5">${itemSummary}</div>
+    <div style="font-size:11px;color:#737373;margin-bottom:8px">${totalQty} ชิ้น</div>
+    <div class="oi-bot"><div class="oi-total">฿${orderTotal.toLocaleString()}</div>
     <div class="oi-btns">
-      ${o.status==='shipped'?`<button class="btn btn-sm btn-ghost" onclick="location.href='tracking.html'">📍 ติดตาม</button>`:''}
-      ${o.status==='delivered'?`<button class="btn btn-sm btn-ghost" onclick="location.href='review-write.html'">⭐ รีวิว</button>`:''}
+      ${o.status==='pending'?`<button class="btn btn-sm" style="background:#FCD34D;color:#7C2D12;font-weight:700" onclick="location.href='checkout.html?direct=${o.id}'">⏳ ชำระเงิน</button>`:''}
+      ${(o.status==='shipped'||o.status==='shipping')?`<button class="btn btn-sm btn-ghost" onclick="location.href='tracking.html?order=${o.order_number}'">📍 ติดตาม</button>`:''}
+      ${(o.status==='delivered'||o.status==='completed')?`<button class="btn btn-sm btn-ghost" onclick="location.href='review-write.html?order=${o.id}'">⭐ รีวิว</button>`:''}
       <button class="btn btn-sm btn-k" onclick="location.href='order-history.html'">ดูรายละเอียด</button>
     </div></div>
-  </div>`).join('');
+  </div>`}).join('');
 }
 
 // ── Load Wishlist ─────────────────────────────────────────
