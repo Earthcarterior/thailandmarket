@@ -2920,15 +2920,8 @@ window.ppReject = async function(id) {
   ppLoad();
 };
 
-(function hookPayouts(){
-  const orig = window.showPanel;
-  if (typeof orig !== 'function') return;
-  window.showPanel = function(name) {
-    const r = orig.apply(this, arguments);
-    if (name === 'payouts') ppLoad();
-    return r;
-  };
-})();
+// hookPayouts ปิดไว้ — showPanel เรียก ppLoad() โดยตรงแล้ว (กัน timing issue)
+// (function hookPayouts(){ ... })();
 
 // Auto-poll badge
 async function ppUpdateBadge() {
@@ -3102,15 +3095,8 @@ window.krDecide = async function(id, decision) {
   krLoad();
 };
 
-(function hookKYC(){
-  const orig = window.showPanel;
-  if (typeof orig !== 'function') return;
-  window.showPanel = function(name) {
-    const r = orig.apply(this, arguments);
-    if (name === 'kyc') krLoad();
-    return r;
-  };
-})();
+// hookKYC ปิดไว้ — showPanel เรียก krLoad() โดยตรงแล้ว
+// (function hookKYC(){ ... })();
 
 // Auto-poll badge
 async function krBadgeLoop() {
@@ -3348,15 +3334,8 @@ window.auShowDetail = function(id) {
 window.auCloseModal = function() { document.getElementById('au-modal-overlay').classList.remove('on'); };
 
 // Hook into showPanel
-(function hookAudit(){
-  const orig = window.showPanel;
-  if (typeof orig !== 'function') return;
-  window.showPanel = function(name) {
-    const r = orig.apply(this, arguments);
-    if (name === 'audit') auLoad();
-    return r;
-  };
-})();
+// hookAudit ปิดไว้ — showPanel เรียก auLoad() โดยตรงแล้ว
+// (function hookAudit(){ ... })();
 </script>
 
 
@@ -4046,10 +4025,10 @@ function showPanel(name) {
   if (name === 'dashboard') loadDashboard();
   // Payment panel — init tab แรก (methods)
   if (name === 'payment' && typeof pmSwitchTab === 'function') pmSwitchTab(_pmTab || 'methods');
-  // audit / payouts / kyc — เป็น IIFE hooks ที่ auto-init เอง แต่เรียก refresh ถ้ามี
-  if (name === 'audit' && typeof window.alRefresh === 'function') window.alRefresh();
-  if (name === 'payouts' && typeof window.poRefresh === 'function') window.poRefresh();
-  if (name === 'kyc' && typeof window.kyRefresh === 'function') window.kyRefresh();
+  // audit / payouts / kyc — เรียก load function โดยตรง (IIFE hooks ไม่ทำงานเพราะ timing)
+  if (name === 'payouts' && typeof ppLoad === 'function') ppLoad();
+  if (name === 'kyc' && typeof krLoad === 'function') krLoad();
+  if (name === 'audit' && typeof auLoad === 'function') auLoad();
 }
 
 // ── Dashboard ─────────────────────────────────────────────
