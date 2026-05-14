@@ -6199,53 +6199,80 @@ async function renderSettingsLive() {
   try {
     const { data } = await _sb.from('seller_settings').select('*').eq('seller_id', _sellerSellerId).maybeSingle();
     const s = data || {};
-    document.getElementById('st-holiday-mode').checked = !!s.holiday_mode;
-    document.getElementById('st-holiday-msg').value = s.holiday_message || '';
-    document.getElementById('st-holiday-until').value = s.holiday_until ? new Date(s.holiday_until).toISOString().slice(0,16) : '';
-    document.getElementById('st-auto-reply').checked = !!s.auto_reply_enabled;
-    document.getElementById('st-auto-msg').value = s.auto_reply_message || '';
-    document.getElementById('st-bank-name').value = s.bank_name || '';
-    document.getElementById('st-bank-num').value = s.bank_account_number || '';
-    document.getElementById('st-bank-acc-name').value = s.bank_account_name || '';
-    document.getElementById('st-bank-branch').value = s.bank_branch || '';
-    document.getElementById('st-promptpay').value = s.promptpay_id || '';
-    document.getElementById('st-biz-name').value = s.business_name || '';
-    document.getElementById('st-biz-tax').value = s.business_tax_id || '';
-    document.getElementById('st-biz-addr').value = s.business_address || '';
-    document.getElementById('st-vat').checked = !!s.vat_registered;
-    document.getElementById('st-notif-order').checked = s.notify_new_order !== false;
-    document.getElementById('st-notif-stock').checked = s.notify_low_stock !== false;
-    document.getElementById('st-notif-msg').checked = s.notify_new_message !== false;
-    document.getElementById('st-notif-review').checked = s.notify_new_review !== false;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+    chk('st-holiday-mode', !!s.holiday_mode);
+    set('st-holiday-msg', s.holiday_message || '');
+    set('st-holiday-until', s.holiday_until ? new Date(s.holiday_until).toISOString().slice(0,16) : '');
+    chk('st-auto-reply', !!s.auto_reply_enabled);
+    set('st-auto-msg', s.auto_reply_message || '');
+    set('st-bank-name', s.bank_name || '');
+    set('st-bank-num', s.bank_account_number || '');
+    set('st-bank-acc-name', s.bank_account_name || '');
+    set('st-bank-branch', s.bank_branch || '');
+    set('st-promptpay', s.promptpay_id || '');
+    set('st-biz-name', s.business_name || '');
+    set('st-biz-tax', s.business_tax_id || '');
+    set('st-biz-addr', s.business_address || '');
+    chk('st-vat', !!s.vat_registered);
+    chk('st-notif-order', s.notify_new_order !== false);
+    chk('st-notif-stock', s.notify_low_stock !== false);
+    chk('st-notif-msg', s.notify_new_message !== false);
+    chk('st-notif-review', s.notify_new_review !== false);
   } catch(e) { console.warn('settings load:', e); }
 }
 
 window.stSave = async function() {
   if (!_sellerSellerId) return;
+  const g = id => document.getElementById(id);
   const payload = {
     seller_id: _sellerSellerId,
-    holiday_mode: document.getElementById('st-holiday-mode').checked,
-    holiday_message: document.getElementById('st-holiday-msg').value.trim() || null,
-    holiday_until: document.getElementById('st-holiday-until').value ? new Date(document.getElementById('st-holiday-until').value).toISOString() : null,
-    auto_reply_enabled: document.getElementById('st-auto-reply').checked,
-    auto_reply_message: document.getElementById('st-auto-msg').value.trim() || null,
-    bank_name: document.getElementById('st-bank-name').value.trim() || null,
-    bank_account_number: document.getElementById('st-bank-num').value.trim() || null,
-    bank_account_name: document.getElementById('st-bank-acc-name').value.trim() || null,
-    bank_branch: document.getElementById('st-bank-branch').value.trim() || null,
-    promptpay_id: document.getElementById('st-promptpay').value.trim() || null,
-    business_name: document.getElementById('st-biz-name').value.trim() || null,
-    business_tax_id: document.getElementById('st-biz-tax').value.trim() || null,
-    business_address: document.getElementById('st-biz-addr').value.trim() || null,
-    vat_registered: document.getElementById('st-vat').checked,
-    notify_new_order: document.getElementById('st-notif-order').checked,
-    notify_low_stock: document.getElementById('st-notif-stock').checked,
-    notify_new_message: document.getElementById('st-notif-msg').checked,
-    notify_new_review: document.getElementById('st-notif-review').checked,
+    holiday_mode: g('st-holiday-mode')?.checked || false,
+    holiday_message: g('st-holiday-msg')?.value.trim() || null,
+    holiday_until: g('st-holiday-until')?.value ? new Date(g('st-holiday-until').value).toISOString() : null,
+    auto_reply_enabled: g('st-auto-reply')?.checked || false,
+    auto_reply_message: g('st-auto-msg')?.value.trim() || null,
+    bank_name: g('st-bank-name')?.value.trim() || null,
+    bank_account_number: g('st-bank-num')?.value.trim() || null,
+    bank_account_name: g('st-bank-acc-name')?.value.trim() || null,
+    bank_branch: g('st-bank-branch')?.value.trim() || null,
+    promptpay_id: g('st-promptpay')?.value.trim() || null,
+    business_name: g('st-biz-name')?.value.trim() || null,
+    business_tax_id: g('st-biz-tax')?.value.trim() || null,
+    business_address: g('st-biz-addr')?.value.trim() || null,
+    vat_registered: g('st-vat')?.checked || false,
+    notify_new_order: g('st-notif-order')?.checked !== false,
+    notify_low_stock: g('st-notif-stock')?.checked !== false,
+    notify_new_message: g('st-notif-msg')?.checked !== false,
+    notify_new_review: g('st-notif-review')?.checked !== false,
     updated_at: new Date().toISOString()
   };
-  const { error } = await _sb.from('seller_settings').upsert(payload, {onConflict:'seller_id'});
-  if (error) { alert('❌ ' + error.message); return; }
+
+  let { error } = await _sb.from('seller_settings').upsert(payload, {onConflict:'seller_id'});
+
+  // ถ้า error เพราะ column หาย → ลองตัด column ที่มีปัญหาออกแล้ว retry
+  if (error && /Could not find the '(\w+)' column/.test(error.message)) {
+    const missingCols = [];
+    let retryPayload = {...payload};
+    let attempts = 0;
+    while (error && attempts < 25) {
+      const m = error.message.match(/Could not find the '(\w+)' column/);
+      if (!m) break;
+      const badCol = m[1];
+      missingCols.push(badCol);
+      delete retryPayload[badCol];
+      attempts++;
+      const res = await _sb.from('seller_settings').upsert(retryPayload, {onConflict:'seller_id'});
+      error = res.error;
+    }
+    if (!error) {
+      alert('⚠️ บันทึกบางส่วนสำเร็จ\n\nColumn ที่ยังไม่มีใน DB: ' + missingCols.join(', ') + 
+            '\n\nกรุณารัน seller-settings-columns-fix SQL เพื่อบันทึกได้ครบ');
+      return;
+    }
+  }
+
+  if (error) { alert('❌ บันทึกไม่สำเร็จ: ' + error.message + '\n\nกรุณารัน seller-settings-columns-fix SQL'); return; }
   alert('✅ บันทึกการตั้งค่าแล้ว');
 };
 
