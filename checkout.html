@@ -1644,6 +1644,7 @@ async function doCheckout(){
         }
         const slipInsert = {
           order_id: order.id,
+          order_number: orderNum,    // ส่ง order_number ด้วย — กัน NOT NULL constraint
           user_id: user.id,
           method_id: selectedMethod.id,
           account_id: (selectedMethod.accounts && selectedMethod.accounts[0]) ? selectedMethod.accounts[0].id : null,
