@@ -869,11 +869,13 @@ function renderPayDetails() {
   }
 
   // Manual mode — แสดงบัญชี + slip upload
-  const acc = p.accounts[0];
+  const acc = p.accounts && p.accounts[0];
   if (!acc) {
     el.innerHTML = `
-      <div style="padding:16px;background:#FFF5F5;border:1px solid #E63329;border-radius:6px;font-size:13px;color:#E63329">
-        ⚠️ ยังไม่ได้ตั้งค่าบัญชีรับเงินสำหรับช่องทางนี้
+      <div style="padding:16px;background:#FFF5F5;border:1px solid #E63329;border-radius:6px;font-size:13px;color:#991B1B">
+        ⚠️ <strong>ช่องทางนี้ยังไม่พร้อมใช้งาน</strong><br>
+        <span style="color:#666;font-size:12px">Admin ยังไม่ได้ตั้งค่าบัญชีรับเงิน/QR สำหรับ "${p.name}"</span><br>
+        <span style="color:#666;font-size:12px">👉 กรุณาเลือกช่องทางการชำระเงินอื่นที่พร้อมใช้งาน</span>
       </div>`;
     return;
   }
@@ -1534,8 +1536,27 @@ async function doCheckout(){
   // ── Validation: ตรวจ slip ถ้า method นี้ require ──
   const selectedMethod = _PAY_DETAILS[selPay];
   const needsSlip = selectedMethod && selectedMethod.requires_slip && selectedMethod.mode === 'manual';
+
+  // เช็คว่ามีบัญชีรับเงินตั้งค่าไว้ไหม
+  if (needsSlip && (!selectedMethod.accounts || !selectedMethod.accounts.length)) {
+    toast('⚠️ ช่องทางนี้ยังไม่พร้อมใช้งาน — admin ยังไม่ได้ตั้งค่าบัญชีรับเงิน กรุณาเลือกช่องทางอื่น');
+    document.getElementById('pay-section')?.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
   if (needsSlip && !_uploadedSlipUrl) {
-    toast('⚠️ กรุณาอัปโหลด slip การโอนเงิน');
+    toast('⚠️ กรุณาอัปโหลด slip การโอนเงินก่อนยืนยันคำสั่งซื้อ');
+    // scroll ไปที่ช่องอัปโหลด slip + highlight
+    const slipBox = document.getElementById('slip-file');
+    if (slipBox) {
+      slipBox.scrollIntoView({behavior:'smooth', block:'center'});
+      const detailEl = document.getElementById('pay-details');
+      if (detailEl) {
+        detailEl.style.transition = 'box-shadow .3s';
+        detailEl.style.boxShadow = '0 0 0 3px #E63329';
+        setTimeout(() => { detailEl.style.boxShadow = ''; }, 1500);
+      }
+    }
     return;
   }
 
