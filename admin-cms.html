@@ -4026,9 +4026,30 @@ function showPanel(name) {
   if (name === 'approve') loadPending();
   if (name === 'orders') orLoad();
   if (name === 'users') loadUsers();
+  if (name === 'members' && typeof loadMembers === 'function') loadMembers();
   if (name === 'categories') loadCategories();
+  if (name === 'brands' && typeof loadBrands === 'function') loadBrands();
+  if (name === 'flash' && typeof loadFlash === 'function') loadFlash();
+  if (name === 'banners' && typeof loadAdminBanners === 'function') loadAdminBanners();
+  if (name === 'sellers' && typeof loadSellers === 'function') loadSellers();
+  if (name === 'reviews') {
+    if (typeof loadReviewStats === 'function') loadReviewStats();
+    if (typeof loadAdminReviews === 'function') loadAdminReviews();
+  }
+  if (name === 'support' && typeof csLoadThreads === 'function') {
+    csLoadThreads();
+    if (typeof csLoadStats === 'function') csLoadStats();
+  }
+  if (name === 'coupons' && typeof loadAdminCoupons === 'function') loadAdminCoupons();
+  if (name === 'articles' && typeof loadAdminArticles === 'function') loadAdminArticles();
   if (name === 'settings') loadSettings();
   if (name === 'dashboard') loadDashboard();
+  // Payment panel — init tab แรก (methods)
+  if (name === 'payment' && typeof pmSwitchTab === 'function') pmSwitchTab(_pmTab || 'methods');
+  // audit / payouts / kyc — เป็น IIFE hooks ที่ auto-init เอง แต่เรียก refresh ถ้ามี
+  if (name === 'audit' && typeof window.alRefresh === 'function') window.alRefresh();
+  if (name === 'payouts' && typeof window.poRefresh === 'function') window.poRefresh();
+  if (name === 'kyc' && typeof window.kyRefresh === 'function') window.kyRefresh();
 }
 
 // ── Dashboard ─────────────────────────────────────────────
