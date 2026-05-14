@@ -2170,15 +2170,7 @@ window.csInit = csInit;
 
 // Auto-init when panel-support shown
 document.addEventListener('DOMContentLoaded', () => {
-  // Hook into existing showPanel
-  const origShowPanel = window.showPanel;
-  if (typeof origShowPanel === 'function') {
-    window.showPanel = function(name) {
-      const result = origShowPanel.apply(this, arguments);
-      if (name === 'support') csInit();
-      return result;
-    };
-  }
+  // hook support ปิดไว้ — showPanel ตัวจริง (case 'support') เรียก csInit() เองแล้ว
   // Also try once on load (in case admin lands on this panel)
   setTimeout(() => csUpdateUnreadBadge(), 2000);
 });
@@ -2760,18 +2752,11 @@ window.pmDisableMaintenance = async function() {
   pmLoadSettings();
 };
 
-// Auto-init when panel shown
-(function hookPaymentPanel(){
-  const orig = window.showPanel;
-  if (typeof orig !== 'function') return;
-  window.showPanel = function(name){
-    const r = orig.apply(this, arguments);
-    if (name === 'payment') pmSwitchTab(_pmTab || 'methods');
-    return r;
-  };
-  // Initial badge load
-  setTimeout(()=>pmUpdatePendingBadge(), 2000);
-  setInterval(()=>pmUpdatePendingBadge(), 30000);
+// hookPaymentPanel ปิดไว้ — showPanel ตัวจริง (case 'payment') เรียก pmSwitchTab เองแล้ว
+(function paymentBadgeOnly(){
+  // เหลือแค่ badge updater — ไม่ override showPanel
+  setTimeout(()=>{ if(typeof pmUpdatePendingBadge==='function') pmUpdatePendingBadge(); }, 2000);
+  setInterval(()=>{ if(typeof pmUpdatePendingBadge==='function') pmUpdatePendingBadge(); }, 30000);
 })();
 </script>
 
@@ -5509,6 +5494,9 @@ window.showPanel = function(name) {
     categories:'หมวดหมู่', settings:'ตั้งค่า',
     brands:'แบรนด์', flash:'Flash Sale',
     orders:'ออเดอร์', reviews:'รีวิว', coupons:'คูปอง',
+    payment:'ระบบการชำระเงิน', payouts:'Payout Requests',
+    kyc:'KYC Review', audit:'Audit Logs', support:'Customer Support',
+    banners:'Banners', articles:'บทความ',
   };
   if (titleEl && titles[name]) titleEl.textContent = titles[name];
 
@@ -5527,6 +5515,13 @@ window.showPanel = function(name) {
     case 'approve':     loadPending('pending_review'); break;
     case 'members':     loadMembers('unconfirmed');    break;
     case 'users':       loadUsers();                   break;
+    // ── panels ที่หายไป — เพิ่มให้ครบ ──
+    case 'orders':      if (typeof orLoad === 'function') orLoad();          break;
+    case 'payment':     if (typeof pmSwitchTab === 'function') pmSwitchTab(window._pmTab || 'methods'); break;
+    case 'payouts':     if (typeof ppLoad === 'function') ppLoad();          break;
+    case 'kyc':         if (typeof krLoad === 'function') krLoad();          break;
+    case 'audit':       if (typeof auLoad === 'function') auLoad();          break;
+    case 'support':     if (typeof csInit === 'function') csInit();          break;
   }
 };
 
