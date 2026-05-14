@@ -602,7 +602,44 @@ img{max-width:100%;height:auto}
     <div class="card" id="addr-section">
       <div class="sec-title">📍 ที่อยู่จัดส่ง</div>
       <div id="addr-list"></div>
-      <button class="add-addr-btn" onclick="toast('➕ เพิ่มที่อยู่ใหม่')">+ เพิ่มที่อยู่ใหม่</button>
+      <button class="add-addr-btn" onclick="openAddrModal()">+ เพิ่มที่อยู่ใหม่</button>
+    </div>
+
+    <!-- ADDRESS MODAL -->
+    <div id="addr-modal" onclick="closeAddrModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px">
+      <div style="background:#fff;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;border-radius:8px;padding:24px" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <div style="font-size:16px;font-weight:600">📍 เพิ่มที่อยู่จัดส่ง</div>
+          <button onclick="closeAddrModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888">×</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label style="font-size:12px;color:#666;display:block;margin-bottom:4px">ชื่อผู้รับ *</label>
+            <input id="cm-addr-name" style="width:100%;padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px" placeholder="ชื่อ-นามสกุล"></div>
+          <div><label style="font-size:12px;color:#666;display:block;margin-bottom:4px">เบอร์โทร *</label>
+            <input id="cm-addr-phone" style="width:100%;padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px" placeholder="08X-XXX-XXXX"></div>
+        </div>
+        <div style="margin-top:10px"><label style="font-size:12px;color:#666;display:block;margin-bottom:4px">ที่อยู่ *</label>
+          <input id="cm-addr-line1" style="width:100%;padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px" placeholder="123/45 ถ.สุขุมวิท ซ.10"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+          <div><label style="font-size:12px;color:#666;display:block;margin-bottom:4px">ตำบล/แขวง</label>
+            <input id="cm-addr-subdistrict" style="width:100%;padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px" placeholder="คลองเตย"></div>
+          <div><label style="font-size:12px;color:#666;display:block;margin-bottom:4px">อำเภอ/เขต</label>
+            <input id="cm-addr-district" style="width:100%;padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px" placeholder="คลองเตย"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+          <div><label style="font-size:12px;color:#666;display:block;margin-bottom:4px">จังหวัด *</label>
+            <input id="cm-addr-province" style="width:100%;padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px" placeholder="กรุงเทพมหานคร"></div>
+          <div><label style="font-size:12px;color:#666;display:block;margin-bottom:4px">รหัสไปรษณีย์ *</label>
+            <input id="cm-addr-postcode" maxlength="5" style="width:100%;padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px" placeholder="10110"></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="cm-addr-default" checked> ตั้งเป็นที่อยู่หลัก
+        </label>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
+          <button onclick="closeAddrModal()" style="padding:9px 16px;background:#fff;border:1px solid #E5E5E5;border-radius:4px;cursor:pointer;font-size:13px">ยกเลิก</button>
+          <button onclick="saveCheckoutAddr()" style="padding:9px 16px;background:#E63329;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">💾 บันทึก</button>
+        </div>
+      </div>
     </div>
 
     <!-- SHIPPING METHOD (per seller) -->
@@ -931,6 +968,64 @@ function buildAddrs(){
   </div>`).join('');
 }
 function selAddr(i){ADDRS.forEach((a,j)=>a.sel=j===i);buildAddrs();toast('📍 เลือกที่อยู่แล้ว');}
+
+// ── Address Modal (เพิ่มที่อยู่ใหม่ในหน้า checkout) ──
+function openAddrModal(){
+  ['cm-addr-name','cm-addr-phone','cm-addr-line1','cm-addr-subdistrict','cm-addr-district','cm-addr-province','cm-addr-postcode'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const dc=document.getElementById('cm-addr-default'); if(dc) dc.checked = ADDRS.length===0;
+  const m=document.getElementById('addr-modal');
+  if(m){ m.style.display='flex'; }
+}
+function closeAddrModal(){
+  const m=document.getElementById('addr-modal');
+  if(m) m.style.display='none';
+}
+async function saveCheckoutAddr(){
+  const g=id=>document.getElementById(id)?.value?.trim()||'';
+  const name=g('cm-addr-name'), phone=g('cm-addr-phone'), line1=g('cm-addr-line1');
+  const subdistrict=g('cm-addr-subdistrict'), district=g('cm-addr-district');
+  const province=g('cm-addr-province'), postcode=g('cm-addr-postcode');
+  const isDefault=document.getElementById('cm-addr-default')?.checked;
+
+  // validate
+  if(!name){ toast('⚠️ กรุณากรอกชื่อผู้รับ'); return; }
+  if(!phone){ toast('⚠️ กรุณากรอกเบอร์โทร'); return; }
+  if(!line1){ toast('⚠️ กรุณากรอกที่อยู่'); return; }
+  if(!province){ toast('⚠️ กรุณากรอกจังหวัด'); return; }
+  if(!postcode||postcode.length<5){ toast('⚠️ รหัสไปรษณีย์ไม่ถูกต้อง'); return; }
+
+  // ต้อง login ก่อน
+  let authId=null;
+  try{
+    const { data:{ user:u } } = await _sbCO.auth.getUser();
+    if(u) authId=u.id;
+  }catch(e){}
+  if(!authId){ toast('⚠️ กรุณาเข้าสู่ระบบก่อนเพิ่มที่อยู่'); return; }
+
+  try{
+    // ใช้ auth.uid() เป็น user_id ให้ตรงกับ profile.html convention
+    const addrData={
+      user_id:authId, name, phone, line1, subdistrict, district, province, postcode,
+      tag:'บ้าน', is_default:isDefault, updated_at:new Date().toISOString()
+    };
+    // ถ้าตั้งเป็นหลัก → unset ตัวอื่นก่อน
+    if(isDefault){
+      await _sbCO.from('addresses').update({is_default:false}).eq('user_id',authId);
+    }
+    const { error } = await _sbCO.from('addresses').insert({...addrData,created_at:new Date().toISOString()});
+    if(error) throw error;
+
+    toast('✅ เพิ่มที่อยู่สำเร็จ');
+    closeAddrModal();
+    // reload addresses
+    await loadCheckoutData();
+  }catch(e){
+    toast('❌ บันทึกไม่สำเร็จ: '+(e.message||e));
+    console.error('saveCheckoutAddr:',e);
+  }
+}
 
 function buildPays(){
   document.getElementById('pay-methods').innerHTML=PAYS.map(p=>`<div class="pm-card ${p.id===selPay?'selected':''}" onclick="selPayMethod('${p.id}')">
@@ -1721,13 +1816,15 @@ window.getPublicUserId = getPublicUserId;
 // ── Load cart + addresses from Supabase ───────────────────
 async function loadCheckoutData() {
   let user = null;
+  let authUserId = null;   // auth.uid() — ใช้ query addresses (profile.html เก็บด้วยค่านี้)
   try {
     const { data:{ user: u } } = await _sbCO.auth.getUser();
     user = u;
-    // Set public user id ใน cache จาก email
     if (u) {
+      authUserId = u.id;  // เก็บ auth.uid() ไว้ก่อน override
+      // Set public user id ใน cache จาก email
       const pid = await getPublicUserId();
-      if (pid) user = { ...u, id: pid };  // override id with public.users.id
+      if (pid) user = { ...u, id: pid, authId: u.id };  // id = public.users.id, authId = auth.uid()
     }
   } catch(e) { /* anon */ }
 
@@ -1801,16 +1898,24 @@ async function loadCheckoutData() {
   cartItems.forEach(it => CART.push(it));
 
   // ── 2. ADDRESSES: from Supabase addresses table ──
+  // profile.html เก็บ addresses.user_id ด้วย auth.uid() — query ด้วย authUserId ก่อน
+  // แต่บางข้อมูลเก่าอาจเก็บด้วย public.users.id → fallback ลองทั้งคู่
   let addrItems = [];
   if (user) {
     try {
-      const { data, error } = await _sbCO
-        .from('addresses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('is_default', { ascending: false })
-        .order('updated_at', { ascending: false });
-      if (error) throw error;
+      // ลอง query ทั้ง 2 id (auth.uid() + public.users.id) เผื่อข้อมูลเก่า
+      const idsToTry = [...new Set([authUserId, user.id].filter(Boolean))];
+      let data = null;
+      for (const tryId of idsToTry) {
+        const res = await _sbCO
+          .from('addresses')
+          .select('*')
+          .eq('user_id', tryId)
+          .order('is_default', { ascending: false })
+          .order('updated_at', { ascending: false });
+        if (res.error) throw res.error;
+        if (res.data && res.data.length) { data = res.data; break; }
+      }
       addrItems = (data || []).map((a, idx) => ({
         id: a.id,
         name: `${a.name || ''}  |  ${a.phone || ''}`,
@@ -1843,7 +1948,7 @@ async function loadCheckoutData() {
     if (addrEl) addrEl.innerHTML = `
       <div style="text-align:center;padding:32px;color:#737373;border:2px dashed #E5E5E5;border-radius:6px">
         <div style="font-size:14px;margin-bottom:12px">ยังไม่มีที่อยู่จัดส่ง</div>
-        <a href="profile.html#addresses" style="display:inline-block;padding:10px 20px;background:var(--black);color:#fff;border-radius:4px;text-decoration:none;font-size:13px">+ เพิ่มที่อยู่ในโปรไฟล์</a>
+        <button onclick="openAddrModal()" style="display:inline-block;padding:10px 20px;background:var(--black);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px">+ เพิ่มที่อยู่จัดส่ง</button>
       </div>`;
   } else {
     buildAddrs();
