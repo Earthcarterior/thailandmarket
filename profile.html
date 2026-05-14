@@ -431,9 +431,28 @@ nav, .nav {
 
     <!-- ORDERS -->
     <div class="pv" id="pv-orders">
-      <div class="sec-head"><div class="sec-title">ออเดอร์ของฉัน</div><button class="btn btn-sm btn-ghost">ดูทั้งหมด →</button></div>
-      <div style="padding:24px" id="orders-list"></div>
+      <div class="sec-head"><div class="sec-title">ออเดอร์ของฉัน <span id="orders-total-count" style="font-size:13px;color:#737373;font-weight:400"></span></div></div>
+      <!-- Filter tabs -->
+      <div id="orders-tabs" style="display:flex;border-bottom:1px solid #E5E5E5;overflow-x:auto;padding:0 24px">
+        <button onclick="ordTab(this,'all')" data-tab="all" class="ord-tab on">ทั้งหมด (0)</button>
+        <button onclick="ordTab(this,'pending')" data-tab="pending" class="ord-tab">รอชำระเงิน (0)</button>
+        <button onclick="ordTab(this,'shipping')" data-tab="shipping" class="ord-tab">กำลังจัดส่ง (0)</button>
+        <button onclick="ordTab(this,'delivered')" data-tab="delivered" class="ord-tab">สำเร็จ (0)</button>
+        <button onclick="ordTab(this,'returned')" data-tab="returned" class="ord-tab">คืนสินค้า (0)</button>
+      </div>
+      <!-- Search -->
+      <div style="padding:16px 24px 0">
+        <input type="text" id="orders-search" placeholder="ค้นหา Order ID หรือชื่อสินค้า..."
+          oninput="ordSearch(this.value)"
+          style="width:100%;padding:9px 14px;border:1px solid #E5E5E5;font-size:13px;outline:none;border-radius:4px">
+      </div>
+      <div style="padding:16px 24px 24px" id="orders-list"></div>
     </div>
+    <style>
+      .ord-tab{padding:10px 16px;font-size:12px;font-weight:500;color:#737373;cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid transparent;background:transparent;font-family:inherit;transition:color .15s}
+      .ord-tab.on{color:#0A0A0A;border-bottom-color:#0A0A0A;font-weight:700}
+      .ord-tab:hover{color:#0A0A0A}
+    </style>
 
     <!-- WISHLIST -->
     <div class="pv" id="pv-wishlist">
@@ -734,29 +753,101 @@ function setupNavDropdown(name, email, role, ini) {
 }
 
 // ── Load Orders ───────────────────────────────────────────
+// ── Orders — โหลดทั้งหมด + filter tabs + ค้นหา (รวม order-history มาไว้ที่นี่) ──
+let _profileOrders = [];     // เก็บออเดอร์ทั้งหมด
+let _profileOrderTab = 'all';
+let _profileOrderSearch = '';
+
 async function loadOrders(uid) {
   const el=document.getElementById('orders-list');
   if(!el) return;
   if(!uid) { el.innerHTML=emptyHtml('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','category.html'); return; }
 
-  // orders.user_id เก็บด้วย public.users.id — ลองทั้ง uid ที่ส่งมา + auth.uid() เผื่อข้อมูลเก่า
+  // orders.user_id เก็บด้วย public.users.id — ลองทั้ง uid + auth.uid() เผื่อข้อมูลเก่า
   let orders = null;
   const idsToTry = [...new Set([uid, currentAuthId].filter(Boolean))];
   for (const tryId of idsToTry) {
-    const res = await sb.from('orders').select('*').eq('user_id',tryId).order('created_at',{ascending:false}).limit(5);
+    const res = await sb.from('orders').select('*').eq('user_id',tryId).order('created_at',{ascending:false});
     if (res.error) continue;
     if (res.data && res.data.length) { orders = res.data; break; }
     if (!orders) orders = res.data;
   }
-  if(!orders?.length) { el.innerHTML=emptyHtml('📦','ยังไม่มีคำสั่งซื้อ','เริ่มช้อปเลย','category.html'); return; }
+  _profileOrders = orders || [];
+  console.log('[profile] loaded', _profileOrders.length, 'orders');
 
-  // status map — ตรงกับ order-history.html
-  const stMap={pending:'รอชำระเงิน',paid:'ชำระแล้ว',confirmed:'ยืนยัน',preparing:'กำลังเตรียม',processing:'กำลังเตรียม',shipping:'กำลังส่ง',shipped:'กำลังส่ง',delivered:'สำเร็จ',completed:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า'};
-  const scMap={pending:'pill-warn',paid:'pill-info',confirmed:'pill-info',preparing:'pill-info',processing:'pill-info',shipping:'pill-info',shipped:'pill-info',delivered:'pill-ok',completed:'pill-ok',cancelled:'pill-gray',returned:'pill-gray'};
-  el.innerHTML=orders.map(o=>{
-    // ออเดอร์เก่าเขียน total_amount, ออเดอร์ใหม่เขียน total — เอาค่าที่ไม่ใช่ 0
+  // อัปเดต count ทุก tab
+  const f = (arr) => _profileOrders.filter(o => arr.includes(o.status)).length;
+  const cAll = _profileOrders.length;
+  const cPending = f(['pending']);
+  const cShipping = f(['paid','confirmed','preparing','processing','shipping','shipped']);
+  const cDelivered = f(['delivered','completed']);
+  const cReturned = f(['returned','return_requested','refunded','cancelled']);
+
+  const tc = document.getElementById('orders-total-count');
+  if (tc) tc.textContent = `(${cAll} รายการ)`;
+  const tabs = document.querySelectorAll('#orders-tabs .ord-tab');
+  if (tabs[0]) tabs[0].textContent = `ทั้งหมด (${cAll})`;
+  if (tabs[1]) tabs[1].textContent = `รอชำระเงิน (${cPending})`;
+  if (tabs[2]) tabs[2].textContent = `กำลังจัดส่ง (${cShipping})`;
+  if (tabs[3]) tabs[3].textContent = `สำเร็จ (${cDelivered})`;
+  if (tabs[4]) tabs[4].textContent = `คืนสินค้า (${cReturned})`;
+
+  renderProfileOrders();
+}
+
+function ordTab(btn, tab) {
+  _profileOrderTab = tab;
+  document.querySelectorAll('#orders-tabs .ord-tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderProfileOrders();
+}
+
+function ordSearch(val) {
+  _profileOrderSearch = (val||'').toLowerCase().trim();
+  renderProfileOrders();
+}
+
+function renderProfileOrders() {
+  const el = document.getElementById('orders-list');
+  if (!el) return;
+
+  // filter ตาม tab
+  const tabGroups = {
+    all: null,
+    pending: ['pending'],
+    shipping: ['paid','confirmed','preparing','processing','shipping','shipped'],
+    delivered: ['delivered','completed'],
+    returned: ['returned','return_requested','refunded','cancelled']
+  };
+  let list = _profileOrders;
+  const grp = tabGroups[_profileOrderTab];
+  if (grp) list = list.filter(o => grp.includes(o.status));
+
+  // filter ตาม search
+  if (_profileOrderSearch) {
+    list = list.filter(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      const itemNames = items.map(i=>(i.name||i.name_th||'')).join(' ').toLowerCase();
+      return (o.order_number||'').toLowerCase().includes(_profileOrderSearch)
+          || itemNames.includes(_profileOrderSearch);
+    });
+  }
+
+  if (!list.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px 24px;color:#737373">
+      <div style="font-size:48px;margin-bottom:12px">📦</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px">${_profileOrders.length ? 'ไม่พบออเดอร์' : 'ยังไม่มีคำสั่งซื้อ'}</div>
+      <div style="font-size:13px;margin-bottom:16px">${_profileOrders.length ? 'ลองเลือกแท็บอื่นหรือเปลี่ยนคำค้นหา' : 'เริ่มช้อปเพื่อสร้างออเดอร์แรก'}</div>
+      ${_profileOrders.length ? '' : '<a href="category.html" style="background:#0A0A0A;color:#fff;padding:10px 24px;display:inline-block;font-size:13px">เริ่มช้อปเลย →</a>'}
+    </div>`;
+    return;
+  }
+
+  const stMap={pending:'รอชำระเงิน',paid:'ชำระแล้ว',confirmed:'ยืนยัน',preparing:'กำลังเตรียม',processing:'กำลังเตรียม',shipping:'กำลังส่ง',shipped:'กำลังส่ง',delivered:'สำเร็จ',completed:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า',return_requested:'ขอคืนสินค้า',refunded:'คืนเงินแล้ว'};
+  const scMap={pending:'pill-warn',paid:'pill-info',confirmed:'pill-info',preparing:'pill-info',processing:'pill-info',shipping:'pill-info',shipped:'pill-info',delivered:'pill-ok',completed:'pill-ok',cancelled:'pill-gray',returned:'pill-gray',return_requested:'pill-warn',refunded:'pill-gray'};
+
+  el.innerHTML = list.map(o=>{
     const orderTotal = Number(o.total) || Number(o.total_amount) || Number(o.grand_total) || Number(o.subtotal) || 0;
-    // ชื่อสินค้า + จำนวน — ดึงจาก items (เหมือน order-history.html)
     const items = Array.isArray(o.items) ? o.items : [];
     const names = items.map(i=>i.name||i.name_th||'').filter(Boolean);
     const itemSummary = names.slice(0,2).join(', ') + (names.length>2?` และอีก ${names.length-2} รายการ`:'') || '(ไม่มีรายการสินค้า)';
@@ -772,9 +863,21 @@ async function loadOrders(uid) {
       ${o.status==='pending'?`<button class="btn btn-sm" style="background:#FCD34D;color:#7C2D12;font-weight:700" onclick="location.href='checkout.html?direct=${o.id}'">⏳ ชำระเงิน</button>`:''}
       ${(o.status==='shipped'||o.status==='shipping')?`<button class="btn btn-sm btn-ghost" onclick="location.href='tracking.html?order=${o.order_number}'">📍 ติดตาม</button>`:''}
       ${(o.status==='delivered'||o.status==='completed')?`<button class="btn btn-sm btn-ghost" onclick="location.href='review-write.html?order=${o.id}'">⭐ รีวิว</button>`:''}
-      <button class="btn btn-sm btn-k" onclick="location.href='order-history.html'">ดูรายละเอียด</button>
+      ${(o.status==='delivered'||o.status==='paid'||o.status==='shipped')?`<button class="btn btn-sm btn-ghost" onclick="ordReturn('${o.id}','${o.order_number}',${orderTotal})">↩️ ขอคืนสินค้า</button>`:''}
     </div></div>
   </div>`}).join('');
+}
+
+// ขอคืนสินค้า — แจ้งให้ติดต่อ support (modal เต็มอยู่ใน order-history เดิม)
+function ordReturn(orderId, orderNum, amount) {
+  const reason = prompt(`ขอคืนสินค้า — ออเดอร์ ${orderNum}\nยอด ฿${amount.toLocaleString()}\n\nกรุณาระบุเหตุผล:`);
+  if (!reason) return;
+  sb.from('return_requests').insert({
+    order_id: orderId, reason: reason, amount: amount, status: 'pending', created_at: new Date().toISOString()
+  }).then(({error}) => {
+    if (error) { alert('❌ ส่งคำขอไม่สำเร็จ: ' + error.message); }
+    else { alert('✅ ส่งคำขอคืนสินค้าแล้ว — ทีมงานจะติดต่อกลับ'); }
+  });
 }
 
 // ── Load Wishlist ─────────────────────────────────────────
@@ -1140,6 +1243,24 @@ function setAvatarUI(url) {
 // ── Init ──────────────────────────────────────────────────
 (async()=>{
   await loadProfile();
+
+  // ถ้า URL มี #orders (มาจาก order-history.html redirect หรือลิงก์ตรง) → เปิด section ออเดอร์
+  function openSectionFromHash() {
+    const hash = (location.hash || '').replace('#','');
+    if (!hash) return;
+    // map hash → section id
+    const sectionMap = { orders:'orders', 'order-history':'orders', wishlist:'wishlist',
+      coupons:'coupons', addresses:'addresses', profile:'profile', notifications:'notifications', loyalty:'loyalty' };
+    const target = sectionMap[hash];
+    if (target) {
+      const sbItem = document.querySelector(`.sb-item[onclick*="'${target}'"]`);
+      show(target, sbItem);
+      // scroll ขึ้นบนสุดของ section
+      document.getElementById('pv-'+target)?.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  }
+  openSectionFromHash();
+  window.addEventListener('hashchange', openSectionFromHash);
 })().catch(err=>{
   console.error('Profile error:',err);
   if(err.message?.includes('auth')||err.message?.includes('session'))
