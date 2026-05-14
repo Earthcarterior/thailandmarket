@@ -1587,6 +1587,7 @@ async function doCheckout(){
       shipping_method: courierCode,            // courier code (kerry, flash, etc.)
       shipping_method_name: courierName,       // display name
       total: total,
+      total_amount: total,                     // เขียนทั้ง 2 column — กัน column split bug
       payment_method: selPay,
       shipping_address: {
         name: selectedAddr.name,
@@ -2154,7 +2155,8 @@ async function placeOrder() {
       user_id: user.id, order_number: orderNum, status: 'pending',
       payment_method: method, payment_status: method==='cod'?'unpaid':'paid',
       shipping_name: name, shipping_phone: phone, shipping_addr: addr,
-      total_amount: total, shipping_fee: total>=500?0:50,
+      total: total, total_amount: total,       // เขียนทั้ง 2 column — กัน column split bug
+      subtotal: total, shipping_fee: total>=500?0:50,
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     }).select().maybeSingle();
     if (oErr) throw oErr;
