@@ -2781,7 +2781,12 @@ window.pmDisableMaintenance = async function() {
     #panel-payouts .pp-pill.rejected{background:#FEE2E2;color:#991B1B}
   </style>
   <div class="pp-wrap">
-    <h1 style="font-size:22px;margin-bottom:14px">💰 Payout Requests</h1>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h1 style="font-size:22px;margin:0">💰 Payout Requests</h1>
+      <button onclick="ppReleaseEscrow()" style="padding:9px 16px;background:#10B981;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">
+        🔓 ปล่อยเงิน escrow ที่ครบกำหนด
+      </button>
+    </div>
 
     <div class="pp-stats">
       <div class="pp-stat"><div class="pp-stat-l">รออนุมัติ</div><div class="pp-stat-v" id="pp-stat-pending" style="color:#F59E0B">—</div></div>
@@ -2810,12 +2815,20 @@ async function ppLoad() {
   const wrap = document.getElementById('pp-list-wrap');
   const sb = window._sb || window.sb;
   if (!sb) return;
-  
+
+  // ตั้งการ์ดเป็น 0 ก่อน — ถ้า query error อย่างน้อยไม่ค้างที่ "—"
+  const setStat = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setStat('pp-stat-pending', '0');
+  setStat('pp-stat-pending-amt', '฿0');
+  setStat('pp-stat-paid-month', '฿0');
+  setStat('pp-stat-total', '฿0');
+
   try {
     const { data, error } = await sb.from('payout_requests').select('*').order('created_at', {ascending:false}).limit(500);
     if (error) throw error;
     _ppRequests = data || [];
-    
+    console.log('[payouts] loaded', _ppRequests.length, 'requests');
+
     // Hydrate sellers
     const sellerIds = [...new Set(_ppRequests.map(r => r.seller_id))];
     if (sellerIds.length) {
@@ -2823,11 +2836,12 @@ async function ppLoad() {
       _ppSellers = {};
       (sellers || []).forEach(s => _ppSellers[s.id] = s);
     }
-    
+
     ppUpdateStats();
     ppRender();
   } catch(e) {
-    wrap.innerHTML = `<div style="padding:30px;text-align:center;color:#E63329">❌ ${(e.message||'').replace(/</g,'&lt;')}<br><small>กรุณารัน pack-BC-2026-05-08.sql</small></div>`;
+    console.error('[payouts] load error:', e);
+    wrap.innerHTML = `<div style="padding:30px;text-align:center;color:#E63329">❌ โหลด Payout ไม่สำเร็จ: ${(e.message||'').replace(/</g,'&lt;')}<br><small>กรุณารัน payout-requests-fix-2026-05-14.sql</small></div>`;
   }
 }
 
@@ -2917,6 +2931,17 @@ window.ppReject = async function(id) {
   const { error } = await sb.rpc('admin_reject_payout', {p_request_id: id, p_reason: reason});
   if (error) { alert('❌ ' + error.message); return; }
   alert('✅ ปฏิเสธคำขอแล้ว — เงินคืนสู่ available balance');
+  ppLoad();
+};
+
+// ปล่อยเงิน escrow ที่ครบกำหนด 7 วัน → available (แทน cron job)
+window.ppReleaseEscrow = async function() {
+  if (!confirm('ปล่อยเงิน escrow ของออเดอร์ที่ครบกำหนด 7 วันทั้งหมด → ยอดถอนได้ของ seller?')) return;
+  const sb = window._sb || window.sb;
+  const { data, error } = await sb.rpc('admin_release_all_due_escrow', {p_days: 7});
+  if (error) { alert('❌ ' + error.message + '\n\nกรุณารัน order-balance-link-2026-05-14.sql'); return; }
+  if (data && data.error) { alert('❌ ' + data.error); return; }
+  alert(`✅ ปล่อยเงิน escrow แล้ว ${data?.released_count || 0} ออเดอร์`);
   ppLoad();
 };
 
