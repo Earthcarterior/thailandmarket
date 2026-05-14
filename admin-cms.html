@@ -4821,8 +4821,15 @@ async function loadUsers(search = '') {
 
 async function toggleUserStatus(id, isActive, email) {
   if (!confirm(`${isActive?'ระงับ':'ปลดระงับ'}บัญชี ${email} ?`)) return;
-  const { error } = await sb.from('users').update({ is_active: !isActive }).eq('id', id);
+  const { data: updated, error } = await sb.from('users')
+    .update({ is_active: !isActive })
+    .eq('id', id)
+    .select('id');
   if (error) { toast('เกิดข้อผิดพลาด: ' + error.message, 'error'); return; }
+  if (!updated || updated.length === 0) {
+    toast('⚠️ ไม่สำเร็จ — สิทธิ์ไม่พอ (RLS) กรุณารัน users-rls-fix SQL', 'error');
+    return;
+  }
   toast(`${isActive?'ระงับ':'ปลดระงับ'}บัญชีแล้ว`, 'success');
   loadUsers();
   if (typeof loadMembers === 'function') loadMembers();
@@ -7234,16 +7241,22 @@ async function loadMembers(filter = '', search = '') {
 }
 
 async function setUserRole(userId, newRole) {
-  // อัปเดต role + ถ้าเป็น seller ให้ ensure มี sellers row
-  const { error } = await sb.from('users').update({ role: newRole, updated_at: new Date().toISOString() }).eq('id', userId);
+  // อัปเดต role — ใช้ .select() เพื่อเช็คว่ามีแถวถูกแก้จริงไหม (RLS อาจบล็อก)
+  const { data: updated, error } = await sb.from('users')
+    .update({ role: newRole, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+    .select('id,role');
   if (error) { toast('❌ ' + error.message); return; }
+  if (!updated || updated.length === 0) {
+    toast('⚠️ เปลี่ยนไม่สำเร็จ — สิทธิ์ไม่พอ (RLS) กรุณารัน users-rls-fix SQL', 'error');
+    return;
+  }
 
   // ถ้าเปลี่ยนเป็น seller → สร้าง sellers row + link seller_id (ถ้ายังไม่มี)
   if (newRole === 'seller') {
     try {
       const { data: u } = await sb.from('users').select('id,email,display_name,seller_id').eq('id', userId).maybeSingle();
       if (u && !u.seller_id) {
-        // หา seller ที่มี user_id ตรงกัน หรือสร้างใหม่
         let { data: existingSeller } = await sb.from('sellers').select('id').eq('user_id', userId).maybeSingle();
         if (!existingSeller) {
           const { data: newSeller } = await sb.from('sellers').insert({
@@ -7262,24 +7275,36 @@ async function setUserRole(userId, newRole) {
   }
 
   toast(`✅ เปลี่ยน Role เป็น ${newRole} แล้ว`, 'ok');
-
-  // ── SYNC: refresh ทั้ง 2 panel ── 
   if (typeof loadUsers === 'function') loadUsers();
   if (typeof loadMembers === 'function') loadMembers();
 }
 
 async function banUser(userId) {
   if (!confirm('ระงับการใช้งาน User นี้?')) return;
-  const { error } = await sb.from('users').update({ is_active: false, updated_at: new Date().toISOString() }).eq('id', userId);
+  const { data: updated, error } = await sb.from('users')
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+    .select('id');
   if (error) { toast('❌ ' + error.message); return; }
+  if (!updated || updated.length === 0) {
+    toast('⚠️ ระงับไม่สำเร็จ — สิทธิ์ไม่พอ (RLS) กรุณารัน users-rls-fix SQL', 'error');
+    return;
+  }
   toast('✅ ระงับ User แล้ว');
   if (typeof loadMembers === 'function') loadMembers();
   if (typeof loadUsers === 'function') loadUsers();
 }
 
 async function unbanUser(userId) {
-  const { error } = await sb.from('users').update({ is_active: true, updated_at: new Date().toISOString() }).eq('id', userId);
+  const { data: updated, error } = await sb.from('users')
+    .update({ is_active: true, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+    .select('id');
   if (error) { toast('❌ ' + error.message); return; }
+  if (!updated || updated.length === 0) {
+    toast('⚠️ เปิดใช้งานไม่สำเร็จ — สิทธิ์ไม่พอ (RLS) กรุณารัน users-rls-fix SQL', 'error');
+    return;
+  }
   toast('✅ เปิดการใช้งาน User แล้ว');
   if (typeof loadMembers === 'function') loadMembers();
   if (typeof loadUsers === 'function') loadUsers();
