@@ -795,14 +795,20 @@ let _slipTransferredAt = null;
 async function loadPaymentMethods() {
   try {
     const { data, error } = await _sbCO.rpc('get_available_payment_methods');
-    if (error) throw error;
+    if (error) {
+      console.error('get_available_payment_methods RPC error:', error);
+      throw error;
+    }
     if (!data || !data.length) {
+      console.warn('payment methods: RPC คืนค่าว่าง — admin ยังไม่เปิด method หรือ maintenance_mode=true');
       document.getElementById('pay-methods').innerHTML = `
         <div style="padding:24px;text-align:center;color:#E63329;background:#FFF5F5;border:1px solid #E63329;border-radius:6px">
-          ⚠️ ขณะนี้ยังไม่เปิดให้สั่งซื้อ<br><small style="color:#666">Admin ยังไม่ได้ตั้งค่าช่องทางการชำระเงิน</small>
+          ⚠️ ขณะนี้ยังไม่เปิดให้สั่งซื้อ<br>
+          <small style="color:#666">Admin ยังไม่ได้เปิดช่องทางการชำระเงิน — หรือรัน payment-system-fix SQL</small>
         </div>`;
       return;
     }
+    console.log('payment methods loaded:', data.length, 'rows');
     // group by id (RPC อาจ return หลายแถวถ้ามีหลาย account)
     const byId = {};
     data.forEach(row => {
