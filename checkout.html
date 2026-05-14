@@ -1624,12 +1624,12 @@ async function doCheckout(){
     if(pErr) console.warn('payment insert:', pErr.message);
 
     // 3.5. payment_slip — ถ้า manual mode + อัปโหลด slip
+    let _slipSaved = false;
     if (needsSlip && _uploadedSlipUrl) {
       try {
         // upload slip image to Supabase storage (bucket: slips)
         let slipUrl = _uploadedSlipUrl;
         if (_uploadedSlipUrl.startsWith('data:')) {
-          // Convert data URL → Blob → upload to storage
           const res = await fetch(_uploadedSlipUrl);
           const blob = await res.blob();
           const ext = (blob.type.split('/')[1] || 'jpg').split(';')[0];
@@ -1653,9 +1653,33 @@ async function doCheckout(){
           reference_number: _slipRefNumber || null,
           status: 'pending'
         };
-        const { error:sErr } = await _sbCO.from('payment_slips').insert(slipInsert);
-        if (sErr) console.warn('slip insert:', sErr.message);
-      } catch(e) { console.warn('slip upload exception:', e); }
+        let { error:sErr } = await _sbCO.from('payment_slips').insert(slipInsert);
+
+        // ถ้า error เพราะ column หาย → ลองตัด column ที่มีปัญหาออกแล้ว retry
+        if (sErr && /Could not find the '(\w+)' column/.test(sErr.message)) {
+          let retrySlip = {...slipInsert};
+          let attempts = 0;
+          while (sErr && attempts < 10) {
+            const m = sErr.message.match(/Could not find the '(\w+)' column/);
+            if (!m) break;
+            delete retrySlip[m[1]];
+            attempts++;
+            const res = await _sbCO.from('payment_slips').insert(retrySlip);
+            sErr = res.error;
+          }
+        }
+
+        if (sErr) {
+          console.error('slip insert FAILED:', sErr.message);
+          alert('⚠️ บันทึกคำสั่งซื้อสำเร็จ แต่บันทึกสลิปไม่สำเร็จ\n\nกรุณาติดต่อแอดมินพร้อมแจ้งเลขออเดอร์ ' + orderNum + '\n(' + sErr.message + ')');
+        } else {
+          _slipSaved = true;
+          console.log('payment_slip saved for order', orderNum);
+        }
+      } catch(e) {
+        console.error('slip upload exception:', e);
+        alert('⚠️ บันทึกคำสั่งซื้อสำเร็จ แต่อัปโหลดสลิปมีปัญหา\n\nกรุณาติดต่อแอดมินพร้อมแจ้งเลขออเดอร์ ' + orderNum);
+      }
     }
 
     // 4. notification
