@@ -412,13 +412,13 @@ img{max-width:100%;height:auto}
   <div>
     <div class="bc"><a href="index.html">Home</a><span>›</span><a href="profile.html">Account</a><span>›</span><span>Orders</span></div>
     <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px">
-      <div><div style="font-size:22px;font-weight:300;letter-spacing:-.01em">คำสั่ง<strong>ซื้อของฉัน</strong></div><div style="font-family:var(--mono);font-size:11px;color:var(--g400);margin-top:4px;letter-spacing:.04em;text-transform:uppercase">5 คำสั่งซื้อ</div></div>
+      <div><div style="font-size:22px;font-weight:300;letter-spacing:-.01em">คำสั่ง<strong>ซื้อของฉัน</strong></div><div style="font-family:var(--mono);font-size:11px;color:var(--g400);margin-top:4px;letter-spacing:.04em;text-transform:uppercase" id="oh-count">กำลังโหลด...</div></div>
     </div>
-    <div style="display:flex;border:var(--border);border-bottom:none;overflow-x:auto;margin-bottom:0">
-      <button onclick="setT(this)" style="padding:9px 16px;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--black);cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid var(--black);background:var(--white);font-family:var(--font);border-right:var(--border)">ทั้งหมด (5)</button>
-      <button onclick="setT(this)" style="padding:9px 16px;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid transparent;background:var(--white);font-family:var(--font);border-right:var(--border);transition:color .15s">กำลังจัดส่ง (1)</button>
-      <button onclick="setT(this)" style="padding:9px 16px;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid transparent;background:var(--white);font-family:var(--font);border-right:var(--border);transition:color .15s">สำเร็จ (3)</button>
-      <button onclick="setT(this)" style="padding:9px 16px;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid transparent;background:var(--white);font-family:var(--font);transition:color .15s">คืนสินค้า (1)</button>
+    <div style="display:flex;border:var(--border);border-bottom:none;overflow-x:auto;margin-bottom:0" id="oh-tabs">
+      <button onclick="setT(this,'all')" data-tab="all" style="padding:9px 16px;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--black);cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid var(--black);background:var(--white);font-family:var(--font);border-right:var(--border)">ทั้งหมด (0)</button>
+      <button onclick="setT(this,'shipping')" data-tab="shipping" style="padding:9px 16px;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid transparent;background:var(--white);font-family:var(--font);border-right:var(--border);transition:color .15s">กำลังจัดส่ง (0)</button>
+      <button onclick="setT(this,'delivered')" data-tab="delivered" style="padding:9px 16px;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid transparent;background:var(--white);font-family:var(--font);border-right:var(--border);transition:color .15s">สำเร็จ (0)</button>
+      <button onclick="setT(this,'returned')" data-tab="returned" style="padding:9px 16px;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border:none;border-bottom:2px solid transparent;background:var(--white);font-family:var(--font);transition:color .15s">คืนสินค้า (0)</button>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:16px;padding:12px 0;border-bottom:var(--border)">
       <input type="text" style="flex:1;padding:9px 14px;border:var(--border);font-size:13px;font-family:var(--font);outline:none;transition:border-color .15s" placeholder="ค้นหา Order ID หรือชื่อสินค้า..." onfocus="this.style.borderColor='var(--black)'" onblur="this.style.borderColor='var(--g200)'">
@@ -427,7 +427,14 @@ img{max-width:100%;height:auto}
     <div id="order-list" style="min-height:200px"></div>
   </div>
 </div>
-<script>function setT(el){el.closest('div').querySelectorAll('button').forEach(b=>{b.style.color='var(--g500)';b.style.borderBottomColor='transparent'});el.style.color='var(--black)';el.style.borderBottomColor='var(--black)'}</script>
+<script>
+let _allOrders = [];  // เก็บ orders ทั้งหมดไว้ filter
+function setT(el, tab){
+  el.closest('div').querySelectorAll('button').forEach(b=>{b.style.color='var(--g500)';b.style.borderBottomColor='transparent'});
+  el.style.color='var(--black)';el.style.borderBottomColor='var(--black)';
+  renderOrderList(tab || 'all');
+}
+</script>
 
 <footer id="tm-footer">
   <div class="tf-in">
@@ -500,20 +507,64 @@ async function loadOrderHistory() {
   const { data:{ session } } = await _sbOH.auth.getSession();
   if (!session) { location.href='login.html?from=order-history.html'; return; }
 
-  const { data:orders, error } = await _sbOH.from('orders')
-    .select('id,order_number,status,total,subtotal,discount,shipping_fee,payment_method,items,created_at,shipping_address')
-    .eq('user_id', session.user.id)
-    .order('created_at', {ascending:false});
-  if (error) { console.error('orders load:', error); }
+  const authId = session.user.id;  // auth.uid()
 
+  // หา public.users.id จาก email — orders.user_id เก็บด้วย public.users.id
+  let publicId = null;
+  try {
+    const { data: pu } = await _sbOH.from('users').select('id').eq('email', session.user.email).maybeSingle();
+    if (pu) publicId = pu.id;
+  } catch(e) { console.warn('getPublicUserId:', e); }
+
+  // query orders — ลองทั้ง public.users.id และ auth.uid() (เผื่อข้อมูลเก่า)
+  const idsToTry = [...new Set([publicId, authId].filter(Boolean))];
+  let orders = null, error = null;
+  for (const tryId of idsToTry) {
+    const res = await _sbOH.from('orders')
+      .select('id,order_number,status,total,subtotal,discount,shipping_fee,payment_method,items,created_at,shipping_address')
+      .eq('user_id', tryId)
+      .order('created_at', {ascending:false});
+    if (res.error) { error = res.error; continue; }
+    if (res.data && res.data.length) { orders = res.data; break; }
+    if (!orders) orders = res.data; // เก็บ empty array ไว้ถ้าไม่เจอเลย
+  }
+  if (error && !orders) { console.error('orders load:', error); }
+  console.log('[order-history] loaded', orders?.length || 0, 'orders (tried ids:', idsToTry, ')');
+
+  _allOrders = orders || [];
+
+  // อัปเดต count จริง
+  const cAll = _allOrders.length;
+  const cShipping = _allOrders.filter(o => ['paid','preparing','shipping','processing','shipped'].includes(o.status)).length;
+  const cDelivered = _allOrders.filter(o => ['delivered','completed'].includes(o.status)).length;
+  const cReturned = _allOrders.filter(o => ['returned','return_requested','refunded'].includes(o.status)).length;
+
+  const oc = document.getElementById('oh-count');
+  if (oc) oc.textContent = cAll + ' คำสั่งซื้อ';
+  const tabs = document.querySelectorAll('#oh-tabs button');
+  if (tabs[0]) tabs[0].textContent = `ทั้งหมด (${cAll})`;
+  if (tabs[1]) tabs[1].textContent = `กำลังจัดส่ง (${cShipping})`;
+  if (tabs[2]) tabs[2].textContent = `สำเร็จ (${cDelivered})`;
+  if (tabs[3]) tabs[3].textContent = `คืนสินค้า (${cReturned})`;
+
+  renderOrderList('all');
+}
+
+function renderOrderList(tab) {
   const container = document.getElementById('order-list') || document.querySelector('main') || document.body;
   if (!container) return;
+
+  // filter ตาม tab
+  let orders = _allOrders;
+  if (tab === 'shipping') orders = _allOrders.filter(o => ['paid','preparing','shipping','processing','shipped'].includes(o.status));
+  else if (tab === 'delivered') orders = _allOrders.filter(o => ['delivered','completed'].includes(o.status));
+  else if (tab === 'returned') orders = _allOrders.filter(o => ['returned','return_requested','refunded'].includes(o.status));
 
   if (!orders?.length) {
     container.innerHTML = `<div style="text-align:center;padding:80px 24px;color:#737373">
       <div style="font-size:64px;margin-bottom:16px">📦</div>
-      <div style="font-size:18px;font-weight:600;margin-bottom:8px">ยังไม่มีคำสั่งซื้อ</div>
-      <div style="margin-bottom:20px">เริ่มช้อปเพื่อสร้างออเดอร์แรกของคุณ</div>
+      <div style="font-size:18px;font-weight:600;margin-bottom:8px">${_allOrders.length ? 'ไม่มีคำสั่งซื้อในหมวดนี้' : 'ยังไม่มีคำสั่งซื้อ'}</div>
+      <div style="margin-bottom:20px">${_allOrders.length ? 'ลองเลือกแท็บอื่น' : 'เริ่มช้อปเพื่อสร้างออเดอร์แรกของคุณ'}</div>
       <a href="category.html" style="background:#0A0A0A;color:#fff;padding:12px 28px;display:inline-block">เริ่มช้อปเลย →</a>
     </div>`;
     return;
@@ -550,6 +601,7 @@ async function loadOrderHistory() {
               ${o.status==='pending' ? `<a href="payment-result.html?order=${o.order_number}" style="padding:8px 14px;background:#FCD34D;color:#7C2D12;font-size:12px;font-weight:700;text-decoration:none;border-radius:3px">⏳ ชำระเงิน</a>` : ''}
               ${(o.status==='paid'||o.status==='preparing'||o.status==='shipping') ? `<a href="tracking.html?order=${o.order_number}" style="padding:8px 14px;background:#0A0A0A;color:#fff;font-size:12px;text-decoration:none;border-radius:3px">📍 ติดตาม</a>` : ''}
               ${o.status==='delivered' ? `<a href="review-write.html?order=${o.id}" style="padding:8px 14px;border:1px solid #0A0A0A;color:#0A0A0A;font-size:12px;text-decoration:none;border-radius:3px">⭐ รีวิว</a>` : ''}
+              ${(o.status==='delivered'||o.status==='paid'||o.status==='shipped') ? `<button onclick="openReturnModal('${o.id}','${o.order_number}',${Number(o.total||0)})" style="padding:8px 14px;background:#fff;border:1px solid #E63329;color:#E63329;font-size:12px;cursor:pointer;border-radius:3px">↩️ ขอคืนสินค้า</button>` : ''}
               <a href="payment-result.html?order=${o.order_number}" style="padding:8px 14px;background:#fff;border:1px solid #E5E5E5;color:#525252;font-size:12px;text-decoration:none;border-radius:3px">รายละเอียด</a>
             </div>
           </div>
@@ -768,5 +820,145 @@ document.addEventListener('DOMContentLoaded', loadOrderHistory);
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
+<!-- ════════════════════════════════════════════════════════════════════
+     RETURN REQUEST MODAL
+     ════════════════════════════════════════════════════════════════════ -->
+<style>
+  #return-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+  #return-modal-overlay.on{display:flex}
+  #return-modal{background:#fff;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;border-radius:8px}
+  #return-modal-head{padding:16px 20px;border-bottom:1px solid #E5E5E5;display:flex;justify-content:space-between;align-items:center}
+  #return-modal-body{padding:20px}
+  #return-modal label{display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:500}
+  #return-modal select,#return-modal input,#return-modal textarea{width:100%;padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-family:inherit;font-size:13px;margin-bottom:10px}
+  #return-modal textarea{min-height:80px;resize:vertical}
+  .rt-evidence-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+  .rt-evidence-thumb{position:relative;aspect-ratio:1;background:#F5F5F5;border-radius:4px;overflow:hidden}
+  .rt-evidence-thumb img{width:100%;height:100%;object-fit:cover}
+  .rt-evidence-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;line-height:1}
+</style>
+
+<div id="return-modal-overlay" onclick="if(event.target===this)closeReturnModal()">
+  <div id="return-modal">
+    <div id="return-modal-head">
+      <div style="font-size:16px;font-weight:600">↩️ ขอคืนสินค้า</div>
+      <button onclick="closeReturnModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#666">×</button>
+    </div>
+    <div id="return-modal-body">
+      <div id="rt-order-info" style="padding:10px;background:#FAFAFA;border-radius:4px;margin-bottom:14px;font-size:13px"></div>
+      
+      <label>เหตุผลการขอคืน <span style="color:#E63329">*</span></label>
+      <select id="rt-reason-cat" required>
+        <option value="">-- เลือก --</option>
+        <option value="damaged">📦 สินค้าเสียหาย/ชำรุด</option>
+        <option value="wrong_item">❌ ส่งผิดรายการ</option>
+        <option value="not_as_described">📝 ไม่ตรงกับคำอธิบาย</option>
+        <option value="quality_issue">⚠️ คุณภาพไม่ดี</option>
+        <option value="changed_mind">😕 เปลี่ยนใจ</option>
+        <option value="other">อื่นๆ</option>
+      </select>
+
+      <label>หัวข้อ / สรุปสั้นๆ <span style="color:#E63329">*</span></label>
+      <input id="rt-reason" placeholder="เช่น: สินค้าหักก่อนได้รับ" required>
+
+      <label>รายละเอียด</label>
+      <textarea id="rt-desc" placeholder="อธิบายปัญหาเพิ่มเติม..."></textarea>
+
+      <label>จำนวนเงินที่ขอคืน (บาท)</label>
+      <input id="rt-amount" type="number" step="0.01" placeholder="0.00">
+
+      <label>หลักฐาน (URL รูป — สูงสุด 4 รูป)</label>
+      <div class="rt-evidence-grid" id="rt-evidence-grid"></div>
+      <input id="rt-img-url" placeholder="วาง URL รูปแล้วกด Enter" onkeydown="if(event.key==='Enter'){event.preventDefault();addEvidenceUrl();}">
+
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="submitReturnRequest()" style="flex:1;padding:11px;background:#E63329;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-family:inherit">📤 ส่งคำขอ</button>
+        <button onclick="closeReturnModal()" style="padding:11px 18px;background:#fff;border:1px solid #E5E5E5;border-radius:4px;cursor:pointer;font-family:inherit">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="return-request-logic">
+let _rtCurrentOrderId = null;
+let _rtCurrentOrderNum = null;
+let _rtEvidence = [];
+
+window.openReturnModal = function(orderId, orderNum, total) {
+  _rtCurrentOrderId = orderId;
+  _rtCurrentOrderNum = orderNum;
+  _rtEvidence = [];
+  document.getElementById('rt-order-info').innerHTML = `<strong>ออเดอร์:</strong> #${orderNum} · <strong>ยอด:</strong> ฿${Number(total||0).toLocaleString()}`;
+  document.getElementById('rt-amount').value = total || '';
+  document.getElementById('rt-reason-cat').value = '';
+  document.getElementById('rt-reason').value = '';
+  document.getElementById('rt-desc').value = '';
+  document.getElementById('rt-img-url').value = '';
+  document.getElementById('rt-evidence-grid').innerHTML = '';
+  document.getElementById('return-modal-overlay').classList.add('on');
+};
+
+window.closeReturnModal = function() {
+  document.getElementById('return-modal-overlay').classList.remove('on');
+};
+
+window.addEvidenceUrl = function() {
+  const inp = document.getElementById('rt-img-url');
+  const url = inp.value.trim();
+  if (!url) return;
+  if (_rtEvidence.length >= 4) { alert('สูงสุด 4 รูป'); return; }
+  _rtEvidence.push(url);
+  inp.value = '';
+  renderEvidence();
+};
+
+function renderEvidence() {
+  const grid = document.getElementById('rt-evidence-grid');
+  grid.innerHTML = _rtEvidence.map((url, i) => `
+    <div class="rt-evidence-thumb">
+      <img src="${url}" onerror="this.style.display='none'">
+      <button class="rt-evidence-del" onclick="removeEvidence(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+window.removeEvidence = function(idx) {
+  _rtEvidence.splice(idx, 1);
+  renderEvidence();
+};
+
+window.submitReturnRequest = async function() {
+  const reasonCat = document.getElementById('rt-reason-cat').value;
+  const reason = document.getElementById('rt-reason').value.trim();
+  const desc = document.getElementById('rt-desc').value.trim();
+  const amount = parseFloat(document.getElementById('rt-amount').value) || null;
+
+  if (!reasonCat) { alert('กรุณาเลือกเหตุผล'); return; }
+  if (!reason) { alert('กรุณากรอกหัวข้อ'); return; }
+
+  // หา supabase client
+  const sb = window._sb || window.sb;
+  if (!sb) { alert('ระบบยังไม่พร้อม กรุณารีเฟรชหน้า'); return; }
+
+  const { data, error } = await sb.rpc('create_return_request', {
+    p_order_id: _rtCurrentOrderId,
+    p_reason_category: reasonCat,
+    p_reason: reason,
+    p_description: desc || null,
+    p_evidence_images: _rtEvidence,
+    p_requested_amount: amount
+  });
+
+  if (error || (data && data.error)) {
+    const msg = error?.message || data.error;
+    if (msg === 'EXISTING_REQUEST') alert('⚠️ มีคำขอคืนสำหรับออเดอร์นี้อยู่แล้ว');
+    else alert('❌ ' + msg);
+    return;
+  }
+  alert('✅ ส่งคำขอคืนสินค้าแล้ว!\n\nร้านค้าจะตรวจสอบและตอบกลับโดยเร็ว');
+  closeReturnModal();
+};
+</script>
+
 </body>
 </html>
