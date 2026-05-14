@@ -2570,17 +2570,44 @@ async function pmLoadSlips() {
   if (!wrap) return;
   const sb = window._sb;
   try {
+    // embed ผ่าน column ชื่อ — เลี่ยงปัญหา "more than one relationship found"
     let q = sb.from('payment_slips')
-      .select('*, orders(id,order_number,total,user_id), users(display_name,email,phone)')
+      .select('*, order:order_id(id,order_number,total,total_amount,user_id), buyer:user_id(display_name,email,phone)')
       .order('created_at', { ascending: false }).limit(100);
     if (_pmSlipFilter !== 'all') q = q.eq('status', _pmSlipFilter);
-    const { data, error } = await q;
+    let { data, error } = await q;
+
+    // ถ้ายัง error เรื่อง embed → fallback query แบบไม่ embed แล้ว hydrate เอง
+    if (error && /relationship|embed|column/.test(error.message)) {
+      console.warn('[slips] embed failed, fallback to manual hydrate:', error.message);
+      let q2 = sb.from('payment_slips').select('*').order('created_at',{ascending:false}).limit(100);
+      if (_pmSlipFilter !== 'all') q2 = q2.eq('status', _pmSlipFilter);
+      const res2 = await q2;
+      if (res2.error) throw res2.error;
+      data = res2.data || [];
+      // hydrate orders + buyers แยก
+      const orderIds = [...new Set(data.map(s=>s.order_id).filter(Boolean))];
+      const userIds = [...new Set(data.map(s=>s.user_id).filter(Boolean))];
+      if (orderIds.length) {
+        const { data: ords } = await sb.from('orders').select('id,order_number,total,total_amount,user_id').in('id', orderIds);
+        const omap = {}; (ords||[]).forEach(o=>omap[o.id]=o);
+        data.forEach(s => s.order = omap[s.order_id] || null);
+      }
+      if (userIds.length) {
+        const { data: usrs } = await sb.from('users').select('id,display_name,email,phone').in('id', userIds);
+        const umap = {}; (usrs||[]).forEach(u=>umap[u.id]=u);
+        data.forEach(s => s.buyer = umap[s.user_id] || null);
+      }
+      error = null;
+    }
     if (error) throw error;
     _pmSlips = data || [];
+    console.log('[slips] loaded', _pmSlips.length, 'slips');
     pmRenderSlips();
     pmUpdatePendingBadge();
   } catch(e) {
-    wrap.innerHTML = `<div class="pm-empty">❌ ${pmEsc(e.message)}</div>`;
+    console.error('[slips] load error:', e);
+    wrap.innerHTML = `<div class="pm-empty">❌ ${pmEsc(e.message)}<br><small>กรุณารัน payment-slips-fix SQL</small></div>`;
   }
 }
 
@@ -2591,8 +2618,8 @@ function pmRenderSlips() {
     return;
   }
   wrap.innerHTML = _pmSlips.map(s => {
-    const order = s.orders || {};
-    const user = s.users || {};
+    const order = s.order || s.orders || {};
+    const user = s.buyer || s.users || {};
     return `
       <div class="pm-slip-row ${s.status}">
         <div class="pm-slip-img" onclick="${s.slip_image_url?`window.open('${pmEsc(s.slip_image_url)}','_blank')`:''}">
@@ -2604,7 +2631,7 @@ function pmRenderSlips() {
             <span style="font-family:monospace;color:#666;font-weight:400;font-size:11px;margin-left:6px">${pmFmtDate(s.created_at)}</span>
           </div>
           <div style="font-size:12px;color:#666">👤 ${pmEsc(user.display_name || user.email || 'Unknown')} ${user.phone?'· 📞 '+pmEsc(user.phone):''}</div>
-          <div style="font-size:13px;font-weight:500;margin-top:3px">💰 ${pmFmtMoney(s.amount || order.total || 0)}</div>
+          <div style="font-size:13px;font-weight:500;margin-top:3px">💰 ${pmFmtMoney(s.amount || order.total || order.total_amount || 0)}</div>
           ${s.transferred_at?`<div style="font-size:11px;color:#666">⏰ โอน: ${pmFmtDate(s.transferred_at)}</div>`:''}
           ${s.reference_number?`<div style="font-size:11px;color:#666;font-family:monospace">Ref: ${pmEsc(s.reference_number)}</div>`:''}
           ${s.reject_reason?`<div style="font-size:11px;color:#E63329;margin-top:3px">❌ ${pmEsc(s.reject_reason)}</div>`:''}
