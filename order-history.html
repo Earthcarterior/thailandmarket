@@ -500,8 +500,10 @@ function toast(msg, type) {
 })();
 
 
-const ST_MAP   = {pending:'รอชำระเงิน',paid:'ชำระแล้ว',preparing:'กำลังเตรียม',shipping:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า'};
-const ST_COLOR = {pending:'#D97706',paid:'#2563EB',preparing:'#7C3AED',shipping:'#0891B2',delivered:'#16A34A',cancelled:'#737373',returned:'#737373'};
+const ST_MAP   = {pending:'รอชำระเงิน',paid:'ชำระแล้ว',confirmed:'ยืนยัน',preparing:'กำลังเตรียม',processing:'กำลังเตรียม',shipping:'กำลังส่ง',shipped:'กำลังส่ง',delivered:'สำเร็จ',completed:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า'};
+const ST_COLOR = {pending:'#D97706',paid:'#2563EB',confirmed:'#2563EB',preparing:'#7C3AED',processing:'#7C3AED',shipping:'#0891B2',shipped:'#0891B2',delivered:'#16A34A',completed:'#16A34A',cancelled:'#737373',returned:'#737373'};
+// ออเดอร์เก่าเขียน total_amount, ออเดอร์ใหม่เขียน total — เอาค่าที่ไม่ใช่ 0
+function _orderTotal(o){ return Number(o.total) || Number(o.total_amount) || Number(o.grand_total) || Number(o.subtotal) || 0; }
 
 async function loadOrderHistory() {
   const { data:{ session } } = await _sbOH.auth.getSession();
@@ -595,13 +597,13 @@ function renderOrderList(tab) {
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
             <div>
               <div style="font-size:11px;color:#737373">ยอดรวม</div>
-              <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:#E63329">฿${Number(o.total).toLocaleString()}</div>
+              <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:#E63329">฿${_orderTotal(o).toLocaleString()}</div>
             </div>
             <div style="display:flex;gap:8px">
               ${o.status==='pending' ? `<a href="payment-result.html?order=${o.order_number}" style="padding:8px 14px;background:#FCD34D;color:#7C2D12;font-size:12px;font-weight:700;text-decoration:none;border-radius:3px">⏳ ชำระเงิน</a>` : ''}
               ${(o.status==='paid'||o.status==='preparing'||o.status==='shipping') ? `<a href="tracking.html?order=${o.order_number}" style="padding:8px 14px;background:#0A0A0A;color:#fff;font-size:12px;text-decoration:none;border-radius:3px">📍 ติดตาม</a>` : ''}
               ${o.status==='delivered' ? `<a href="review-write.html?order=${o.id}" style="padding:8px 14px;border:1px solid #0A0A0A;color:#0A0A0A;font-size:12px;text-decoration:none;border-radius:3px">⭐ รีวิว</a>` : ''}
-              ${(o.status==='delivered'||o.status==='paid'||o.status==='shipped') ? `<button onclick="openReturnModal('${o.id}','${o.order_number}',${Number(o.total||0)})" style="padding:8px 14px;background:#fff;border:1px solid #E63329;color:#E63329;font-size:12px;cursor:pointer;border-radius:3px">↩️ ขอคืนสินค้า</button>` : ''}
+              ${(o.status==='delivered'||o.status==='paid'||o.status==='shipped') ? `<button onclick="openReturnModal('${o.id}','${o.order_number}',${_orderTotal(o)})" style="padding:8px 14px;background:#fff;border:1px solid #E63329;color:#E63329;font-size:12px;cursor:pointer;border-radius:3px">↩️ ขอคืนสินค้า</button>` : ''}
               <a href="payment-result.html?order=${o.order_number}" style="padding:8px 14px;background:#fff;border:1px solid #E5E5E5;color:#525252;font-size:12px;text-decoration:none;border-radius:3px">รายละเอียด</a>
             </div>
           </div>
