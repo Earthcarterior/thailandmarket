@@ -2703,6 +2703,15 @@ nav, .nav {
       #page-ship-pending .sp-courier-chip b{font-weight:500}
       #page-ship-pending .sp-tracking{color:#10B981;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer}
       #page-ship-pending .sp-tracking:hover{text-decoration:underline}
+      #page-ship-pending .sp-doctype{display:flex;gap:10px;align-items:flex-start;padding:11px;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+      #page-ship-pending .sp-doctype:hover{border-color:#E63329}
+      #page-ship-pending .sp-doctype.on{background:#FFF5F5;border-color:#E63329}
+      #page-ship-pending .sp-doctype input{accent-color:#E63329;margin-top:2px}
+      #page-ship-pending .sp-doctype-info{flex:1}
+      #page-ship-pending .sp-doctype-name{font-size:12px;font-weight:600;margin-bottom:2px}
+      #page-ship-pending .sp-doctype-desc{font-size:10px;color:#888;font-family:'DM Mono',monospace;line-height:1.5}
+      #page-ship-pending .sp-doctype-badge{font-size:9px;background:#E5E5E5;color:#525252;padding:1px 6px;border-radius:3px;font-family:'DM Mono',monospace}
+      #page-ship-pending .sp-doctype.on .sp-doctype-badge{background:#E63329;color:#fff}
     </style>
     <div class="ph">📮 สินค้าที่ต้องจัดส่ง</div>
     <div class="ps">PENDING SHIPMENT · จัดส่ง + พิมพ์เอกสาร</div>
@@ -2850,32 +2859,36 @@ nav, .nav {
           </div>
         </div>
         
-        <!-- SIDE: Document creation -->
+        <!-- SIDE: Document creation — เลือกประเภทเอกสาร -->
         <div class="sp-side">
           <div style="font-size:14px;font-weight:600;margin-bottom:6px">สร้างเอกสารการจัดส่งพัสดุ</div>
-          <div style="font-size:11px;color:#E63329;margin-bottom:14px">Select the parcels to generate shipping documents</div>
+          <div style="font-size:11px;color:#E63329;margin-bottom:14px" id="sp-doc-sel-hint">เลือกพัสดุก่อน แล้วเลือกประเภทเอกสาร</div>
           
-          <label class="sp-doc-check"><input type="checkbox" id="sp-doc-picklist"> Picklist</label>
-          <label class="sp-doc-check"><input type="checkbox" id="sp-doc-cover-packing"> ใบปะหน้าพัสดุ & Packing List</label>
-          <label class="sp-doc-check"><input type="checkbox" id="sp-doc-cover"> ใบปะหน้าพัสดุ</label>
-          <label class="sp-doc-check on"><input type="checkbox" id="sp-doc-packing" checked> Packing List</label>
-          
-          <div class="sp-fmt">
-            <label><input type="radio" name="sp-fmt" value="pdf" checked> PDF</label>
-            <label><input type="radio" name="sp-fmt" value="excel"> Excel</label>
+          <!-- เลือกขนาดกระดาษ -->
+          <div style="font-size:11px;color:#666;margin-bottom:6px;font-weight:600">📏 ขนาดกระดาษ</div>
+          <div class="sp-fmt" style="margin-bottom:14px">
+            <label><input type="radio" name="sp-paper" value="A4" checked onchange="spRenderDocTypes()"> A4</label>
+            <label><input type="radio" name="sp-paper" value="A6" onchange="spRenderDocTypes()"> A6</label>
           </div>
           
-          <div style="font-size:11px;color:#666;margin:14px 0 6px">รายละเอียดเอกสารที่จะพิมพ์</div>
-          <div style="display:flex;gap:6px;align-items:center;font-size:12px;padding:8px;background:#FAFAFA;border:1px solid #E5E5E5;border-radius:4px">📋 <span>Packing List</span></div>
+          <!-- ตารางเลือกประเภทเอกสาร -->
+          <div style="font-size:11px;color:#666;margin-bottom:6px;font-weight:600">📄 ประเภทเอกสาร (เลือกได้ 1)</div>
+          <div id="sp-doctype-list"></div>
+          
+          <!-- รูปแบบไฟล์ -->
+          <div style="font-size:11px;color:#666;margin:14px 0 6px;font-weight:600">💾 รูปแบบไฟล์</div>
+          <div class="sp-fmt">
+            <label><input type="radio" name="sp-fmt" value="pdf" checked> PDF</label>
+            <label><input type="radio" name="sp-fmt" value="print"> พิมพ์เลย</label>
+          </div>
           
           <button class="sp-btn primary" onclick="spGenerateDocs()" style="margin-top:14px">🖨️ สร้างเอกสารที่เลือก</button>
-          
-          <div style="font-size:11px;color:#888;margin-top:8px;line-height:1.6">* กรุณาอนุญาตให้ Shopee เปิดหน้าต่างใหม่เพื่อดูตัวอย่างเอกสารก่อนพิมพ์</div>
+          <div style="font-size:11px;color:#888;margin-top:8px;line-height:1.6">* ระบบจะเปิดหน้าต่างใหม่เพื่อแสดงตัวอย่างก่อนพิมพ์</div>
           
           <div class="sp-drop-box">
-            <div style="font-size:14px;font-weight:600;margin-bottom:10px">ใบยืนยันการจัดส่ง</div>
-            <div style="font-size:11px;color:#666;margin-bottom:10px">พิมพ์ใบยืนยันการจัดส่ง</div>
-            <button class="sp-btn primary" onclick="spGenerateConfirm()">📄 สร้างใบยืนยันการจัดส่ง</button>
+            <div style="font-size:14px;font-weight:600;margin-bottom:10px">ใบสรุปจัดเตรียมของ</div>
+            <div style="font-size:11px;color:#666;margin-bottom:10px">รวมสินค้าทุกพัสดุที่เลือก เป็นใบเดียว — สะดวกตอนหยิบของ</div>
+            <button class="sp-btn primary" onclick="spGenerateSummary()">📋 สร้างใบสรุปจัดเตรียมของ</button>
           </div>
         </div>
       </div>
@@ -7841,7 +7854,7 @@ window.spTab = function(tab) {
   _spActiveTab = tab;
   document.querySelectorAll('#page-ship-pending .sp-tab').forEach(b => b.classList.toggle('on', b.dataset.sptab === tab));
   document.querySelectorAll('#page-ship-pending .sp-panel').forEach(p => p.classList.toggle('on', p.id === 'sp-panel-' + tab));
-  if (tab === 'docs') spRenderDocsTable();
+  if (tab === 'docs') { spRenderDocsTable(); spRenderDocTypes(); }
 };
 
 window.spSetUrg = function(u) {
@@ -7981,73 +7994,276 @@ window.spDocToggleAll = function(checked) {
   document.querySelectorAll('#sp-doc-list .sp-doc-cb-item').forEach(cb => cb.checked = checked);
 };
 
+// ─── ประเภทเอกสาร (ตาม Shopee/Page365 reference) ───
+const SP_DOCTYPES = {
+  A4: [
+    {id:'cover_to',       name:'ใบจ่าหน้าพัสดุ (ผู้รับ)',          desc:'ระบุเฉพาะผู้รับ',           perPage:12},
+    {id:'cover_tofrom',   name:'ใบจ่าหน้าพัสดุ (ผู้รับ-ผู้ส่ง)',  desc:'ระบุทั้งผู้รับและผู้ส่ง',    perPage:6},
+    {id:'picklist',       name:'ใบจัดเตรียมของ (Picklist)',        desc:'รายการสินค้าต่อพัสดุ',       perPage:4},
+    {id:'packing_big',    name:'ใบแพ็คของพร้อมจ่าหน้า (ใหญ่)',     desc:'จ่าหน้า + รายการสินค้า',     perPage:2},
+    {id:'packing_small',  name:'ใบแพ็คของพร้อมจ่าหน้า (เล็ก)',     desc:'จ่าหน้า + รายการสินค้า',     perPage:6},
+  ],
+  A6: [
+    {id:'cover_tofrom',   name:'ใบจ่าหน้าพัสดุ (ผู้รับ-ผู้ส่ง)',  desc:'A6 · 1 พัสดุ/หน้า',          perPage:1},
+    {id:'picklist',       name:'ใบจัดเตรียมของ (Picklist)',        desc:'A6 · 1 พัสดุ/หน้า',          perPage:1},
+    {id:'packing_big',    name:'ใบแพ็คของพร้อมจ่าหน้า (ใหญ่)',     desc:'A6 · 1 พัสดุ/หน้า',          perPage:1},
+    {id:'packing_small',  name:'ใบแพ็คของพร้อมจ่าหน้า (เล็ก)',     desc:'A6 · 1 พัสดุ/หน้า',          perPage:1},
+  ]
+};
+let _spSelectedDocType = 'cover_tofrom';
+
+function spRenderDocTypes() {
+  const paper = document.querySelector('input[name="sp-paper"]:checked')?.value || 'A4';
+  const wrap = $('sp-doctype-list');
+  if (!wrap) return;
+  const types = SP_DOCTYPES[paper] || [];
+  // ถ้า type ที่เลือกอยู่ไม่มีใน paper นี้ → reset เป็นตัวแรก
+  if (!types.find(t => t.id === _spSelectedDocType)) _spSelectedDocType = types[0]?.id;
+  
+  wrap.innerHTML = types.map(t => `
+    <label class="sp-doctype ${t.id === _spSelectedDocType ? 'on' : ''}" onclick="spPickDocType('${t.id}')">
+      <input type="radio" name="sp-doctype" value="${t.id}" ${t.id === _spSelectedDocType ? 'checked' : ''}>
+      <div class="sp-doctype-info">
+        <div class="sp-doctype-name">${t.name}</div>
+        <div class="sp-doctype-desc">${t.desc}</div>
+      </div>
+      <span class="sp-doctype-badge">${t.perPage}/หน้า</span>
+    </label>
+  `).join('');
+}
+
+window.spPickDocType = function(id) {
+  _spSelectedDocType = id;
+  spRenderDocTypes();
+};
+
 window.spGenerateDocs = function() {
   const ids = [...document.querySelectorAll('#sp-doc-list .sp-doc-cb-item:checked')].map(cb => cb.value);
   if (!ids.length) { toast('⚠️ กรุณาเลือกพัสดุก่อน','error'); return; }
   
-  const docs = [];
-  if ($('sp-doc-picklist')?.checked) docs.push('Picklist');
-  if ($('sp-doc-cover-packing')?.checked) docs.push('ใบปะหน้าพัสดุ & Packing List');
-  if ($('sp-doc-cover')?.checked) docs.push('ใบปะหน้าพัสดุ');
-  if ($('sp-doc-packing')?.checked) docs.push('Packing List');
-  
-  if (!docs.length) { toast('⚠️ กรุณาเลือกประเภทเอกสาร','error'); return; }
-  
+  const paper = document.querySelector('input[name="sp-paper"]:checked')?.value || 'A4';
   const fmt = document.querySelector('input[name="sp-fmt"]:checked')?.value || 'pdf';
-  toast(`🖨️ สร้าง ${docs.join(' + ')} (${fmt.toUpperCase()}) ${ids.length} พัสดุ — กรุณารอ`, 'ok');
+  const docType = (SP_DOCTYPES[paper] || []).find(t => t.id === _spSelectedDocType);
+  if (!docType) { toast('⚠️ กรุณาเลือกประเภทเอกสาร','error'); return; }
   
-  // Open print preview ในหน้าต่างใหม่
-  setTimeout(() => spOpenDocPreview(ids, docs, fmt), 500);
+  toast(`🖨️ สร้าง ${docType.name} · ${paper} · ${ids.length} พัสดุ`, 'ok');
+  setTimeout(() => spOpenDocPreview(ids, docType, paper, fmt), 400);
 };
 
-function spOpenDocPreview(ids, docs, fmt) {
-  const w = window.open('', '_blank', 'width=800,height=900');
-  if (!w) { toast('⚠️ โปรดเปิด popup blocker','error'); return; }
+// ─── ข้อมูลร้าน (ผู้ส่ง) ───
+function _spSenderInfo() {
+  const a = _spPickupAddr;
+  if (a) {
+    return {
+      name: _sellerData?.shop_name || a.label || 'ร้านค้า',
+      detail: `${a.address_line || ''} ${a.subdistrict || ''} ${a.district || ''} ${a.province || ''} ${a.postal_code || ''}`.trim(),
+      phone: a.phone || '-'
+    };
+  }
+  return { name: _sellerData?.shop_name || 'ร้านค้า', detail: '-', phone: '-' };
+}
+
+function spOpenDocPreview(ids, docType, paper, fmt) {
+  const w = window.open('', '_blank', 'width=900,height=1000');
+  if (!w) { toast('⚠️ โปรดอนุญาต popup','error'); return; }
   
   const orders = _spOrders.filter(o => ids.includes(o.id));
-  const docHtml = orders.map(o => {
-    const addr = o.shipping_address || {};
-    const items = o.items || [];
-    return `
-      <div style="page-break-after:always;padding:30px;font-family:sans-serif">
-        <div style="border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px">
-          <div style="display:flex;justify-content:space-between">
-            <div>
-              <div style="font-size:18px;font-weight:bold">${sfEsc(o.shipping_method_name || 'Courier')}</div>
-              <div style="font-size:11px">Order: ${sfEsc(o.order_number || o.id)}</div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-family:monospace;font-size:14px">${sfEsc(o.tracking_number || '—')}</div>
-            </div>
-          </div>
-        </div>
-        <div style="margin-bottom:14px">
-          <div style="font-size:11px;color:#666">ผู้รับ:</div>
-          <div style="font-weight:bold">${sfEsc(addr.name || '—')}</div>
-          <div style="font-size:12px">${sfEsc(addr.detail || '')}</div>
-        </div>
-        <div style="margin-top:18px">
-          <table style="width:100%;border-collapse:collapse;font-size:12px">
-            <thead><tr style="background:#f5f5f5"><th style="padding:6px;border:1px solid #ddd;text-align:left">สินค้า</th><th style="padding:6px;border:1px solid #ddd">จำนวน</th></tr></thead>
-            <tbody>
-              ${items.map(it => `<tr><td style="padding:6px;border:1px solid #ddd">${sfEsc(it.name || '—')}</td><td style="padding:6px;border:1px solid #ddd;text-align:center">${it.quantity || 1}</td></tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>`;
-  }).join('');
+  const sender = _spSenderInfo();
+  const today = new Date().toLocaleDateString('th-TH');
   
-  w.document.write(`<html><head><title>${docs.join(' + ')}</title></head><body>
-    <div style="padding:10px;background:#FEF3C7;color:#92400E;font-size:13px;border-bottom:1px solid #F59E0B">
-      📄 ${docs.join(' + ')} (${fmt.toUpperCase()}) · ${orders.length} parcels · <a onclick="window.print()" style="color:#E63329;cursor:pointer">🖨️ พิมพ์</a>
+  // สร้าง block ของแต่ละพัสดุตาม docType
+  const blocks = orders.map((o, idx) => spBuildDocBlock(o, docType.id, sender, idx)).join('');
+  
+  // จัด layout grid ตาม perPage
+  const cols = paper === 'A6' ? 1 : (docType.perPage >= 6 ? 2 : (docType.perPage >= 2 ? 2 : 1));
+  const pageStyle = paper === 'A6' 
+    ? '@page{size:A6;margin:4mm} body{width:105mm}'
+    : '@page{size:A4;margin:6mm}';
+  
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${docType.name}</title>
+    <style>
+      ${pageStyle}
+      *{box-sizing:border-box;margin:0;padding:0;font-family:'Sarabun','Tahoma',sans-serif}
+      body{background:#fff;color:#000}
+      .toolbar{padding:10px 16px;background:#0A0A0A;color:#fff;font-size:13px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+      .toolbar button{background:#E63329;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:12px}
+      .doc-grid{display:grid;grid-template-columns:repeat(${cols},1fr);gap:0}
+      .doc-cell{border:1px dashed #999;padding:10px;min-height:${paper==='A6'?'140mm':docType.perPage>=6?'90mm':docType.perPage>=4?'65mm':docType.perPage>=2?'130mm':'260mm'}}
+      .lbl-num{display:inline-block;background:#000;color:#fff;padding:2px 10px;font-weight:bold;font-size:14px}
+      .lbl-box{border:1.5px solid #000;padding:10px;margin:8px 0}
+      table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+      th,td{border:1px solid #000;padding:5px 7px;text-align:left}
+      th{background:#f0f0f0;font-weight:600}
+      .muted{color:#555;font-size:10px}
+      @media print{.toolbar{display:none}.doc-cell{border-color:#ccc}}
+    </style></head><body>
+    <div class="toolbar">
+      <span>📄 ${docType.name} · ${paper} · ${orders.length} พัสดุ · พิมพ์เมื่อ ${today}</span>
+      <button onclick="window.print()">🖨️ พิมพ์เอกสาร</button>
     </div>
-    ${docHtml}
+    <div class="doc-grid">${blocks}</div>
   </body></html>`);
   w.document.close();
 }
 
-window.spGenerateConfirm = function() {
-  toast('📄 สร้างใบยืนยันการจัดส่ง — coming soon','info');
+// สร้าง 1 block ตามประเภทเอกสาร
+function spBuildDocBlock(o, typeId, sender, idx) {
+  const addr = o.shipping_address || {};
+  const items = o.items || [];
+  const num = '#' + (o.order_number || o.id.slice(0,6)).slice(-6).toUpperCase();
+  const courier = o.shipping_method_name || o.shipping_method || 'จัดส่ง';
+  const buyerName = addr.name || '—';
+  const buyerDetail = addr.detail || addr.address || '—';
+  const buyerPhone = addr.phone || addr.tel || '';
+  const totalQty = items.reduce((s,it) => s + (it.quantity || 1), 0);
+  
+  const itemRows = items.map((it, i) => `
+    <tr>
+      <td style="text-align:center;width:30px">${i+1}</td>
+      <td>${sfEsc(it.name || it.products?.name_th || '(สินค้าไม่มีชื่อ)')}</td>
+      <td style="width:90px">${sfEsc(it.sku || '-')}</td>
+      <td style="text-align:center;width:50px">${it.quantity || 1} ชิ้น</td>
+    </tr>`).join('');
+  
+  // ── ใบจ่าหน้า (ผู้รับ) ──
+  const coverTo = `
+    <div class="lbl-box">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <span class="lbl-num">${num}</span>
+        <span class="muted">ติดต่อ ${sfEsc(buyerPhone || '-')}</span>
+      </div>
+      <div style="font-size:15px;font-weight:600;margin:8px 0 4px">${sfEsc(buyerName)}</div>
+      <div style="font-size:12px;line-height:1.5">${sfEsc(buyerDetail)}</div>
+      <div style="text-align:right;margin-top:10px" class="muted">(${sfEsc(courier)})</div>
+    </div>`;
+  
+  // ── ใบจ่าหน้า (ผู้รับ-ผู้ส่ง) ──
+  const coverToFrom = `
+    <div class="muted" style="font-size:9px;margin-bottom:4px">*กรณีจัดส่งสินค้าไม่สำเร็จ กรุณาส่งคืนตามที่อยู่ผู้ส่ง</div>
+    <div style="font-size:11px"><b>ผู้ส่ง</b> &nbsp;${sfEsc(sender.name)} (${sfEsc(sender.phone)})</div>
+    <div class="muted" style="font-size:10px;margin:2px 0 8px">${sfEsc(sender.detail)}</div>
+    <div class="lbl-box">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <span style="font-size:13px;font-weight:600">ผู้รับ ${buyerPhone ? '<span class="muted">('+sfEsc(buyerPhone)+')</span>' : ''}</span>
+        <span class="lbl-num">${num}</span>
+      </div>
+      <div style="font-size:14px;font-weight:600;margin:6px 0 3px">${sfEsc(buyerName)}</div>
+      <div style="font-size:11px;line-height:1.5">${sfEsc(buyerDetail)}</div>
+      <div style="text-align:right;margin-top:8px" class="muted">(${sfEsc(courier)})</div>
+    </div>`;
+  
+  // ── ใบจัดเตรียมของ (Picklist) ──
+  const picklist = `
+    <div style="text-align:center;font-weight:600;font-size:13px;margin-bottom:6px">ใบจัดเตรียมของ (Stock Preparing List)</div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">
+      <span>จำนวนสินค้าทั้งหมด ${items.length} ชนิด ${totalQty} ชิ้น</span>
+      <span>เลขที่บิล: <span class="lbl-num" style="font-size:11px">${num}</span></span>
+    </div>
+    <div class="muted" style="font-size:10px;margin-bottom:6px">พิมพ์เมื่อ: ${new Date().toLocaleDateString('th-TH')}</div>
+    <table>
+      <thead><tr><th style="width:30px">ลำดับ</th><th>รายการ</th><th style="width:90px">แบบสินค้า / SKU</th><th style="width:55px">จำนวน</th></tr></thead>
+      <tbody>${itemRows}<tr><td colspan="3" style="text-align:right;font-weight:600">รวม :</td><td style="text-align:center;font-weight:600">${totalQty} ชิ้น</td></tr></tbody>
+    </table>`;
+  
+  // ── ใบแพ็คของพร้อมจ่าหน้า (ใหญ่) — จ่าหน้า + picklist คู่กัน ──
+  const packingBig = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>${coverToFrom}</div>
+      <div>
+        <div style="text-align:center;font-weight:600;font-size:12px;margin-bottom:4px">ใบจัดเตรียมของ</div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+          <span>${items.length} ชนิด ${totalQty} ชิ้น</span><span class="lbl-num" style="font-size:10px">${num}</span>
+        </div>
+        <table style="font-size:10px">
+          <thead><tr><th>รายการ</th><th style="width:55px">SKU</th><th style="width:40px">จำนวน</th></tr></thead>
+          <tbody>${items.map(it=>`<tr><td>${sfEsc(it.name||it.products?.name_th||'-')}</td><td>${sfEsc(it.sku||'-')}</td><td style="text-align:center">${it.quantity||1}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  
+  // ── ใบแพ็คของพร้อมจ่าหน้า (เล็ก) — กรอบเล็กรวมกัน ──
+  const packingSmall = `
+    <div style="border:1px solid #000;padding:8px;font-size:10px">
+      <div style="display:flex;justify-content:space-between">
+        <b>ผู้ส่ง</b> <span class="muted">(${sfEsc(sender.phone)})</span>
+      </div>
+      <div style="font-weight:600">${sfEsc(sender.name)}</div>
+      <div class="muted" style="margin-bottom:6px">${sfEsc(sender.detail)}</div>
+      <div style="border:1px solid #000;padding:6px;margin:6px 0">
+        <div style="display:flex;justify-content:space-between">
+          <b>ผู้รับ</b> ${buyerPhone?'<span class="muted">('+sfEsc(buyerPhone)+')</span>':''}
+          <span class="lbl-num" style="font-size:9px">${num}</span>
+        </div>
+        <div style="font-weight:600">${sfEsc(buyerName)}</div>
+        <div>${sfEsc(buyerDetail)}</div>
+      </div>
+      <div class="muted">(${sfEsc(courier)})</div>
+      <div style="margin-top:4px"><b>สินค้า:</b> ${items.map(it=>sfEsc(it.name||'-')+' ×'+(it.quantity||1)).join(', ')}</div>
+    </div>`;
+  
+  const content = {
+    cover_to: coverTo,
+    cover_tofrom: coverToFrom,
+    picklist: picklist,
+    packing_big: packingBig,
+    packing_small: packingSmall
+  }[typeId] || coverToFrom;
+  
+  return `<div class="doc-cell">${content}</div>`;
+}
+
+// ─── ใบสรุปจัดเตรียมของ (รวมทุกพัสดุ) ───
+window.spGenerateSummary = function() {
+  const ids = [...document.querySelectorAll('#sp-doc-list .sp-doc-cb-item:checked')].map(cb => cb.value);
+  if (!ids.length) { toast('⚠️ กรุณาเลือกพัสดุก่อน','error'); return; }
+  
+  const orders = _spOrders.filter(o => ids.includes(o.id));
+  
+  // รวมสินค้าทุกพัสดุ — group by SKU/name
+  const agg = {};
+  orders.forEach(o => {
+    (o.items || []).forEach(it => {
+      const key = it.sku || it.name || it.product_id || 'unknown';
+      if (!agg[key]) agg[key] = {name: it.name || it.products?.name_th || '(สินค้าไม่มีชื่อ)', sku: it.sku || '-', qty: 0};
+      agg[key].qty += (it.quantity || 1);
+    });
+  });
+  const rows = Object.values(agg);
+  const totalQty = rows.reduce((s,r) => s + r.qty, 0);
+  
+  const w = window.open('', '_blank', 'width=800,height=900');
+  if (!w) { toast('⚠️ โปรดอนุญาต popup','error'); return; }
+  
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>ใบสรุปจัดเตรียมของ</title>
+    <style>
+      @page{size:A4;margin:14mm}
+      *{box-sizing:border-box;margin:0;padding:0;font-family:'Sarabun','Tahoma',sans-serif}
+      .toolbar{padding:10px 16px;background:#0A0A0A;color:#fff;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+      .toolbar button{background:#E63329;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer}
+      .wrap{padding:24px}
+      h2{text-align:center;font-size:16px;margin-bottom:14px}
+      .meta{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+      table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+      th,td{border:1px solid #000;padding:7px 9px}
+      th{background:#f0f0f0}
+      @media print{.toolbar{display:none}}
+    </style></head><body>
+    <div class="toolbar"><span>📋 ใบสรุปจัดเตรียมของ · ${orders.length} พัสดุ</span><button onclick="window.print()">🖨️ พิมพ์</button></div>
+    <div class="wrap">
+      <h2>ใบสรุปจัดเตรียมของ (Stock Preparing List Summary)</h2>
+      <div class="meta"><span>จำนวนสินค้าทั้งหมด: ${rows.length} ชนิด ${totalQty} ชิ้น</span><span>จำนวนบิล: ${orders.length} รายการ</span></div>
+      <div class="meta"><span>พิมพ์เมื่อ: ${new Date().toLocaleDateString('th-TH')}</span></div>
+      <table>
+        <thead><tr><th style="width:50px">ลำดับ</th><th>รายการ</th><th style="width:140px">แบบสินค้า / SKU</th><th style="width:90px">จำนวน</th></tr></thead>
+        <tbody>
+          ${rows.map((r,i) => `<tr><td style="text-align:center">${i+1}</td><td>${sfEsc(r.name)}</td><td>${sfEsc(r.sku)}</td><td style="text-align:center">${r.qty} ชิ้น</td></tr>`).join('')}
+          <tr><td colspan="3" style="text-align:right;font-weight:600">รวม :</td><td style="text-align:center;font-weight:600">${totalQty} ชิ้น</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </body></html>`);
+  w.document.close();
+  toast(`📋 สร้างใบสรุป ${rows.length} ชนิด ${totalQty} ชิ้น`,'ok');
 };
 
 async function renderSecurityLive() {
