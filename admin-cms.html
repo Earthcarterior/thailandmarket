@@ -2634,7 +2634,7 @@ function pmRenderSlips() {
             <button class="pm-btn primary" onclick="pmVerifySlip('${s.id}','verified')" style="font-size:11px">✅ อนุมัติ</button>
             <button class="pm-btn danger" onclick="pmVerifySlip('${s.id}','rejected')" style="font-size:11px">❌ ปฏิเสธ</button>
           `:''}
-          <a href="admin-cms.html?panel=orders&order=${pmEsc(s.order_id)}" class="pm-btn" style="font-size:11px;text-decoration:none">ดู order</a>
+          <button onclick="orShowDetail('${pmEsc(s.order_id)}')" class="pm-btn" style="font-size:11px;cursor:pointer">📦 ดู order</button>
         </div>
       </div>
     `;
@@ -5468,6 +5468,22 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
   checkSession();
+
+  // ── URL param handler: ?panel=orders&order=ID → เปิด panel + modal อัตโนมัติ ──
+  setTimeout(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const panel = params.get('panel');
+      const orderId = params.get('order');
+      if (panel && typeof showPanel === 'function') {
+        showPanel(panel);
+      }
+      if (orderId && typeof orShowDetail === 'function') {
+        // รอ panel orders โหลด orders เสร็จก่อน
+        setTimeout(() => orShowDetail(orderId), 800);
+      }
+    } catch(e) { console.warn('URL param handler:', e); }
+  }, 500);
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -7772,8 +7788,18 @@ window.orShowDetail = async function(orderId) {
 
   const sb = window.sb || window._sb;
   try {
-    const order = _orOrders.find(o => o.id === orderId);
-    if (!order) { body.innerHTML = '<div style="text-align:center;padding:40px">ไม่พบออเดอร์</div>'; return; }
+    // หา order ใน cache ก่อน — ถ้าไม่เจอ fetch ใหม่
+    let order = _orOrders.find(o => o.id === orderId);
+    if (!order) {
+      const r = await sb.from('orders').select('*').eq('id', orderId).maybeSingle();
+      if (r.error || !r.data) { body.innerHTML = '<div style="text-align:center;padding:40px">ไม่พบออเดอร์</div>'; return; }
+      order = r.data;
+      // hydrate user ด้วย ถ้ายังไม่มี cache
+      if (order.user_id && !_orUsersCache[order.user_id]) {
+        const ru = await sb.from('users').select('id,email,display_name,phone').eq('id', order.user_id).maybeSingle();
+        if (ru.data) _orUsersCache[order.user_id] = ru.data;
+      }
+    }
 
     title.textContent = '📦 ' + (order.order_number || orderId.slice(0,8));
 
