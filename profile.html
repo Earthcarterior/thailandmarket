@@ -1495,5 +1495,48 @@ function setAvatarUI(url) {
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
-</body>
+<script>
+  (function(){
+    function addBtns(){
+          var rows = document.querySelectorAll('.order-item');
+          rows.forEach(function(row){
+                  var btnsDiv = row.querySelector('.oi-btns');
+                  if (!btnsDiv) return;
+                  if (btnsDiv.querySelector('.btn-track-injected')) return;
+                  var status = (row.dataset.status || '').trim();
+                  var orderId = row.dataset.orderId || row.dataset.id || '';
+                  var orderNum = row.dataset.orderNumber || row.dataset.order || orderId;
+                  if (status === 'pending') {
+                            var btn = document.createElement('a');
+                            btn.href = 'checkout.html?direct=' + orderId;
+                            btn.className = 'btn btn-sm btn-red btn-track-injected';
+                            btn.style.cssText = 'display:inline-flex;padding:5px 12px;font-size:11px;';
+                            btn.textContent = '\uD83D\uDCB3 \u0E0A\u0E33\u0E23\u0E30\u0E40\u0E07\u0E34\u0E19';
+                            btnsDiv.appendChild(btn);
+                  } else {
+                            var btn2 = document.createElement('a');
+                            btn2.href = 'tracking.html?order=' + orderNum;
+                            btn2.className = 'btn btn-sm btn-outline btn-track-injected';
+                            btn2.style.cssText = 'display:inline-flex;padding:5px 12px;font-size:11px;';
+                            btn2.textContent = '\uD83D\uDCCD \u0E15\u0E34\u0E14\u0E15\u0E32\u0E21';
+                            btnsDiv.appendChild(btn2);
+                  }
+          });
+    }
+      function init(){
+            if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', addBtns);
+            } else {
+                    addBtns();
+            }
+      }
+      init();
+      window.addEventListener('hashchange', function(){
+            if (location.hash === '#orders') setTimeout(addBtns, 800);
+      });
+      console.log('\u2705 Profile orders patch loaded \u2014 ' + new Date().toLocaleTimeString());
+  })();
+</script>
+  
+</script></body>
 </html>
