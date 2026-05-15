@@ -1630,37 +1630,47 @@ async function doCheckout(){
         // upload slip image to Supabase storage (bucket: slips)
         let slipUrl = _uploadedSlipUrl;
         if (_uploadedSlipUrl.startsWith('data:')) {
-          const res = await fetch(_uploadedSlipUrl);
-          const blob = await res.blob();
-          const ext = (blob.type.split('/')[1] || 'jpg').split(';')[0];
-          const fileName = `${order.id}-${Date.now()}.${ext}`;
-          const { data:upData, error:upErr } = await _sbCO.storage.from('slips').upload(fileName, blob, { upsert: true });
-          if (!upErr && upData) {
-            const { data: pub } = _sbCO.storage.from('slips').getPublicUrl(upData.path);
-            slipUrl = pub.publicUrl;
-          } else {
-            console.warn('slip storage upload failed, keeping data url:', upErr);
+          try {
+            const res = await fetch(_uploadedSlipUrl);
+            const blob = await res.blob();
+            const ext = (blob.type.split('/')[1] || 'jpg').split(';')[0];
+            const fileName = `${order.id}-${Date.now()}.${ext}`;
+            const { data:upData, error:upErr } = await _sbCO.storage.from('slips').upload(fileName, blob, { upsert: true, contentType: blob.type });
+            if (!upErr && upData) {
+              const { data: pub } = _sbCO.storage.from('slips').getPublicUrl(upData.path);
+              slipUrl = pub.publicUrl;
+              console.log('slip uploaded:', slipUrl);
+            } else {
+              // bucket อาจยังไม่มี → fallback ใช้ data URL ตรงๆ (เก็บใน DB)
+              console.warn('storage upload failed, fallback to data URL:', upErr?.message);
+            }
+          } catch(upEx) {
+            console.warn('storage upload exception, fallback to data URL:', upEx.message);
           }
         }
+        const amt = _slipAmount || total;
         const slipInsert = {
           order_id: order.id,
-          order_number: orderNum,    // ส่ง order_number ด้วย — กัน NOT NULL constraint
+          order_number: orderNum,
           user_id: user.id,
           method_id: selectedMethod.id,
           account_id: (selectedMethod.accounts && selectedMethod.accounts[0]) ? selectedMethod.accounts[0].id : null,
           slip_image_url: slipUrl,
-          amount: _slipAmount || total,
+          slip_image_path: slipUrl,         // schema เก่าใช้ชื่อนี้
+          amount: amt,
+          amount_paid: amt,                  // schema เก่ามี NOT NULL บน amount_paid
           transferred_at: _slipTransferredAt ? new Date(_slipTransferredAt).toISOString() : null,
           reference_number: _slipRefNumber || null,
+          reference_no: _slipRefNumber || null,   // schema เก่าใช้ชื่อนี้
           status: 'pending'
         };
         let { error:sErr } = await _sbCO.from('payment_slips').insert(slipInsert);
 
-        // ถ้า error เพราะ column หาย → ลองตัด column ที่มีปัญหาออกแล้ว retry
+        // ถ้า error เพราะ column หาย → ตัด column ที่มีปัญหาออกแล้ว retry
         if (sErr && /Could not find the '(\w+)' column/.test(sErr.message)) {
           let retrySlip = {...slipInsert};
           let attempts = 0;
-          while (sErr && attempts < 10) {
+          while (sErr && attempts < 15) {
             const m = sErr.message.match(/Could not find the '(\w+)' column/);
             if (!m) break;
             delete retrySlip[m[1]];
@@ -1675,7 +1685,7 @@ async function doCheckout(){
           alert('⚠️ บันทึกคำสั่งซื้อสำเร็จ แต่บันทึกสลิปไม่สำเร็จ\n\nกรุณาติดต่อแอดมินพร้อมแจ้งเลขออเดอร์ ' + orderNum + '\n(' + sErr.message + ')');
         } else {
           _slipSaved = true;
-          console.log('payment_slip saved for order', orderNum);
+          console.log('✅ payment_slip saved for order', orderNum);
         }
       } catch(e) {
         console.error('slip upload exception:', e);
