@@ -1,0 +1,209 @@
+<!-- ═══════════════════════════════════════════════════════════════════════
+     TRACKING PAGE — REAL DATA PATCH v3 (2026-05-15)
+     
+     ใส่ script block นี้ก่อน </body> ใน tracking.html
+     หรือก่อน </body> ใน GitHub → tracking.html → กด Edit → paste แล้ว Commit
+     
+     ทำงาน: รัน async หลัง DOMContentLoaded → ลบ mock data ทั้งหมด → 
+            ใส่ข้อมูลจริงจาก Supabase orders + order_tracking + users
+═══════════════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  // รอ Supabase client โหลด
+  function whenReady(){
+    var sb = window._sb || window.sb;
+    if (!sb) { setTimeout(whenReady, 200); return; }
+    runTrackingPatch(sb);
+  }
+  
+  async function runTrackingPatch(sb){
+    try {
+      var url = new URL(location.href);
+      var orderNum = url.searchParams.get('order');
+      if (!orderNum) return;
+      
+      // 1) ดึง order + user + order_tracking
+      var ord = await sb.from('orders').select('*').eq('order_number', orderNum).maybeSingle();
+      if (!ord.data) {
+        console.warn('[TrackingPatch] order not found:', orderNum);
+        return;
+      }
+      var o = ord.data;
+      
+      var track = await sb.from('order_tracking').select('*').eq('order_id', o.id).order('created_at', {ascending:true});
+      var u = await sb.from('users').select('display_name,phone,loyalty_pts').eq('id', o.user_id).maybeSingle();
+      
+      // ── 2) order number + date
+      var sbOrderNum = document.querySelector('.sb-order-num');
+      if (sbOrderNum) sbOrderNum.textContent = '#' + o.order_number;
+      var sbOrderDate = document.querySelector('.sb-order-date');
+      if (sbOrderDate) {
+        var d = new Date(o.created_at);
+        sbOrderDate.textContent = d.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) + ' · ' + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+      }
+      
+      // ── 3) status steps
+      var statusToStep = {pending:0,paid:1,confirmed:2,processing:2,preparing:2,shipped:3,shipping:3,delivered:4,completed:4,cancelled:-1};
+      var currentStep = statusToStep[o.status] ?? 0;
+      var stepsContainer = document.getElementById('status-steps');
+      if (stepsContainer) {
+        var stepNames = ['สั่งซื้อแล้ว','ชำระเงิน','เตรียมพัสดุ','กำลังจัดส่ง','จัดส่งสำเร็จ'];
+        var stepIcons = ['📝','💳','📦','🚚','🎉'];
+        stepsContainer.innerHTML = stepNames.map(function(name,i){
+          var cls = i<currentStep ? 'done' : (i===currentStep ? 'active' : 'pending');
+          var color = cls==='done'?'#16A34A':(cls==='active'?'#0A0A0A':'#A3A3A3');
+          var weight = cls==='active'?'700':'400';
+          return '<div class="st-step '+cls+'" style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:'+color+';font-weight:'+weight+'"><div style="font-size:24px">'+stepIcons[i]+'</div><div>'+name+'</div></div>';
+        }).join('<div style="flex:1;height:2px;background:#E5E5E5;margin:0 4px;margin-top:24px"></div>');
+      }
+      
+      // ── 4) ETA card (.eta-main / .eta-right)
+      var etaMain = document.querySelector('.eta-main');
+      if (etaMain) {
+        if (o.shipped_at && (o.tracking_no || o.tracking_number)) {
+          var dShip = new Date(o.shipped_at);
+          var carrier = o.tracking_carrier || o.carrier || 'ขนส่ง';
+          etaMain.innerHTML = '<strong style="color:#0A0A0A;font-size:14px">📦 จัดส่งเมื่อ '+dShip.toLocaleDateString('th-TH')+'</strong><div style="font-size:11px;color:#737373;margin-top:4px">กำลังอยู่ระหว่างขนส่ง · <span>'+carrier+'</span></div>';
+        } else if (o.status==='paid' || o.payment_status==='paid') {
+          etaMain.innerHTML = '<strong style="color:#0A0A0A;font-size:14px">⏳ รอร้านค้าจัดส่ง</strong><div style="font-size:11px;color:#737373;margin-top:4px">ชำระเงินสำเร็จแล้ว · ร้านค้ากำลังเตรียมพัสดุ</div>';
+        } else if (o.status==='pending') {
+          etaMain.innerHTML = '<strong style="color:#D97706;font-size:14px">⏳ รอชำระเงิน</strong><div style="font-size:11px;color:#737373;margin-top:4px">กรุณาชำระเงินภายใน 24 ชม.</div>';
+        } else if (o.status==='delivered'||o.status==='completed'){
+          etaMain.innerHTML = '<strong style="color:#16A34A;font-size:14px">🎉 จัดส่งสำเร็จ</strong><div style="font-size:11px;color:#737373;margin-top:4px">ลูกค้าได้รับสินค้าเรียบร้อย</div>';
+        } else if (o.status==='cancelled'){
+          etaMain.innerHTML = '<strong style="color:#737373;font-size:14px">✕ ยกเลิกออเดอร์</strong><div style="font-size:11px;color:#737373;margin-top:4px">'+(o.cancel_reason||'ออเดอร์ถูกยกเลิก')+'</div>';
+        }
+      }
+      var etaRight = document.querySelector('.eta-right');
+      if (etaRight) {
+        var trk = o.tracking_no || o.tracking_number;
+        if (trk) {
+          etaRight.innerHTML = '<div style="font-size:11px;color:#737373">เลขพัสดุ</div><div style="font-family:monospace;font-weight:700;font-size:13px;margin-top:2px">'+trk+'</div>';
+        } else {
+          etaRight.innerHTML = '<div style="font-size:11px;color:#A3A3A3">ยังไม่มีเลขพัสดุ</div>';
+        }
+      }
+      
+      // ── 5) Timeline events
+      var timeline = document.getElementById('timeline');
+      if (timeline) {
+        var rows;
+        if (track.data && track.data.length){
+          rows = track.data.map(function(t){
+            var dt = new Date(t.created_at);
+            var icon = t.status==='paid'?'💳':t.status==='preparing'?'📦':(t.status==='shipping'||t.status==='shipped')?'🚚':t.status==='delivered'?'🎉':'📝';
+            return '<div class="tl-item" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F2F2F2"><div style="font-size:20px">'+icon+'</div><div style="flex:1"><div style="font-weight:600;font-size:13px">'+(t.description||t.status)+'</div><div style="font-size:11px;color:#737373;margin-top:2px">'+dt.toLocaleString('th-TH')+'</div></div></div>';
+          });
+        } else {
+          var events = [];
+          events.push({icon:'📝', label:'สั่งซื้อแล้ว', date:o.created_at});
+          if (o.paid_at) events.push({icon:'💳', label:'ชำระเงินสำเร็จ', date:o.paid_at});
+          if (o.preparing_at) events.push({icon:'📦', label:'กำลังเตรียมพัสดุ', date:o.preparing_at});
+          if (o.shipped_at) events.push({icon:'🚚', label:'จัดส่งแล้ว '+(o.tracking_carrier||o.carrier||'')+' '+(o.tracking_no||o.tracking_number||''), date:o.shipped_at});
+          if (o.delivered_at) events.push({icon:'🎉', label:'ส่งสำเร็จถึงมือลูกค้า', date:o.delivered_at});
+          rows = events.reverse().map(function(e){
+            var dt = new Date(e.date);
+            return '<div class="tl-item" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F2F2F2"><div style="font-size:20px">'+e.icon+'</div><div style="flex:1"><div style="font-weight:600;font-size:13px">'+e.label+'</div><div style="font-size:11px;color:#737373;margin-top:2px">'+dt.toLocaleString('th-TH')+'</div></div></div>';
+          });
+        }
+        timeline.innerHTML = rows.join('');
+      }
+      
+      // ── 6) Order items
+      var oiContainer = document.getElementById('order-items');
+      if (oiContainer && Array.isArray(o.items)) {
+        oiContainer.innerHTML = o.items.map(function(it){
+          return '<div class="order-item" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F2F2F2"><div class="order-img" style="width:60px;height:60px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:8px">📦</div><div class="order-name" style="flex:1"><div style="font-weight:600;font-size:13px">'+(it.name||'-')+'</div><div class="order-var" style="font-size:11px;color:#737373;margin-top:2px">'+(it.shop||'')+(it.variant?' · '+it.variant:'')+' × '+(it.qty||1)+'</div></div><div class="order-price" style="font-weight:700;font-family:monospace">฿'+Number(it.subtotal||it.price||0).toLocaleString()+'</div></div>';
+        }).join('');
+      }
+      
+      // ── 7) Shipping address card
+      var allDivs = document.querySelectorAll('div');
+      var addrLeaf = null;
+      allDivs.forEach(function(el){
+        if (!addrLeaf && el.children.length===0 && el.textContent.indexOf('สมชาย ใจดี')>-1){
+          addrLeaf = el.parentElement;
+        }
+      });
+      if (addrLeaf) {
+        var addr = o.shipping_address || {};
+        var name = addr.name || u.data?.display_name || 'ไม่ระบุชื่อ';
+        var phone = addr.phone || u.data?.phone || '-';
+        var detail = addr.detail || addr.address || addr.line1 || '';
+        var sub = [addr.subdistrict, addr.district, addr.province, addr.zip].filter(Boolean).join(' ');
+        var container = addrLeaf.closest('.card') || addrLeaf;
+        var heading = container.querySelector('h2, h3, .card-title');
+        var headingHTML = heading ? heading.outerHTML : '<h3 style="font-size:14px;font-weight:700;margin-bottom:8px">📍 ที่อยู่รับสินค้า</h3>';
+        container.innerHTML = headingHTML + 
+          '<div style="padding:8px 0"><div style="font-weight:600;font-size:14px">'+name+' · '+phone+'</div><div style="font-size:13px;color:#404040;margin-top:4px">'+detail+(sub?' '+sub:'')+'</div></div>' +
+          ((o.tracking_no||o.tracking_number) ? 
+            '<div style="margin-top:12px;padding:10px;background:#F5F5F5;border-radius:6px"><div style="font-size:11px;color:#737373">🚚 '+(o.tracking_carrier||o.carrier||'ขนส่ง')+'</div><div style="font-family:monospace;font-weight:700;font-size:13px;margin-top:2px">'+(o.tracking_no||o.tracking_number)+' <button onclick="navigator.clipboard.writeText(\''+(o.tracking_no||o.tracking_number)+'\');this.textContent=\'คัดลอกแล้ว ✓\'" style="margin-left:8px;padding:2px 8px;font-size:10px;background:#0A0A0A;color:#fff;border:none;border-radius:4px;cursor:pointer">คัดลอก</button></div></div>' : 
+            '');
+      }
+      
+      // ── 8) Payment summary + points
+      var realPts = u.data?.loyalty_pts || 0;
+      var orderPts = Math.floor(Number(o.total||0)/10);
+      
+      // resolve payment method
+      var pmLabel = '-';
+      if (o.payment_method) {
+        if (o.payment_method.length === 36) {
+          var pmRow = await sb.from('payment_methods').select('*').eq('id', o.payment_method).maybeSingle();
+          if (pmRow.data) {
+            var type = pmRow.data.type || pmRow.data.method_type || '';
+            var simple = {credit_card:'บัตรเครดิต', promptpay:'พร้อมเพย์', cod:'เก็บเงินปลายทาง', bank_transfer:'โอนผ่านธนาคาร'};
+            pmLabel = pmRow.data.label || pmRow.data.name || simple[type] || type;
+          }
+        } else {
+          var s2 = {credit_card:'บัตรเครดิต', promptpay:'พร้อมเพย์', cod:'เก็บเงินปลายทาง', bank_transfer:'โอนผ่านธนาคาร'};
+          pmLabel = s2[o.payment_method] || o.payment_method;
+        }
+      }
+      
+      var totalReal = Number(o.total||o.total_amount||0);
+      
+      // tier calc
+      var tierName, tierIcon, nextTier, nextNeed;
+      if (realPts >= 50000){ tierName='Platinum'; tierIcon='💎'; nextTier=null; nextNeed=0; }
+      else if (realPts >= 10000){ tierName='Gold'; tierIcon='🥇'; nextTier='Platinum'; nextNeed=50000-realPts; }
+      else if (realPts >= 1000){ tierName='Silver'; tierIcon='🥈'; nextTier='Gold'; nextNeed=10000-realPts; }
+      else { tierName='Bronze'; tierIcon='🥉'; nextTier='Silver'; nextNeed=1000-realPts; }
+      
+      // replace text nodes ที่มี mock
+      function walkAndReplace(){
+        var allEls2 = document.querySelectorAll('*');
+        allEls2.forEach(function(el){
+          if (el.children.length>0) return;
+          var t = el.textContent;
+          // ยอดรวมสุทธิ
+          if (/฿14,290/.test(t)) el.textContent = t.replace('14,290', totalReal.toLocaleString());
+          // แต้ม
+          if (/\+1,429/.test(t)) el.textContent = t.replace('+1,429', '+'+orderPts.toLocaleString());
+          // วิธีชำระ
+          if (/Visa •••4521|บัตรเครดิต Visa|bank_transfer/.test(t)) el.textContent = 'ชำระด้วย: ' + pmLabel;
+          // แต้มรวม
+          if (/6,249 แต้ม|แต้มรวม.*ระดับ/.test(t) && t.indexOf('แต้มรวม')>-1) {
+            el.textContent = 'แต้มรวม: '+realPts.toLocaleString()+' แต้ม · ระดับ '+tierName+' '+tierIcon;
+          }
+          // next tier
+          if (/Platinum:\s*อีก\s*[\d,]+\s*แต้ม|Gold:\s*อีก\s*[\d,]+\s*แต้ม|Silver:\s*อีก\s*[\d,]+\s*แต้ม/.test(t)) {
+            el.textContent = nextTier ? (nextTier+': อีก '+nextNeed.toLocaleString()+' แต้ม') : '🎉 ระดับสูงสุดแล้ว';
+          }
+        });
+      }
+      walkAndReplace();
+      
+      console.log('[TrackingPatch] ✓ Real data loaded:', o.order_number, o.status);
+    } catch(e) {
+      console.error('[TrackingPatch] error:', e);
+    }
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(whenReady, 800); });
+  } else {
+    setTimeout(whenReady, 800);
+  }
+})();
+</script>
