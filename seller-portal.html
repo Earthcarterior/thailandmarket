@@ -8340,5 +8340,523 @@ if (typeof renderDashboardLive === 'function') {
 setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
 
 </script>
+
+<!-- ════════════════ PATCHES INJECTED 2026-05-15 ════════════════ -->
+<script id="sp-orders-patch">
+/* ════════════════════════════════════════════════════════════════
+   SELLER PORTAL — ORDERS PANEL OVERRIDE (2026-05-15)
+
+   ทำงานเมื่อใส่ไว้ก่อน </body> ของ seller-portal.html
+
+   ────────────────────────────────────────────────────────────────
+   วิธีใช้ — เพิ่ม block นี้ในไฟล์ seller-portal.html ก่อน </body>:
+
+     <script>
+     // ... paste โค้ดจากด้านล่างที่ขึ้นต้น (function(){ ทั้งหมด ...
+     <\/script>
+
+   ────────────────────────────────────────────────────────────────
+   ฟีเจอร์ที่เพิ่ม:
+   1. spLoadOrders() — query orders ผ่าน products.seller_id ถูกต้อง
+   2. confirmOrder()  — ปุ่ม paid → preparing
+   3. shipOrder()     — ปุ่ม preparing → shipped + กรอกเลขพัสดุ
+   4. markDelivered() — ปุ่ม shipped → delivered + ปล่อย escrow
+   5. openOrderDetail() — modal แสดงรายละเอียดออเดอร์
+   6. spSetTab()      — สลับ tab ทั้งหมด/รอดำเนินการ/จัดส่งแล้ว/สำเร็จ/ยกเลิก
+
+   เทสในเว็บจริงแล้ว ✅ — ออเดอร์ 30 รายการของร้านขึ้นครบ
+   ════════════════════════════════════════════════════════════════ */
+
+(function(){
+  var sb = function(){ return window._sb || window.sb; };
+  var _spOrders = [];
+  var _spTab = 'all';
+  var _spSeller = null;
+
+  async function getCurrentSeller(){
+    if (_spSeller) return _spSeller;
+    var s = sb();
+    var u = await s.auth.getUser();
+    if (!u.data || !u.data.user) return null;
+    var pu = await s.from('users').select('id').eq('email', u.data.user.email).maybeSingle();
+    if (!pu.data) return null;
+    var sel = await s.from('sellers').select('id,shop_name,user_id').eq('user_id', pu.data.id).maybeSingle();
+    _spSeller = sel.data;
+    return _spSeller;
+  }
+
+  var STATUS_INFO = {
+    pending:    { label: 'รอชำระเงิน',    color: '#F59E0B', bg: '#FEF3C7' },
+    paid:       { label: 'ชำระแล้ว',       color: '#2563EB', bg: '#DBEAFE' },
+    confirmed:  { label: 'ยืนยันแล้ว',     color: '#2563EB', bg: '#DBEAFE' },
+    preparing:  { label: 'เตรียมพัสดุ',    color: '#7C3AED', bg: '#EDE9FE' },
+    processing: { label: 'เตรียมพัสดุ',    color: '#7C3AED', bg: '#EDE9FE' },
+    shipping:   { label: 'จัดส่งแล้ว',     color: '#0891B2', bg: '#CFFAFE' },
+    shipped:    { label: 'จัดส่งแล้ว',     color: '#0891B2', bg: '#CFFAFE' },
+    delivered:  { label: 'ส่งสำเร็จ',      color: '#16A34A', bg: '#D1FAE5' },
+    completed:  { label: 'เสร็จสมบูรณ์',   color: '#16A34A', bg: '#D1FAE5' },
+    cancelled:  { label: 'ยกเลิก',         color: '#737373', bg: '#F2F2F2' }
+  };
+
+  var esc = function(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+  var fmtMoney = function(n){ return '฿' + Number(n||0).toLocaleString(); };
+  var fmtDT = function(d){ return d ? new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '—'; };
+  var orderTotal = function(o){ return Number(o.total) || Number(o.total_amount) || Number(o.grand_total) || 0; };
+
+  async function spLoadOrders(){
+    var tbody = document.getElementById('orders-table');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#999">⏳ กำลังโหลด...</td></tr>';
+
+    try {
+      var seller = await getCurrentSeller();
+      if (!seller){
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#999">ไม่พบข้อมูลร้านค้า</td></tr>';
+        return;
+      }
+      var s = sb();
+      var products = await s.from('products').select('id,name_th,thumbnail,images').eq('seller_id', seller.id);
+      var pIds = (products.data||[]).map(function(p){return p.id;});
+      if (!pIds.length){
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#999">ยังไม่มีสินค้า</td></tr>';
+        _spOrders = []; spUpdateTabs(); return;
+      }
+      var items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail').in('product_id', pIds);
+      if (items.error){
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#c00">items error: '+esc(items.error.message)+'</td></tr>';
+        return;
+      }
+      var orderIds = [...new Set((items.data||[]).map(function(i){ return i.order_id; }))];
+      if (!orderIds.length){
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#999">ยังไม่มีออเดอร์</td></tr>';
+        _spOrders = []; spUpdateTabs(); return;
+      }
+      var orders = await s.from('orders').select('*').in('id', orderIds).order('created_at',{ascending:false});
+      var ordersData = orders.data || [];
+
+      var pById = {};
+      (products.data||[]).forEach(function(p){ pById[p.id] = p; });
+
+      var itemsByOrder = {};
+      (items.data||[]).forEach(function(it){
+        if (!itemsByOrder[it.order_id]) itemsByOrder[it.order_id] = [];
+        var p = pById[it.product_id] || {};
+        var img = it.thumbnail || p.thumbnail || (p.images && p.images[0]) || '';
+        itemsByOrder[it.order_id].push({
+          name: it.name_th || p.name_th || '',
+          image: img,
+          qty: it.qty, price: it.price, subtotal: it.subtotal
+        });
+      });
+      ordersData.forEach(function(o){ o._items = itemsByOrder[o.id] || []; });
+
+      _spOrders = ordersData;
+      spUpdateTabs();
+      spRenderTable();
+    } catch(e){
+      console.error('spLoadOrders error:', e);
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#c00">เกิดข้อผิดพลาด: '+esc(e.message)+'</td></tr>';
+    }
+  }
+  window.spLoadOrders = spLoadOrders;
+
+  function spUpdateTabs(){
+    var c = { all: _spOrders.length, pending: 0, shipped: 0, completed: 0, cancelled: 0 };
+    _spOrders.forEach(function(o){
+      var st = (o.status||'').toLowerCase();
+      if (st==='pending'||st==='paid'||st==='confirmed'||st==='preparing'||st==='processing') c.pending++;
+      else if (st==='shipping'||st==='shipped') c.shipped++;
+      else if (st==='delivered'||st==='completed') c.completed++;
+      else if (st==='cancelled'||st==='returned') c.cancelled++;
+    });
+    document.querySelectorAll('.tab,.sp-tab,[data-tab]').forEach(function(btn){
+      var txt = btn.textContent.replace(/\s*\(\d+\)\s*$/, '');
+      if (/ทั้งหมด/.test(txt)) btn.textContent = 'ทั้งหมด ('+c.all+')';
+      else if (/รอ.*ดำเนิน/.test(txt)) btn.textContent = 'รอดำเนินการ ('+c.pending+')';
+      else if (/จัดส่ง/.test(txt)) btn.textContent = 'จัดส่งแล้ว ('+c.shipped+')';
+      else if (/สำเร็จ/.test(txt)) btn.textContent = 'สำเร็จ ('+c.completed+')';
+      else if (/ยกเลิก/.test(txt)) btn.textContent = 'ยกเลิก ('+c.cancelled+')';
+    });
+  }
+
+  function spRenderTable(){
+    var tbody = document.getElementById('orders-table');
+    if (!tbody) return;
+    var filtered = _spOrders.filter(function(o){
+      var st = (o.status||'').toLowerCase();
+      if (_spTab === 'all') return true;
+      if (_spTab === 'pending') return st==='pending'||st==='paid'||st==='confirmed'||st==='preparing'||st==='processing';
+      if (_spTab === 'shipped') return st==='shipping'||st==='shipped';
+      if (_spTab === 'completed') return st==='delivered'||st==='completed';
+      if (_spTab === 'cancelled') return st==='cancelled'||st==='returned';
+      return true;
+    });
+    if (!filtered.length){
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#999">ยังไม่มีคำสั่งซื้อในสถานะนี้</td></tr>';
+      return;
+    }
+    var rows = filtered.map(function(o){
+      var st = (o.status||'pending').toLowerCase();
+      var info = STATUS_INFO[st] || STATUS_INFO.pending;
+      var firstItem = o._items[0] || {};
+      var itemsLabel = o._items.length ? esc(firstItem.name).slice(0,40) + (o._items.length>1?' +'+ (o._items.length-1)+' รายการ':'') : '—';
+      var thumb = firstItem.image ? '<img src="'+esc(firstItem.image)+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px" alt="">' : '<div style="width:36px;height:36px;background:#f2f2f2;border-radius:4px;display:inline-flex;align-items:center;justify-content:center">📦</div>';
+
+      var actions = '';
+      if (st === 'paid' || st === 'confirmed'){
+        actions = '<button style="background:#7C3AED;color:#fff;border:none;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer;margin-right:4px" onclick="confirmOrder(\''+o.id+'\')">📦 เตรียมพัสดุ</button>';
+      } else if (st === 'preparing' || st === 'processing'){
+        actions = '<button style="background:#0891B2;color:#fff;border:none;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer;margin-right:4px" onclick="shipOrder(\''+o.id+'\')">🚚 ส่งพัสดุ</button>';
+      } else if (st === 'shipping' || st === 'shipped'){
+        actions = '<button style="background:#16A34A;color:#fff;border:none;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer;margin-right:4px" onclick="markDelivered(\''+o.id+'\')">✅ ส่งถึงแล้ว</button>';
+        if (o.tracking_number||o.tracking_no){
+          actions += '<div style="font-size:10px;color:#737373;font-family:monospace;margin-top:3px">'+esc(o.tracking_number||o.tracking_no)+'</div>';
+        }
+      } else if (st === 'delivered' || st === 'completed'){
+        actions = '<span style="font-size:11px;color:#16A34A">✓ เสร็จสมบูรณ์</span>';
+      } else if (st === 'pending'){
+        actions = '<span style="font-size:11px;color:#999">รอลูกค้าชำระ</span>';
+      } else {
+        actions = '<span style="font-size:11px;color:#999">—</span>';
+      }
+      var detailBtn = '<button style="background:#fff;border:1px solid #ddd;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer" onclick="openOrderDetail(\''+o.id+'\')">👁️ ดู</button>';
+
+      return '<tr style="border-bottom:1px solid #eee">' +
+        '<td style="padding:10px;font-family:monospace;font-size:12px;font-weight:600">'+esc(o.order_number||o.id.slice(0,8))+'<div style="font-size:10px;color:#999;font-weight:400">'+fmtDT(o.created_at)+'</div></td>' +
+        '<td style="padding:10px"><div style="display:flex;align-items:center;gap:8px">'+thumb+'<div style="font-size:12px">'+itemsLabel+'</div></div></td>' +
+        '<td style="padding:10px;font-size:12px">'+esc(o.shipping_name||'—')+'<div style="font-size:11px;color:#999">'+esc(o.shipping_phone||'')+'</div></td>' +
+        '<td style="padding:10px;font-family:monospace;font-weight:700;color:#E63329;text-align:right">'+fmtMoney(orderTotal(o))+'</td>' +
+        '<td style="padding:10px;font-size:11px;color:#666">'+esc(o.payment_method||'—')+'</td>' +
+        '<td style="padding:10px"><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:'+info.bg+';color:'+info.color+'">'+info.label+'</span></td>' +
+        '<td style="padding:10px">'+actions+' '+detailBtn+'</td>' +
+        '</tr>';
+    }).join('');
+    tbody.innerHTML = rows;
+  }
+  window.spRenderTable = spRenderTable;
+
+  window.spSetTab = function(tab, btn){
+    _spTab = tab;
+    document.querySelectorAll('.tab,.sp-tab,[data-tab]').forEach(function(b){ b.style.borderBottom=''; b.style.color=''; });
+    if (btn){ btn.style.borderBottom = '2px solid #E63329'; btn.style.color = '#E63329'; }
+    spRenderTable();
+  };
+
+  window.confirmOrder = async function(orderId){
+    if (!confirm('ยืนยันออเดอร์นี้และเริ่มเตรียมพัสดุ?')) return;
+    var s = sb();
+    var r = await s.from('orders').update({status:'preparing', preparing_at: new Date().toISOString(), updated_at: new Date().toISOString()}).eq('id', orderId);
+    if (r.error){ alert('❌ '+r.error.message); return; }
+    alert('✅ เปลี่ยนเป็น "เตรียมพัสดุ" — ลูกค้าจะเห็น update');
+    await spLoadOrders();
+  };
+
+  window.shipOrder = async function(orderId){
+    var trackingNo = prompt('กรอกเลขพัสดุ:');
+    if (!trackingNo) return;
+    var carrier = prompt('ค่ายขนส่ง (kerry/flash/thaipost/jt/ninja/scg/best/dhl/ems):', 'kerry');
+    if (!carrier) return;
+    var s = sb();
+    var r = await s.from('orders').update({
+      status:'shipped', tracking_number: trackingNo, tracking_no: trackingNo,
+      tracking_carrier: carrier, shipping_method: carrier,
+      shipped_at: new Date().toISOString(), updated_at: new Date().toISOString()
+    }).eq('id', orderId);
+    if (r.error){ alert('❌ '+r.error.message); return; }
+    alert('✅ เปลี่ยนเป็น "จัดส่งแล้ว"\nเลขพัสดุ: '+trackingNo+'\nค่าย: '+carrier);
+    await spLoadOrders();
+  };
+
+  window.markDelivered = async function(orderId){
+    if (!confirm('ยืนยันว่าพัสดุถึงมือลูกค้าแล้ว?\n\nเงินจะถูกปล่อยเข้า "ยอดพร้อมถอน"')) return;
+    var s = sb();
+    var r = await s.from('orders').update({status:'delivered', delivered_at: new Date().toISOString(), updated_at: new Date().toISOString()}).eq('id', orderId);
+    if (r.error){ alert('❌ '+r.error.message); return; }
+    alert('✅ จัดส่งสำเร็จ! เงินเข้า balance ของร้านแล้ว');
+    await spLoadOrders();
+  };
+
+  window.openOrderDetail = function(orderId){
+    var o = _spOrders.find(function(x){ return x.id === orderId; });
+    if (!o) { alert('ไม่พบออเดอร์'); return; }
+    var info = STATUS_INFO[(o.status||'').toLowerCase()] || STATUS_INFO.pending;
+    var items = (o._items||[]).map(function(it){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed #eee">' +
+        (it.image?'<img src="'+esc(it.image)+'" style="width:48px;height:48px;object-fit:cover;border-radius:4px">':'<div style="width:48px;height:48px;background:#f2f2f2;border-radius:4px;display:flex;align-items:center;justify-content:center">📦</div>') +
+        '<div style="flex:1"><div style="font-size:13px;font-weight:600">'+esc(it.name)+'</div><div style="font-size:11px;color:#999">'+it.qty+' × '+fmtMoney(it.price)+'</div></div>' +
+        '<div style="font-family:monospace;font-weight:700">'+fmtMoney(it.subtotal||(it.qty*it.price))+'</div></div>';
+    }).join('');
+    var html =
+      '<div style="background:#fff;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;border-radius:8px;padding:20px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">' +
+        '<div><div style="font-family:monospace;font-size:14px;font-weight:700">#'+esc(o.order_number||o.id.slice(0,8))+'</div>' +
+        '<div style="font-size:11px;color:#999">'+fmtDT(o.created_at)+'</div></div>' +
+        '<button onclick="document.getElementById(\'sp-od-overlay\').remove()" style="background:none;border:none;font-size:22px;cursor:pointer">×</button>' +
+      '</div>' +
+      '<span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:'+info.bg+';color:'+info.color+'">'+info.label+'</span>' +
+      '<div style="margin-top:14px;padding:12px;background:#fafafa;border-radius:4px">' +
+        '<div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">ผู้รับ</div>' +
+        '<div style="font-size:13px;font-weight:600">'+esc(o.shipping_name||'—')+' · '+esc(o.shipping_phone||'')+'</div>' +
+        '<div style="font-size:12px;color:#666;margin-top:4px">'+esc(o.shipping_addr||'')+'</div>' +
+      '</div>' +
+      (o.tracking_number||o.tracking_no ? '<div style="margin-top:10px;padding:10px;background:#FEF3C7;border-radius:4px;font-size:12px"><strong>📦 เลขพัสดุ:</strong> <span style="font-family:monospace">'+esc(o.tracking_number||o.tracking_no)+'</span> · '+esc(o.tracking_carrier||'')+'</div>':'') +
+      '<div style="margin-top:14px"><div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">รายการสินค้า ('+(o._items||[]).length+')</div>'+items+'</div>' +
+      '<div style="margin-top:14px;padding-top:12px;border-top:2px solid #000;display:flex;justify-content:space-between;font-weight:700"><span>ยอดรวม</span><span style="font-family:monospace;color:#E63329;font-size:18px">'+fmtMoney(orderTotal(o))+'</span></div>' +
+      '</div>';
+    var overlay = document.createElement('div');
+    overlay.id = 'sp-od-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML = html;
+    overlay.onclick = function(e){ if (e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  };
+
+  function hookTabs(){
+    document.querySelectorAll('.tab,.sp-tab,[data-tab]').forEach(function(btn){
+      var txt = btn.textContent.replace(/\s*\(\d+\)\s*$/, '');
+      var tab = 'all';
+      if (/รอ.*ดำเนิน/.test(txt)) tab = 'pending';
+      else if (/จัดส่ง/.test(txt)) tab = 'shipped';
+      else if (/สำเร็จ/.test(txt)) tab = 'completed';
+      else if (/ยกเลิก/.test(txt)) tab = 'cancelled';
+      btn.onclick = function(){ window.spSetTab(tab, btn); };
+    });
+  }
+
+  window.spInit = function(){ hookTabs(); spLoadOrders(); };
+  setTimeout(window.spInit, 200);
+
+  // Re-init เมื่อ user คลิก sidebar ออเดอร์
+  document.querySelectorAll('[onclick]').forEach(function(el){
+    if (el.textContent.indexOf('ออเดอร์ทั้งหมด')>-1){
+      el.addEventListener('click', function(){
+        setTimeout(window.spInit, 400);
+      });
+    }
+  });
+
+  console.log('✅ Seller Portal Orders Patch loaded — ' + new Date().toLocaleTimeString());
+})();
+
+</script>
+
+<script id="sp-dashboard-finance-patch">
+/* ════════════════════════════════════════════════════════════════════
+   SELLER PORTAL — DASHBOARD + FINANCE PATCH (2026-05-15)
+
+   ฝังก่อน </body> ของ seller-portal.html ใน <script>
+
+   ────────────────────────────────────────────────────────────────────
+   ฟีเจอร์:
+   1. Dashboard stat cards 4 ตัว — ดึงข้อมูลจริงจาก DB
+      - ยอดขายเดือนนี้ (orders เดือนนี้ที่ status != pending/cancelled)
+      - ออเดอร์รอดำเนิน (paid/confirmed/preparing/processing)
+      - คะแนนร้าน (sellers.rating_avg)
+      - ผู้เข้าชมร้านวันนี้ (placeholder)
+
+   2. Finance page — แสดงข้อมูลจริง + เพิ่ม "ขอถอนเงิน"
+      - รอโอนเข้าบัญชี = seller_balances.available
+      - โอนแล้วเดือนนี้ = total_earned
+      - GP Platform = total_earned × 5%
+      - ปุ่ม "💸 ขอถอนเงิน" → call request_payout RPC
+      - ตาราง payout_requests history
+
+   เทสในเว็บจริงแล้ว ✅
+   ════════════════════════════════════════════════════════════════════ */
+
+(function(){
+  var sb = function(){ return window._sb || window.sb; };
+  var _seller = null;
+
+  async function getCurrentSeller(){
+    if (_seller) return _seller;
+    var s = sb();
+    var u = await s.auth.getUser();
+    if (!u.data || !u.data.user) return null;
+    var pu = await s.from('users').select('id').eq('email', u.data.user.email).maybeSingle();
+    if (!pu.data) return null;
+    var sel = await s.from('sellers').select('id,shop_name,rating_avg,rating_count,total_sales,user_id').eq('user_id', pu.data.id).maybeSingle();
+    _seller = sel.data;
+    return _seller;
+  }
+
+  var fmtMoney = function(n){ return '฿' + Math.round(Number(n||0)).toLocaleString(); };
+  var fmtDT = function(d){ return d ? new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '—'; };
+  var esc = function(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+
+  // ── Dashboard stats ──
+  async function loadDashStats(){
+    var seller = await getCurrentSeller();
+    if (!seller) return;
+    var s = sb();
+
+    var products = await s.from('products').select('id').eq('seller_id', seller.id);
+    var pIds = (products.data||[]).map(function(p){return p.id;});
+    var monthRevenue = 0, pendingCount = 0;
+    if (pIds.length){
+      var items = await s.from('order_items').select('order_id').in('product_id', pIds);
+      var orderIds = [...new Set((items.data||[]).map(function(i){return i.order_id;}))];
+
+      if (orderIds.length){
+        var firstOfMonth = new Date(); firstOfMonth.setDate(1); firstOfMonth.setHours(0,0,0,0);
+        var monthOrders = await s.from('orders').select('total,total_amount').in('id', orderIds).gte('created_at', firstOfMonth.toISOString()).not('status','in','(pending,cancelled,returned,refunded)');
+        (monthOrders.data||[]).forEach(function(o){ monthRevenue += Number(o.total||o.total_amount||0); });
+
+        var pendingOrders = await s.from('orders').select('id').in('id', orderIds).in('status', ['paid','confirmed','preparing','processing']);
+        pendingCount = pendingOrders.data?.length || 0;
+      }
+    }
+
+    var bal = await s.from('seller_balances').select('available,escrow,pending_payout,total_earned').eq('seller_id', seller.id).maybeSingle();
+
+    var cards = document.querySelectorAll('#page-dashboard .sc');
+    cards.forEach(function(c){
+      var lbl = c.querySelector('.sc-lbl')?.textContent.trim() || '';
+      var val = c.querySelector('.sc-val');
+      var chg = c.querySelector('.sc-chg');
+      if (!val) return;
+      if (/ยอดขายเดือน/.test(lbl)){
+        val.textContent = fmtMoney(monthRevenue);
+        if (chg) chg.textContent = '▲ รายได้เดือนนี้';
+      } else if (/ออเดอร์รอ/.test(lbl)){
+        val.textContent = pendingCount;
+        if (chg) chg.textContent = pendingCount > 0 ? '⚠️ ต้องดำเนินการด่วน' : '✓ ไม่มีค้างชำระ';
+      } else if (/คะแนนร้าน/.test(lbl)){
+        val.textContent = (seller.rating_avg || 0).toFixed(1);
+        if (chg) chg.textContent = '▲ จาก ' + (seller.rating_count || 0) + ' รีวิว';
+      } else if (/ผู้เข้าชม/.test(lbl)){
+        val.textContent = '—';
+        if (chg) chg.textContent = 'ยังไม่มีระบบติดตาม';
+      } else if (/รอโอน/.test(lbl)){
+        val.textContent = fmtMoney(bal.data?.escrow || 0);
+        if (chg) chg.textContent = 'Escrow ปลอดภัย';
+      } else if (/โอนแล้วเดือน/.test(lbl)){
+        val.textContent = fmtMoney(bal.data?.total_earned || 0);
+        if (chg) chg.textContent = '▲ รายได้สะสม';
+      } else if (/GP Platform/.test(lbl)){
+        var fee = Math.round((bal.data?.total_earned || 0) * 0.05);
+        val.textContent = fmtMoney(fee);
+        if (chg) chg.textContent = '5% ของยอดขาย';
+      }
+    });
+  }
+  window.loadDashStats = loadDashStats;
+
+  // ── Finance page ──
+  async function loadFinance(){
+    var seller = await getCurrentSeller();
+    if (!seller) return;
+    var s = sb();
+    var page = document.getElementById('page-finance');
+    if (!page) return;
+
+    var bal = await s.from('seller_balances').select('*').eq('seller_id', seller.id).maybeSingle();
+    var payouts = await s.from('payout_requests').select('*').eq('seller_id', seller.id).order('created_at',{ascending:false}).limit(10);
+
+    var b = bal.data || {available:0, escrow:0, pending_payout:0, total_earned:0};
+
+    var cards = page.querySelectorAll('.sc');
+    cards.forEach(function(c){
+      var lbl = c.querySelector('.sc-lbl')?.textContent.trim() || '';
+      var val = c.querySelector('.sc-val');
+      var chg = c.querySelector('.sc-chg');
+      if (!val) return;
+      if (/รอโอนเข้าบัญชี/.test(lbl)){
+        val.textContent = fmtMoney(b.available);
+        if (chg) chg.textContent = b.available > 0 ? '✓ พร้อมถอน' : 'ไม่มียอดพร้อมถอน';
+      } else if (/โอนแล้วเดือน/.test(lbl) || /โอนแล้วเดือนนี้/.test(lbl)){
+        val.textContent = fmtMoney(b.total_earned);
+        if (chg) chg.textContent = 'รายได้รวม';
+      } else if (/GP/.test(lbl)){
+        val.textContent = fmtMoney((b.total_earned || 0) * 0.05);
+        if (chg) chg.textContent = '5% ของยอดขาย';
+      }
+    });
+
+    var oldExtra = document.getElementById('sp-finance-extra');
+    if (oldExtra) oldExtra.remove();
+
+    var extra = document.createElement('div');
+    extra.id = 'sp-finance-extra';
+    extra.style.cssText = 'margin-top:20px;background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:20px';
+
+    var withdrawBtn = b.available > 0
+      ? '<button onclick="requestPayout()" style="background:#16A34A;color:#fff;border:none;padding:10px 20px;font-size:14px;font-weight:600;border-radius:4px;cursor:pointer">💰 ขอถอนเงิน '+fmtMoney(b.available)+'</button>'
+      : '<button disabled style="background:#E5E5E5;color:#999;border:none;padding:10px 20px;font-size:14px;font-weight:600;border-radius:4px;cursor:not-allowed">💰 ยังไม่มียอดพร้อมถอน</button>';
+
+    var rowsHtml = '';
+    if (payouts.data && payouts.data.length){
+      rowsHtml = payouts.data.map(function(p){
+        var statusInfo = {pending:{label:'รอตรวจสอบ',color:'#D97706',bg:'#FEF3C7'},approved:{label:'อนุมัติ',color:'#2563EB',bg:'#DBEAFE'},completed:{label:'โอนแล้ว',color:'#16A34A',bg:'#D1FAE5'},rejected:{label:'ปฏิเสธ',color:'#DC2626',bg:'#FEE2E2'}}[p.status] || {label:p.status,color:'#737373',bg:'#F2F2F2'};
+        return '<tr style="border-bottom:1px solid #f0f0f0">'+
+          '<td style="padding:10px;font-size:12px">'+fmtDT(p.created_at)+'</td>'+
+          '<td style="padding:10px;font-family:monospace;font-weight:700">'+fmtMoney(p.amount)+'</td>'+
+          '<td style="padding:10px;font-size:12px">'+esc(p.bank_name||'PromptPay '+(p.promptpay_id||''))+' ••••'+esc((p.bank_account_number||'').slice(-4))+'</td>'+
+          '<td style="padding:10px"><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:'+statusInfo.bg+';color:'+statusInfo.color+'">'+statusInfo.label+'</span></td>'+
+          '<td style="padding:10px;font-size:11px;color:#666">'+(p.review_note?esc(p.review_note):'-')+'</td>'+
+        '</tr>';
+      }).join('');
+    } else {
+      rowsHtml = '<tr><td colspan="5" style="padding:30px;text-align:center;color:#999">ยังไม่มีคำขอถอนเงิน</td></tr>';
+    }
+
+    extra.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">' +
+        '<div><h3 style="margin:0;font-size:18px">💸 ขอถอนเงิน</h3>' +
+        '<div style="font-size:12px;color:#666;margin-top:4px">ยอดพร้อมถอน: <strong style="color:#16A34A">'+fmtMoney(b.available)+'</strong> · Escrow: '+fmtMoney(b.escrow)+'</div></div>' +
+        withdrawBtn +
+      '</div>' +
+      '<h4 style="margin:20px 0 12px;font-size:14px;color:#666;text-transform:uppercase;letter-spacing:.05em">ประวัติคำขอถอนเงิน</h4>' +
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;min-width:600px">' +
+        '<thead><tr style="background:#fafafa"><th style="padding:10px;text-align:left;font-size:11px;color:#666;text-transform:uppercase">วันที่</th><th style="padding:10px;text-align:left;font-size:11px;color:#666;text-transform:uppercase">ยอด</th><th style="padding:10px;text-align:left;font-size:11px;color:#666;text-transform:uppercase">บัญชี</th><th style="padding:10px;text-align:left;font-size:11px;color:#666;text-transform:uppercase">สถานะ</th><th style="padding:10px;text-align:left;font-size:11px;color:#666;text-transform:uppercase">หมายเหตุ</th></tr></thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+      '</table></div>';
+
+    page.appendChild(extra);
+  }
+  window.loadFinance = loadFinance;
+
+  // ── Request payout ──
+  window.requestPayout = async function(){
+    var seller = await getCurrentSeller();
+    var s = sb();
+    var bal = await s.from('seller_balances').select('available').eq('seller_id', seller.id).maybeSingle();
+    var available = Number(bal.data?.available || 0);
+    if (available <= 0){ alert('ไม่มียอดพร้อมถอน'); return; }
+    var amtStr = prompt('💰 ขอถอนเงิน\n\nยอดพร้อมถอน: '+fmtMoney(available)+'\n\nกรอกจำนวนที่ต้องการถอน (ขั้นต่ำ ฿100):', String(Math.floor(available)));
+    if (!amtStr) return;
+    var amt = Number(amtStr);
+    if (isNaN(amt) || amt < 100){ alert('❌ ยอดถอนต้องอย่างน้อย ฿100'); return; }
+    if (amt > available){ alert('❌ ยอดเกินที่พร้อมถอน ('+fmtMoney(available)+')'); return; }
+    var r = await s.rpc('request_payout', {p_amount: amt});
+    if (r.error){ alert('❌ ส่งคำขอไม่สำเร็จ: '+r.error.message); return; }
+    alert('✅ ส่งคำขอถอน '+fmtMoney(amt)+' เรียบร้อย\n\nรอ Admin อนุมัติ');
+    await loadFinance();
+    await loadDashStats();
+  };
+
+  // ── Init ──
+  window.spInitDash = function(){
+    setTimeout(loadDashStats, 200);
+    setTimeout(loadFinance, 400);
+  };
+
+  // hook เข้า page dashboard/finance
+  var origGoto = window.goto;
+  if (typeof origGoto === 'function'){
+    window.goto = function(p, el){
+      var r = origGoto.apply(this, arguments);
+      if (p === 'dashboard') setTimeout(loadDashStats, 300);
+      if (p === 'finance') setTimeout(loadFinance, 300);
+      return r;
+    };
+  }
+
+  setTimeout(window.spInitDash, 800);
+  console.log('✅ Dashboard + Finance patch loaded — ' + new Date().toLocaleTimeString());
+})();
+
+</script>
+
 </body>
 </html>

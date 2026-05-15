@@ -1495,48 +1495,91 @@ function setAvatarUI(url) {
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
-<script>
-  (function(){
-    function addBtns(){
-          var rows = document.querySelectorAll('.order-item');
-          rows.forEach(function(row){
-                  var btnsDiv = row.querySelector('.oi-btns');
-                  if (!btnsDiv) return;
-                  if (btnsDiv.querySelector('.btn-track-injected')) return;
-                  var status = (row.dataset.status || '').trim();
-                  var orderId = row.dataset.orderId || row.dataset.id || '';
-                  var orderNum = row.dataset.orderNumber || row.dataset.order || orderId;
-                  if (status === 'pending') {
-                            var btn = document.createElement('a');
-                            btn.href = 'checkout.html?direct=' + orderId;
-                            btn.className = 'btn btn-sm btn-red btn-track-injected';
-                            btn.style.cssText = 'display:inline-flex;padding:5px 12px;font-size:11px;';
-                            btn.textContent = '\uD83D\uDCB3 \u0E0A\u0E33\u0E23\u0E30\u0E40\u0E07\u0E34\u0E19';
-                            btnsDiv.appendChild(btn);
-                  } else {
-                            var btn2 = document.createElement('a');
-                            btn2.href = 'tracking.html?order=' + orderNum;
-                            btn2.className = 'btn btn-sm btn-outline btn-track-injected';
-                            btn2.style.cssText = 'display:inline-flex;padding:5px 12px;font-size:11px;';
-                            btn2.textContent = '\uD83D\uDCCD \u0E15\u0E34\u0E14\u0E15\u0E32\u0E21';
-                            btnsDiv.appendChild(btn2);
-                  }
-          });
-    }
-      function init(){
-            if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', addBtns);
-            } else {
-                    addBtns();
-            }
+
+<!-- ════════════════ PATCH INJECTED 2026-05-15 ════════════════ -->
+<script id="profile-orders-patch">
+/* ════════════════════════════════════════════════════════════════════
+   PROFILE ORDERS — ADD TRACKING + PAYMENT BUTTONS (2026-05-15)
+
+   ฝังก่อน </body> ของ profile.html ใน <script>
+
+   ────────────────────────────────────────────────────────────────────
+   เพิ่มปุ่มในออเดอร์แต่ละแถว:
+   - status=pending → "💳 ชำระเงิน" (link ไป checkout.html?direct=<order_id>)
+   - status=other → "📍 ติดตาม" (link ไป tracking.html?order=<order_number>)
+
+   เทสในเว็บจริงแล้ว ✅
+   ════════════════════════════════════════════════════════════════════ */
+
+(function(){
+  function addBtns(){
+    var rows = document.querySelectorAll('.order-item');
+    var added = 0;
+    rows.forEach(function(row){
+      var btnsDiv = row.querySelector('.oi-btns');
+      if (!btnsDiv) return;
+      if (btnsDiv.querySelector('.btn-track-injected')) return;
+
+      var returnBtn = btnsDiv.querySelector('button[onclick*="ordReturn"]');
+      var orderNum = '';
+      var orderId = '';
+      if (returnBtn){
+        var m = returnBtn.getAttribute('onclick').match(/ordReturn\('([^']+)','([^']+)'/);
+        if (m){ orderId = m[1]; orderNum = m[2]; }
+      } else {
+        var m2 = row.textContent.match(/TM[-\d]+/);
+        if (m2) orderNum = m2[0];
       }
-      init();
-      window.addEventListener('hashchange', function(){
-            if (location.hash === '#orders') setTimeout(addBtns, 800);
-      });
-      console.log('\u2705 Profile orders patch loaded \u2014 ' + new Date().toLocaleTimeString());
-  })();
+
+      var statusBadge = row.querySelector('[class*="status"],.oi-status');
+      var statusText = statusBadge ? statusBadge.textContent.trim() : row.textContent;
+      var isPending = /รอชำระ/.test(statusText);
+
+      if (isPending && orderId){
+        var payBtn = document.createElement('a');
+        payBtn.className = 'btn btn-sm btn-track-injected';
+        payBtn.style.cssText = 'background:#E63329;color:#fff;padding:6px 12px;font-size:12px;text-decoration:none;border-radius:3px;margin-right:6px;display:inline-flex;align-items:center;gap:4px';
+        payBtn.href = 'checkout.html?direct=' + orderId;
+        payBtn.textContent = '💳 ชำระเงิน';
+        btnsDiv.insertBefore(payBtn, btnsDiv.firstChild);
+      } else {
+        var trackBtn = document.createElement('a');
+        trackBtn.className = 'btn btn-sm btn-track-injected';
+        trackBtn.style.cssText = 'background:#0A0A0A;color:#fff;padding:6px 12px;font-size:12px;text-decoration:none;border-radius:3px;margin-right:6px;display:inline-flex;align-items:center;gap:4px';
+        trackBtn.href = 'tracking.html?order=' + encodeURIComponent(orderNum);
+        trackBtn.textContent = '📍 ติดตาม';
+        btnsDiv.insertBefore(trackBtn, btnsDiv.firstChild);
+      }
+      added++;
+    });
+    return added;
+  }
+
+  function init(){
+    addBtns();
+    var ol = document.getElementById('orders-list');
+    if (ol && !ol._hooked){
+      var obs = new MutationObserver(function(){ setTimeout(addBtns, 100); });
+      obs.observe(ol, {childList: true, subtree: true});
+      ol._hooked = true;
+    }
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(init, 1500); });
+  } else {
+    setTimeout(init, 1500);
+  }
+
+  // re-run when navigating to #orders
+  window.addEventListener('hashchange', function(){
+    if (location.hash === '#orders') setTimeout(init, 800);
+  });
+
+  console.log('✅ Profile orders patch loaded — ' + new Date().toLocaleTimeString());
+})();
+
 </script>
-  
+
 </body>
 </html>
