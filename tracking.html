@@ -894,31 +894,259 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-<!-- TRACKING REAL DATA PATCH v4 -->
+
+<!-- ═══════════════ TRACKING REAL DATA PATCH v5 (2026-05-18) ═══════════════ -->
+<style>
+/* Anti-flash: hide tracking content until patch finishes */
+body:not(.tm-tracking-loaded) .success-banner,
+body:not(.tm-tracking-loaded) .layout,
+body:not(.tm-tracking-loaded) .page,
+body:not(.tm-tracking-loaded) footer {
+  visibility: hidden !important;
+}
+body:not(.tm-tracking-loaded)::before {
+  content: '';
+  position: fixed;
+  top: 100px;
+  left: 0; right: 0; bottom: 0;
+  background: #FAFAFA;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body:not(.tm-tracking-loaded)::after {
+  content: '⏳ กำลังโหลดข้อมูล...';
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: #737373;
+}
+/* Show after 3 seconds even if patch fails (safety) */
+body.tm-tracking-loaded::before, body.tm-tracking-loaded::after { display: none; }
+</style>
+<script>
+// Safety net: show content after 3 seconds no matter what
+setTimeout(function(){ document.body.classList.add('tm-tracking-loaded'); }, 3000);
+</script>
 <script>
 (function(){
-function R(){var s=window._sb||window.sb;if(!s){setTimeout(R,200);return;}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){setTimeout(function(){P(s);},600);});}else{setTimeout(function(){P(s);},600);}}R();
-function FC(n){var c=document.querySelectorAll(".card");for(var i=0;i<c.length;i++){var t=c[i].querySelector(".card-title");if(t&&t.textContent.indexOf(n)>-1)return c[i];}return null;}
-function SC(c,h){if(!c)return;var t=c.querySelector(".card-title");c.innerHTML=(t?t.outerHTML:"")+h;}
-function T(p){if(p>=50000)return{n:"Platinum",i:"💎",x:null,d:0};if(p>=10000)return{n:"Gold",i:"🥇",x:"Platinum",d:50000-p};if(p>=1000)return{n:"Silver",i:"🥈",x:"Gold",d:10000-p};return{n:"Bronze",i:"🥉",x:"Silver",d:1000-p};}
-async function P(s){try{var n=new URL(location.href).searchParams.get("order");if(!n)return;
-var O=await s.from("orders").select("*").eq("order_number",n).maybeSingle();if(!O.data){console.warn("[Tr] not found",n);return;}var o=O.data;
-var TR=await s.from("order_tracking").select("*").eq("order_id",o.id).order("created_at",{ascending:true});
-var U=await s.from("users").select("display_name,phone,loyalty_pts").eq("id",o.user_id).maybeSingle();
-var pL="-",pI="💳";if(o.payment_method){if(o.payment_method.length===36){var pM=await s.from("payment_methods").select("*").eq("id",o.payment_method).maybeSingle();if(pM.data){pL=pM.data.name_th||pM.data.name||pM.data.code;pI=pM.data.icon||"💳";}}else{var sp={credit_card:["💳","บัตรเครดิต"],promptpay:["📱","พร้อมเพย์"],cod:["💵","เก็บเงินปลายทาง"],bank_transfer:["🏦","โอนผ่านธนาคาร"]};if(sp[o.payment_method]){pI=sp[o.payment_method][0];pL=sp[o.payment_method][1];}else pL=o.payment_method;}}
-var sN=document.querySelector(".sb-order-num");if(sN)sN.textContent="#"+o.order_number;
-var sD=document.querySelector(".sb-order-date");if(sD){var d=new Date(o.created_at);sD.textContent=d.toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})+" · "+d.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"});}
-var S2={pending:0,paid:1,confirmed:2,processing:2,preparing:2,shipped:3,shipping:3,delivered:4,completed:4,cancelled:-1};var CU=S2[o.status]??0;
-var SS=document.getElementById("status-steps");if(SS){var SN=["สั่งซื้อแล้ว","ชำระเงิน","เตรียมพัสดุ","กำลังจัดส่ง","จัดส่งสำเร็จ"];var SI=["📝","💳","📦","🚚","🎉"];SS.style.cssText="display:flex;align-items:flex-start;justify-content:space-between;gap:4px;padding:16px 8px";SS.innerHTML=SN.map(function(N,i){var dn=i<CU,ac=i===CU;var co=dn?"#16A34A":(ac?"#0A0A0A":"#A3A3A3");var bg=dn?"#DCFCE7":(ac?"#FEF3C7":"#F5F5F5");var rg=ac?"box-shadow:0 0 0 3px rgba(217,119,6,0.2);":"";return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:'+co+';font-weight:'+(ac?"700":"500")+';text-align:center"><div style="width:42px;height:42px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:20px;'+rg+'">'+SI[i]+'</div><div>'+N+'</div></div>';}).join("");}
-var EM=document.querySelector(".eta-main");var ER=document.querySelector(".eta-right");var EH="";if(o.shipped_at&&(o.tracking_no||o.tracking_number)){var ds=new Date(o.shipped_at);EH='<strong style="color:#0A0A0A;font-size:14px">📦 จัดส่งเมื่อ '+ds.toLocaleDateString("th-TH")+'</strong><div style="font-size:11px;color:#737373;margin-top:4px">กำลังอยู่ระหว่างขนส่ง · '+(o.tracking_carrier||o.carrier||"ขนส่ง")+'</div>';}else if(o.status==="paid"||o.payment_status==="paid"){EH='<strong style="color:#0A0A0A;font-size:14px">⏳ รอร้านค้าจัดส่ง</strong><div style="font-size:11px;color:#737373;margin-top:4px">ชำระเงินสำเร็จแล้ว · ร้านค้ากำลังเตรียมพัสดุ</div>';}else if(o.status==="pending"){EH='<strong style="color:#D97706;font-size:14px">⏳ รอชำระเงิน</strong><div style="font-size:11px;color:#737373;margin-top:4px">กรุณาชำระเงินภายใน 24 ชม.</div>';}else if(o.status==="delivered"||o.status==="completed"){EH='<strong style="color:#16A34A;font-size:14px">🎉 จัดส่งสำเร็จ</strong><div style="font-size:11px;color:#737373;margin-top:4px">ลูกค้าได้รับสินค้าเรียบร้อย</div>';}else if(o.status==="cancelled"){EH='<strong style="color:#737373;font-size:14px">✕ ยกเลิกออเดอร์</strong><div style="font-size:11px;color:#737373;margin-top:4px">'+(o.cancel_reason||"ออเดอร์ถูกยกเลิก")+'</div>';}if(EM)EM.innerHTML=EH;
-if(ER){var tk=o.tracking_no||o.tracking_number;ER.innerHTML=tk?'<div style="font-size:11px;color:#737373">เลขพัสดุ</div><div style="font-family:monospace;font-weight:700;font-size:13px;margin-top:2px">'+tk+'</div>':'<div style="font-size:11px;color:#A3A3A3">ยังไม่มีเลขพัสดุ</div>';}
-var TL=document.getElementById("timeline");if(TL){var rw;if(TR.data&&TR.data.length){rw=TR.data.map(function(t){var dt=new Date(t.created_at);var ic=t.status==="paid"?"💳":t.status==="preparing"?"📦":(t.status==="shipping"||t.status==="shipped")?"🚚":t.status==="delivered"?"🎉":"📝";return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F2F2F2"><div style="font-size:20px">'+ic+'</div><div style="flex:1"><div style="font-weight:600;font-size:13px">'+(t.description||t.status)+'</div><div style="font-size:11px;color:#737373;margin-top:2px">'+dt.toLocaleString("th-TH")+'</div></div></div>';});}else{var ev=[{icon:"📝",label:"สั่งซื้อแล้ว",date:o.created_at}];if(o.paid_at)ev.push({icon:"💳",label:"ชำระเงินสำเร็จ",date:o.paid_at});if(o.preparing_at)ev.push({icon:"📦",label:"กำลังเตรียมพัสดุ",date:o.preparing_at});if(o.shipped_at)ev.push({icon:"🚚",label:"จัดส่งแล้ว "+(o.tracking_carrier||o.carrier||"")+" "+(o.tracking_no||o.tracking_number||""),date:o.shipped_at});if(o.delivered_at)ev.push({icon:"🎉",label:"ส่งสำเร็จถึงมือลูกค้า",date:o.delivered_at});rw=ev.reverse().map(function(e){var dt=new Date(e.date);return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F2F2F2"><div style="font-size:20px">'+e.icon+'</div><div style="flex:1"><div style="font-weight:600;font-size:13px">'+e.label+'</div><div style="font-size:11px;color:#737373;margin-top:2px">'+dt.toLocaleString("th-TH")+'</div></div></div>';});}TL.innerHTML=rw.join("");}
-var OI=document.getElementById("order-items");if(OI&&Array.isArray(o.items)){OI.innerHTML=o.items.map(function(it){return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F2F2F2"><div style="width:60px;height:60px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:8px">📦</div><div style="flex:1"><div style="font-weight:600;font-size:13px">'+(it.name||"-")+'</div><div style="font-size:11px;color:#737373;margin-top:2px">'+(it.shop||"")+(it.variant?" · "+it.variant:"")+' × '+(it.qty||1)+'</div></div><div style="font-weight:700;font-family:monospace">฿'+Number(it.subtotal||it.price||0).toLocaleString()+'</div></div>';}).join("");}
-var AC=FC("ที่อยู่รับสินค้า");if(AC){var ad=o.shipping_address||{};var nm=ad.name||U.data?.display_name||"ไม่ระบุชื่อ";var ph=ad.phone||U.data?.phone||"-";var dt=ad.detail||ad.address||ad.line1||"";var sb2=[ad.subdistrict,ad.district,ad.province,ad.zip].filter(Boolean).join(" ");SC(AC,'<div style="padding:8px 0"><div style="font-weight:600;font-size:14px">'+nm+' · '+ph+'</div><div style="font-size:13px;color:#404040;margin-top:6px;line-height:1.5">'+dt+(sb2?" "+sb2:"")+'</div></div>'+((o.tracking_no||o.tracking_number)?'<div style="margin-top:12px;padding:10px;background:#F5F5F5;border-radius:6px"><div style="font-size:11px;color:#737373">🚚 '+(o.tracking_carrier||o.carrier||"ขนส่ง")+'</div><div style="font-family:monospace;font-weight:700;font-size:13px;margin-top:2px">'+(o.tracking_no||o.tracking_number)+'</div></div>':'<div style="margin-top:12px;padding:10px;background:#FEF3C7;border-radius:6px;font-size:11px;color:#92400E">⏳ ยังไม่มีเลขพัสดุ — รอร้านค้าจัดส่ง</div>'));}
-var SM=FC("สรุปยอดชำระ");if(SM){var st=Number(o.subtotal||0)||(Array.isArray(o.items)?o.items.reduce(function(a,b){return a+Number(b.subtotal||0);},0):0);var sh=Number(o.shipping_fee||0);var di=Number(o.discount||o.discount_amount||0);var tt=Number(o.total||o.total_amount||0);var pts=Math.floor(tt/10);var rp=U.data?.loyalty_pts||0;var ti=T(rp);SC(SM,'<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:#737373">ราคาสินค้า</span><span style="font-family:monospace">฿'+st.toLocaleString()+'</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:#737373">ค่าจัดส่ง</span><span style="font-family:monospace">'+(sh===0?'<span style="color:#16A34A;font-weight:600">ฟรี</span>':"฿"+sh.toLocaleString())+'</span></div>'+(di>0?'<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#16A34A"><span>ส่วนลด</span><span style="font-family:monospace">-฿'+di.toLocaleString()+'</span></div>':"")+'<div style="display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:700;border-top:1px solid #E5E5E5;margin-top:8px"><span>ยอดรวมสุทธิ</span><span style="font-family:monospace;color:#E63329">฿'+tt.toLocaleString()+'</span></div><div style="margin-top:14px;padding:10px;background:#F5F5F5;border-radius:6px;font-size:12px"><div style="color:#737373;margin-bottom:2px">ชำระด้วย</div><div style="font-weight:600">'+pI+' '+pL+'</div></div><div style="margin-top:8px;padding:10px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:6px;font-size:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">⭐ แต้มที่ได้รับ</span><span style="font-weight:700;color:#92400E">+'+pts.toLocaleString()+' ThaiPoints</span></div><div style="font-size:11px;color:#737373;margin-top:4px">แต้มรวม: '+rp.toLocaleString()+' · ระดับ '+ti.n+' '+ti.i+(ti.x?' · '+ti.x+': อีก '+ti.d.toLocaleString()+' แต้ม':' · 🎉 ระดับสูงสุด')+'</div></div>');}
-console.log("[Tracking v4] ✓",o.order_number,"·",o.status);}catch(e){console.error("[Tracking v4] error:",e);}}
+function whenReady(){
+  var sb = window._sb || window.sb;
+  if (!sb) { setTimeout(whenReady, 100); return; }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ runPatch(sb); });
+  } else {
+    runPatch(sb);
+  }
+}
+whenReady();
+
+function findCardByTitle(needle){
+  var cards = document.querySelectorAll('.card');
+  for (var i=0; i<cards.length; i++){
+    var t = cards[i].querySelector('.card-title');
+    if (t && t.textContent.indexOf(needle)>-1) return cards[i];
+  }
+  return null;
+}
+function setCardContent(card, html){
+  if (!card) return false;
+  var title = card.querySelector('.card-title');
+  card.innerHTML = (title ? title.outerHTML : '') + html;
+  return true;
+}
+function calcTier(pts){
+  if (pts >= 50000) return {name:'Platinum', icon:'💎', next:null, need:0};
+  if (pts >= 10000) return {name:'Gold', icon:'🥇', next:'Platinum', need:50000-pts};
+  if (pts >= 1000)  return {name:'Silver', icon:'🥈', next:'Gold', need:10000-pts};
+  return {name:'Bronze', icon:'🥉', next:'Silver', need:1000-pts};
+}
+
+function hideAllMockData(){
+  // wipe mock content with placeholder
+  var elements = [
+    '.sb-order-num', '.sb-order-date', '#status-steps', '#timeline', '#order-items',
+    '.eta-main', '.eta-right'
+  ];
+  elements.forEach(function(sel){
+    var el = document.querySelector(sel);
+    if (el) el.innerHTML = '<span style="color:#A3A3A3;font-size:12px">—</span>';
+  });
+  // wipe address + summary cards content (keep title)
+  ['ที่อยู่รับสินค้า', 'สรุปยอดชำระ'].forEach(function(title){
+    var card = findCardByTitle(title);
+    if (card){
+      var t = card.querySelector('.card-title');
+      card.innerHTML = (t ? t.outerHTML : '') + '<div style="padding:16px 0;text-align:center;color:#A3A3A3;font-size:13px">กรุณาเข้าสู่ระบบเพื่อดูข้อมูล</div>';
+    }
+  });
+}
+
+async function runPatch(sb){
+  try {
+    var orderNum = new URL(location.href).searchParams.get('order');
+    if (!orderNum) { document.body.classList.add('tm-tracking-loaded'); return; }
+    
+    var ord = await sb.from('orders').select('*').eq('order_number', orderNum).maybeSingle();
+    if (!ord.data) {
+      console.warn('[Tracking v5] order not found / no access:', orderNum);
+      hideAllMockData();
+      document.body.classList.add('tm-tracking-loaded');
+      return;
+    }
+    var o = ord.data;
+    
+    var track = await sb.from('order_tracking').select('*').eq('order_id', o.id).order('created_at', {ascending:true});
+    var u = await sb.from('users').select('display_name,phone,loyalty_pts').eq('id', o.user_id).maybeSingle();
+    
+    var pmLabel = '-', pmIcon = '💳';
+    if (o.payment_method){
+      if (o.payment_method.length === 36){
+        var pmRow = await sb.from('payment_methods').select('*').eq('id', o.payment_method).maybeSingle();
+        if (pmRow.data){
+          pmLabel = pmRow.data.name_th || pmRow.data.name || pmRow.data.code;
+          pmIcon = pmRow.data.icon || '💳';
+        }
+      } else {
+        var simple = {credit_card:['💳','บัตรเครดิต'], promptpay:['📱','พร้อมเพย์'], cod:['💵','เก็บเงินปลายทาง'], bank_transfer:['🏦','โอนผ่านธนาคาร']};
+        if (simple[o.payment_method]){ pmIcon = simple[o.payment_method][0]; pmLabel = simple[o.payment_method][1]; }
+        else pmLabel = o.payment_method;
+      }
+    }
+    
+    // Header
+    var sbN = document.querySelector('.sb-order-num');
+    if (sbN) sbN.textContent = '#' + o.order_number;
+    var sbD = document.querySelector('.sb-order-date');
+    if (sbD){
+      var d = new Date(o.created_at);
+      sbD.textContent = d.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) + ' · ' + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    }
+    
+    // Status steps
+    var s2s = {pending:0,paid:1,confirmed:2,processing:2,preparing:2,shipped:3,shipping:3,delivered:4,completed:4,cancelled:-1};
+    var cur = s2s[o.status] ?? 0;
+    var ss = document.getElementById('status-steps');
+    if (ss){
+      var sn = ['สั่งซื้อแล้ว','ชำระเงิน','เตรียมพัสดุ','กำลังจัดส่ง','จัดส่งสำเร็จ'];
+      var si = ['📝','💳','📦','🚚','🎉'];
+      ss.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:4px;padding:16px 8px';
+      ss.innerHTML = sn.map(function(n,i){
+        var dn = i<cur, ac = i===cur;
+        var co = dn?'#16A34A':(ac?'#0A0A0A':'#A3A3A3');
+        var bg = dn?'#DCFCE7':(ac?'#FEF3C7':'#F5F5F5');
+        var rg = ac?'box-shadow:0 0 0 3px rgba(217,119,6,0.2);':'';
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:'+co+';font-weight:'+(ac?'700':'500')+';text-align:center"><div style="width:42px;height:42px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:20px;'+rg+'">'+si[i]+'</div><div>'+n+'</div></div>';
+      }).join('');
+    }
+    
+    // ETA strip
+    var em = document.querySelector('.eta-main');
+    var er = document.querySelector('.eta-right');
+    var eh = '';
+    if (o.shipped_at && (o.tracking_no || o.tracking_number)){
+      var ds = new Date(o.shipped_at);
+      eh = '<strong style="color:#0A0A0A;font-size:14px">📦 จัดส่งเมื่อ '+ds.toLocaleDateString('th-TH')+'</strong><div style="font-size:11px;color:#737373;margin-top:4px">กำลังอยู่ระหว่างขนส่ง · '+(o.tracking_carrier||o.carrier||'ขนส่ง')+'</div>';
+    } else if (o.status==='paid' || o.payment_status==='paid'){
+      eh = '<strong style="color:#0A0A0A;font-size:14px">⏳ รอร้านค้าจัดส่ง</strong><div style="font-size:11px;color:#737373;margin-top:4px">ชำระเงินสำเร็จแล้ว · ร้านค้ากำลังเตรียมพัสดุ</div>';
+    } else if (o.status==='pending'){
+      eh = '<strong style="color:#D97706;font-size:14px">⏳ รอชำระเงิน</strong><div style="font-size:11px;color:#737373;margin-top:4px">กรุณาชำระเงินภายใน 24 ชม.</div>';
+    } else if (o.status==='delivered'||o.status==='completed'){
+      eh = '<strong style="color:#16A34A;font-size:14px">🎉 จัดส่งสำเร็จ</strong><div style="font-size:11px;color:#737373;margin-top:4px">ลูกค้าได้รับสินค้าเรียบร้อย</div>';
+    } else if (o.status==='cancelled'){
+      eh = '<strong style="color:#737373;font-size:14px">✕ ยกเลิกออเดอร์</strong><div style="font-size:11px;color:#737373;margin-top:4px">'+(o.cancel_reason||'ออเดอร์ถูกยกเลิก')+'</div>';
+    }
+    if (em) em.innerHTML = eh;
+    if (er){
+      var trk = o.tracking_no || o.tracking_number;
+      er.innerHTML = trk ? '<div style="font-size:11px;color:#737373">เลขพัสดุ</div><div style="font-family:monospace;font-weight:700;font-size:13px;margin-top:2px">'+trk+'</div>' : '<div style="font-size:11px;color:#A3A3A3">ยังไม่มีเลขพัสดุ</div>';
+    }
+    
+    // Timeline
+    var tl = document.getElementById('timeline');
+    if (tl){
+      var rows;
+      if (track.data && track.data.length){
+        rows = track.data.map(function(t){
+          var dt = new Date(t.created_at);
+          var ic = t.status==='paid'?'💳':t.status==='preparing'?'📦':(t.status==='shipping'||t.status==='shipped')?'🚚':t.status==='delivered'?'🎉':'📝';
+          return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F2F2F2"><div style="font-size:20px">'+ic+'</div><div style="flex:1"><div style="font-weight:600;font-size:13px">'+(t.description||t.status)+'</div><div style="font-size:11px;color:#737373;margin-top:2px">'+dt.toLocaleString('th-TH')+'</div></div></div>';
+        });
+      } else {
+        var ev = [{icon:'📝',label:'สั่งซื้อแล้ว',date:o.created_at}];
+        if (o.paid_at) ev.push({icon:'💳',label:'ชำระเงินสำเร็จ',date:o.paid_at});
+        if (o.preparing_at) ev.push({icon:'📦',label:'กำลังเตรียมพัสดุ',date:o.preparing_at});
+        if (o.shipped_at) ev.push({icon:'🚚',label:'จัดส่งแล้ว '+(o.tracking_carrier||o.carrier||'')+' '+(o.tracking_no||o.tracking_number||''),date:o.shipped_at});
+        if (o.delivered_at) ev.push({icon:'🎉',label:'ส่งสำเร็จถึงมือลูกค้า',date:o.delivered_at});
+        rows = ev.reverse().map(function(e){
+          var dt = new Date(e.date);
+          return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F2F2F2"><div style="font-size:20px">'+e.icon+'</div><div style="flex:1"><div style="font-weight:600;font-size:13px">'+e.label+'</div><div style="font-size:11px;color:#737373;margin-top:2px">'+dt.toLocaleString('th-TH')+'</div></div></div>';
+        });
+      }
+      tl.innerHTML = rows.join('');
+    }
+    
+    // Items
+    var oi = document.getElementById('order-items');
+    if (oi && Array.isArray(o.items)){
+      oi.innerHTML = o.items.map(function(it){
+        return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F2F2F2"><div style="width:60px;height:60px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:8px">📦</div><div style="flex:1"><div style="font-weight:600;font-size:13px">'+(it.name||'-')+'</div><div style="font-size:11px;color:#737373;margin-top:2px">'+(it.shop||'')+(it.variant?' · '+it.variant:'')+' × '+(it.qty||1)+'</div></div><div style="font-weight:700;font-family:monospace">฿'+Number(it.subtotal||it.price||0).toLocaleString()+'</div></div>';
+      }).join('');
+    }
+    
+    // Address
+    var ac = findCardByTitle('ที่อยู่รับสินค้า');
+    if (ac){
+      var ad = o.shipping_address || {};
+      var nm = ad.name || u.data?.display_name || 'ไม่ระบุชื่อ';
+      var ph = ad.phone || u.data?.phone || '-';
+      var dt2 = ad.detail || ad.address || ad.line1 || '';
+      var sb2 = [ad.subdistrict,ad.district,ad.province,ad.zip].filter(Boolean).join(' ');
+      setCardContent(ac,
+        '<div style="padding:8px 0"><div style="font-weight:600;font-size:14px">'+nm+' · '+ph+'</div><div style="font-size:13px;color:#404040;margin-top:6px;line-height:1.5">'+dt2+(sb2?' '+sb2:'')+'</div></div>'+
+        ((o.tracking_no||o.tracking_number) ? 
+          '<div style="margin-top:12px;padding:10px;background:#F5F5F5;border-radius:6px"><div style="font-size:11px;color:#737373">🚚 '+(o.tracking_carrier||o.carrier||'ขนส่ง')+'</div><div style="font-family:monospace;font-weight:700;font-size:13px;margin-top:2px">'+(o.tracking_no||o.tracking_number)+'</div></div>' : 
+          '<div style="margin-top:12px;padding:10px;background:#FEF3C7;border-radius:6px;font-size:11px;color:#92400E">⏳ ยังไม่มีเลขพัสดุ — รอร้านค้าจัดส่ง</div>')
+      );
+    }
+    
+    // Summary
+    var sm = findCardByTitle('สรุปยอดชำระ');
+    if (sm){
+      var st = Number(o.subtotal||0) || (Array.isArray(o.items)?o.items.reduce(function(a,b){return a+Number(b.subtotal||0);},0):0);
+      var sh = Number(o.shipping_fee||0);
+      var di = Number(o.discount||o.discount_amount||0);
+      var tt = Number(o.total||o.total_amount||0);
+      var pts = Math.floor(tt/10);
+      var rp = u.data?.loyalty_pts || 0;
+      var ti = calcTier(rp);
+      
+      setCardContent(sm,
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:#737373">ราคาสินค้า</span><span style="font-family:monospace">฿'+st.toLocaleString()+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:#737373">ค่าจัดส่ง</span><span style="font-family:monospace">'+(sh===0?'<span style="color:#16A34A;font-weight:600">ฟรี</span>':'฿'+sh.toLocaleString())+'</span></div>'+
+        (di>0?'<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#16A34A"><span>ส่วนลด</span><span style="font-family:monospace">-฿'+di.toLocaleString()+'</span></div>':'')+
+        '<div style="display:flex;justify-content:space-between;padding:10px 0;font-size:15px;font-weight:700;border-top:1px solid #E5E5E5;margin-top:8px"><span>ยอดรวมสุทธิ</span><span style="font-family:monospace;color:#E63329">฿'+tt.toLocaleString()+'</span></div>'+
+        '<div style="margin-top:14px;padding:10px;background:#F5F5F5;border-radius:6px;font-size:12px"><div style="color:#737373;margin-bottom:2px">ชำระด้วย</div><div style="font-weight:600">'+pmIcon+' '+pmLabel+'</div></div>'+
+        '<div style="margin-top:8px;padding:10px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:6px;font-size:12px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">⭐ แต้มที่ได้รับ</span><span style="font-weight:700;color:#92400E">+'+pts.toLocaleString()+' ThaiPoints</span></div><div style="font-size:11px;color:#737373;margin-top:4px">แต้มรวม: '+rp.toLocaleString()+' · ระดับ '+ti.name+' '+ti.icon+(ti.next?' · '+ti.next+': อีก '+ti.need.toLocaleString()+' แต้ม':' · 🎉 ระดับสูงสุด')+'</div></div>'
+      );
+    }
+    
+    console.log('[Tracking v5] ✓', o.order_number, '·', o.status);
+  } catch(e) {
+    console.error('[Tracking v5] error:', e);
+    hideAllMockData();
+  } finally {
+    // ALWAYS show content after patch finishes (success or fail)
+    document.body.classList.add('tm-tracking-loaded');
+  }
+}
 })();
 </script>
+
 
 </body>
 </html>
