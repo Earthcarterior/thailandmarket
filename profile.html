@@ -869,15 +869,38 @@ function renderProfileOrders() {
 }
 
 // ขอคืนสินค้า — แจ้งให้ติดต่อ support (modal เต็มอยู่ใน order-history เดิม)
-function ordReturn(orderId, orderNum, amount) {
+async function ordReturn(orderId, orderNum, amount) {
   const reason = prompt(`ขอคืนสินค้า — ออเดอร์ ${orderNum}\nยอด ฿${amount.toLocaleString()}\n\nกรุณาระบุเหตุผล:`);
   if (!reason) return;
-  sb.from('return_requests').insert({
-    order_id: orderId, reason: reason, amount: amount, status: 'pending', created_at: new Date().toISOString()
-  }).then(({error}) => {
-    if (error) { alert('❌ ส่งคำขอไม่สำเร็จ: ' + error.message); }
-    else { alert('✅ ส่งคำขอคืนสินค้าแล้ว — ทีมงานจะติดต่อกลับ'); }
-  });
+  if (reason.trim().length < 5) { alert('⚠️ กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร'); return; }
+  
+  try {
+    // ดึง user_id จาก public.users (mapped from auth.email)
+    const { data:{ session } } = await sb.auth.getSession();
+    if (!session) { alert('⚠️ กรุณาเข้าสู่ระบบ'); return; }
+    
+    const { data: u } = await sb.from('users').select('id').eq('email', session.user.email).maybeSingle();
+    const userId = u?.id || null;
+    
+    const { error } = await sb.from('return_requests').insert({
+      order_id: orderId,
+      user_id: userId,
+      reason: reason.trim(),
+      amount: amount,
+      status: 'pending',
+      return_type: 'refund'
+    });
+    
+    if (error) {
+      console.error('[ordReturn]', error);
+      alert('❌ ส่งคำขอไม่สำเร็จ: ' + error.message);
+    } else {
+      alert('✅ ส่งคำขอคืนสินค้าแล้ว — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ');
+    }
+  } catch(e) {
+    console.error('[ordReturn]', e);
+    alert('❌ เกิดข้อผิดพลาด: ' + e.message);
+  }
 }
 
 // ── Load Wishlist ─────────────────────────────────────────
