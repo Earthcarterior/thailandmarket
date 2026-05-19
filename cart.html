@@ -972,8 +972,12 @@ async function getSellersInfo(cart){
 }
 
 // ── Render cart ──
+// IMPORTANT: renderCart() reads from localStorage SYNCHRONOUSLY only.
+// Do NOT fetch from Supabase here — that causes race conditions where
+// server data (stale) overwrites local changes that haven't synced yet.
+// Use renderCartFromServer() on initial page load instead.
 async function renderCart(){
-  const cart = await loadCartUnified();
+  const cart = getCart();
   const wrap = document.getElementById('cart-items');
   const toolbar = document.getElementById('cart-toolbar');
   const countLabel = document.getElementById('cart-count-label');
@@ -1652,9 +1656,16 @@ async function goCheckout(){
   location.href = 'checkout.html';
 }
 
+// Server-aware render: used ONLY on initial page load.
+// Fetches latest cart from Supabase, merges with localStorage, then renders.
+async function renderCartFromServer(){
+  await loadCartUnified();   // sync server → localStorage
+  await renderCart();        // render from updated localStorage
+}
+
 window.addEventListener('storage', e=>{ if (e.key === 'tm_cart') renderCart(); });
-document.addEventListener('DOMContentLoaded', renderCart);
-if (document.readyState !== 'loading') renderCart();
+document.addEventListener('DOMContentLoaded', renderCartFromServer);
+if (document.readyState !== 'loading') renderCartFromServer();
 
 // ── Cart badge ──
 function tmUpdateCartBadge(){
