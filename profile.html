@@ -1512,6 +1512,24 @@ function setAvatarUI(url) {
    ════════════════════════════════════════════════════════════════════ */
 
 (function(){
+  // Helper: remove duplicate native buttons that the injected one replaces
+  function removeDupes(btnsDiv, kind){
+    // kind = 'track', 'pay', 'review'
+    var dupSelectors = {
+      'track': 'button[onclick*="tracking.html?order"]',
+      'pay':   'button[onclick*="checkout.html?direct"]',
+      'review': 'button[onclick*="review-write"]'
+    };
+    var sel = dupSelectors[kind];
+    if (!sel) return;
+    btnsDiv.querySelectorAll(sel).forEach(function(b){
+      // only remove the NATIVE ones (not our injected anchors)
+      if (b.tagName === 'BUTTON' && !b.classList.contains('btn-track-injected')) {
+        b.remove();
+      }
+    });
+  }
+
   function addBtns(){
     var rows = document.querySelectorAll('.order-item');
     var added = 0;
@@ -1521,6 +1539,7 @@ function setAvatarUI(url) {
       if (btnsDiv.querySelector('.btn-track-injected')) return;
 
       var returnBtn = btnsDiv.querySelector('button[onclick*="ordReturn"]');
+      var reviewBtn = btnsDiv.querySelector('button[onclick*="review-write"]');
       var orderNum = '';
       var orderId = '';
       if (returnBtn){
@@ -1533,16 +1552,39 @@ function setAvatarUI(url) {
 
       var statusBadge = row.querySelector('[class*="status"],.oi-status');
       var statusText = statusBadge ? statusBadge.textContent.trim() : row.textContent;
-      var isPending = /รอชำระ/.test(statusText);
+      var isPending   = /รอชำระ/.test(statusText);
+      var isDelivered = /(จัดส่งสำเร็จ|สำเร็จ|รับสินค้าแล้ว|delivered|completed)/i.test(statusText);
 
       if (isPending && orderId){
+        // Pay button (red) — remove dup pay button first
+        removeDupes(btnsDiv, 'pay');
         var payBtn = document.createElement('a');
         payBtn.className = 'btn btn-sm btn-track-injected';
         payBtn.style.cssText = 'background:#E63329;color:#fff;padding:6px 12px;font-size:12px;text-decoration:none;border-radius:3px;margin-right:6px;display:inline-flex;align-items:center;gap:4px';
         payBtn.href = 'checkout.html?direct=' + orderId;
         payBtn.textContent = '💳 ชำระเงิน';
         btnsDiv.insertBefore(payBtn, btnsDiv.firstChild);
+      } else if (isDelivered) {
+        // Review button (gold) — remove dup review button first, and remove duplicate "ติดตาม" native btn
+        removeDupes(btnsDiv, 'review');
+        removeDupes(btnsDiv, 'track');
+        if (reviewBtn || orderId) {
+          var rvOrderId = orderId;
+          // try to extract order id from review button if present
+          if (reviewBtn) {
+            var rm = reviewBtn.getAttribute('onclick').match(/review-write\.html\?order=([^'"&]+)/);
+            if (rm) rvOrderId = rm[1];
+          }
+          var rvBtn = document.createElement('a');
+          rvBtn.className = 'btn btn-sm btn-track-injected';
+          rvBtn.style.cssText = 'background:#D97706;color:#fff;padding:6px 12px;font-size:12px;text-decoration:none;border-radius:3px;margin-right:6px;display:inline-flex;align-items:center;gap:4px';
+          rvBtn.href = 'review-write.html?order=' + encodeURIComponent(rvOrderId || orderNum);
+          rvBtn.textContent = '⭐ รีวิว';
+          btnsDiv.insertBefore(rvBtn, btnsDiv.firstChild);
+        }
       } else {
+        // Track button (black) — REMOVE the native ติดตาม button first to prevent duplicate
+        removeDupes(btnsDiv, 'track');
         var trackBtn = document.createElement('a');
         trackBtn.className = 'btn btn-sm btn-track-injected';
         trackBtn.style.cssText = 'background:#0A0A0A;color:#fff;padding:6px 12px;font-size:12px;text-decoration:none;border-radius:3px;margin-right:6px;display:inline-flex;align-items:center;gap:4px';
@@ -1576,10 +1618,8 @@ function setAvatarUI(url) {
     if (location.hash === '#orders') setTimeout(init, 800);
   });
 
-  console.log('✅ Profile orders patch loaded — ' + new Date().toLocaleTimeString());
-})();
-
-</script>
+  console.log('✅ Profile orders patch v2 loaded — ' + new Date().toLocaleTimeString());
+})();</script>
 
 </body>
 </html>

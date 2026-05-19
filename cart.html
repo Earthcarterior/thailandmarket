@@ -1248,6 +1248,7 @@ async function deleteFromSupabase(pid){
 async function clearCart(){
   if (!confirm('ต้องการล้างตะกร้าทั้งหมด?')) return;
   localStorage.removeItem('tm_cart');
+  localStorage.removeItem('tm_coupons');
   _discount = 0; _couponType = ''; _couponCode = '';
   _selected.clear();
   renderCart();
@@ -1263,6 +1264,60 @@ function quickCoupon(code){
   document.getElementById('coupon-input').value = code;
   applyCoupon();
 }
+// ═══ COUPON SYNC HELPERS (added 2026-05-18) — sync with checkout.html ═══
+function saveCouponsState(arr){
+  try {
+    localStorage.setItem('tm_coupons', JSON.stringify(arr || []));
+  } catch(e) { console.warn('saveCouponsState:', e); }
+}
+
+async function restoreCouponsState(){
+  try {
+    const raw = localStorage.getItem('tm_coupons');
+    if (!raw) return false;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || !arr.length){
+      _discount = 0; _couponCode = ''; _couponType = '';
+      const wrap = document.getElementById('coupon-applied-wrap');
+      if (wrap) wrap.innerHTML = '';
+      return false;
+    }
+    // Use first coupon (cart UI is single-coupon)
+    const c = arr[0];
+    _couponCode = c.code;
+    _couponType = c.type;
+    // Look up full coupon to get original 'value' (since saved has discount amt not %)
+    try {
+      const { data:raw_c } = await _sb.from('coupons').select('*').eq('code', c.code).maybeSingle();
+      if (raw_c) {
+        const norm = _normCoupon(raw_c);
+        _discount = norm.value;
+        const wrap = document.getElementById('coupon-applied-wrap');
+        if (wrap) wrap.innerHTML = '<div class="coupon-applied"><span>✓ <strong>'+c.code+'</strong> · '+(norm.name||'')+'</span><button onclick="removeCoupon()">✕</button></div>';
+      } else {
+        _discount = Number(c.discount) || 0;
+      }
+    } catch(e) {
+      _discount = Number(c.discount) || 0;
+    }
+    if (typeof updateSummary === 'function') updateSummary();
+    console.log('[cart] restored coupon:', c.code);
+    return true;
+  } catch(e) { console.warn('restoreCouponsState:', e); return false; }
+}
+
+// Listen for cross-tab/page changes
+window.addEventListener('storage', function(e){
+  if (e.key === 'tm_coupons') {
+    restoreCouponsState();
+    if (typeof loadSuggestedCoupons === 'function') loadSuggestedCoupons();
+  }
+});
+
+// Restore on initial load (after renderCart settles)
+setTimeout(restoreCouponsState, 1200);
+// ═══ END COUPON SYNC HELPERS ═══
+
 // Helper: normalize coupon record across schema variants
 function _normCoupon(c){
   if (!c) return null;
@@ -1333,6 +1388,25 @@ async function applyCoupon(){
     _discount = coupon.value;
     _couponType = coupon.type;
     _couponCode = code;
+    // Calculate discount for cross-page sync
+    const _cart = getCart();
+    const _selectedCart = _cart.filter(i => _selected.has(itemKey(i)));
+    const _subtotal = _selectedCart.reduce((s,i) => s + (i.price*(i.qty||1)), 0);
+    let _discAmt = 0;
+    if (coupon.type === 'percent') _discAmt = Math.round(_subtotal * coupon.value / 100);
+    else if (coupon.type === 'shipping') _discAmt = _subtotal >= 500 ? 0 : 50;
+    else _discAmt = Math.min(coupon.value, _subtotal);
+    // Save to shared localStorage so checkout can pick it up
+    saveCouponsState([{
+      code: code,
+      name: coupon.name || code,
+      discount: _discAmt,
+      type: coupon.type,
+      icon: coupon.icon || '🎟️',
+      stackable: coupon.stackable !== false,
+      seller_id: coupon.seller_id,
+      brand_id: coupon.brand_id
+    }]);
     document.getElementById('coupon-applied-wrap').innerHTML =
       '<div class="coupon-applied"><span>✓ <strong>'+code+'</strong> · '+(coupon.name||'')+'</span><button onclick="removeCoupon()">✕</button></div>';
     document.getElementById('coupon-input').value = '';
@@ -1413,7 +1487,9 @@ async function loadSuggestedCoupons(){
 function removeCoupon(){
   _discount = 0; _couponType = ''; _couponCode = '';
   document.getElementById('coupon-applied-wrap').innerHTML = '';
+  saveCouponsState([]);
   updateSummary();
+  loadSuggestedCoupons();
   toast('🎟️ ยกเลิกคูปองแล้ว');
 }
 function togglePoints(checked){ _usePoints = checked; updateSummary(); }
@@ -1567,6 +1643,8 @@ async function goCheckout(){
     setTimeout(()=>location.href='login.html?from=cart.html', 1200);
     return;
   }
+  // tm_coupons already in localStorage from applyCoupon — checkout will pick it up
+  // Also keep sessionStorage.tm_checkout for backward compat
   sessionStorage.setItem('tm_checkout', JSON.stringify({
     items: selectedCart, coupon_code: _couponCode, discount: _discount,
     coupon_type: _couponType, use_points: _usePoints, points_discount: _pointsDiscount

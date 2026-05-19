@@ -721,9 +721,7 @@ img{max-width:100%;height:auto}
         <div id="my-claimed-vouchers" style="margin-top:10px"></div>
         
         <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-          <span style="font-size:11px;background:#FEF3C7;color:#92400E;padding:3px 8px;border-radius:4px;cursor:pointer" onclick="prefillCoupon('FREESHIP')">🚚 FREESHIP</span>
-          <span style="font-size:11px;background:#DCFCE7;color:#065F46;padding:3px 8px;border-radius:4px;cursor:pointer" onclick="prefillCoupon('GOLD500')">💰 GOLD500</span>
-          <span style="font-size:11px;background:#FEE2E2;color:#991B1B;padding:3px 8px;border-radius:4px;cursor:pointer" onclick="prefillCoupon('FLASH10')">⚡ FLASH10</span>
+          <span id="coupon-chips-co" style="display:flex;flex-wrap:wrap;gap:6px;width:100%"><span style="font-size:11px;color:#A3A3A3;font-family:'DM Mono',monospace">กำลังโหลด...</span></span>
         </div>
       </div>
     </div>
@@ -1071,6 +1069,143 @@ function _coupSb() { return window._sb; }
 
 function prefillCoupon(code){document.getElementById('coup-input').value=code;}
 
+// ═══ COUPON SYNC HELPERS (added 2026-05-18) ═══
+function _normCoupon(c){
+  if (!c) return null;
+  return {
+    code: c.code,
+    name: c.name || c.title || c.code,
+    type: c.type || c.discount_type || 'fixed',
+    value: Number(c.value != null ? c.value : c.discount_value) || 0,
+    min_order: Number(c.min_order || c.min_order_amount || c.min_purchase) || 0,
+    max_discount: c.max_discount,
+    end_at: c.end_at || c.expires_at,
+    start_at: c.start_at || c.starts_at,
+    seller_id: c.seller_id,
+    brand_id: c.brand_id,
+    product_ids: c.product_ids || [],
+    category_id: c.category_id,
+    is_active: c.is_active !== false,
+    icon: c.icon || '🎟️',
+    stackable: c.stackable !== false
+  };
+}
+
+function saveCouponsState(){
+  try {
+    localStorage.setItem('tm_coupons', JSON.stringify(_appliedCoupons));
+  } catch(e) { console.warn('saveCouponsState:', e); }
+}
+
+function restoreCouponsState(){
+  try {
+    const raw = localStorage.getItem('tm_coupons');
+    if (!raw) return false;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || !arr.length) return false;
+    _appliedCoupons = arr;
+    if (typeof renderAppliedCoupons === 'function') renderAppliedCoupons();
+    if (typeof updateTotal === 'function') updateTotal();
+    console.log('[checkout] restored', arr.length, 'coupon(s) from localStorage');
+    return true;
+  } catch(e) { console.warn('restoreCouponsState:', e); return false; }
+}
+
+// Cross-tab + cross-page sync
+window.addEventListener('storage', function(e){
+  if (e.key !== 'tm_coupons') return;
+  try {
+    const arr = JSON.parse(e.newValue || '[]');
+    _appliedCoupons = Array.isArray(arr) ? arr : [];
+    if (typeof renderAppliedCoupons === 'function') renderAppliedCoupons();
+    if (typeof updateTotal === 'function') updateTotal();
+  } catch(err) {}
+});
+
+// Restore on page load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(restoreCouponsState, 800); });
+} else {
+  setTimeout(restoreCouponsState, 800);
+}
+
+// Dynamic chips loader
+async function loadCheckoutChips(){
+  try {
+    const sb = window._sb || window._sbCO;
+    if (!sb) { setTimeout(loadCheckoutChips, 500); return; }
+    const cart = (typeof CART !== 'undefined' && CART.length) ? CART : 
+                 JSON.parse(localStorage.getItem('tm_cart')||'[]');
+    if (!cart.length){
+      const el = document.getElementById('coupon-chips-co');
+      if (el) el.innerHTML = '<span style="font-size:11px;color:#A3A3A3;font-family:\'DM Mono\',monospace">เพิ่มสินค้าเพื่อดูคูปอง</span>';
+      return;
+    }
+    const sellerIds = [...new Set(cart.map(i=>i.seller_id).filter(Boolean))];
+    const brandIds  = [...new Set(cart.map(i=>i.brand_id).filter(Boolean))];
+    const { data } = await sb.from('coupons').select('*').eq('is_active', true).limit(50);
+    if (!data || !data.length){
+      const el = document.getElementById('coupon-chips-co');
+      if (el) el.innerHTML = '<span style="font-size:11px;color:#A3A3A3;font-family:\'DM Mono\',monospace">ไม่มีคูปอง</span>';
+      return;
+    }
+    const subtotal = cart.reduce((s,i)=>s+((i.price||0)*(i.qty||1)), 0);
+    const now = new Date();
+    const eligible = data.map(_normCoupon).filter(c => {
+      if (c.end_at && new Date(c.end_at) < now) return false;
+      if (c.start_at && new Date(c.start_at) > now) return false;
+      if (c.min_order > 0 && subtotal < c.min_order) return false;
+      if (c.seller_id && !sellerIds.includes(c.seller_id)) return false;
+      if (c.brand_id && !brandIds.includes(c.brand_id)) return false;
+      // skip if already applied
+      if (_appliedCoupons.find(a => a.code === c.code)) return false;
+      return true;
+    });
+    eligible.sort((a,b) => {
+      if (a.type === 'shipping' && b.type !== 'shipping') return -1;
+      if (b.type === 'shipping' && a.type !== 'shipping') return 1;
+      return (b.type==='percent'?b.value*10:b.value) - (a.type==='percent'?a.value*10:a.value);
+    });
+    const top = eligible.slice(0, 4);
+    const el = document.getElementById('coupon-chips-co');
+    if (!el) return;
+    if (!top.length){
+      el.innerHTML = '<span style="font-size:11px;color:#A3A3A3;font-family:\'DM Mono\',monospace">ไม่มีคูปองที่เหมาะกับตะกร้านี้</span>';
+      return;
+    }
+    const colors = [
+      'background:#FEF3C7;color:#92400E',
+      'background:#DCFCE7;color:#065F46',
+      'background:#FEE2E2;color:#991B1B',
+      'background:#DBEAFE;color:#1E40AF'
+    ];
+    el.innerHTML = top.map((c, i) => {
+      const icon = c.type === 'shipping' ? '🚚' : c.type === 'percent' ? '%' : '฿';
+      const label = c.type === 'shipping' ? 'ฟรีค่าส่ง' :
+                    c.type === 'percent' ? '-' + c.value + '%' :
+                    '-฿' + Number(c.value).toLocaleString();
+      return '<span style="font-size:11px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:\'DM Mono\',monospace;' + colors[i] + '" onclick="quickApplyCoupon(\'' + c.code + '\')" title="' + (c.name||'') + '">' + icon + ' ' + c.code + ' · ' + label + '</span>';
+    }).join('');
+  } catch(e) { console.warn('loadCheckoutChips:', e); }
+}
+
+async function quickApplyCoupon(code){
+  const inp = document.getElementById('coup-input');
+  if (inp) inp.value = code;
+  await applyCoupon();
+}
+
+// Initial load + reload when CART changes
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(loadCheckoutChips, 1500); });
+} else {
+  setTimeout(loadCheckoutChips, 1500);
+}
+window.addEventListener('storage', function(e){
+  if (e.key === 'tm_cart' || e.key === 'tm_coupons') setTimeout(loadCheckoutChips, 300);
+});
+// ═══ END COUPON SYNC HELPERS ═══
+
 async function applyCoupon(){
   const inp = document.getElementById('coup-input');
   const code = inp.value.trim().toUpperCase();
@@ -1120,6 +1255,8 @@ async function applyCoupon(){
         inp.value = '';
         renderAppliedCoupons();
         updateTotal();
+        saveCouponsState();
+        loadCheckoutChips();
         toast('✅ ใช้โค้ดร้าน "' + voucherResult.name + '" ได้รับส่วนลด ฿' + voucherResult.discount);
         return;
       }
@@ -1193,6 +1330,8 @@ async function applyCoupon(){
     toast(`✅ ใช้คูปอง ${result.code} ลด ฿${result.discount}`);
     renderAppliedCoupons();
     updateTotal();
+    saveCouponsState();
+    loadCheckoutChips();
 
   } catch(e) {
     toast('❌ เกิดข้อผิดพลาด: ' + e.message);
@@ -1203,6 +1342,8 @@ function removeCouponItem(code) {
   _appliedCoupons = _appliedCoupons.filter(c => c.code !== code);
   renderAppliedCoupons();
   updateTotal();
+  saveCouponsState();
+  loadCheckoutChips();
   toast('✕ ลบคูปอง ' + code);
 }
 
@@ -2242,8 +2383,9 @@ async function placeOrder() {
       // ไม่ blocking — order สั่งสำเร็จแล้ว
     }
 
-    // Clear cart
+    // Clear cart + coupons
     localStorage.removeItem('tm_cart');
+    localStorage.removeItem('tm_coupons');
     
     // Redirect to success
     location.href = `payment-result.html?order=${orderNum}&status=success`;
