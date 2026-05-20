@@ -958,13 +958,100 @@ function buildCart(){
       <div class="cart-price">฿${(it.price*it.qty).toLocaleString()}</div>
       <div class="cart-old">฿${it.old.toLocaleString()}</div>
       <div style="margin-top:6px">
-        <select class="ship-sel" onchange="toast('🚚 เลือก: '+this.value)">
-          <option>Kerry — ฿0 (ฟรี)</option><option>Flash — ฿30</option><option>SCG — ฟรี (ถึงพรุ่งนี้)</option>
+        <select class="ship-sel"
+                data-product-id="${it.id||''}"
+                data-seller-id="${it.seller_id||''}"
+                data-item-idx="${i}"
+                onchange="onProductShippingChange(this)">
+          <option value="__default__">⬇️ ใช้ค่ารวมของร้าน</option>
         </select>
       </div>
     </div>
   </div>`).join('');
+  // หลัง render → fill ตัวเลือกตามที่ cache ไว้ (ถ้า loadShippingMethods ทำงานแล้ว)
+  refreshProductShippingDropdowns();
 }
+
+// ───────────────────────────────────────────────────────────────
+// Refresh dropdown ของ "วิธีจัดส่งรายสินค้า" ในการ์ดทุกใบ
+// - เติม <option> จาก _sellerCouriersCache[sellerId]
+// - แสดง prefix ของตัวเลือก default ให้สื่อว่า "ตอนนี้ร้านเลือกอะไรอยู่"
+// ───────────────────────────────────────────────────────────────
+window.refreshProductShippingDropdowns = function(){
+  document.querySelectorAll('select.ship-sel').forEach(sel => {
+    const productId = sel.dataset.productId;
+    const sellerId  = sel.dataset.sellerId;
+    if (!sellerId) return;
+    const couriers = _sellerCouriersCache[sellerId] || [];
+    const sellerDefault = _shippingBySeller[sellerId];
+    const override = _shippingByProduct[productId];
+
+    // ตัวเลือกที่ "ใช้ค่ารวมของร้าน"
+    let defaultLabel = '⬇️ ใช้ค่ารวมของร้าน';
+    if (sellerDefault) {
+      const priceStr = sellerDefault.is_free
+        ? 'ฟรี' : '฿' + Number(sellerDefault.price).toLocaleString('th-TH');
+      defaultLabel = `⬇️ ตามร้าน: ${sellerDefault.name_th} — ${priceStr}`;
+    }
+
+    // เคลียร์ option เก่า แล้วใส่ใหม่
+    sel.innerHTML = '';
+    const defOpt = document.createElement('option');
+    defOpt.value = '__default__';
+    defOpt.textContent = defaultLabel;
+    sel.appendChild(defOpt);
+
+    couriers.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code || c.courier_id;
+      const priceStr = c.is_free ? 'ฟรี' : '฿' + Number(c.price).toLocaleString('th-TH');
+      opt.textContent = `${c.name_th} — ${priceStr}`;
+      // เก็บข้อมูลไว้บน option เพื่อใช้ตอน onChange
+      opt.dataset.courierId = c.courier_id;
+      opt.dataset.code      = c.code || '';
+      opt.dataset.nameTh    = c.name_th || '';
+      opt.dataset.price     = c.price;
+      opt.dataset.isFree    = c.is_free ? '1' : '0';
+      sel.appendChild(opt);
+    });
+
+    // ตั้งค่า current selection
+    if (override) {
+      sel.value = override.code || override.courier_id;
+    } else {
+      sel.value = '__default__';
+    }
+  });
+};
+
+// ───────────────────────────────────────────────────────────────
+// User เปลี่ยน dropdown รายสินค้า
+// ───────────────────────────────────────────────────────────────
+window.onProductShippingChange = function(sel){
+  const productId = sel.dataset.productId;
+  const sellerId  = sel.dataset.sellerId;
+  if (!productId) return;
+
+  if (sel.value === '__default__') {
+    // เลิก override → ใช้ของร้าน
+    delete _shippingByProduct[productId];
+    toast('🚚 ใช้วิธีจัดส่งของร้าน');
+  } else {
+    const opt = sel.options[sel.selectedIndex];
+    if (opt && opt.dataset.courierId) {
+      _shippingByProduct[productId] = {
+        seller_id:  sellerId,
+        courier_id: opt.dataset.courierId,
+        price:      parseFloat(opt.dataset.price) || 0,
+        is_free:    opt.dataset.isFree === '1',
+        code:       opt.dataset.code,
+        name_th:    opt.dataset.nameTh
+      };
+      toast(`🚚 ${opt.dataset.nameTh}`);
+    }
+  }
+  updateTotal();
+};
 
 // changeQty/removeItem ถูกประกาศไว้ด้านล่าง (ตัวที่ sync ทั้ง localStorage + Supabase)
 // ดู line ~1420 (changeQty) และ ~1458 (removeItem)
@@ -1380,15 +1467,64 @@ function renderAppliedCoupons() {
   }
 }
 
-// override updateTotal เพื่อให้รวม coupon discount + update ทุก field ของ summary
-let _selectedShipping = null;  // {courier_id, price, ...}
+// ───────────────────────────────────────────────────────────────
+// Shipping selection state — รองรับการเลือก 2 ระดับ:
+//   1) ระดับร้าน  : _shippingBySeller[sellerId]  (ค่า default ของทั้งร้าน)
+//   2) ระดับสินค้า: _shippingByProduct[productId] (override เฉพาะสินค้านั้น)
+// ถ้าสินค้าไม่มี override → ใช้ค่าของร้าน
+// ───────────────────────────────────────────────────────────────
+let _shippingBySeller  = {};   // {sellerId: {courier_id, price, code, name_th, is_free}}
+let _shippingByProduct = {};   // {productId: {courier_id, price, code, name_th, is_free, seller_id}}
+let _sellerCouriersCache = {}; // {sellerId: [{courier_id, code, name_th, price, is_free, ...}]}
+
+// คืนค่า shipping ที่ effective สำหรับสินค้าชิ้นหนึ่ง (override ก่อน, ไม่งั้นใช้ของร้าน)
+function getEffectiveShipping(item){
+  if (!item) return null;
+  const ov = _shippingByProduct[item.id];
+  if (ov) return ov;
+  return _shippingBySeller[item.seller_id] || null;
+}
+
+// คำนวณค่าส่งรวม — แยกตาม "shipment" (sellerId + courierCode)
+// ถ้าสินค้าในร้านเดียวกันใช้ courier เดียวกัน → จ่ายค่าส่งครั้งเดียว
+function calcTotalShipping(){
+  const shipments = {};  // key = sellerId|courierCode → price
+  for (const it of CART) {
+    const sh = getEffectiveShipping(it);
+    if (!sh) continue;
+    const key = (it.seller_id || 'unknown') + '|' + (sh.code || sh.courier_id);
+    if (!(key in shipments)) {
+      shipments[key] = parseFloat(sh.price) || 0;
+    }
+  }
+  return Object.values(shipments).reduce((s,p)=>s+p, 0);
+}
+
+// เช็คว่า "เลือกครบทุกชิ้นแล้วหรือยัง"
+function hasShippingForAllItems(){
+  return CART.every(it => !!getEffectiveShipping(it));
+}
+
+// backward-compat: โค้ดอื่นยังอ่าน _selectedShipping อยู่ — สรุปเป็นค่าตัวแรก
+Object.defineProperty(window, '_selectedShipping', {
+  get(){
+    // หา shipping ของ item ตัวแรกที่มี
+    for (const it of CART) {
+      const sh = getEffectiveShipping(it);
+      if (sh) return sh;
+    }
+    return null;
+  },
+  configurable: true
+});
 
 function updateTotal(){
   const sub = CART.reduce((s,it) => s + it.price * it.qty, 0);
   const oldSub = CART.reduce((s,it) => s + (it.old||it.price) * it.qty, 0);
   const productDisc = Math.max(0, oldSub - sub);
   const couponDisc = _appliedCoupons.reduce((s,c) => s + (c.discount||0), 0);
-  const shipping = _selectedShipping ? parseFloat(_selectedShipping.price || 0) : 0;
+  const shipping = calcTotalShipping();
+  const allChosen = hasShippingForAllItems();
   const total = Math.max(0, sub - couponDisc + shipping);
 
   // Cart count label
@@ -1414,12 +1550,12 @@ function updateTotal(){
   // Shipping
   const shipEl = document.getElementById('ship-val');
   if (shipEl) {
-    if (shipping > 0) {
-      shipEl.innerHTML = '฿' + shipping.toLocaleString();
-    } else if (_selectedShipping && _selectedShipping.is_free) {
-      shipEl.innerHTML = '฿0 <span style="font-size:10px;background:#D1FAE5;color:#065F46;padding:1px 6px;border-radius:3px;font-weight:600">ฟรี</span>';
-    } else {
+    if (!allChosen && CART.length > 0) {
       shipEl.innerHTML = '<span style="color:#888;font-size:11px">รอเลือกวิธีจัดส่ง</span>';
+    } else if (shipping > 0) {
+      shipEl.innerHTML = '฿' + shipping.toLocaleString();
+    } else {
+      shipEl.innerHTML = '฿0 <span style="font-size:10px;background:#D1FAE5;color:#065F46;padding:1px 6px;border-radius:3px;font-weight:600">ฟรี</span>';
     }
   }
 
@@ -1495,6 +1631,9 @@ async function loadShippingMethods() {
       } else if (!couriers.length) {
         html += `<div style="padding:10px;background:#FEF3C7;border:1px solid #F59E0B;border-radius:4px;font-size:12px;color:#92400E">⚠️ ร้านนี้ยังไม่ได้ตั้งค่าวิธีจัดส่ง<br><small>Seller ต้องไปเปิด courier ที่ Seller Portal → การจัดส่ง — หรือ admin รัน seller-shipping-fix SQL</small></div>`;
       } else {
+        // ★★ Cache couriers list สำหรับร้านนี้ (ใช้กับ dropdown ในการ์ดสินค้า) ★★
+        _sellerCouriersCache[sellerId] = couriers;
+
         html += couriers.map((c, idx) => {
           const checked = idx === 0 ? 'checked' : '';
           const priceStr = c.is_free ? '<span style="color:#10B981;font-weight:600">ฟรี!</span>' : `฿${parseFloat(c.price).toLocaleString('th-TH')}`;
@@ -1511,13 +1650,13 @@ async function loadShippingMethods() {
             <div style="font-family:monospace;font-size:13px">${priceStr}</div>
           </label>`;
         }).join('');
-        // Auto-select first one
+        // Auto-select first one — ตั้งเป็น default ของร้านนี้
         if (couriers[0]) {
-          _selectedShipping = {
+          _shippingBySeller[sellerId] = {
             seller_id: sellerId,
             courier_id: couriers[0].courier_id,
-            price: couriers[0].price,
-            is_free: couriers[0].is_free,
+            price: parseFloat(couriers[0].price) || 0,
+            is_free: !!couriers[0].is_free,
             code: couriers[0].code,
             name_th: couriers[0].name_th
           };
@@ -1525,8 +1664,10 @@ async function loadShippingMethods() {
       }
       html += '</div>';
     });
-    
+
     wrap.innerHTML = html;
+    // หลังโหลดเสร็จ → refresh dropdown ในการ์ดสินค้าให้ตรงกับร้าน
+    refreshProductShippingDropdowns();
     updateTotal();
   } catch(e) {
     console.warn('shipping load:', e);
@@ -1537,7 +1678,16 @@ async function loadShippingMethods() {
 function escapeHtmlCO(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 window.selectShipping = function(sellerId, courierId, price, isFree, code, nameTh) {
-  _selectedShipping = {seller_id: sellerId, courier_id: courierId, price: price, is_free: isFree, code: code, name_th: nameTh};
+  _shippingBySeller[sellerId] = {
+    seller_id: sellerId,
+    courier_id: courierId,
+    price: parseFloat(price) || 0,
+    is_free: !!isFree,
+    code: code,
+    name_th: nameTh
+  };
+  // Refresh dropdown ในการ์ดสินค้าของร้านนี้ (ที่ไม่มี override) ให้ตามร้าน
+  refreshProductShippingDropdowns();
   updateTotal();
 };
 
@@ -1701,13 +1851,21 @@ async function doCheckout(){
     return;
   }
 
-  // คำนวณยอด — ใช้ shipping ที่ลูกค้าเลือก
+  // คำนวณยอด — ใช้ shipping ที่ลูกค้าเลือก (รวมหลายร้าน/หลาย courier)
   const sub = CART.reduce((s,it)=>s+it.price*it.qty, 0);
   const couponDisc = (typeof _appliedCoupons!=='undefined'?_appliedCoupons:[]).reduce((s,c)=>s+(c.discount||0), 0);
-  const shipping = _selectedShipping ? (parseFloat(_selectedShipping.price) || 0) : 0;
-  const courierCode = _selectedShipping ? _selectedShipping.code : null;
-  const courierName = _selectedShipping ? _selectedShipping.name_th : null;
+  const shipping = calcTotalShipping();
+  // หา courier "หลัก" (เอาของชิ้นแรก) ไว้กรอกใน column shipping_method (single)
+  const firstSh = CART.length ? getEffectiveShipping(CART[0]) : null;
+  const courierCode = firstSh ? firstSh.code : null;
+  const courierName = firstSh ? firstSh.name_th : null;
   const total = Math.max(0, sub - couponDisc + shipping);
+
+  // เช็คว่ามีสินค้าที่ยังไม่ได้เลือก shipping ไหม
+  if (!hasShippingForAllItems()) {
+    toast('⚠️ กรุณาเลือกวิธีจัดส่งให้ครบทุกร้าน');
+    return;
+  }
 
   // สร้าง order_number — TM-YYYY-XXX
   const year = new Date().getFullYear();
@@ -1736,11 +1894,17 @@ async function doCheckout(){
         tag: selectedAddr.tag,
         addr_id: selectedAddr.id||null
       },
-      items: CART.map(it=>({
-        product_id: it.id, name: it.name, variant: it.var||'',
-        shop: it.shop, price: it.price, qty: it.qty,
-        subtotal: it.price*it.qty
-      })),
+      items: CART.map(it=>{
+        const sh = getEffectiveShipping(it);
+        return {
+          product_id: it.id, name: it.name, variant: it.var||'',
+          shop: it.shop, price: it.price, qty: it.qty,
+          subtotal: it.price*it.qty,
+          shipping_courier_code: sh ? sh.code : null,
+          shipping_courier_name: sh ? sh.name_th : null,
+          shipping_is_override: !!_shippingByProduct[it.id]
+        };
+      }),
       notes: null
     }).select().single();
     if(oErr) throw new Error('Order: '+oErr.message);
