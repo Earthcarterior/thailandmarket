@@ -1477,6 +1477,15 @@ let _shippingBySeller  = {};   // {sellerId: {courier_id, price, code, name_th, 
 let _shippingByProduct = {};   // {productId: {courier_id, price, code, name_th, is_free, seller_id}}
 let _sellerCouriersCache = {}; // {sellerId: [{courier_id, code, name_th, price, is_free, ...}]}
 
+// ★ FALLBACK COURIERS — ใช้เมื่อ seller ยังไม่ได้ตั้งค่าใน DB
+// ทำให้ระบบใช้งานได้แม้ DB ไม่ครบ
+const FALLBACK_COURIERS = [
+  { courier_id: 'fb-kerry',  code: 'kerry',  name_th: 'Kerry Express',     price: 0,  is_free: true,  est_min: 2, est_max: 3, has_cod: true,  logo_url: '🚚' },
+  { courier_id: 'fb-flash',  code: 'flash',  name_th: 'Flash Express',     price: 30, is_free: false, est_min: 1, est_max: 2, has_cod: true,  logo_url: '⚡' },
+  { courier_id: 'fb-scg',    code: 'scg',    name_th: 'SCG Express',       price: 50, is_free: false, est_min: 1, est_max: 1, has_cod: false, logo_url: '📦' },
+  { courier_id: 'fb-thaipost', code: 'thaipost', name_th: 'ไปรษณีย์ไทย',  price: 40, is_free: false, est_min: 3, est_max: 5, has_cod: true,  logo_url: '✉️' }
+];
+
 // คืนค่า shipping ที่ effective สำหรับสินค้าชิ้นหนึ่ง (override ก่อน, ไม่งั้นใช้ของร้าน)
 function getEffectiveShipping(item){
   if (!item) return null;
@@ -1485,14 +1494,16 @@ function getEffectiveShipping(item){
   return _shippingBySeller[item.seller_id] || null;
 }
 
-// คำนวณค่าส่งรวม — คิดเป็นรายชิ้น (1 ชิ้น = 1 ค่าส่ง)
-// ✅ ตรงตามที่ user ต้องการ: ทุกสินค้าจ่ายค่าส่งของตัวเอง แยกกัน
+// คำนวณค่าส่งรวม — คิดเป็นรายชิ้น (qty x price)
+// ✅ ทุกชิ้นจ่ายค่าส่งของตัวเอง — qty 3 ก็ x3
 function calcTotalShipping(){
   let total = 0;
   for (const it of CART) {
     const sh = getEffectiveShipping(it);
     if (!sh) continue;
-    total += (parseFloat(sh.price) || 0);
+    const price = parseFloat(sh.price) || 0;
+    const qty = parseInt(it.qty) || 1;
+    total += price * qty;
   }
   return total;
 }
@@ -1623,15 +1634,25 @@ async function loadShippingMethods() {
       const seller = sellerMap[sellerId] || {shop_name: 'ร้านค้า'};
       html += `<div style="margin-bottom:14px">
         <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:600">🏪 ${escapeHtmlCO(seller.shop_name)}</div>`;
-      if (error) {
-        html += `<div style="padding:10px;background:#FEE2E2;border:1px solid #EF4444;border-radius:4px;font-size:12px;color:#991B1B">❌ โหลดวิธีจัดส่งไม่ได้: ${escapeHtmlCO(error.message || 'unknown')}<br><small>กรุณารัน seller-shipping-fix SQL</small></div>`;
-      } else if (!couriers.length) {
-        html += `<div style="padding:10px;background:#FEF3C7;border:1px solid #F59E0B;border-radius:4px;font-size:12px;color:#92400E">⚠️ ร้านนี้ยังไม่ได้ตั้งค่าวิธีจัดส่ง<br><small>Seller ต้องไปเปิด courier ที่ Seller Portal → การจัดส่ง — หรือ admin รัน seller-shipping-fix SQL</small></div>`;
-      } else {
-        // ★★ Cache couriers list สำหรับร้านนี้ (ใช้กับ dropdown ในการ์ดสินค้า) ★★
-        _sellerCouriersCache[sellerId] = couriers;
+      // ★ ถ้า error หรือไม่มี courier → ใช้ FALLBACK เพื่อให้ระบบใช้งานได้
+      let activeCouriers = couriers;
+      let usingFallback = false;
+      if (error || !couriers.length) {
+        activeCouriers = FALLBACK_COURIERS;
+        usingFallback = true;
+        console.warn('[shipping] Using fallback couriers for seller', sellerId, error ? '(error)' : '(empty)');
+      }
 
-        html += couriers.map((c, idx) => {
+      {
+        // ★★ Cache couriers list สำหรับร้านนี้ (ใช้กับ dropdown ในการ์ดสินค้า) ★★
+        _sellerCouriersCache[sellerId] = activeCouriers;
+
+        // แสดง warning เล็กๆ ถ้าใช้ fallback (ไม่ block user)
+        if (usingFallback) {
+          html += `<div style="padding:6px 10px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:4px;font-size:11px;color:#92400E;margin-bottom:6px">ℹ️ ใช้รายการจัดส่งทั่วไป (ร้านยังไม่ได้ตั้งค่า)</div>`;
+        }
+
+        html += activeCouriers.map((c, idx) => {
           const checked = idx === 0 ? 'checked' : '';
           const priceStr = c.is_free ? '<span style="color:#10B981;font-weight:600">ฟรี!</span>' : `฿${parseFloat(c.price).toLocaleString('th-TH')}`;
           const days = c.est_min === c.est_max ? c.est_min : `${c.est_min}-${c.est_max}`;
@@ -1648,14 +1669,14 @@ async function loadShippingMethods() {
           </label>`;
         }).join('');
         // Auto-select first one — ตั้งเป็น default ของร้านนี้
-        if (couriers[0]) {
+        if (activeCouriers[0]) {
           _shippingBySeller[sellerId] = {
             seller_id: sellerId,
-            courier_id: couriers[0].courier_id,
-            price: parseFloat(couriers[0].price) || 0,
-            is_free: !!couriers[0].is_free,
-            code: couriers[0].code,
-            name_th: couriers[0].name_th
+            courier_id: activeCouriers[0].courier_id,
+            price: parseFloat(activeCouriers[0].price) || 0,
+            is_free: !!activeCouriers[0].is_free,
+            code: activeCouriers[0].code,
+            name_th: activeCouriers[0].name_th
           };
         }
       }
@@ -1668,7 +1689,42 @@ async function loadShippingMethods() {
     updateTotal();
   } catch(e) {
     console.warn('shipping load:', e);
-    wrap.innerHTML = `<div style="padding:14px;color:#E63329;font-size:12px">❌ ${escapeHtmlCO(e.message)}<br><small>กรุณารัน shipping-system-2026-05-11.sql</small></div>`;
+    // ★ Last-resort fallback: ใช้ FALLBACK_COURIERS สำหรับทุก seller ใน CART
+    try {
+      const sids = [...new Set(CART.map(c => c.seller_id).filter(Boolean))];
+      let html = '';
+      sids.forEach(sid => {
+        _sellerCouriersCache[sid] = FALLBACK_COURIERS;
+        _shippingBySeller[sid] = {
+          seller_id: sid,
+          courier_id: FALLBACK_COURIERS[0].courier_id,
+          price: FALLBACK_COURIERS[0].price,
+          is_free: FALLBACK_COURIERS[0].is_free,
+          code: FALLBACK_COURIERS[0].code,
+          name_th: FALLBACK_COURIERS[0].name_th
+        };
+        html += `<div style="margin-bottom:14px"><div style="font-size:11px;color:#666;margin-bottom:6px">🏪 ร้านค้า</div>`;
+        html += `<div style="padding:6px 10px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:4px;font-size:11px;color:#92400E;margin-bottom:6px">ℹ️ ใช้รายการจัดส่งทั่วไป</div>`;
+        html += FALLBACK_COURIERS.map((c, idx) => {
+          const checked = idx === 0 ? 'checked' : '';
+          const priceStr = c.is_free ? '<span style="color:#10B981;font-weight:600">ฟรี!</span>' : `฿${c.price}`;
+          return `<label style="display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid #E5E5E5;border-radius:4px;margin-bottom:6px;cursor:pointer;background:#fff" onclick="selectShipping('${sid}','${c.courier_id}',${c.price},${c.is_free},'${c.code}','${c.name_th}')">
+            <div style="display:flex;gap:10px;align-items:center">
+              <input type="radio" name="ship-${sid}" ${checked}>
+              <div>${c.logo_url}</div>
+              <div><div style="font-size:13px;font-weight:500">${c.name_th}</div><div style="font-size:11px;color:#888">ส่งใน ${c.est_min}-${c.est_max} วัน</div></div>
+            </div>
+            <div style="font-family:monospace;font-size:13px">${priceStr}</div>
+          </label>`;
+        }).join('');
+        html += '</div>';
+      });
+      wrap.innerHTML = html;
+      refreshProductShippingDropdowns();
+      updateTotal();
+    } catch(e2) {
+      wrap.innerHTML = `<div style="padding:14px;color:#E63329;font-size:12px">❌ ${escapeHtmlCO(e.message)}</div>`;
+    }
   }
 }
 
