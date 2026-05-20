@@ -2223,7 +2223,7 @@ async function loadCheckoutData() {
     try {
       const { data, error } = await _sbCO
         .from('cart_items')
-        .select('id, product_id, quantity, variant_text, products(id, name_th, name_en, price, thumbnail, images, sellers(shop_name))')
+        .select('id, product_id, quantity, variant_text, products(id, name_th, name_en, price, thumbnail, images, seller_id, sellers(shop_name))')
         .eq('user_id', user.id);
       if (error) throw error;
       cartItems = (data || []).map(row => {
@@ -2232,6 +2232,7 @@ async function loadCheckoutData() {
         const img = imgs[0] || p.thumbnail || '';
         return {
           id: row.product_id,
+          seller_id: p.seller_id || null,   // ★ จำเป็นสำหรับ dropdown shipping ★
           icon: img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover">` : '📦',
           name: p.name_th || p.name_en || 'สินค้า',
           var: row.variant_text || '',
@@ -2274,6 +2275,7 @@ async function loadCheckoutData() {
     }
     cartItems = ls.map(it => ({
       id: it.id || it.product_id || '',
+      seller_id: it.seller_id || null,   // ★ จำเป็นสำหรับ dropdown shipping ★
       icon: it.img ? `<img src="${it.img}" style="width:100%;height:100%;object-fit:cover">` : (it.icon || '📦'),
       name: it.name || 'สินค้า',
       var: it.variant || it.var || '',
@@ -2285,6 +2287,20 @@ async function loadCheckoutData() {
   }
   CART.length = 0;
   cartItems.forEach(it => CART.push(it));
+
+  // ★ Safety net: ถ้ามี item ที่ไม่มี seller_id (เช่น legacy data จาก localStorage)
+  // ให้ fetch จาก products table มา fill ให้ — เพื่อให้ dropdown shipping ทำงานได้
+  const missing = CART.filter(it => it.id && !it.seller_id).map(it => it.id);
+  if (missing.length > 0) {
+    try {
+      const { data: prods } = await _sbCO.from('products').select('id, seller_id').in('id', missing);
+      const map = {};
+      (prods || []).forEach(p => { if (p.seller_id) map[p.id] = p.seller_id; });
+      CART.forEach(it => {
+        if (!it.seller_id && map[it.id]) it.seller_id = map[it.id];
+      });
+    } catch(e) { console.warn('[checkout] backfill seller_id failed:', e?.message || e); }
+  }
 
   // ── 2. ADDRESSES: from Supabase addresses table ──
   // profile.html เก็บ addresses.user_id ด้วย auth.uid() — query ด้วย authUserId ก่อน
