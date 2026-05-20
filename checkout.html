@@ -1485,19 +1485,16 @@ function getEffectiveShipping(item){
   return _shippingBySeller[item.seller_id] || null;
 }
 
-// คำนวณค่าส่งรวม — แยกตาม "shipment" (sellerId + courierCode)
-// ถ้าสินค้าในร้านเดียวกันใช้ courier เดียวกัน → จ่ายค่าส่งครั้งเดียว
+// คำนวณค่าส่งรวม — คิดเป็นรายชิ้น (1 ชิ้น = 1 ค่าส่ง)
+// ✅ ตรงตามที่ user ต้องการ: ทุกสินค้าจ่ายค่าส่งของตัวเอง แยกกัน
 function calcTotalShipping(){
-  const shipments = {};  // key = sellerId|courierCode → price
+  let total = 0;
   for (const it of CART) {
     const sh = getEffectiveShipping(it);
     if (!sh) continue;
-    const key = (it.seller_id || 'unknown') + '|' + (sh.code || sh.courier_id);
-    if (!(key in shipments)) {
-      shipments[key] = parseFloat(sh.price) || 0;
-    }
+    total += (parseFloat(sh.price) || 0);
   }
-  return Object.values(shipments).reduce((s,p)=>s+p, 0);
+  return total;
 }
 
 // เช็คว่า "เลือกครบทุกชิ้นแล้วหรือยัง"
