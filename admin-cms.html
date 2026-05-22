@@ -590,6 +590,9 @@ nav { display: block !important; height: auto !important; }
       </div>
 
       <div class="sb-section-lbl">ระบบ</div>
+      <div class="sni" id="nav-couriers" onclick="showPanel('couriers')">
+        <span class="sni-ico">🚚</span> ขนส่ง
+      </div>
       <div class="sni" id="nav-audit" onclick="showPanel('audit')">
         <span class="sni-ico">📋</span> Audit Logs
       </div>
@@ -3150,6 +3153,354 @@ async function krBadgeLoop() {
 }
 setTimeout(krBadgeLoop, 5000);
 setInterval(krBadgeLoop, 60000);
+</script>
+
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- PANEL: COURIERS (จัดการบริษัทขนส่งทั้งระบบ)                   -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div id="panel-couriers" class="panel admin-only" style="padding:0;display:none">
+  <style>
+    #panel-couriers .cr-wrap{padding:24px;background:#FAFAFA;min-height:calc(100vh - 80px)}
+    #panel-couriers .cr-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:14px;flex-wrap:wrap}
+    #panel-couriers .cr-head h2{font-size:20px;font-weight:600;margin:0 0 4px}
+    #panel-couriers .cr-head p{font-size:12px;color:#666;margin:0}
+    #panel-couriers .cr-btn-add{padding:10px 18px;background:#0A0A0A;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+    #panel-couriers .cr-btn-add:hover{background:#262626}
+    #panel-couriers .cr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+    #panel-couriers .cr-stat{padding:14px;background:#fff;border:1px solid #E5E5E5;border-radius:6px}
+    #panel-couriers .cr-stat-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+    #panel-couriers .cr-stat-val{font-size:22px;font-weight:600;font-family:'DM Mono',monospace}
+    #panel-couriers .cr-card{background:#fff;border:1px solid #E5E5E5;border-radius:8px;overflow:hidden;margin-bottom:8px}
+    #panel-couriers .cr-row{display:grid;grid-template-columns:60px 1fr auto auto auto auto;gap:14px;align-items:center;padding:14px 18px;border-bottom:1px solid #F0F0F0}
+    #panel-couriers .cr-row:last-child{border-bottom:none}
+    #panel-couriers .cr-row.head{background:#F9FAFB;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+    #panel-couriers .cr-icon{width:46px;height:46px;background:#F5F5F5;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:22px}
+    #panel-couriers .cr-name{font-size:14px;font-weight:600;margin-bottom:3px}
+    #panel-couriers .cr-meta{font-size:11px;color:#666;font-family:'DM Mono',monospace}
+    #panel-couriers .cr-tag{display:inline-block;padding:2px 8px;border-radius:9px;font-size:10px;font-family:'DM Mono',monospace}
+    #panel-couriers .cr-tag.cod{background:#FEF3C7;color:#92400E}
+    #panel-couriers .cr-tag.no-cod{background:#F3F4F6;color:#6B7280}
+    #panel-couriers .cr-price{font-family:'DM Mono',monospace;font-size:13px;font-weight:600}
+    #panel-couriers .cr-toggle{position:relative;width:42px;height:24px;display:inline-block;cursor:pointer}
+    #panel-couriers .cr-toggle input{opacity:0;width:0;height:0}
+    #panel-couriers .cr-toggle-slider{position:absolute;inset:0;background:#ccc;border-radius:12px;transition:.3s}
+    #panel-couriers .cr-toggle-slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    #panel-couriers .cr-toggle input:checked + .cr-toggle-slider{background:#10B981}
+    #panel-couriers .cr-toggle input:checked + .cr-toggle-slider:before{transform:translateX(18px)}
+    #panel-couriers .cr-actions{display:flex;gap:6px}
+    #panel-couriers .cr-btn{padding:6px 12px;border:1px solid #E5E5E5;background:#fff;border-radius:4px;cursor:pointer;font-size:11px;font-family:inherit}
+    #panel-couriers .cr-btn:hover{background:#F5F5F5}
+    #panel-couriers .cr-btn.danger{color:#E63329;border-color:#FECACA}
+    #panel-couriers .cr-btn.danger:hover{background:#FEF2F2}
+    #panel-couriers .cr-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+    #panel-couriers .cr-modal.on{display:flex}
+    #panel-couriers .cr-modal-body{background:#fff;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;border-radius:8px;padding:24px}
+    #panel-couriers .cr-modal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    #panel-couriers .cr-modal-h h3{margin:0;font-size:18px;font-weight:600}
+    #panel-couriers .cr-close{background:none;border:none;font-size:22px;cursor:pointer;color:#888;padding:0;line-height:1}
+    #panel-couriers .cr-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    #panel-couriers .cr-fg{display:flex;flex-direction:column}
+    #panel-couriers .cr-fg.full{grid-column:1/-1}
+    #panel-couriers .cr-lbl{font-size:11px;color:#525252;margin-bottom:5px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+    #panel-couriers .cr-input{padding:10px 12px;border:1px solid #E5E5E5;border-radius:4px;font-size:13px;font-family:inherit}
+    #panel-couriers .cr-input:focus{outline:none;border-color:#0A0A0A}
+    #panel-couriers .cr-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;padding-top:14px;border-top:1px solid #F0F0F0}
+    #panel-couriers .cr-save{padding:10px 22px;background:#0A0A0A;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit}
+    #panel-couriers .cr-save:hover{background:#262626}
+    #panel-couriers .cr-cancel{padding:10px 22px;background:#fff;color:#666;border:1px solid #E5E5E5;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit}
+    @media(max-width:720px){
+      #panel-couriers .cr-row{grid-template-columns:50px 1fr auto;font-size:12px}
+      #panel-couriers .cr-row.head .cr-col-hide,
+      #panel-couriers .cr-row .cr-col-hide{display:none}
+    }
+  </style>
+
+  <div class="cr-wrap">
+    <div class="cr-head">
+      <div>
+        <h2>🚚 จัดการบริษัทขนส่ง</h2>
+        <p>ตั้งค่าบริษัทขนส่งทั้งระบบ — Seller จะเห็นรายการนี้ในหน้า Seller Portal เพื่อเปิด/ปิดใช้งานและตั้งราคาเอง</p>
+      </div>
+      <button class="cr-btn-add" onclick="crOpenModal()">➕ เพิ่มบริษัทขนส่ง</button>
+    </div>
+
+    <div class="cr-stats" id="cr-stats">
+      <div class="cr-stat"><div class="cr-stat-lbl">ทั้งหมด</div><div class="cr-stat-val" id="cr-stat-total">—</div></div>
+      <div class="cr-stat"><div class="cr-stat-lbl">เปิดใช้งาน</div><div class="cr-stat-val" id="cr-stat-active" style="color:#10B981">—</div></div>
+      <div class="cr-stat"><div class="cr-stat-lbl">ปิดใช้งาน</div><div class="cr-stat-val" id="cr-stat-inactive" style="color:#888">—</div></div>
+      <div class="cr-stat"><div class="cr-stat-lbl">รองรับ COD</div><div class="cr-stat-val" id="cr-stat-cod" style="color:#D97706">—</div></div>
+    </div>
+
+    <div class="cr-card">
+      <div class="cr-row head">
+        <div>โลโก้</div>
+        <div>ชื่อ / Code</div>
+        <div class="cr-col-hide">ราคาเริ่มต้น</div>
+        <div class="cr-col-hide">ระยะเวลา</div>
+        <div>เปิดใช้</div>
+        <div style="text-align:right">จัดการ</div>
+      </div>
+      <div id="cr-list">
+        <div style="padding:40px;text-align:center;color:#888">⏳ กำลังโหลด...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: เพิ่ม/แก้ไข courier -->
+  <div class="cr-modal" id="cr-modal">
+    <div class="cr-modal-body">
+      <div class="cr-modal-h">
+        <h3 id="cr-modal-title">➕ เพิ่มบริษัทขนส่ง</h3>
+        <button class="cr-close" onclick="crCloseModal()">×</button>
+      </div>
+      <input type="hidden" id="cr-id">
+      <div class="cr-form-grid">
+        <div class="cr-fg full">
+          <label class="cr-lbl">ชื่อภาษาไทย *</label>
+          <input class="cr-input" id="cr-name-th" placeholder="เช่น Kerry Express" required>
+        </div>
+        <div class="cr-fg full">
+          <label class="cr-lbl">ชื่อภาษาอังกฤษ</label>
+          <input class="cr-input" id="cr-name-en" placeholder="Kerry Express">
+        </div>
+        <div class="cr-fg">
+          <label class="cr-lbl">Code (ตัวพิมพ์เล็ก, ไม่เว้นวรรค) *</label>
+          <input class="cr-input" id="cr-code" placeholder="kerry" required>
+        </div>
+        <div class="cr-fg">
+          <label class="cr-lbl">Logo (emoji หรือ URL)</label>
+          <input class="cr-input" id="cr-logo" placeholder="🚚 หรือ https://...">
+        </div>
+        <div class="cr-fg">
+          <label class="cr-lbl">ราคาเริ่มต้น (฿)</label>
+          <input class="cr-input" type="number" min="0" step="0.01" id="cr-base-price" placeholder="30">
+        </div>
+        <div class="cr-fg">
+          <label class="cr-lbl">ราคา/kg (฿)</label>
+          <input class="cr-input" type="number" min="0" step="0.01" id="cr-price-per-kg" placeholder="0">
+        </div>
+        <div class="cr-fg">
+          <label class="cr-lbl">ส่งขั้นต่ำ (วัน)</label>
+          <input class="cr-input" type="number" min="0" id="cr-est-min" placeholder="1">
+        </div>
+        <div class="cr-fg">
+          <label class="cr-lbl">ส่งสูงสุด (วัน)</label>
+          <input class="cr-input" type="number" min="0" id="cr-est-max" placeholder="3">
+        </div>
+        <div class="cr-fg">
+          <label class="cr-lbl">ลำดับการแสดง</label>
+          <input class="cr-input" type="number" min="0" id="cr-sort-order" placeholder="0" value="0">
+        </div>
+        <div class="cr-fg" style="justify-content:flex-end">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:10px 0">
+            <input type="checkbox" id="cr-has-cod" style="accent-color:#E63329;width:16px;height:16px">
+            <span>รองรับ COD (เก็บเงินปลายทาง)</span>
+          </label>
+        </div>
+        <div class="cr-fg full">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="cr-is-active" style="accent-color:#10B981;width:16px;height:16px" checked>
+            <span>เปิดใช้งาน (Seller จะเห็นในรายการ)</span>
+          </label>
+        </div>
+      </div>
+      <div class="cr-modal-actions">
+        <button class="cr-cancel" onclick="crCloseModal()">ยกเลิก</button>
+        <button class="cr-save" onclick="crSave()">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// PANEL COURIERS — Admin จัดการบริษัทขนส่งทั้งระบบ
+// ════════════════════════════════════════════════════════════
+let _crCouriers = [];
+
+async function crLoad() {
+  try {
+    const sb = window._sb || window._sbAdmin;
+    if (!sb) throw new Error('Supabase ยังไม่พร้อม');
+    const { data, error } = await sb.from('couriers').select('*').order('sort_order', {ascending:true}).order('name_th');
+    if (error) throw error;
+    _crCouriers = data || [];
+    crRender();
+    crUpdateStats();
+  } catch(e) {
+    console.warn('crLoad:', e);
+    const wrap = document.getElementById('cr-list');
+    if (wrap) wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#E63329">❌ ${e.message}<br><small style="color:#888">กรุณารัน SHIPPING-SETUP.sql ใน Supabase ก่อน</small></div>`;
+  }
+}
+
+function crEscape(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function crRender() {
+  const wrap = document.getElementById('cr-list');
+  if (!wrap) return;
+  if (!_crCouriers.length) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#888">ยังไม่มีบริษัทขนส่ง — กด <strong>+ เพิ่มบริษัทขนส่ง</strong> ด้านบน</div>';
+    return;
+  }
+  wrap.innerHTML = _crCouriers.map(c => {
+    const isUrl = c.logo_url && /^https?:\/\//.test(c.logo_url);
+    const logo = isUrl
+      ? `<img src="${crEscape(c.logo_url)}" style="width:30px;height:30px;object-fit:contain">`
+      : (c.logo_url || '📦');
+    const days = (c.est_delivery_min === c.est_delivery_max)
+      ? `${c.est_delivery_min || '?'}`
+      : `${c.est_delivery_min||'?'}-${c.est_delivery_max||'?'}`;
+    return `<div class="cr-row">
+      <div class="cr-icon">${logo}</div>
+      <div>
+        <div class="cr-name">
+          ${crEscape(c.name_th || '—')}
+          ${c.has_cod ? '<span class="cr-tag cod" style="margin-left:6px">COD</span>' : ''}
+        </div>
+        <div class="cr-meta">${crEscape(c.code || '—')} · ${crEscape(c.name_en || '')}</div>
+      </div>
+      <div class="cr-col-hide cr-price">฿${Number(c.base_price||0).toLocaleString()}${c.price_per_kg ? ` + ฿${Number(c.price_per_kg).toLocaleString()}/kg` : ''}</div>
+      <div class="cr-col-hide cr-meta">${days} วัน</div>
+      <div>
+        <label class="cr-toggle">
+          <input type="checkbox" ${c.is_active?'checked':''} onchange="crToggle('${c.id}', this.checked)">
+          <span class="cr-toggle-slider"></span>
+        </label>
+      </div>
+      <div class="cr-actions" style="justify-content:flex-end">
+        <button class="cr-btn" onclick="crEdit('${c.id}')">แก้ไข</button>
+        <button class="cr-btn danger" onclick="crDelete('${c.id}')">ลบ</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function crUpdateStats() {
+  const total = _crCouriers.length;
+  const active = _crCouriers.filter(c => c.is_active).length;
+  const inactive = total - active;
+  const cod = _crCouriers.filter(c => c.has_cod).length;
+  const t = id => { const el = document.getElementById(id); if (el) el.textContent = arguments[1]; };
+  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('cr-stat-total', total);
+  set('cr-stat-active', active);
+  set('cr-stat-inactive', inactive);
+  set('cr-stat-cod', cod);
+}
+
+window.crOpenModal = function(){
+  document.getElementById('cr-modal-title').textContent = '➕ เพิ่มบริษัทขนส่ง';
+  document.getElementById('cr-id').value = '';
+  ['name-th','name-en','code','logo','base-price','price-per-kg','est-min','est-max'].forEach(k => {
+    const el = document.getElementById('cr-'+k);
+    if (el) el.value = '';
+  });
+  document.getElementById('cr-sort-order').value = '0';
+  document.getElementById('cr-has-cod').checked = false;
+  document.getElementById('cr-is-active').checked = true;
+  document.getElementById('cr-modal').classList.add('on');
+};
+
+window.crCloseModal = function(){
+  document.getElementById('cr-modal').classList.remove('on');
+};
+
+window.crEdit = function(id){
+  const c = _crCouriers.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('cr-modal-title').textContent = '✏️ แก้ไขบริษัทขนส่ง';
+  document.getElementById('cr-id').value = c.id;
+  document.getElementById('cr-name-th').value = c.name_th || '';
+  document.getElementById('cr-name-en').value = c.name_en || '';
+  document.getElementById('cr-code').value = c.code || '';
+  document.getElementById('cr-logo').value = c.logo_url || '';
+  document.getElementById('cr-base-price').value = c.base_price ?? '';
+  document.getElementById('cr-price-per-kg').value = c.price_per_kg ?? '';
+  document.getElementById('cr-est-min').value = c.est_delivery_min ?? '';
+  document.getElementById('cr-est-max').value = c.est_delivery_max ?? '';
+  document.getElementById('cr-sort-order').value = c.sort_order ?? 0;
+  document.getElementById('cr-has-cod').checked = !!c.has_cod;
+  document.getElementById('cr-is-active').checked = c.is_active !== false;
+  document.getElementById('cr-modal').classList.add('on');
+};
+
+window.crSave = async function(){
+  const sb = window._sb || window._sbAdmin;
+  const id = document.getElementById('cr-id').value;
+  const name_th = document.getElementById('cr-name-th').value.trim();
+  const code = document.getElementById('cr-code').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if (!name_th) { alert('⚠️ กรุณากรอกชื่อภาษาไทย'); return; }
+  if (!code) { alert('⚠️ กรุณากรอก Code'); return; }
+  const payload = {
+    name_th,
+    name_en: document.getElementById('cr-name-en').value.trim() || null,
+    code,
+    logo_url: document.getElementById('cr-logo').value.trim() || null,
+    base_price: parseFloat(document.getElementById('cr-base-price').value) || 0,
+    price_per_kg: parseFloat(document.getElementById('cr-price-per-kg').value) || 0,
+    est_delivery_min: parseInt(document.getElementById('cr-est-min').value) || 1,
+    est_delivery_max: parseInt(document.getElementById('cr-est-max').value) || 3,
+    sort_order: parseInt(document.getElementById('cr-sort-order').value) || 0,
+    has_cod: document.getElementById('cr-has-cod').checked,
+    is_active: document.getElementById('cr-is-active').checked,
+    updated_at: new Date().toISOString()
+  };
+  try {
+    if (id) {
+      const { error } = await sb.from('couriers').update(payload).eq('id', id);
+      if (error) throw error;
+    } else {
+      const { error } = await sb.from('couriers').insert(payload);
+      if (error) throw error;
+    }
+    crCloseModal();
+    await crLoad();
+  } catch(e) {
+    alert('❌ ' + (e.message || e));
+  }
+};
+
+window.crToggle = async function(id, isActive){
+  const sb = window._sb || window._sbAdmin;
+  try {
+    const { error } = await sb.from('couriers').update({is_active: isActive, updated_at: new Date().toISOString()}).eq('id', id);
+    if (error) throw error;
+    const c = _crCouriers.find(x => x.id === id);
+    if (c) c.is_active = isActive;
+    crUpdateStats();
+  } catch(e) {
+    alert('❌ ' + e.message);
+    crLoad();
+  }
+};
+
+window.crDelete = async function(id){
+  const c = _crCouriers.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm(`ลบ "${c.name_th}" ใช่ไหม?\n⚠️ การลบจะมีผลต่อร้านค้าทั้งหมดที่ใช้บริษัทขนส่งนี้`)) return;
+  const sb = window._sb || window._sbAdmin;
+  try {
+    const { error } = await sb.from('couriers').delete().eq('id', id);
+    if (error) throw error;
+    await crLoad();
+  } catch(e) {
+    alert('❌ ' + (e.message || e));
+  }
+};
+
+// Auto-load เมื่อเข้า panel
+(function() {
+  const navItem = document.getElementById('nav-couriers');
+  if (navItem) {
+    navItem.addEventListener('click', () => setTimeout(crLoad, 100));
+  }
+  // Also load if URL has #couriers
+  if (location.hash === '#couriers') {
+    setTimeout(crLoad, 500);
+  }
+})();
 </script>
 
 
