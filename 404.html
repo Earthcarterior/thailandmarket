@@ -19,6 +19,22 @@
 window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
 window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
 window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
+
+// ── Search box (header) ──────────────────────────────────
+function doSearch(){
+  const q=document.getElementById('search-inp')?.value?.trim();
+  if(q) location.href='search.html?q='+encodeURIComponent(q);
+}
+
+// ── Category bar "see all" dropdown toggle ───────────────
+function showAllCats(){
+  const dd=document.getElementById('cats-dropdown');
+  if(!dd) return;
+  const open=dd.style.display!=='none'&&dd.style.display!=='';
+  dd.style.display=open?'none':'block';
+  const btn=document.querySelector('.catbar-seeall');
+  if(btn) btn.textContent=open?'ดูทั้งหมด ▸':'ปิด ✕';
+}
 </script>
 <style>
 /* ════════════════════════════════════════════════
