@@ -332,6 +332,7 @@ footer{background:var(--black);padding:40px 24px 28px;margin-top:16px}
 }
 
 </style>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -917,7 +918,7 @@ async function loadFlash() {
             ${d > 0 ? `<div class="flash-disc">-${d}%</div>` : ''}
           </div>
           <div class="flash-info">
-            <div class="flash-name">${p.name_th}</div>
+            <div class="flash-name">${escQ(p.name_th)}</div>
             <div style="display:flex;align-items:baseline;gap:4px">
               <div class="flash-price">฿${Number(p.price).toLocaleString()}</div>
               ${p.compare_price ? `<div class="flash-old">฿${Number(p.compare_price).toLocaleString()}</div>` : ''}
@@ -973,8 +974,8 @@ function renderProducts() {
           <div class="prod-wish" onclick="event.stopPropagation();toast('❤️ บันทึกใน Wishlist')">♡</div>
         </div>
         <div class="prod-info">
-          <div class="prod-cat">${p.categories?.name_th || ''}</div>
-          <div class="prod-name">${p.name_th}</div>
+          <div class="prod-cat">${escQ(p.categories?.name_th || '')}</div>
+          <div class="prod-name">${escQ(p.name_th)}</div>
           <div class="prod-rating">
             <span class="stars">★★★★★</span>
             <span>${p.rating_avg || 5.0}</span>
@@ -1034,7 +1035,7 @@ function renderCatSections() {
                   <div class="cat-prod-img">
                     ${thumb ? `<img src="${thumb}" alt="" loading="lazy" onerror="this.style.display='none'">` : '<span style="font-size:36px">📦</span>'}
                   </div>
-                  <div class="cat-prod-name">${p.name_th}</div>
+                  <div class="cat-prod-name">${escQ(p.name_th)}</div>
                   <div style="display:flex;align-items:baseline;gap:4px">
                     <div class="cat-prod-price">฿${Number(p.price).toLocaleString()}</div>
                     ${p.compare_price ? `<div class="cat-prod-old">฿${Number(p.compare_price).toLocaleString()}</div>` : ''}

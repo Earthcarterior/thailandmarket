@@ -573,6 +573,7 @@ nav, .nav {
   margin:0 !important;
 }
 </style>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -1291,8 +1292,8 @@ function renderGrid(data) {
         <button class="prod-wish" id="wish-${p.id}" onclick="event.stopPropagation();toggleWish('${p.id}',this)" title="บันทึกสินค้า">♡</button>
       </div>
       <div class="prod-info">
-        <div class="prod-cat">${p.categories?.name_th||''}</div>
-        <div class="prod-name">${p.name_th}</div>
+        <div class="prod-cat">${escapeHtml(p.categories?.name_th||'')}</div>
+        <div class="prod-name">${escapeHtml(p.name_th)}</div>
         <div class="prod-rating">
           <span class="stars">★★★★★</span>
           <span>${p.rating_avg||5.0}</span>
@@ -1338,8 +1339,8 @@ function renderList(data) {
       </div>
       <div class="prod-list-info">
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:500;margin-bottom:4px">${p.name_th}</div>
-          <div style="font-size:12px;color:var(--g500)">${p.categories?.name_th||''} · ★${p.rating_avg||5} (${p.rating_count||0}) · สต็อก ${p.stock_quantity}</div>
+          <div style="font-size:14px;font-weight:500;margin-bottom:4px">${escapeHtml(p.name_th)}</div>
+          <div style="font-size:12px;color:var(--g500)">${escapeHtml(p.categories?.name_th||'')} · ★${p.rating_avg||5} (${p.rating_count||0}) · สต็อก ${p.stock_quantity}</div>
           <div style="display:flex;gap:4px;margin-top:6px">
             <span style="font-size:10px;background:var(--g100);padding:2px 7px;font-family:var(--mono)">ส่งฟรี</span>
             ${p.is_flash_sale?`<span style="font-size:10px;background:#FFF3EE;color:var(--red);padding:2px 7px;font-family:var(--mono)">⚡ Flash</span>`:''}

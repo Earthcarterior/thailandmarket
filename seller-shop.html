@@ -86,6 +86,7 @@ a{text-decoration:none;color:inherit}
   .shop-tabs{top:56px}
 }
 </style>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -166,8 +167,8 @@ function render(){
       <div class="shop-hero-inner">
         <div class="shop-avatar">${s.logo_url ? `<img src="${s.logo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : initial}</div>
         <div class="shop-info">
-          <div class="shop-name">${s.shop_name||'ร้านค้า'} ${verified?`<span class="shop-verified">✓ ยืนยันแล้ว</span>`:''}</div>
-          <div class="shop-tagline">${s.description || s.tagline || 'ขายดี ส่งเร็ว ของแท้ คุณภาพดี · ขายใน Thailand Market'}</div>
+          <div class="shop-name">${esc(s.shop_name||'ร้านค้า')} ${verified?`<span class="shop-verified">✓ ยืนยันแล้ว</span>`:''}</div>
+          <div class="shop-tagline">${esc(s.description || s.tagline || 'ขายดี ส่งเร็ว ของแท้ คุณภาพดี · ขายใน Thailand Market')}</div>
           <div class="shop-stats">
             <div class="shop-stat"><strong>${totalProducts.toLocaleString()}</strong>สินค้า</div>
             <div class="shop-stat"><strong>${totalSales.toLocaleString()}</strong>ขายแล้ว</div>
@@ -225,8 +226,8 @@ function renderTab(){
     c.innerHTML = `
       <div class="about-section">
         <h3>ℹ️ ข้อมูลร้าน</h3>
-        <div class="about-row"><div class="lbl">ชื่อร้าน</div><div>${s.shop_name||'-'}</div></div>
-        <div class="about-row"><div class="lbl">รายละเอียด</div><div>${s.description || s.tagline || '-'}</div></div>
+        <div class="about-row"><div class="lbl">ชื่อร้าน</div><div>${esc(s.shop_name||'-')}</div></div>
+        <div class="about-row"><div class="lbl">รายละเอียด</div><div>${esc(s.description || s.tagline || '-')}</div></div>
         <div class="about-row"><div class="lbl">ที่ตั้ง</div><div>${s.location || s.address || 'ประเทศไทย'}</div></div>
         ${s.phone ? `<div class="about-row"><div class="lbl">โทร</div><div>${s.phone}</div></div>` : ''}
         ${s.email ? `<div class="about-row"><div class="lbl">อีเมล</div><div>${s.email}</div></div>` : ''}
@@ -291,11 +292,11 @@ function renderProductCard(p){
 
   return `<div class="p-card" onclick="location.href='product.html?id=${p.id}'">
     <div class="p-img">
-      ${img ? `<img src="${img}" alt="${p.name_th}" onerror="this.style.display='none';this.parentElement.textContent='📦'">` : '📦'}
+      ${img ? `<img src="${esc(img)}" alt="${esc(p.name_th)}" onerror="this.style.display='none';this.parentElement.textContent='📦'">` : '📦'}
       ${badge ? `<span class="p-badge">${badge}</span>` : ''}
     </div>
     <div class="p-body">
-      <div class="p-name">${p.name_th || p.name_en || '-'}</div>
+      <div class="p-name">${esc(p.name_th || p.name_en || '-')}</div>
       <div class="p-price">
         <span class="p-price-now">฿${Number(p.price).toLocaleString()}</span>
         ${isOnSale ? `<span class="p-price-old">฿${Number(p.original_price).toLocaleString()}</span>` : ''}

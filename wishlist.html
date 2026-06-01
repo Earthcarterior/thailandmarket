@@ -529,6 +529,7 @@ nav, .nav {
   .nav-top{padding:0 12px!important;gap:4px!important}
 }
 </style>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -1414,14 +1415,14 @@ function renderWishlistCards(items) {
       
       <!-- Image -->
       <div style="aspect-ratio:1;background:var(--g50);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative">
-        ${thumb ? `<img src="${thumb}" alt="${p.name_th}" loading="lazy" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:60px">📦</span>'}
+        ${thumb ? `<img src="${escQ(thumb)}" alt="${escQ(p.name_th)}" loading="lazy" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:60px">📦</span>'}
         ${p.is_flash_sale ? '<div style="position:absolute;top:8px;left:8px;background:#E63329;color:#fff;font-family:var(--mono);font-size:10px;font-weight:500;padding:3px 8px;letter-spacing:.04em">⚡ FLASH</div>' : disc>=30 ? `<div style="position:absolute;top:8px;left:8px;background:#E63329;color:#fff;font-family:var(--mono);font-size:10px;padding:3px 8px">SALE</div>` : ''}
       </div>
 
       <!-- Info -->
       <div style="padding:12px">
-        ${p.categories ? `<div style="font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.04em;margin-bottom:4px">${p.categories.name_th}</div>` : ''}
-        <div style="font-size:13px;font-weight:500;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.name_th}">${p.name_th}</div>
+        ${p.categories ? `<div style="font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.04em;margin-bottom:4px">${escQ(p.categories.name_th)}</div>` : ''}
+        <div style="font-size:13px;font-weight:500;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escQ(p.name_th)}">${escQ(p.name_th)}</div>
         <div style="font-size:12px;color:var(--amber);margin-bottom:6px">
           ${stars} <span style="color:var(--g500)">${p.rating_avg||'5.0'} (${(p.rating_count||0).toLocaleString()})</span>
         </div>
