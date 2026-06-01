@@ -470,6 +470,7 @@ img{max-width:100%;height:auto}
   .nav-top{padding:0 12px!important;gap:4px!important}
 }
 </style>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 <!-- ── ANNOUNCEMENT ── -->
@@ -862,14 +863,14 @@ async function loadFlashProducts() {
           <div style="position:absolute;top:8px;left:8px;background:#E63329;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 8px">⚡ -${disc}%</div>
         </div>
         <div style="padding:12px">
-          <div style="font-size:11px;color:#737373;margin-bottom:4px">${p.categories?.name_th||''}</div>
-          <div style="font-size:13px;font-weight:500;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name_th}</div>
+          <div style="font-size:11px;color:#737373;margin-bottom:4px">${escQ(p.categories?.name_th||'')}</div>
+          <div style="font-size:13px;font-weight:500;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escQ(p.name_th)}</div>
           <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
             <div style="font-family:var(--mono);font-size:17px;font-weight:600;color:#E63329">฿${Number(p.price).toLocaleString()}</div>
             ${p.compare_price?`<div style="font-family:var(--mono);font-size:12px;color:#A3A3A3;text-decoration:line-through">฿${Number(p.compare_price).toLocaleString()}</div>`:''}
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-            <button onclick="event.stopPropagation();addToCart('${p.id}','${p.name_th}',p.price)"
+            <button data-act="cart" data-id="${escQ(p.id)}" data-name="${escQ(p.name_th)}" data-price="${p.price}"
               style="padding:8px;background:#fff;border:1px solid #0A0A0A;font-size:11px;font-weight:500;cursor:pointer">🛒 ลงตะกร้า</button>
             <button onclick="event.stopPropagation();location.href='product.html?id=${p.id}'"
               style="padding:8px;background:#0A0A0A;color:#fff;border:none;font-size:11px;font-weight:500;cursor:pointer">ซื้อเลย</button>
@@ -1121,5 +1122,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
+  <script src="cart-actions.js"></script>
 </body>
 </html>

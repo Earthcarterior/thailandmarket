@@ -1433,13 +1433,13 @@ function renderWishlistCards(items) {
         </div>
         ${p.stock_quantity <= 10 && p.stock_quantity > 0 ? `<div style="font-size:11px;color:var(--red);margin-bottom:8px">⚠ เหลือ ${p.stock_quantity} ชิ้น</div>` : ''}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-          <button onclick="event.stopPropagation();addToCart('${p.id}','${p.name_th.replace(/'/g,"\'")}' ,${p.price},'${thumb||''}')"
+          <button data-act="cart" data-id="${escQ(p.id)}" data-name="${escQ(p.name_th)}" data-price="${p.price}" data-img="${escQ(thumb||'')}"
             style="padding:9px;background:#fff;border:var(--border-dark);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s"
             onmouseover="this.style.background='var(--black)';this.style.color='#fff'"
             onmouseout="this.style.background='#fff';this.style.color='var(--black)'">
             🛒 ลงตะกร้า
           </button>
-          <button onclick="event.stopPropagation();buyNow('${p.id}','${p.name_th.replace(/'/g,"\'")}' ,${p.price},'${thumb||''}')"
+          <button data-act="buy" data-id="${escQ(p.id)}" data-name="${escQ(p.name_th)}" data-price="${p.price}" data-img="${escQ(thumb||'')}"
             style="padding:9px;background:var(--black);color:#fff;border:none;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s"
             onmouseover="this.style.background='var(--red)'"
             onmouseout="this.style.background='var(--black)'">
@@ -1751,5 +1751,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
+  <script>
+  /* data-act delegation (wishlist): cart->addToCart, buy->buyNow */
+  document.addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest('[data-act="cart"],[data-act="buy"]');
+    if(!b) return;
+    e.stopPropagation();
+    var id=b.dataset.id, name=b.dataset.name||'', price=Number(b.dataset.price||0), img=b.dataset.img||'';
+    if(b.getAttribute("data-act")==="buy"){ if(typeof buyNow==="function") buyNow(id,name,price,img); }
+    else { if(typeof addToCart==="function") addToCart(id,name,price,img); }
+  }, true);
+  </script>
 </body>
 </html>

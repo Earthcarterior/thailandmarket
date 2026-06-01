@@ -1309,8 +1309,8 @@ function renderGrid(data) {
           ${p.is_flash_sale?`<span style="font-size:10px;background:#FFF3EE;color:var(--red);padding:2px 7px;font-family:var(--mono)">Flash</span>`:''}
         </div>
         <div class="prod-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:8px">
-          <button class="btn-cart" onclick="event.stopPropagation();quickAddCart('${p.id}','${p.name_th.replace(/'/g,"\'")}',${p.price},'${thumb||''}')">🛒 ตะกร้า</button>
-          <button class="btn-buy" onclick="event.stopPropagation();quickAddCart('${p.id}','${p.name_th.replace(/'/g,"\'")}',${p.price},'');location.href='checkout.html'">ซื้อเลย</button>
+          <button class="btn-cart" data-act="cart" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name_th)}" data-price="${p.price}" data-img="${escapeHtml(thumb||'')}">🛒 ตะกร้า</button>
+          <button class="btn-buy" data-act="buy" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name_th)}" data-price="${p.price}">ซื้อเลย</button>
         </div>
       </div>
     </div>`;
@@ -1350,7 +1350,7 @@ function renderList(data) {
           <div class="prod-list-price">฿${Number(p.price).toLocaleString()}</div>
           ${p.compare_price?`<div style="font-family:var(--mono);font-size:11px;color:var(--g400);text-decoration:line-through">฿${Number(p.compare_price).toLocaleString()}</div>`:''}
           ${disc>0?`<div style="font-family:var(--mono);font-size:11px;color:var(--red);margin-bottom:8px">-${disc}%</div>`:''}
-          <button class="btn-cart" style="font-size:11px;padding:6px 12px" onclick="event.stopPropagation();quickAddCart('${p.id}','${p.name_th.replace(/'/g,"\'")}',${p.price},'${thumb||''}')">+ ตะกร้า</button>
+          <button class="btn-cart" style="font-size:11px;padding:6px 12px" data-act="cart" data-id="${escapeHtml(p.id)}" data-name="${escapeHtml(p.name_th)}" data-price="${p.price}" data-img="${escapeHtml(thumb||'')}">+ ตะกร้า</button>
         </div>
       </div>
     </div>`;
@@ -1964,5 +1964,6 @@ async function toggleWish(productId, btn) {
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
+  <script src="cart-actions.js"></script>
 </body>
 </html

@@ -1458,8 +1458,8 @@ function renderProducts() {
           </div>
           <div class="prod-shop">📦 Thailand Market${p.stock_quantity < 5 && p.stock_quantity > 0 ? ' · <span style="color:var(--red)">เหลือน้อย</span>' : p.stock_quantity === 0 ? ' · <span style="color:var(--red)">หมดแล้ว</span>' : ''}</div>
           <div class="prod-actions">
-            <button class="btn-cart" onclick="event.stopPropagation();addCart('${p.id}','${escQ(p.name_th)}',${p.price},'${thumb||''}')">🛒 ตะกร้า</button>
-            <button class="btn-buy" onclick="event.stopPropagation();addCart('${p.id}','${escQ(p.name_th)}',${p.price},'');location.href='checkout.html'">ซื้อเลย</button>
+            <button class="btn-cart" data-act="cart" data-id="${escQ(p.id)}" data-name="${escQ(p.name_th)}" data-price="${p.price}" data-img="${escQ(thumb||'')}">🛒 ตะกร้า</button>
+            <button class="btn-buy" data-act="buy" data-id="${escQ(p.id)}" data-name="${escQ(p.name_th)}" data-price="${p.price}">ซื้อเลย</button>
           </div>
         </div>
       </div>`;
@@ -1510,7 +1510,7 @@ function renderCatSections() {
                     <div class="cat-prod-price">฿${Number(p.price).toLocaleString()}</div>
                     ${p.compare_price ? `<div class="cat-prod-old">฿${Number(p.compare_price).toLocaleString()}</div>` : ''}
                   </div>
-                  <button class="cat-btn" onclick="event.stopPropagation();addCart('${p.id}','${escQ(p.name_th)}',${p.price},'${thumb||''}')">+ ตะกร้า</button>
+                  <button class="cat-btn" data-act="cart" data-id="${escQ(p.id)}" data-name="${escQ(p.name_th)}" data-price="${p.price}" data-img="${escQ(thumb||'')}">+ ตะกร้า</button>
                 </div>`;
             }).join('')}
           </div>
@@ -3303,5 +3303,6 @@ init().catch(e => console.error('[TM] init crashed:', e));
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
+  <script src="cart-actions.js"></script>
 </body>
 </html>
