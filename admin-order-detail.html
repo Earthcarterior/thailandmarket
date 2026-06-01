@@ -87,6 +87,7 @@ a{text-decoration:none;color:inherit}
 }
 </style>
   <link rel="stylesheet" href="mobile-nav-fix.css">   <script src="admin-guard.js"></script>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -191,8 +192,8 @@ function render(){
         ${items.map(it=>`<div class="item-row">
           <div class="item-img">${it.thumbnail?`<img src="${it.thumbnail}">`:'📦'}</div>
           <div class="item-info">
-            <div class="item-name">${it.name||'สินค้า'}</div>
-            <div class="item-meta">${it.shop||''} ${it.variant?'· '+it.variant:''}</div>
+            <div class="item-name">${esc(it.name||'สินค้า')}</div>
+            <div class="item-meta">${esc(it.shop||'')} ${it.variant?'· '+esc(it.variant):''}</div>
             <div class="item-qty">฿${Number(it.price).toLocaleString()} × ${it.qty}</div>
           </div>
           <div class="item-price">฿${Number(it.subtotal||it.price*it.qty).toLocaleString()}</div>
@@ -208,9 +209,9 @@ function render(){
           <div class="tl-item done">
             <div class="tl-dot">${ST_ICONS[ev.status]||'•'}</div>
             <div class="tl-info">
-              <div class="tl-title">${ev.description||ev.status}</div>
-              ${ev.location?`<div class="tl-desc">📍 ${ev.location}</div>`:''}
-              ${ev.tracking_no?`<div class="tl-desc">🔢 ${ev.carrier||''} ${ev.tracking_no}</div>`:''}
+              <div class="tl-title">${esc(ev.description||ev.status)}</div>
+              ${ev.location?`<div class="tl-desc">📍 ${esc(ev.location)}</div>`:''}
+              ${ev.tracking_no?`<div class="tl-desc">🔢 ${esc(ev.carrier||'')} ${esc(ev.tracking_no)}</div>`:''}
               <div class="tl-time">${new Date(ev.created_at).toLocaleString('th-TH')}</div>
             </div>
           </div>`).join('')}
@@ -266,9 +267,9 @@ function render(){
     <div class="section">
       <div class="section-head"><h3>👤 ลูกค้า / ที่อยู่จัดส่ง</h3></div>
       <div class="section-body">
-        <div style="font-weight:600;margin-bottom:4px">${addr.name||'-'}</div>
-        <div style="font-size:12px;color:var(--g500);margin-bottom:8px">${addr.detail||'-'}</div>
-        ${addr.tag?`<span class="badge b-paid">${addr.tag}</span>`:''}
+        <div style="font-weight:600;margin-bottom:4px">${esc(addr.name||'-')}</div>
+        <div style="font-size:12px;color:var(--g500);margin-bottom:8px">${esc(addr.detail||'-')}</div>
+        ${addr.tag?`<span class="badge b-paid">${esc(addr.tag)}</span>`:''}
       </div>
     </div>
 

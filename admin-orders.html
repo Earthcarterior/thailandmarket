@@ -84,6 +84,7 @@ tr.row:hover{background:var(--g50)}
 }
 </style>
   <script src="admin-guard.js"></script>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -259,15 +260,15 @@ function render(){
     </tr></thead>
     <tbody>${list.map(o=>{
       const items = Array.isArray(o.items)?o.items:[];
-      const itemSummary = items.slice(0,2).map(i=>i.name).join(', ') + (items.length>2?` +${items.length-2}`:'');
+      const itemSummary = items.slice(0,2).map(i=>esc(i.name)).join(', ') + (items.length>2?` +${items.length-2}`:'');
       const totalQty = items.reduce((s,i)=>s+(i.qty||1),0);
       const addr = o.shipping_address || {};
       const dateStr = new Date(o.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) + ' · ' + new Date(o.created_at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
       return `<tr class="row" onclick="location.href='admin-order-detail.html?order=${o.order_number}'">
         <td><div class="order-num">${o.order_number}</div></td>
         <td>
-          <div class="cust-name">${addr.name||'(ไม่ระบุ)'}</div>
-          <div class="cust-meta">${(addr.detail||'').slice(0,50)}${(addr.detail||'').length>50?'...':''}</div>
+          <div class="cust-name">${esc(addr.name||'(ไม่ระบุ)')}</div>
+          <div class="cust-meta">${esc((addr.detail||'').slice(0,50))}${(addr.detail||'').length>50?'...':''}</div>
         </td>
         <td>
           <div style="font-size:12px;line-height:1.4">${itemSummary}</div>

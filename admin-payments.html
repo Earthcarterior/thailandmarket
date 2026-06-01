@@ -45,6 +45,7 @@ tr.row:hover{background:var(--g50)}
 .btn-success{background:var(--green);color:#fff;border-color:var(--green)}
 </style>
   <script src="admin-guard.js"></script>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -136,9 +137,9 @@ function render(){
       return `<tr class="row" onclick="goToOrder('${o.order_number||''}')">
         <td style="font-size:11px;color:var(--g500)">${dateStr}</td>
         <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600">${o.order_number||'-'}</td>
-        <td>${a.name||'-'}</td>
+        <td>${esc(a.name||'-')}</td>
         <td>${PAY_ICON[p.method]||''} ${PAY_LABEL[p.method]||p.method}</td>
-        <td style="font-family:'DM Mono',monospace;font-size:11px">${card}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:11px">${esc(card)}</td>
         <td style="text-align:right;font-family:'DM Mono',monospace;font-weight:700">฿${Number(p.amount).toLocaleString()}</td>
         <td><span class="badge ${stClass}">${stLabel}</span></td>
         <td>${p.status==='pending'?`<button class="btn btn-success" onclick="event.stopPropagation();confirmPay('${p.id}','${o.order_number||''}','${p.user_id}')">ยืนยัน</button>`:''}</td>
