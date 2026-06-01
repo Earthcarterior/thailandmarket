@@ -13,8 +13,11 @@
 // ============================================================================
 import { minify as minifyHtml } from 'html-minifier-terser';
 import { minify as minifyJs } from 'terser';
+import obfuscatorPkg from 'javascript-obfuscator';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+
+const obfuscator = obfuscatorPkg.default ?? obfuscatorPkg;
 
 const ROOT = path.resolve('.');
 const OUT  = path.resolve('dist');
@@ -28,19 +31,60 @@ const SKIP = new Set([
 // นามสกุลที่เป็นไฟล์ dev/ความลับ — ไม่ควรเสิร์ฟต่อสาธารณะ
 const SKIP_EXT = new Set(['.sql', '.md', '.zip']);
 
-// ── terser options (ใช้ทั้ง inline <script> และไฟล์ .js) ────────────────────
+// ── terser options (ใช้กับ inline event handler + ก่อน obfuscate) ───────────
 const terserOpts = {
   compress: { toplevel: false, drop_debugger: true },
   mangle:   { toplevel: false },              // ไม่แตะชื่อ global → onclick ใช้ได้
   format:   { comments: false },
 };
 
+// ── javascript-obfuscator options (ใช้กับ <script> เต็มก้อนเท่านั้น) ─────────
+//  ตั้งค่าแบบ "แรงแต่ปลอดภัย": เข้ารหัส string + ชื่อ local เป็น hex
+//  ปิด transform ที่เสี่ยงทำเว็บพัง (controlFlowFlattening / selfDefending /
+//  debugProtection / transformObjectKeys) และ renameGlobals:false เพื่อให้
+//  ฟังก์ชัน global ที่ inline onclick เรียกยังทำงาน
+const obfOpts = {
+  compact: true,
+  renameGlobals: false,
+  identifierNamesGenerator: 'hexadecimal',
+  stringArray: true,
+  stringArrayThreshold: 0.75,
+  stringArrayEncoding: ['base64'],
+  splitStrings: false,
+  controlFlowFlattening: false,
+  deadCodeInjection: false,
+  debugProtection: false,
+  selfDefending: false,
+  numbersToExpressions: false,
+  transformObjectKeys: false,
+  unicodeEscapeSequence: false,
+  simplify: true,
+};
+
+async function terserCode(text) {
+  try { return (await minifyJs(text, terserOpts)).code ?? text; }
+  catch { return text; }
+}
+
+// minifyJS สำหรับ html-minifier-terser:
+//  - inline (เช่น onclick="...") → terser เบาๆ (obfuscate ที่นี่เสี่ยงพัง)
+//  - <script> เต็มก้อน → obfuscate (ถ้า fail ถอยมา terser, ถ้ายัง fail คืนต้นฉบับ)
+async function minifyJSHandler(text, inline) {
+  if (inline) return terserCode(text);
+  try {
+    const pre = await terserCode(text);                    // ย่อก่อน แล้วค่อย obfuscate
+    return obfuscator.obfuscate(pre, obfOpts).getObfuscatedCode();
+  } catch {
+    return terserCode(text);
+  }
+}
+
 const htmlOpts = {
   collapseWhitespace: true,
   conservativeCollapse: false,
   removeComments: true,
   minifyCSS: true,
-  minifyJS: terserOpts,
+  minifyJS: minifyJSHandler,
   keepClosingSlash: true,
   removeAttributeQuotes: false,               // กัน attribute พังในกรณีค่ามีช่องว่าง
   ignoreCustomComments: [/^!/],
@@ -77,12 +121,11 @@ async function walk(relDir = '') {
     } else if (ext === '.js') {
       const input = await fs.readFile(src, 'utf8');
       try {
-        const res = await minifyJs(input, terserOpts);
-        await fs.writeFile(dst, res.code ?? input);
+        await fs.writeFile(dst, await minifyJSHandler(input, false));  // obfuscate
         nJs++;
       } catch (e) {
         await fs.writeFile(dst, input);
-        warnings.push(`JS minify ไม่ผ่าน (copy ดิบแทน): ${rel} — ${e.message.split('\n')[0]}`);
+        warnings.push(`JS obfuscate ไม่ผ่าน (copy ดิบแทน): ${rel} — ${e.message.split('\n')[0]}`);
         nCopy++;
       }
     } else {
