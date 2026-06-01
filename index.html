@@ -1202,7 +1202,7 @@ function addCart(id, name, price, img) {
 
 function doSearch() {
   const q = document.getElementById('search-inp')?.value?.trim();
-  if (q) window.location.href = `search-results.html?q=${encodeURIComponent(q)}`;
+  if (q) window.location.href = `search.html?q=${encodeURIComponent(q)}`;
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -1257,7 +1257,7 @@ async function showSearchInitial(dd) {
   const trend = document.getElementById('sd-trend');
   if (trend) {
     trend.innerHTML = _trendingCache.length
-      ? _trendingCache.map(t => `<a href="search-results.html?q=${encodeURIComponent(t.query)}" style="display:inline-block;padding:5px 10px;background:var(--g50);font-size:12px;border:1px solid transparent;font-family:var(--mono);transition:all .15s" onmouseover="this.style.borderColor='var(--black)'" onmouseout="this.style.borderColor='transparent'">${escQ(t.query)}</a>`).join('')
+      ? _trendingCache.map(t => `<a href="search.html?q=${encodeURIComponent(t.query)}" style="display:inline-block;padding:5px 10px;background:var(--g50);font-size:12px;border:1px solid transparent;font-family:var(--mono);transition:all .15s" onmouseover="this.style.borderColor='var(--black)'" onmouseout="this.style.borderColor='transparent'">${escQ(t.query)}</a>`).join('')
       : '<div style="font-size:12px;color:var(--g400)">ยังไม่มีข้อมูล</div>';
   }
 }
@@ -1282,7 +1282,7 @@ async function fetchSearchSuggestions(q, dd) {
         </div>
       </a>`).join('');
     }
-    html += `<a href="search-results.html?q=${encodeURIComponent(q)}" style="display:block;padding:12px 16px;text-align:center;font-size:11px;font-family:var(--mono);color:var(--red);letter-spacing:.06em;text-transform:uppercase;font-weight:600;text-decoration:none;border-top:1px solid #F5F5F5">🔍 ดูผลการค้นหาทั้งหมด →</a>`;
+    html += `<a href="search.html?q=${encodeURIComponent(q)}" style="display:block;padding:12px 16px;text-align:center;font-size:11px;font-family:var(--mono);color:var(--red);letter-spacing:.06em;text-transform:uppercase;font-weight:600;text-decoration:none;border-top:1px solid #F5F5F5">🔍 ดูผลการค้นหาทั้งหมด →</a>`;
     dd.innerHTML = html;
     dd.style.display = 'block';
   } catch(e) { /* silent */ }

@@ -7014,7 +7014,7 @@ function arRenderTable() {
       </td>
       <td style="font-family:'DM Mono',monospace;font-size:11px;color:#737373">${dateStr}</td>
       <td>
-        ${a.status==='published'?`<a href="../article.html?slug=${a.slug}" target="_blank" class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px;text-decoration:none">👁</a>`:''}
+        ${a.status==='published'?`<a href="article.html?slug=${a.slug}" target="_blank" class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px;text-decoration:none">👁</a>`:''}
         <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px" onclick="editArticle('${a.id}')">✏️</button>
         <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="deleteArticle('${a.id}','${(a.title||'').replace(/'/g,'')}')">🗑️</button>
       </td>
