@@ -411,6 +411,7 @@ img{max-width:100%;height:auto}
 ::selection{background:#0A0A0A;color:#fff}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="xss-safe.js"></script>
 </head><body>
 <!-- ── ANNOUNCEMENT ── -->
 <div class="ann">
@@ -542,10 +543,10 @@ function renderNotif(n){
     <div class="ni-ico" style="background:${n.bg}">${n.ico}</div>
     <div class="ni-body">
       <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:3px">
-        <div class="ni-title" style="flex:1">${n.title}</div>
+        <div class="ni-title" style="flex:1">${esc(n.title)}</div>
         <span class="ni-tag ${TAG_MAP[n.tag]}">${TAG_LABEL[n.tag]}</span>
       </div>
-      <div class="ni-body-txt">${n.body}</div>
+      <div class="ni-body-txt">${esc(n.body)}</div>
       <div class="ni-time">${n.time}</div>
       <div class="ni-actions">${n.actions.map(a=>`<button class="na-btn ${a.primary?'na-primary':'na-secondary'}" onclick="event.stopPropagation();${a.fn}">${a.label}</button>`).join('')}</div>
     </div>
