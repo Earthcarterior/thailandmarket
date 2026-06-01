@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Thailand Market — Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -599,6 +600,72 @@ img{max-width:100%;height:auto}
 <div class="toast-wrap" id="tw"></div>
 
 <script>
+
+const SUPABASE_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU3MjAwMDAsImV4cCI6MjA1MTI5NjAwMH0.PLACEHOLDER';
+const _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+async function loadRealStats(){
+  try{
+    const {data,error}=await _sb.rpc('admin_dashboard_stats');
+    if(error)throw error;
+    const s=Array.isArray(data)?data[0]:data;
+    if(!s)return;
+    // Update sidebar badges + stat cards
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v??'—'};
+    set('sb-pending-sellers',s.pending_sellers||0);
+    set('sb-pending-products',s.pending_products||0);
+    set('stat-total-users',(s.total_users||0).toLocaleString());
+    set('stat-total-sellers',(s.total_sellers||0).toLocaleString());
+    set('stat-total-orders',(s.total_orders||0).toLocaleString());
+    set('stat-today-orders',(s.today_orders||0).toLocaleString());
+    set('stat-today-revenue','฿'+(Number(s.today_revenue)||0).toLocaleString());
+  }catch(e){console.warn('loadRealStats:',e.message)}
+}
+
+async function loadRealOrders(){
+  try{
+    const {data,error}=await _sb.from('orders')
+      .select('id, order_code, total_amount, status, created_at, order_items(product_name, product_image)')
+      .order('created_at',{ascending:false})
+      .limit(5);
+    if(error)throw error;
+    const el=document.getElementById('overview-orders');
+    if(!el||!data||!data.length)return;
+    const STAT={pending:['b-am','รอจัดส่ง'],processing:['b-am','กำลังจัดส่ง'],shipped:['b-bl','จัดส่งแล้ว'],completed:['b-gn','สำเร็จ'],cancelled:['b-rd','ยกเลิก']};
+    el.innerHTML=data.map(o=>{
+      const item=o.order_items?.[0]||{};
+      const s=STAT[o.status]||['b-am',o.status||'—'];
+      return `<tr>
+        <td style="font-size:10px;color:var(--primary);font-weight:600">${o.order_code||o.id.substring(0,8)}</td>
+        <td><div class="td-p"><div class="pt">📦</div>${(item.product_name||'').substring(0,30)}</div></td>
+        <td>—</td>
+        <td style="font-weight:600">฿${Number(o.total_amount||0).toLocaleString()}</td>
+        <td style="font-size:10px;color:var(--g400)">${new Date(o.created_at).toLocaleDateString('th-TH')}</td>
+        <td><span class="pill ${s[0]}">${s[1]}</span></td>
+      </tr>`;
+    }).join('');
+  }catch(e){console.warn('loadRealOrders:',e.message)}
+}
+
+async function loadRealSellers(){
+  try{
+    const {data,error}=await _sb.from('sellers')
+      .select('id, shop_name, business_name, business_type, status, created_at')
+      .eq('status','approved')
+      .order('created_at',{ascending:false})
+      .limit(5);
+    if(error)throw error;
+    const el=document.getElementById('top-sellers');
+    if(!el||!data)return;
+    el.innerHTML=data.map((s,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--g100)">
+      <div style="width:18px;font-size:11px;font-weight:700;color:${i<3?'var(--accent)':'var(--g400)'}">#${i+1}</div>
+      <div class="pt">🏪</div>
+      <div style="flex:1"><div style="font-size:11px;font-weight:500">${(s.shop_name||s.business_name||'').substring(0,20)}</div><div style="font-size:9px;color:var(--g400)">${s.business_type||'—'}</div></div>
+    </div>`).join('');
+  }catch(e){console.warn('loadRealSellers:',e.message)}
+}
+
 const CATS_DATA=[
   {id:'home',icon:'🏠',name:'Home & Furniture',color:'#7F77DD',gmv:48.2,sellers:8420,prods:312000,orders:12480,gp:8},
   {id:'fashion',icon:'👗',name:'แฟชั่น',color:'#D4537E',gmv:92.4,sellers:12840,prods:524000,orders:38900,gp:11},
@@ -692,6 +759,7 @@ function getCatStrategy(id){
 }
 
 function renderOverview(){
+  loadRealStats();loadRealOrders();loadRealSellers();
   const days=['จ','อ','พ','พฤ','ศ','ส','อา'];const data=[8.2,10.4,7.8,12.8,14.2,11.4,15.8];const max=Math.max(...data);
   document.getElementById('overview-bars').innerHTML=data.map((v,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
     <div style="font-size:9px;font-weight:500;color:var(--g700)">${v}M</div>

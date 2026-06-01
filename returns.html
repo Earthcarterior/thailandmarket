@@ -5,6 +5,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Thailand Market — คืนสินค้า</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -458,6 +459,36 @@ img{max-width:100%;height:auto}
 </div>
 <div class="toast-wrap" id="tw"></div>
 <script>
+
+const SUPABASE_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU3MjAwMDAsImV4cCI6MjA1MTI5NjAwMH0.PLACEHOLDER';
+const _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+// อ่าน ?order=xxx จาก URL
+const _urlParams=new URLSearchParams(location.search);
+const _orderId=_urlParams.get('order');
+const _orderItemId=_urlParams.get('item');
+
+async function loadOrderContext(){
+  if(!_orderId)return;
+  try{
+    const {data:o,error}=await _sb.from('orders')
+      .select('id, order_code, total_amount, status, order_items(id, product_name, product_image, price, quantity, seller_id)')
+      .eq('id',_orderId).single();
+    if(error)throw error;
+    const ctx=document.getElementById('order-context');
+    if(ctx){
+      const item=_orderItemId?o.order_items.find(i=>i.id===_orderItemId):o.order_items[0];
+      ctx.innerHTML=`
+        <div style="padding:14px;background:#FAFAFA;border:1px solid #E5E5E5;margin-bottom:16px;border-radius:6px">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:#737373;margin-bottom:6px">ORDER ${o.order_code||o.id.substring(0,8)}</div>
+          <div style="font-size:14px;font-weight:600">${item?.product_name||'—'}</div>
+          <div style="font-size:12px;color:#737373">x${item?.quantity||1} · ฿${Number(item?.price||0).toLocaleString()}</div>
+        </div>`;
+    }
+  }catch(e){console.warn(e)}
+}
+
 const REASON_INFO={
   defect:'สินค้ามีตำหนิ/เสียหาย: กรุณาถ่ายรูปตำหนิให้ชัดเจน ร้านค้าจะรับผิดชอบค่าจัดส่งทั้งหมด และตรวจสอบภายใน 24 ชั่วโมง',
   wrong:'ได้รับสินค้าผิด: กรุณาถ่ายรูปสินค้าที่ได้รับ ไม่ต้องเปิดบรรจุภัณฑ์ ร้านค้าจะส่งสินค้าที่ถูกต้องให้ภายใน 3 วัน',
@@ -468,12 +499,36 @@ const REASON_INFO={
 };
 function updateReason(){const v=document.getElementById('reason-sel').value;const info=document.getElementById('reason-info');const text=document.getElementById('reason-text');if(v&&REASON_INFO[v]){info.style.display='block';text.textContent=REASON_INFO[v];}else{info.style.display='none';}}
 function selMethod(el){document.querySelectorAll('.mo').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');toast('💳 เลือก: '+el.querySelector('.mo-name').textContent);}
-function submitReturn(){
+async function submitReturn(){
   const reason=document.getElementById('reason-sel').value;
   if(!reason){toast('⚠️ กรุณาเลือกเหตุผลการคืนสินค้า');return;}
-  toast('✅ ส่งคำขอคืนสินค้าแล้ว! รหัส RMA-2026-00284 · รอ Kerry รับสินค้าภายใน 24 ชม.');
-  setTimeout(()=>{toast('📲 ส่ง SMS แจ้งเตือนแล้ว: 08X-XXXX-XXXX');},1200);
+  if(!_orderId){toast('⚠️ ไม่พบ order — กลับไปที่ประวัติออเดอร์ก่อน');return;}
+  try{
+    const {data:{user}}=await _sb.auth.getUser();
+    if(!user){toast('⚠️ กรุณาเข้าสู่ระบบก่อน');setTimeout(()=>location.href='login.html?next='+encodeURIComponent(location.href),1500);return;}
+    const {data:userRow}=await _sb.from('users').select('id').eq('email',user.email).maybeSingle();
+    if(!userRow){toast('❌ ไม่พบข้อมูลผู้ใช้');return;}
+    const {data:order}=await _sb.from('orders').select('id, order_items(seller_id, id)').eq('id',_orderId).single();
+    const itemRow=_orderItemId?order.order_items.find(i=>i.id===_orderItemId):order?.order_items?.[0];
+    const payload={
+      order_id:_orderId,
+      order_item_id:itemRow?.id||null,
+      user_id:userRow.id,
+      seller_id:itemRow?.seller_id||null,
+      reason:reason,
+      reason_detail:REASON_INFO[reason]||'',
+      status:'pending'
+    };
+    const {data:ret,error}=await _sb.from('returns').insert(payload).select('return_code').single();
+    if(error)throw error;
+    toast('✅ ส่งคำขอคืนสินค้าแล้ว! รหัส '+(ret?.return_code||'-')+' · ติดตามได้ในหน้าประวัติออเดอร์');
+    setTimeout(()=>location.href='profile.html#orders',2500);
+  }catch(e){
+    toast('❌ '+e.message);
+  }
 }
+
+document.addEventListener('DOMContentLoaded',loadOrderContext);
 function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3500);}
 </script>
 
