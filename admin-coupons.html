@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests; object-src 'none'; base-uri 'self'">
 <meta charset="UTF-8">
 <meta name="theme-color" content="#0A0A0A">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -173,7 +174,8 @@ img{max-width:100%;height:auto}
 /* ── Selection color ── */
 ::selection{background:#0A0A0A;color:#fff}
 </style>
-  <link rel="stylesheet" href="mobile-nav-fix.css"> </head>
+  <link rel="stylesheet" href="mobile-nav-fix.css">   <script src="admin-guard.js"></script>
+</head>
 <body>
 <nav id="tn">
   <div class="tn-top">

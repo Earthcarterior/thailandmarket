@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests; object-src 'none'; base-uri 'self'">
 <meta charset="UTF-8">
 <meta name="theme-color" content="#0A0A0A">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -942,8 +943,8 @@ function buildCart(){
   document.getElementById('cart-items').innerHTML=CART.map((it,i)=>`<div class="cart-item">
     <div class="cart-img">${it.icon}</div>
     <div>
-      <div class="cart-name">${it.name}</div>
-      <div class="cart-var">${it.var}</div>
+      <div class="cart-name">${escapeHtml(it.name)}</div>
+      <div class="cart-var">${escapeHtml(it.var||'')}</div>
       <div class="cart-shop">🏪 ${it.shop}</div>
       <div style="display:flex;align-items:center;gap:10px">
         <div class="qty-ctrl">
@@ -991,7 +992,7 @@ window.refreshProductShippingDropdowns = function(){
     if (sellerDefault) {
       const priceStr = sellerDefault.is_free
         ? 'ฟรี' : '฿' + Number(sellerDefault.price).toLocaleString('th-TH');
-      defaultLabel = `⬇️ ตามร้าน: ${sellerDefault.name_th} — ${priceStr}`;
+      defaultLabel = `⬇️ ตามร้าน: ${escapeHtml(sellerDefault.name_th)} — ${priceStr}`;
     }
 
     // เคลียร์ option เก่า แล้วใส่ใหม่

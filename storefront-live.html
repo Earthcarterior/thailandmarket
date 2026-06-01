@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests; object-src 'none'; base-uri 'self'">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0A0A0A">
@@ -559,6 +560,7 @@ nav, .nav {
   margin:0 !important;
 }
 </style>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -1218,8 +1220,8 @@ function renderGrid(data) {
         <button class="prod-wish" id="wish-${p.id}" onclick="event.stopPropagation();toggleWish('${p.id}',this)" title="บันทึกสินค้า">♡</button>
       </div>
       <div class="prod-info">
-        <div class="prod-cat">${p.categories?.name_th||''}</div>
-        <div class="prod-name">${p.name_th}</div>
+        <div class="prod-cat">${escQ(p.categories?.name_th||'')}</div>
+        <div class="prod-name">${escQ(p.name_th)}</div>
         <div class="prod-rating">
           <span class="stars">★★★★★</span>
           <span>${p.rating_avg||5.0}</span>
@@ -1235,8 +1237,8 @@ function renderGrid(data) {
           ${p.is_flash_sale?`<span style="font-size:10px;background:#FFF3EE;color:var(--red);padding:2px 7px;font-family:var(--mono)">Flash</span>`:''}
         </div>
         <div class="prod-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:8px">
-          <button class="btn-cart" onclick="event.stopPropagation();quickAddCart('${p.id}','${p.name_th.replace(/'/g,"\'")}',${p.price},'${thumb||''}')">🛒 ตะกร้า</button>
-          <button class="btn-buy" onclick="event.stopPropagation();quickAddCart('${p.id}','${p.name_th.replace(/'/g,"\'")}',${p.price},'');location.href='checkout.html'">ซื้อเลย</button>
+          <button class="btn-cart" data-act="cart" data-id="${escQ(p.id)}" data-name="${escQ(p.name_th)}" data-price="${p.price}" data-img="${escQ(thumb||'')}">🛒 ตะกร้า</button>
+          <button class="btn-buy" data-act="buy" data-id="${escQ(p.id)}" data-name="${escQ(p.name_th)}" data-price="${p.price}">ซื้อเลย</button>
         </div>
       </div>
     </div>`;
@@ -1265,7 +1267,7 @@ function renderList(data) {
       </div>
       <div class="prod-list-info">
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:500;margin-bottom:4px">${p.name_th}</div>
+          <div style="font-size:14px;font-weight:500;margin-bottom:4px">${escQ(p.name_th)}</div>
           <div style="font-size:12px;color:var(--g500)">${p.categories?.name_th||''} · ★${p.rating_avg||5} (${p.rating_count||0}) · สต็อก ${p.stock_quantity}</div>
           <div style="display:flex;gap:4px;margin-top:6px">
             <span style="font-size:10px;background:var(--g100);padding:2px 7px;font-family:var(--mono)">ส่งฟรี</span>
@@ -1276,7 +1278,7 @@ function renderList(data) {
           <div class="prod-list-price">฿${Number(p.price).toLocaleString()}</div>
           ${p.compare_price?`<div style="font-family:var(--mono);font-size:11px;color:var(--g400);text-decoration:line-through">฿${Number(p.compare_price).toLocaleString()}</div>`:''}
           ${disc>0?`<div style="font-family:var(--mono);font-size:11px;color:var(--red);margin-bottom:8px">-${disc}%</div>`:''}
-          <button class="btn-cart" style="font-size:11px;padding:6px 12px" onclick="event.stopPropagation();quickAddCart('${p.id}','${p.name_th.replace(/'/g,"\'")}',${p.price},'${thumb||''}')">+ ตะกร้า</button>
+          <button class="btn-cart" style="font-size:11px;padding:6px 12px" data-act="cart" data-id="${escQ(p.id)}" data-name="${escQ(p.name_th)}" data-price="${p.price}" data-img="${escQ(thumb||'')}">+ ตะกร้า</button>
         </div>
       </div>
     </div>`;
@@ -1579,5 +1581,6 @@ async function toggleWish(productId, btn) {
 }
 
 </script>
+  <script src="cart-actions.js"></script>
 </body>
 </html

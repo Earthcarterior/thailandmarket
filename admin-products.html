@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests; object-src 'none'; base-uri 'self'">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0A0A0A">
@@ -99,6 +100,8 @@ tbody tr:last-child td{border-bottom:none}
 @keyframes tIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
 @media(max-width:768px){.app{flex-direction:column}.sb{width:100%;position:relative;height:auto}.main{margin-left:0}.stats{grid-template-columns:1fr 1fr}.modal-body{grid-template-columns:1fr}}
 </style>
+  <script src="admin-guard.js"></script>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -339,12 +342,12 @@ async function loadProds(){
         <td><div style=display:flex;align-items:center;gap:10px;cursor:pointer onclick="viewProd('${p.id}')">
           <div class=prod-thumb>${th}</div>
           <div onclick="viewProd('${p.id}')" style=cursor:pointer>
-            <div style=font-weight:500;font-size:13px;margin-bottom:2px>${p.name_th}</div>
-            ${p.name_en?`<div style=font-family:var(--mono);font-size:10px;color:var(--g400)>${p.name_en}</div>`:""}
+            <div style=font-weight:500;font-size:13px;margin-bottom:2px>${esc(p.name_th)}</div>
+            ${p.name_en?`<div style=font-family:var(--mono);font-size:10px;color:var(--g400)>${esc(p.name_en)}</div>`:""}
           </div>
         </div></td>
-        <td style=font-size:12px>${p.seller?.shop_name||"—"}${p.seller?.is_verified?"<span style=color:var(--green);font-size:10px;margin-left:4px>✓</span>":""}</td>
-        <td style=font-size:12px>${p.category?.name_th||"—"}</td>
+        <td style=font-size:12px>${esc(p.seller?.shop_name||"—")}${p.seller?.is_verified?"<span style=color:var(--green);font-size:10px;margin-left:4px>✓</span>":""}</td>
+        <td style=font-size:12px>${esc(p.category?.name_th||"—")}</td>
         <td><div style=font-family:var(--mono);font-size:14px;font-weight:500>฿${Number(p.price).toLocaleString()}</div>${disc>0?`<div style=font-family:var(--mono);font-size:10px;color:var(--red)>-${disc}%</div>`:""}</td>
         <td style=font-family:var(--mono);font-size:13px>${p.stock_quantity}</td>
         <td style=font-family:var(--mono);font-size:10px;color:var(--g500)>${dt}</td>
@@ -352,7 +355,7 @@ async function loadProds(){
         <td><div style=display:flex;gap:4px>
           <button class="btn btn-o btn-xs" onclick="viewProd('${p.id}')">🔍 ดู</button>
           ${p.status==="pending_review"?`
-          <button class="btn btn-xs" style=background:var(--green);color:var(--white) onclick="quickApprove('${p.id}','${p.name_th.replace(/'/g,"\'")}')" >✓</button>
+          <button class="btn btn-xs" style=background:var(--green);color:var(--white) onclick="quickApprove('${p.id}')" >✓</button>
           <button class="btn btn-xs" style=background:var(--red);color:var(--white) onclick="quickReject('${p.id}')">✕</button>`:""}
         </div></td>
       </tr>`;
@@ -391,7 +394,7 @@ async function viewProd(id){
 
     // Seller info
     const s=p.seller||{};
-    document.getElementById("m-seller").innerHTML=`<strong>${s.shop_name||"—"}</strong>${s.is_verified?"<span style=color:var(--green);font-size:11px;margin-left:6px>✓ Verified</span>":""}<br><span style=font-size:12px;color:var(--g500)>Rating: ${s.rating_avg||0} ★ · ยอดขาย ${s.total_sales||0} ชิ้น</span>`;
+    document.getElementById("m-seller").innerHTML=`<strong>${esc(s.shop_name||"—")}</strong>${s.is_verified?"<span style=color:var(--green);font-size:11px;margin-left:6px>✓ Verified</span>":""}<br><span style=font-size:12px;color:var(--g500)>Rating: ${s.rating_avg||0} ★ · ยอดขาย ${s.total_sales||0} ชิ้น</span>`;
 
     // Images
     const imgs=p.images||[];
@@ -402,7 +405,7 @@ async function viewProd(id){
 
     // Details table
     document.getElementById("m-details").innerHTML=`
-      <div class=detail-row><span class=detail-lbl>หมวดหมู่</span><span class=detail-val>${p.category?.name_th||"—"}</span></div>
+      <div class=detail-row><span class=detail-lbl>หมวดหมู่</span><span class=detail-val>${esc(p.category?.name_th||"—")}</span></div>
       <div class=detail-row><span class=detail-lbl>SKU</span><span class=detail-val style=font-family:var(--mono)>${p.sku||"—"}</span></div>
       <div class=detail-row><span class=detail-lbl>สต็อก</span><span class=detail-val style=font-family:var(--mono)>${p.stock_quantity}</span></div>
       <div class=detail-row><span class=detail-lbl>น้ำหนัก</span><span class=detail-val>${p.weight_grams?p.weight_grams+"g":"—"}</span></div>
@@ -434,10 +437,10 @@ async function doApprove(){
   } catch(e){ toast("อนุมัติไม่สำเร็จ: "+e.message); }
 }
 
-async function quickApprove(id,name){
+async function quickApprove(id){
   try{
     await apic("PATCH",`/products/${id}/approve`,{});
-    toast(`✅ อนุมัติ "${name}" แล้ว`,true);
+    toast(`✅ อนุมัติสินค้าแล้ว`,true);
     loadProds(); loadStats();
   } catch(e){ toast("อนุมัติไม่สำเร็จ"); }
 }

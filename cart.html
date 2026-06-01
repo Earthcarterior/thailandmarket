@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests; object-src 'none'; base-uri 'self'">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Thailand Market — ตะกร้าสินค้า</title>
@@ -593,6 +594,7 @@ img{max-width:100%;height:auto}
 .cart-points-box label{display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:4px}
 .cart-points-box input[type=checkbox]{accent-color:#D97706;cursor:pointer}
 </style>
+  <script src="xss-safe.js"></script>
 </head>
 <body>
 
@@ -1042,12 +1044,12 @@ async function renderCart(){
       '</div>'+
       sellerFsBar+
       items.map(({item, idx})=>{
-        const trgImg = item.img ? '<img src="'+item.img+'" alt="'+item.name+'" onerror="this.style.display=\'none\';this.parentElement.textContent=\'📦\'">' : '📦';
+        const trgImg = item.img ? '<img src="'+esc(item.img)+'" alt="'+esc(item.name)+'" onerror="this.style.display=\'none\';this.parentElement.textContent=\'📦\'">' : '📦';
         return '<div class="cart-item">'+
           '<input type="checkbox" class="cart-cb cart-item-cb" data-key="'+itemKey(item)+'" onchange="toggleItemSelect(this.dataset.key, this.checked)" '+(_selected.has(itemKey(item))?'checked':'')+'>'+
           '<div class="cart-img">'+trgImg+'</div>'+
           '<div style="flex:1;min-width:0">'+
-            '<div class="cart-name">'+item.name+'</div>'+
+            '<div class="cart-name">'+esc(item.name)+'</div>'+
             (item.variant ? '<div class="cart-var">ตัวเลือก: '+item.variant+'</div>' : '')+
             '<div style="display:flex;align-items:baseline;gap:8px;margin:6px 0;flex-wrap:wrap">'+
               '<span class="cart-price">'+fmtPrice(item.price)+'</span>'+
@@ -1216,8 +1218,8 @@ function renderSaved(){
   document.getElementById('saved-count').textContent = '(' + saved.length + ' รายการ)';
   grid.innerHTML = saved.map((s,i)=>
     '<div class="saved-card">'+
-    (s.img ? '<img src="'+s.img+'" alt="'+s.name+'" onerror="this.style.display=\'none\'">' : '<div style="aspect-ratio:1;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:36px;border-radius:4px;margin-bottom:6px">📦</div>')+
-    '<div class="nm">'+s.name+'</div>'+
+    (s.img ? '<img src="'+esc(s.img)+'" alt="'+esc(s.name)+'" onerror="this.style.display=\'none\'">' : '<div style="aspect-ratio:1;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:36px;border-radius:4px;margin-bottom:6px">📦</div>')+
+    '<div class="nm">'+esc(s.name)+'</div>'+
     '<div class="pr">'+fmtPrice(s.price)+'</div>'+
     '<button class="add-btn" onclick="moveSavedToCart('+i+')">+ ย้ายกลับตะกร้า</button>'+
     '</div>'
@@ -1305,7 +1307,7 @@ async function restoreCouponsState(){
         const norm = _normCoupon(raw_c);
         _discount = norm.value;
         const wrap = document.getElementById('coupon-applied-wrap');
-        if (wrap) wrap.innerHTML = '<div class="coupon-applied"><span>✓ <strong>'+c.code+'</strong> · '+(norm.name||'')+'</span><button onclick="removeCoupon()">✕</button></div>';
+        if (wrap) wrap.innerHTML = '<div class="coupon-applied"><span>✓ <strong>'+esc(c.code)+'</strong> · '+esc(norm.name||'')+'</span><button onclick="removeCoupon()">✕</button></div>';
       } else {
         _discount = Number(c.discount) || 0;
       }
@@ -1420,7 +1422,7 @@ async function applyCoupon(){
       brand_id: coupon.brand_id
     }]);
     document.getElementById('coupon-applied-wrap').innerHTML =
-      '<div class="coupon-applied"><span>✓ <strong>'+code+'</strong> · '+(coupon.name||'')+'</span><button onclick="removeCoupon()">✕</button></div>';
+      '<div class="coupon-applied"><span>✓ <strong>'+esc(code)+'</strong> · '+esc(coupon.name||'')+'</span><button onclick="removeCoupon()">✕</button></div>';
     document.getElementById('coupon-input').value = '';
     updateSummary();
     toast('🎟️ ใช้คูปอง "' + code + '" สำเร็จ!', 'ok');
