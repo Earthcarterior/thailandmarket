@@ -8129,7 +8129,429 @@ function spOpenDocPreview(ids, docType, paper, fmt) {
       <button onclick="window.print()">🖨️ พิมพ์เอกสาร</button>
     </div>
     <div class="doc-grid">${blocks}</div>
-  </body></html>`);
+  
+<!-- ========== Seller Portal Patches (2026.06) ========== -->
+<script>
+// ════════════════════════════════════════════════════════════
+// SELLER PORTAL — Function Patches (2026.06)
+// เพิ่ม/แก้ functions ที่ขาดให้ใช้งานได้จริงทุก section
+// ════════════════════════════════════════════════════════════
+
+(function(){
+
+const sb = () => window._sb;
+
+async function getSid(){
+  if (window._sellerSellerId) return window._sellerSellerId;
+  const { data: { user } } = await sb().auth.getUser();
+  if (!user) return null;
+  const { data: u } = await sb().from('users').select('id').eq('email', user.email).maybeSingle();
+  if (!u) return null;
+  const { data: s } = await sb().from('sellers').select('id').eq('owner_user_id', u.id).maybeSingle();
+  if (s) window._sellerSellerId = s.id;
+  return s?.id || null;
+}
+
+function fmtBaht(n){ return '฿' + Number(n||0).toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function timeAgo(d){
+  if(!d) return '';
+  const diff = (Date.now() - new Date(d).getTime())/1000;
+  if (diff < 60) return Math.floor(diff)+' วินาทีก่อน';
+  if (diff < 3600) return Math.floor(diff/60)+' นาทีก่อน';
+  if (diff < 86400) return Math.floor(diff/3600)+' ชม.ก่อน';
+  if (diff < 2592000) return Math.floor(diff/86400)+' วันก่อน';
+  return new Date(d).toLocaleDateString('th-TH');
+}
+
+// ════════════════════════════════════════════════════════════
+// DASHBOARD — ใช้ RPC seller_dashboard_stats
+// ════════════════════════════════════════════════════════════
+window.loadDashStatsV2 = async function(){
+  try{
+    const { data, error } = await sb().rpc('seller_dashboard_stats');
+    if (error) throw error;
+    if (!data || data.error) return;
+
+    const setText = (sel, val) => {
+      const el = typeof sel === 'string' ? document.querySelector(sel) : sel;
+      if (el) el.textContent = val;
+    };
+
+    // ดู cards ใน page-dashboard
+    document.querySelectorAll('#page-dashboard .sc').forEach(c => {
+      const lbl = c.querySelector('.sc-lbl')?.textContent.trim() || '';
+      const val = c.querySelector('.sc-val');
+      const chg = c.querySelector('.sc-chg');
+      if (!val) return;
+      if (/ยอดขายวันนี้|รายได้วันนี้/.test(lbl)){
+        val.textContent = fmtBaht(data.today_revenue);
+      } else if (/ยอดขายเดือน|รายได้เดือน/.test(lbl)){
+        val.textContent = fmtBaht(data.month_revenue);
+      } else if (/ออเดอร์รอ|รอจัดส่ง/.test(lbl)){
+        val.textContent = data.pending_orders ?? 0;
+        if (chg) chg.textContent = data.pending_orders > 0 ? '⚠️ ต้องดำเนินการ' : '✓ ไม่มีค้าง';
+      } else if (/ออเดอร์ทั้งหมด/.test(lbl)){
+        val.textContent = data.total_orders ?? 0;
+      } else if (/คะแนนร้าน|Rating/.test(lbl)){
+        val.textContent = (data.avg_rating || 0).toFixed(1);
+        if (chg) chg.textContent = `⭐ จาก ${data.total_reviews||0} รีวิว`;
+      } else if (/สินค้าทั้งหมด|จำนวนสินค้า/.test(lbl)){
+        val.textContent = data.total_products ?? 0;
+      } else if (/สต็อกใกล้หมด|Low stock/.test(lbl)){
+        val.textContent = data.low_stock_count ?? 0;
+        if (chg) chg.textContent = data.low_stock_count > 0 ? '⚠️ ต้องเติม' : '✓ สต็อกพอ';
+      } else if (/รอโอน|Pending payout/.test(lbl)){
+        val.textContent = fmtBaht(data.balance?.escrow || 0);
+      } else if (/ยอดสะสม|Total earned/.test(lbl)){
+        val.textContent = fmtBaht(data.balance?.total_earned || 0);
+      }
+    });
+
+    // Badges ใน sidebar
+    setText('#ship-pending-badge', data.pending_orders);
+    setText('#returns-badge', data.pending_returns);
+    if (data.pending_orders > 0) document.getElementById('ship-pending-badge')?.style.removeProperty('display');
+    if (data.pending_returns > 0) document.getElementById('returns-badge')?.style.removeProperty('display');
+  }catch(e){
+    console.warn('loadDashStatsV2:', e.message);
+  }
+};
+
+// ════════════════════════════════════════════════════════════
+// ORDERS — ใช้ RPC seller_recent_orders
+// ════════════════════════════════════════════════════════════
+window.loadSellerOrdersV2 = async function(status, limit){
+  status = status || null;
+  limit = limit || 50;
+  try{
+    const { data, error } = await sb().rpc('seller_recent_orders', {
+      p_seller_id: null,
+      p_status: status,
+      p_limit: limit,
+      p_offset: 0
+    });
+    if (error) throw error;
+    window._sellerOrders = data || [];
+
+    // Render ใน page-orders ถ้ามี
+    const wrap = document.getElementById('orders-tbody') || document.getElementById('orders-list');
+    if (wrap){
+      if (!data || !data.length){
+        wrap.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#888">ยังไม่มีออเดอร์</td></tr>';
+        return data;
+      }
+      const STATUS_MAP = {
+        pending:['#FEF3C7','#92400E','รอชำระ'],
+        paid:['#DBEAFE','#1E40AF','ชำระแล้ว'],
+        confirmed:['#DBEAFE','#1E40AF','ยืนยันแล้ว'],
+        preparing:['#FED7AA','#C2410C','กำลังเตรียม'],
+        processing:['#FED7AA','#C2410C','กำลังจัดส่ง'],
+        shipped:['#A7F3D0','#065F46','จัดส่งแล้ว'],
+        completed:['#D1FAE5','#065F46','สำเร็จ'],
+        cancelled:['#FEE2E2','#991B1B','ยกเลิก'],
+        returned:['#FEE2E2','#991B1B','คืน'],
+        refunded:['#E5E5E5','#525252','คืนเงิน']
+      };
+      wrap.innerHTML = data.map(o => {
+        const s = STATUS_MAP[o.status] || ['#E5E5E5','#525252', o.status||'—'];
+        return `<tr>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:#E63329">${esc(o.order_code||o.order_id?.substring(0,8))}</td>
+          <td style="font-size:12px">${esc(o.customer_name||o.customer_email||'—')}</td>
+          <td><div style="display:flex;align-items:center;gap:8px">
+            ${o.first_product_image ? `<img src="${esc(o.first_product_image)}" style="width:32px;height:32px;object-fit:cover;border:1px solid #E5E5E5;border-radius:3px" onerror="this.style.display='none'">` : ''}
+            <div><div style="font-size:12px">${esc((o.first_product_name||'').substring(0,40))}</div>
+            <div style="font-size:10px;color:#888">+${(o.items_count-1>0)?o.items_count-1+' รายการ':0}</div></div>
+          </div></td>
+          <td style="font-family:'DM Mono',monospace;font-weight:600">${fmtBaht(o.total_amount)}</td>
+          <td><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;background:${s[0]};color:${s[1]};font-weight:500">${s[2]}</span></td>
+          <td style="font-size:11px;color:#888">${timeAgo(o.created_at)}</td>
+          <td style="text-align:right">
+            <button class="btn btn-xs" onclick="window.openOrderDetail('${o.order_id}')" style="padding:5px 12px;border:1px solid #E5E5E5;background:#fff;font-size:11px;cursor:pointer;border-radius:3px">ดูรายละเอียด</button>
+            ${['paid','confirmed','preparing','processing'].includes(o.status) ? `<button class="btn btn-xs" onclick="window.openShipDialog('${o.order_id}')" style="padding:5px 12px;border:1px solid #E63329;background:#E63329;color:#fff;font-size:11px;cursor:pointer;border-radius:3px;margin-left:4px">📮 จัดส่ง</button>` : ''}
+          </td>
+        </tr>`;
+      }).join('');
+    }
+    return data;
+  }catch(e){
+    console.warn('loadSellerOrdersV2:', e.message);
+    return [];
+  }
+};
+
+// Ship order dialog
+window.openShipDialog = async function(orderId){
+  const tracking = prompt('กรอกหมายเลขพัสดุ (Tracking Number):');
+  if (!tracking || !tracking.trim()) return;
+  const courier = prompt('Courier code (kerry, flash, jnt, scg, thaipost, ninjavan, grab):', 'kerry');
+  if (!courier) return;
+  try{
+    const { data, error } = await sb().rpc('seller_ship_order', {
+      p_order_id: orderId,
+      p_courier_code: courier.trim().toLowerCase(),
+      p_tracking_no: tracking.trim()
+    });
+    if (error) throw error;
+    window.toast?.('✅ จัดส่งสำเร็จ', 'ok') || alert('✅ จัดส่งสำเร็จ');
+    await window.loadSellerOrdersV2?.();
+    await window.loadDashStatsV2?.();
+  }catch(e){
+    alert('❌ ' + e.message);
+  }
+};
+
+window.openOrderDetail = function(orderId){
+  window.open('order-detail.html?id=' + orderId, '_blank');
+};
+
+// ════════════════════════════════════════════════════════════
+// FINANCE — ใช้ RPC seller_finance_summary
+// ════════════════════════════════════════════════════════════
+window.loadFinanceV2 = async function(){
+  try{
+    const { data: summary, error } = await sb().rpc('seller_finance_summary');
+    if (error) throw error;
+    if (!summary || summary.error) return;
+
+    const b = summary.balance || {};
+    const set = (sel, val) => { const el = document.querySelector(sel); if (el) el.textContent = val; };
+
+    // Cards ใน finance page
+    set('#fin-available', fmtBaht(b.available));
+    set('#fin-escrow', fmtBaht(b.escrow));
+    set('#fin-pending', fmtBaht(b.pending_payout));
+    set('#fin-total-earned', fmtBaht(b.total_earned));
+    set('#fin-total-paid', fmtBaht(b.total_paid));
+    set('#fin-this-month', fmtBaht(summary.this_month_revenue));
+    set('#fin-last-month', fmtBaht(summary.last_month_revenue));
+    set('#fin-mom', (summary.mom_change_pct > 0 ? '▲ ' : '▼ ') + Math.abs(summary.mom_change_pct||0) + '%');
+    set('#fin-pending-orders', fmtBaht(summary.pending_orders_value));
+
+    // โหลด payouts
+    const sid = await getSid();
+    if (sid){
+      const { data: payouts } = await sb().from('seller_payouts')
+        .select('*').eq('seller_id', sid).order('created_at',{ascending:false}).limit(20);
+      const tb = document.getElementById('fin-payouts-tbody');
+      if (tb){
+        if (!payouts || !payouts.length){
+          tb.innerHTML = '<tr><td colspan="6" style="padding:30px;text-align:center;color:#888">ยังไม่มีประวัติการโอน</td></tr>';
+        } else {
+          tb.innerHTML = payouts.map(p => `<tr>
+            <td style="font-family:'DM Mono',monospace;font-size:11px">${esc(p.payout_code||'-')}</td>
+            <td>${fmtBaht(p.amount)}</td>
+            <td>${fmtBaht(p.fee||0)}</td>
+            <td style="font-weight:600">${fmtBaht(p.net_amount)}</td>
+            <td><span style="padding:2px 8px;border-radius:8px;font-size:10px;background:${p.status==='completed'?'#D1FAE5':p.status==='failed'?'#FEE2E2':'#FEF3C7'};color:${p.status==='completed'?'#065F46':p.status==='failed'?'#991B1B':'#92400E'}">${p.status}</span></td>
+            <td style="font-size:11px;color:#888">${p.paid_at ? new Date(p.paid_at).toLocaleDateString('th-TH') : timeAgo(p.created_at)}</td>
+          </tr>`).join('');
+        }
+      }
+    }
+  }catch(e){
+    console.warn('loadFinanceV2:', e.message);
+  }
+};
+
+// ════════════════════════════════════════════════════════════
+// BANK ACCOUNTS
+// ════════════════════════════════════════════════════════════
+window.loadBankAccounts = async function(){
+  const sid = await getSid();
+  if (!sid) return;
+  try{
+    const { data, error } = await sb().from('seller_bank_accounts')
+      .select('*').eq('seller_id', sid).order('is_default', {ascending:false});
+    if (error) throw error;
+    const wrap = document.getElementById('bank-list');
+    if (!wrap) return;
+    if (!data || !data.length){
+      wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#888">ยังไม่มีบัญชีธนาคาร — กด <strong>+ เพิ่มบัญชี</strong> เพื่อเริ่มต้น</div>';
+      return;
+    }
+    wrap.innerHTML = data.map(b => `<div style="padding:14px;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:14px;font-weight:600">${esc(b.bank_name||b.bank_code)} ${b.is_default?'<span style="font-size:10px;padding:2px 6px;background:#10B981;color:#fff;border-radius:3px;margin-left:6px">DEFAULT</span>':''}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:13px;color:#525252;margin-top:4px">${esc(b.account_number)}</div>
+        <div style="font-size:12px;color:#737373">${esc(b.account_name)}</div>
+        ${b.is_verified ? '<div style="font-size:11px;color:#10B981;margin-top:4px">✅ ยืนยันแล้ว</div>' : '<div style="font-size:11px;color:#F59E0B;margin-top:4px">⏳ รอยืนยัน</div>'}
+      </div>
+      <div style="display:flex;gap:6px">
+        ${!b.is_default ? `<button onclick="setDefaultBank('${b.id}')" class="btn btn-xs" style="padding:6px 10px;border:1px solid #E5E5E5;background:#fff;cursor:pointer;font-size:11px;border-radius:3px">ตั้ง default</button>` : ''}
+        <button onclick="deleteBank('${b.id}')" class="btn btn-xs" style="padding:6px 10px;border:1px solid #EF4444;color:#EF4444;background:#fff;cursor:pointer;font-size:11px;border-radius:3px">ลบ</button>
+      </div>
+    </div>`).join('');
+  }catch(e){
+    console.warn('loadBankAccounts:', e.message);
+  }
+};
+
+window.addBankAccount = async function(){
+  const bank_code = prompt('Bank code (KBANK/SCB/BBL/BAY/KTB/TTB/GSB):');
+  if (!bank_code) return;
+  const bank_name = prompt('Bank name (เช่น "กสิกรไทย"):');
+  const account_number = prompt('เลขบัญชี:');
+  if (!account_number) return;
+  const account_name = prompt('ชื่อบัญชี:');
+  if (!account_name) return;
+  const sid = await getSid();
+  if (!sid) return alert('ไม่พบ seller');
+  try{
+    const { error } = await sb().from('seller_bank_accounts').insert({
+      seller_id: sid, bank_code: bank_code.trim().toUpperCase(),
+      bank_name: bank_name?.trim(), account_number: account_number.trim(),
+      account_name: account_name.trim()
+    });
+    if (error) throw error;
+    window.toast?.('✅ เพิ่มบัญชีแล้ว','ok') || alert('✅ เพิ่มบัญชีแล้ว');
+    window.loadBankAccounts();
+  }catch(e){ alert('❌ '+e.message); }
+};
+
+window.setDefaultBank = async function(id){
+  const sid = await getSid();
+  await sb().from('seller_bank_accounts').update({is_default:false}).eq('seller_id', sid);
+  const { error } = await sb().from('seller_bank_accounts').update({is_default:true}).eq('id', id);
+  if (error) return alert(error.message);
+  window.loadBankAccounts();
+};
+
+window.deleteBank = async function(id){
+  if (!confirm('ลบบัญชีนี้?')) return;
+  const { error } = await sb().from('seller_bank_accounts').delete().eq('id', id);
+  if (error) return alert(error.message);
+  window.loadBankAccounts();
+};
+
+// ════════════════════════════════════════════════════════════
+// COUPONS
+// ════════════════════════════════════════════════════════════
+window.loadSellerCoupons = async function(){
+  const sid = await getSid();
+  if (!sid) return;
+  try{
+    const { data, error } = await sb().from('seller_coupons')
+      .select('*').eq('seller_id', sid).order('created_at',{ascending:false});
+    if (error) throw error;
+    const wrap = document.getElementById('coupons-list');
+    if (!wrap) return;
+    if (!data || !data.length){
+      wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#888">ยังไม่มีโค้ดส่วนลด — กด <strong>+ สร้างโค้ด</strong></div>';
+      return;
+    }
+    wrap.innerHTML = data.map(c => {
+      const expired = c.expires_at && new Date(c.expires_at) < new Date();
+      const active = c.is_active && !expired;
+      return `<div style="padding:14px;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:8px;${expired?'opacity:.5':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#E63329">${esc(c.code)}</div>
+            <div style="font-size:12px;color:#525252;margin-top:4px">${esc(c.name||'')}</div>
+            <div style="font-size:11px;color:#888;margin-top:2px">
+              ${c.discount_type==='percent' ? `ลด ${c.discount_value}%` : `ลด ${fmtBaht(c.discount_value)}`}
+              ${c.min_purchase ? ` · ขั้นต่ำ ${fmtBaht(c.min_purchase)}` : ''}
+            </div>
+            <div style="font-size:10px;color:#888;margin-top:6px">ใช้ไปแล้ว: ${c.used_count||0}${c.usage_limit?' / '+c.usage_limit:''}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            <span style="padding:2px 8px;border-radius:8px;font-size:10px;background:${active?'#D1FAE5':'#FEE2E2'};color:${active?'#065F46':'#991B1B'}">${active?'Active':expired?'หมดอายุ':'ปิด'}</span>
+            <button onclick="toggleCoupon('${c.id}', ${!c.is_active})" class="btn btn-xs" style="padding:4px 10px;border:1px solid #E5E5E5;background:#fff;cursor:pointer;font-size:10px;border-radius:3px">${c.is_active?'ปิด':'เปิด'}</button>
+            <button onclick="deleteCoupon('${c.id}')" class="btn btn-xs" style="padding:4px 10px;border:1px solid #EF4444;color:#EF4444;background:#fff;cursor:pointer;font-size:10px;border-radius:3px">ลบ</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){ console.warn('loadSellerCoupons:', e.message); }
+};
+
+window.createCoupon = async function(){
+  const code = prompt('Code (เช่น SALE10):');
+  if (!code) return;
+  const name = prompt('ชื่อโปร:');
+  const type = prompt('ประเภท (fixed/percent):', 'fixed');
+  const value = parseFloat(prompt('มูลค่าส่วนลด:', '50'));
+  if (!value) return;
+  const min = parseFloat(prompt('ยอดซื้อขั้นต่ำ (0 = ไม่มี):', '0')) || 0;
+  const sid = await getSid();
+  try{
+    const { error } = await sb().from('seller_coupons').insert({
+      seller_id: sid, code: code.trim().toUpperCase(), name: name?.trim(),
+      discount_type: type, discount_value: value, min_purchase: min
+    });
+    if (error) throw error;
+    alert('✅ สร้างโค้ดแล้ว');
+    window.loadSellerCoupons();
+  }catch(e){ alert('❌ '+e.message); }
+};
+
+window.toggleCoupon = async function(id, active){
+  await sb().from('seller_coupons').update({is_active: active}).eq('id', id);
+  window.loadSellerCoupons();
+};
+
+window.deleteCoupon = async function(id){
+  if (!confirm('ลบโค้ด?')) return;
+  await sb().from('seller_coupons').delete().eq('id', id);
+  window.loadSellerCoupons();
+};
+
+// ════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ════════════════════════════════════════════════════════════
+window.loadSellerNotifications = async function(){
+  const sid = await getSid();
+  if (!sid) return;
+  try{
+    const { data, error } = await sb().from('seller_notifications')
+      .select('*').eq('seller_id', sid).order('created_at',{ascending:false}).limit(50);
+    if (error) throw error;
+    const wrap = document.getElementById('notif-list');
+    if (!wrap) return;
+    if (!data || !data.length){
+      wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#888">ไม่มีการแจ้งเตือน</div>';
+      return;
+    }
+    wrap.innerHTML = data.map(n => `<div style="padding:12px;border-bottom:1px solid #F0F0F0;${!n.is_read?'background:#FFFBEA':''};cursor:pointer" onclick="markNotifRead('${n.id}'); ${n.link?`location.href='${n.link}'`:''}">
+      <div style="display:flex;justify-content:space-between">
+        <div style="font-weight:${n.is_read?500:600};font-size:13px">${esc(n.title)}</div>
+        <div style="font-size:11px;color:#888">${timeAgo(n.created_at)}</div>
+      </div>
+      ${n.body ? `<div style="font-size:12px;color:#525252;margin-top:4px">${esc(n.body)}</div>` : ''}
+    </div>`).join('');
+  }catch(e){ console.warn('loadSellerNotifications:', e.message); }
+};
+
+window.markNotifRead = async function(id){
+  await sb().from('seller_notifications').update({is_read: true}).eq('id', id);
+};
+
+// ════════════════════════════════════════════════════════════
+// AUTO-LOAD เมื่อเปลี่ยน page
+// ════════════════════════════════════════════════════════════
+const _origGoto = window.goto;
+window.goto = function(page, el){
+  if (typeof _origGoto === 'function') _origGoto(page, el);
+  setTimeout(() => {
+    if (page === 'dashboard')   window.loadDashStatsV2?.();
+    if (page === 'orders')       window.loadSellerOrdersV2?.();
+    if (page === 'ship-pending') window.loadSellerOrdersV2?.('paid');
+    if (page === 'finance')      window.loadFinanceV2?.();
+    if (page === 'bank')         window.loadBankAccounts?.();
+    if (page === 'promotions')   window.loadSellerCoupons?.();
+    if (page === 'notifications')window.loadSellerNotifications?.();
+  }, 100);
+};
+
+// Load dashboard อันแรกตอนเข้า
+setTimeout(() => {
+  window.loadDashStatsV2?.();
+}, 500);
+
+})();
+
+</script>
+</body></html>`);
   w.document.close();
 }
 
