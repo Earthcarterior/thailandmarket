@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>หมวดหมู่สินค้า — Thailand Market</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--accent:#E63329;--g100:#F5F5F5;--g200:#E5E5E5;--g500:#737373;--g700:#404040}
+body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;color:#0A0A0A;font-size:13px}
+.nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--g200);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;z-index:100}
+.back{padding:6px 12px;background:#fff;border:1px solid var(--g200);border-radius:4px;text-decoration:none;color:var(--g700);font-size:12px}
+.logo{font-family:'Inter';font-weight:800;font-size:16px;text-decoration:none;color:#0A0A0A}.logo .dot{color:var(--accent)}
+.main{padding:24px;max-width:1280px;margin:0 auto}
+h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.sub{font-size:13px;color:var(--g500);margin-bottom:20px}
+.card{background:#fff;border:1px solid var(--g200);border-radius:6px;overflow:hidden}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--g200);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{padding:6px 12px;background:#fff;border:1px solid var(--g200);border-radius:99px;cursor:pointer;font-size:11px;color:var(--g700);font-family:inherit}
+.tab.on{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--g200);border-radius:6px;padding:14px}
+.stat-lbl{font-size:10px;color:#A3A3A3;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-weight:600}
+.stat-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--g100);padding:10px 12px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;color:var(--g700)}
+td{padding:10px 12px;border-bottom:1px solid #F0F0F0}
+.btn{padding:6px 12px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid var(--g200);background:#fff;color:var(--g700);font-family:inherit}
+.btn-ok{border-color:#10B981;color:#10B981}
+.btn-danger{border-color:#EF4444;color:#EF4444}
+.btn-primary{background:#E63329;color:#fff;border-color:#E63329}
+.btn-dark{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+.empty{padding:60px;text-align:center;color:#A3A3A3}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;padding:12px 24px;border-radius:6px;z-index:9999;font-size:13px;display:none}
+.toast.on{display:block}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.modal-body{background:#fff;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;border-radius:8px;padding:24px}
+.modal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:#A3A3A3}
+.fg{margin-bottom:12px}
+.lbl{font-size:10px;color:var(--g700);margin-bottom:5px;font-weight:600;text-transform:uppercase;display:block}
+.inp,.sel,.txt{width:100%;padding:9px 12px;border:1px solid var(--g200);border-radius:4px;font-size:13px;background:#fff;font-family:inherit}
+.txt{min-height:80px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500}
+</style></head>
+<body>
+<nav class="nav">
+<a href="admin-cms.html" class="back">← กลับ Admin</a>
+<a href="index.html" class="logo">Thailand<span class="dot">.</span>Market</a>
+<a href="profile.html" class="back">โปรไฟล์</a>
+</nav>
+<main class="main">
+<h1>📁 หมวดหมู่สินค้า</h1>
+<div class="sub">จัดการหมวดหมู่หลัก/หมวดย่อย</div>
+<div class="card"><div class="card-head"><div style="font-size:13px;font-weight:600">📋 รายการหมวด</div><button class="btn btn-primary" onclick="newCat()">➕ เพิ่ม</button></div><div id="list"><div class="empty">⏳</div></div></div>
+<div class="modal" id="modal"><div class="modal-body"><div class="modal-h"><h3 id="mt">➕ เพิ่ม</h3><button class="modal-close" onclick="document.getElementById('modal').classList.remove('on')">×</button></div>
+<input type="hidden" id="mid"><div class="row2"><div class="fg"><label class="lbl">ชื่อภาษาไทย*</label><input class="inp" id="m_name_th"></div><div class="fg"><label class="lbl">ชื่อภาษาอังกฤษ</label><input class="inp" id="m_name_en"></div></div>
+<div class="row2"><div class="fg"><label class="lbl">Slug</label><input class="inp" id="m_slug"></div><div class="fg"><label class="lbl">Icon</label><input class="inp" id="m_icon" placeholder="📱"></div></div>
+<div class="fg"><label class="lbl">Parent</label><select class="sel" id="m_parent"><option value="">— หมวดหลัก —</option></select></div>
+<div class="fg"><label class="lbl">ลำดับ</label><input class="inp" type="number" id="m_sort" value="0"></div>
+<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid #F0F0F0"><button class="btn" onclick="document.getElementById('modal').classList.remove('on')">ยกเลิก</button><button class="btn btn-dark" onclick="saveCat()">💾 บันทึก</button></div></div></div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const _sb = window.supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'PLACEHOLDER_ANON_KEY');
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"\']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmt(n){return'฿'+Number(n||0).toLocaleString('th-TH');}
+function toast(m,k){const t=document.getElementById('toast');t.textContent=m;t.style.background=k==='ok'?'#10B981':k==='err'?'#E63329':'#0A0A0A';t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3500);}
+function time(d){if(!d)return'';const n=(Date.now()-new Date(d).getTime())/1000;if(n<3600)return Math.floor(n/60)+'น.';if(n<86400)return Math.floor(n/3600)+'ชม.';return new Date(d).toLocaleDateString('th-TH');}
+function statBadge(s){const M={pending:['#FEF3C7','#92400E','⏳'],active:['#D1FAE5','#065F46','✓'],approved:['#D1FAE5','#065F46','✓'],rejected:['#FEE2E2','#991B1B','✕'],completed:['#D1FAE5','#065F46','✅']};const x=M[s]||['#E5E5E5','#525252',s||'—'];return`<span class="badge" style="background:${x[0]};color:${x[1]}">${x[2]}</span>`;}
+async function checkAdmin(){const{data:{user}}=await _sb.auth.getUser();if(!user){location.href='login.html?next='+encodeURIComponent(location.pathname);return null;}const{data:u}=await _sb.from('users').select('*').eq('email',user.email).maybeSingle();if(!u||!['admin','super_admin'].includes(u.role)){toast('❌ ต้องเป็น Admin','err');setTimeout(()=>location.href='index.html',1500);return null;}return u;}
+let _cats=[],_editId=null;
+async function load(){const wrap=document.getElementById('list');try{const{data}=await _sb.from('categories').select('*').order('sort_order').order('name_th');_cats=data||[];
+if(!_cats.length){wrap.innerHTML='<div class="empty">ยังไม่มี — กด +เพิ่ม</div>';return;}
+const parents=_cats.filter(c=>!c.parent_id);const childMap={};_cats.filter(c=>c.parent_id).forEach(c=>{if(!childMap[c.parent_id])childMap[c.parent_id]=[];childMap[c.parent_id].push(c);});
+let html='<table><thead><tr><th>หมวด</th><th>Slug</th><th>หมวดย่อย</th><th></th></tr></thead><tbody>';
+parents.forEach(p=>{const kids=childMap[p.id]||[];
+html+=`<tr><td><div style="font-weight:600">${esc(p.icon||'')} ${esc(p.name_th)}</div><div style="font-size:10px;color:#888">${esc(p.name_en||'')}</div></td><td style="font-family:monospace">${esc(p.slug||'-')}</td><td>${kids.length}</td><td style="text-align:right"><button class="btn" onclick="editCat('${p.id}')">แก้</button> <button class="btn btn-danger" onclick="delCat('${p.id}')">ลบ</button></td></tr>`;
+kids.forEach(k=>{html+=`<tr style="background:#FAFAFA"><td style="padding-left:36px">↳ ${esc(k.icon||'')} ${esc(k.name_th)}</td><td style="font-family:monospace">${esc(k.slug||'-')}</td><td></td><td style="text-align:right"><button class="btn" onclick="editCat('${k.id}')">แก้</button> <button class="btn btn-danger" onclick="delCat('${k.id}')">ลบ</button></td></tr>`;});});
+wrap.innerHTML=html+'</tbody></table>';}catch(e){wrap.innerHTML='<div class="empty" style="color:#E63329">❌ '+esc(e.message)+'</div>';}}
+function newCat(){_editId=null;document.getElementById('mt').textContent='➕ เพิ่ม';['m_name_th','m_name_en','m_slug','m_icon'].forEach(i=>document.getElementById(i).value='');document.getElementById('m_sort').value='0';renderParents();document.getElementById('modal').classList.add('on');}
+function editCat(id){const c=_cats.find(x=>x.id===id);if(!c)return;_editId=id;document.getElementById('mt').textContent='✏️ แก้ไข';document.getElementById('m_name_th').value=c.name_th||'';document.getElementById('m_name_en').value=c.name_en||'';document.getElementById('m_slug').value=c.slug||'';document.getElementById('m_icon').value=c.icon||'';document.getElementById('m_sort').value=c.sort_order||0;renderParents(id);document.getElementById('m_parent').value=c.parent_id||'';document.getElementById('modal').classList.add('on');}
+function renderParents(ex){const sel=document.getElementById('m_parent');sel.innerHTML='<option value="">— หมวดหลัก —</option>';_cats.filter(c=>!c.parent_id&&c.id!==ex).forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=(c.icon||'')+' '+c.name_th;sel.appendChild(o);});}
+async function saveCat(){const p={name_th:document.getElementById('m_name_th').value.trim(),name_en:document.getElementById('m_name_en').value.trim()||null,slug:document.getElementById('m_slug').value.trim()||null,icon:document.getElementById('m_icon').value.trim()||null,parent_id:document.getElementById('m_parent').value||null,sort_order:parseInt(document.getElementById('m_sort').value)||0};
+if(!p.name_th){toast('⚠️ กรอกชื่อ','err');return;}
+try{const r=_editId?await _sb.from('categories').update(p).eq('id',_editId):await _sb.from('categories').insert(p);if(r.error)throw r.error;toast('✅ บันทึก','ok');document.getElementById('modal').classList.remove('on');load();}catch(e){toast('❌ '+e.message,'err');}}
+async function delCat(id){if(!confirm('ลบ?'))return;await _sb.from('categories').delete().eq('id',id);toast('🗑️','ok');load();}
+(async()=>{if(await checkAdmin())load();})();
+</script>
+</body></html>

@@ -1,581 +1,145 @@
 <!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0A0A0A">
-<title>Thailand Market — Admin: อนุมัติสินค้า</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>อนุมัติสินค้า — Thailand Market</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-:root{--black:#0A0A0A;--white:#fff;--red:#E63329;--g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g400:#A3A3A3;--g500:#737373;--g600:#525252;--g800:#262626;--green:#16A34A;--amber:#D97706;--font:"DM Sans",system-ui,sans-serif;--mono:"DM Mono",monospace;--border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;--sidebar:220px}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;-webkit-font-smoothing:antialiased}
-a{text-decoration:none;color:inherit}button{font-family:var(--font);cursor:pointer}
-.app{display:flex;min-height:100vh}
-.sb{width:var(--sidebar);background:var(--black);flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;overflow-y:auto;z-index:100}
-.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:9px}
-.sb-mark{width:32px;height:32px;background:var(--g800);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;color:var(--white);font-size:13px;flex-shrink:0}
-.sb-name{font-family:var(--mono);font-weight:500;color:var(--white);font-size:13px;letter-spacing:.04em}
-.sb-sub{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.5px;text-transform:uppercase}
-.sb-nav{padding:8px 0;flex:1}
-.sb-lbl{font-size:9px;color:rgba(255,255,255,.28);letter-spacing:1.2px;text-transform:uppercase;padding:6px 16px 4px}
-.sni{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;color:rgba(255,255,255,.5);font-size:12.5px;transition:all .15s;border-left:3px solid transparent;text-decoration:none}
-.sni:hover{background:rgba(255,255,255,.05);color:var(--white)}.sni.on{background:rgba(230,51,41,.12);color:var(--white);border-left-color:var(--red)}
-.sni-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0}
-.sni-badge{margin-left:auto;background:var(--red);color:var(--white);font-size:9px;padding:1px 6px;border-radius:10px}
-.sb-foot{padding:12px 16px;border-top:1px solid rgba(255,255,255,.07)}
-.sb-fl{display:flex;align-items:center;gap:7px;padding:5px 0;color:rgba(255,255,255,.35);font-size:11.5px;transition:color .15s;text-decoration:none;background:none;border:none;font-family:var(--font);width:100%;cursor:pointer}
-.sb-fl:hover{color:rgba(255,255,255,.7)}
-.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{background:var(--white);border-bottom:var(--border);height:52px;display:flex;align-items:center;padding:0 20px;position:sticky;top:0;z-index:90}
-.tb-title{font-family:var(--mono);font-weight:600;font-size:14px;letter-spacing:.03em}
-.tb-right{display:flex;gap:8px;align-items:center;margin-left:auto}
-.content{padding:20px;flex:1}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.btn-k{background:var(--black);color:var(--white)}.btn-k:hover{background:var(--g800)}
-.btn-g{background:var(--green);color:var(--white)}.btn-g:hover{opacity:.9}
-.btn-r{background:var(--red);color:var(--white)}.btn-r:hover{opacity:.9}
-.btn-o{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-o:hover{background:var(--black);color:var(--white)}
-.btn-sm{padding:7px 14px;font-size:11px}.btn-xs{padding:5px 10px;font-size:10px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.sc{background:var(--white);border:var(--border);padding:18px;position:relative;overflow:hidden}
-.sc-bar{position:absolute;top:0;left:0;right:0;height:2px}
-.sc-lbl{font-family:var(--mono);font-size:10px;color:var(--g500);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
-.sc-val{font-family:var(--mono);font-size:24px;font-weight:500}
-.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-.ftab{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;border:var(--border);background:var(--white);font-family:var(--font);color:var(--g500);transition:all .15s}
-.ftab:hover{border-color:var(--black);color:var(--black)}.ftab.on{background:var(--black);color:var(--white);border-color:var(--black)}
-.tbl-wrap{border:var(--border);overflow:hidden;overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-thead th{padding:10px 14px;text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g500);border-bottom:var(--border);background:var(--g50)}
-tbody td{padding:12px 14px;border-bottom:var(--border);font-size:13px;vertical-align:middle}
-tbody tr:hover td{background:var(--g50)}
-tbody tr:last-child td{border-bottom:none}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:var(--border);font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
-.badge-ok{background:var(--black);color:var(--white);border-color:var(--black)}
-.badge-warn{border-color:var(--amber);color:var(--amber)}
-.badge-r{border-color:var(--red);color:var(--red)}
-.badge-g{border-color:var(--green);color:var(--green)}
-.prod-thumb{width:52px;height:52px;background:var(--g50);border:var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden}
-.prod-thumb img{width:100%;height:100%;object-fit:cover}
-/* Detail Modal */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 20px;backdrop-filter:blur(2px)}
-.modal-bg.on{display:flex}
-.modal{background:var(--white);border:var(--border-dark);width:760px;max-width:100%;margin:auto}
-.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:var(--border);position:sticky;top:0;background:var(--white);z-index:1}
-.modal-ttl{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
-.modal-x{background:none;border:none;font-size:18px;cursor:pointer;color:var(--g400)}.modal-x:hover{color:var(--black)}
-.modal-body{padding:24px;display:grid;grid-template-columns:280px 1fr;gap:24px}
-.modal-foot{padding:16px 22px;border-top:var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;bottom:0;background:var(--white)}
-.img-gallery{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.img-thumb{width:64px;height:64px;border:var(--border);overflow:hidden;cursor:pointer}
-.img-thumb img{width:100%;height:100%;object-fit:cover}
-.img-main{width:100%;aspect-ratio:1;border:var(--border);overflow:hidden;margin-bottom:8px}
-.img-main img{width:100%;height:100%;object-fit:contain}
-.detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:var(--border);font-size:13px}
-.detail-row:last-child{border-bottom:none}
-.detail-lbl{color:var(--g500);font-size:12px}
-.detail-val{font-weight:500;text-align:right;max-width:60%}
-.reject-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9100;display:none;align-items:center;justify-content:center}
-.reject-modal.on{display:flex}
-.reject-box{background:var(--white);border:var(--border-dark);width:460px;max-width:90vw}
-.lbl{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--g600);display:block;margin-bottom:6px}
-.ta{width:100%;padding:10px 12px;border:var(--border);font-size:14px;font-family:var(--font);outline:none;resize:vertical;min-height:80px}.ta:focus{border-color:var(--black)}
-/* Auth gate */
-.auth-gate{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--g50)}
-.auth-box{width:400px;max-width:90vw;background:var(--white);border:var(--border-dark);padding:40px}
-.inp{width:100%;padding:10px 12px;border:var(--border);font-size:14px;font-family:var(--font);outline:none;transition:border-color .15s}
-.inp:focus{border-color:var(--black)}.inp::placeholder{color:var(--g400)}
-.pagination{display:flex;justify-content:space-between;align-items:center;padding:12px 0;font-family:var(--mono);font-size:11px;color:var(--g500)}
-.page-btn{width:28px;height:28px;border:var(--border);background:var(--white);cursor:pointer;font-size:12px;font-family:var(--mono);display:flex;align-items:center;justify-content:center;transition:all .15s}
-.page-btn:hover{border-color:var(--black)}.page-btn.on{background:var(--black);color:var(--white);border-color:var(--black)}
-.tw{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
-.toast{background:var(--black);color:var(--white);padding:11px 18px;font-size:12.5px;border-left:3px solid var(--red);animation:tIn .2s ease}
-.toast.ok{border-left-color:var(--green)}.toast.warn{border-left-color:var(--amber)}
-@keyframes tIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
-@media(max-width:768px){.app{flex-direction:column}.sb{width:100%;position:relative;height:auto}.main{margin-left:0}.stats{grid-template-columns:1fr 1fr}.modal-body{grid-template-columns:1fr}}
-</style>
-</head>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--accent:#E63329;--g100:#F5F5F5;--g200:#E5E5E5;--g500:#737373;--g700:#404040}
+body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;color:#0A0A0A;font-size:13px;min-height:100vh}
+.nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--g200);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;z-index:100}
+.back{padding:6px 12px;background:#fff;border:1px solid var(--g200);border-radius:4px;text-decoration:none;color:var(--g700);font-size:12px}
+.logo{font-family:'Inter';font-weight:800;font-size:16px;text-decoration:none;color:#0A0A0A}.logo .dot{color:var(--accent)}
+.main{padding:24px;max-width:1280px;margin:0 auto}
+h1{font-size:22px;font-weight:700;margin-bottom:6px}
+.sub{font-size:13px;color:var(--g500);margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--g200);border-radius:6px;padding:14px}
+.stat-lbl{font-size:10px;color:#A3A3A3;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-weight:600}
+.stat-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:700}
+.card{background:#fff;border:1px solid var(--g200);border-radius:6px;overflow:hidden}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--g200);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{padding:6px 12px;background:#fff;border:1px solid var(--g200);border-radius:99px;cursor:pointer;font-size:11px;color:var(--g700);font-family:inherit}
+.tab.on{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--g100);padding:10px 12px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;color:var(--g700);border-bottom:1px solid var(--g200)}
+td{padding:10px 12px;border-bottom:1px solid #F0F0F0}
+.btn{padding:6px 12px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid var(--g200);background:#fff;color:var(--g700);font-family:inherit}
+.btn-ok{border-color:#10B981;color:#10B981}
+.btn-danger{border-color:#EF4444;color:#EF4444}
+.empty{padding:60px;text-align:center;color:#A3A3A3}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;padding:12px 24px;border-radius:6px;z-index:9999;font-size:13px;display:none}
+.toast.on{display:block}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500}
+</style></head>
 <body>
+<nav class="nav">
+<a href="admin-cms.html" class="back">← กลับ Admin</a>
+<a href="index.html" class="logo">Thailand<span class="dot">.</span>Market</a>
+<a href="profile.html" class="back">โปรไฟล์</a>
+</nav>
+<main class="main">
+<h1>📦 อนุมัติสินค้า</h1>
+<div class="sub">ตรวจสอบและอนุมัติสินค้าใหม่จาก Seller</div>
 
-<!-- AUTH GATE -->
-<div id="gate" class="auth-gate" style="display:none">
-<div class="auth-box">
-  <div style="font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:32px">Thailand<span style="color:var(--red)">.</span>Market <span style="color:var(--g400);font-size:11px">/ Admin</span></div>
-  <h2 style="font-size:22px;font-weight:300;margin-bottom:6px">Admin <strong>Login</strong></h2>
-  <p style="font-size:13px;color:var(--g500);margin-bottom:24px">เข้าสู่ระบบด้วยบัญชี Admin เท่านั้น</p>
-  <div style="margin-bottom:14px"><label class="lbl">Email</label><input class="inp" type="email" id="le" placeholder="admin@email.com"></div>
-  <div style="margin-bottom:20px"><label class="lbl">Password</label><input class="inp" type="password" id="lp" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-  <button class="btn btn-k" style="width:100%;justify-content:center;padding:13px" onclick="doLogin()">เข้าสู่ระบบ</button>
-</div>
-</div>
-
-<!-- MAIN APP -->
-<div id="app" class="app" style="display:none">
-<aside class="sb">
-  <div class="sb-logo"><div class="sb-mark">A</div><div><div class="sb-name">Thailand<span style="color:var(--red)">.</span>Market</div><div class="sb-sub">Admin Panel</div></div></div>
-  <nav class="sb-nav">
-    <div class="sb-lbl">Administration</div>
-    <a href="admin-dashboard.html" class="sni"><span class="sni-ico">📊</span>Overview</a>
-    <a href="admin-users.html" class="sni"><span class="sni-ico">👤</span>ผู้ใช้</a>
-    <a href="admin-sellers.html" class="sni"><span class="sni-ico">🏪</span>ร้านค้า</a>
-    <a href="admin-orders.html" class="sni"><span class="sni-ico">🛒</span>ออเดอร์</a>
-    <a href="admin-products.html" class="sni on"><span class="sni-ico">📦</span>อนุมัติสินค้า<span class="sni-badge" id="sb-pending">?</span></a>
-    <a href="admin-coupons.html" class="sni"><span class="sni-ico">🎫</span>คูปอง</a>
-    <a href="admin-payouts.html" class="sni"><span class="sni-ico">💰</span>Payout</a>
-    <a href="flash-sale-admin.html" class="sni"><span class="sni-ico">⚡</span>Flash Sale</a>
-    <a href="analytics-report.html" class="sni"><span class="sni-ico">📈</span>รายงาน</a>
-    <a href="campaign-calendar.html" class="sni"><span class="sni-ico">📅</span>Campaign</a>
-  </nav>
-  <div class="sb-foot">
-    <a href="index.html" class="sb-fl">🏠 หน้าหลัก</a>
-    <button class="sb-fl" onclick="doLogout()">🚪 ออกจากระบบ</button>
-  </div>
-</aside>
-
-<div class="main">
-  <div class="topbar">
-    <div class="tb-title">📦 อนุมัติสินค้า</div>
-    <div class="tb-right">
-      <button class="btn btn-o btn-sm" onclick="loadProds()">🔄 รีเฟรช</button>
-      <div id="admin-av" style="width:32px;height:32px;background:var(--g800);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono)">A</div>
-    </div>
-  </div>
-  <div class="content">
-    <div class="stats">
-      <div class="sc"><div class="sc-bar" style="background:var(--amber)"></div><div class="sc-lbl">รออนุมัติ</div><div class="sc-val" id="st-pend" style="color:var(--amber)">—</div><div style="font-family:var(--mono);font-size:10px;margin-top:4px;color:var(--g500)">ควรดำเนินการใน 4 ชม.</div></div>
-      <div class="sc"><div class="sc-bar" style="background:var(--green)"></div><div class="sc-lbl">อนุมัติแล้ววันนี้</div><div class="sc-val" id="st-approved" style="color:var(--green)">—</div></div>
-      <div class="sc"><div class="sc-bar" style="background:var(--red)"></div><div class="sc-lbl">ปฏิเสธแล้ว</div><div class="sc-val" id="st-rej" style="color:var(--red)">—</div></div>
-      <div class="sc"><div class="sc-bar" style="background:var(--black)"></div><div class="sc-lbl">สินค้า Active ทั้งหมด</div><div class="sc-val" id="st-total">—</div></div>
-    </div>
-
-    <!-- Alert banner when there are pending products -->
-    <div id="alert-banner" style="background:var(--black);color:var(--white);padding:12px 16px;margin-bottom:16px;display:none;align-items:center;gap:14px">
-      <span style="font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase">⚠️ มีสินค้ารออนุมัติ <span id="alert-count">0</span> รายการ — ดำเนินการก่อนครบ 24 ชั่วโมง</span>
-      <button class="btn btn-sm" style="background:var(--red);color:var(--white);margin-left:auto" onclick="fStatus(document.querySelector('.ftab-pend'),'pending_review')">ดูทั้งหมด →</button>
-    </div>
-
-    <div class="filter-bar">
-      <button class="ftab on" onclick="fStatus(this,'')">ทั้งหมด</button>
-      <button class="ftab ftab-pend" onclick="fStatus(this,'pending_review')">⏳ รออนุมัติ</button>
-      <button class="ftab" onclick="fStatus(this,'active')">✓ อนุมัติแล้ว</button>
-      <button class="ftab" onclick="fStatus(this,'rejected')">✕ ปฏิเสธ</button>
-      <button class="ftab" onclick="fStatus(this,'draft')">📝 Draft</button>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <input type="text" id="srch" style="padding:8px 12px;border:var(--border);font-size:13px;font-family:var(--font);outline:none;width:200px" placeholder="ค้นหาสินค้า / ร้านค้า...">
-        <button class="btn btn-o btn-sm" onclick="loadProds()">🔍</button>
-      </div>
-    </div>
-
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr><th><input type="checkbox" id="chkall" onchange="toggleAll(this)"></th><th>สินค้า</th><th>ร้านค้า</th><th>หมวด</th><th>ราคา</th><th>สต็อก</th><th>ส่งมาเมื่อ</th><th>สถานะ</th><th></th></tr></thead>
-        <tbody id="tbody"><tr><td colspan="9" style="text-align:center;padding:40px;color:var(--g400);font-family:var(--mono);font-size:12px">กำลังโหลด...</td></tr></tbody>
-      </table>
-    </div>
-    <div class="pagination" id="pg"></div>
-
-    <!-- Bulk actions -->
-    <div id="bulk-bar" style="display:none;background:var(--black);color:var(--white);padding:12px 16px;margin-top:12px;align-items:center;gap:12px">
-      <span style="font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase"><span id="bulk-count">0</span> รายการที่เลือก</span>
-      <button class="btn btn-g btn-sm" onclick="bulkApprove()">✓ อนุมัติทั้งหมด</button>
-      <button class="btn btn-r btn-sm" onclick="openBulkReject()">✕ ปฏิเสธทั้งหมด</button>
-    </div>
-  </div>
-</div>
+<div class="stats">
+<div class="stat"><div class="stat-lbl">รออนุมัติ</div><div class="stat-val" id="st-pending" style="color:#F59E0B">—</div></div>
+<div class="stat"><div class="stat-lbl">Active</div><div class="stat-val" id="st-active" style="color:#10B981">—</div></div>
+<div class="stat"><div class="stat-lbl">ปฏิเสธ</div><div class="stat-val" id="st-rejected" style="color:#EF4444">—</div></div>
+<div class="stat"><div class="stat-lbl">ทั้งหมด</div><div class="stat-val" id="st-total">—</div></div>
 </div>
 
-<!-- PRODUCT DETAIL MODAL -->
-<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
-<div class="modal">
-  <div class="modal-head">
-    <div class="modal-ttl" id="mttl">รายละเอียดสินค้า</div>
-    <button class="modal-x" onclick="closeModal()">✕</button>
-  </div>
-  <div class="modal-body">
-    <div>
-      <div class="img-main"><img id="m-main-img" src="" alt="" onerror="this.style.display='none'"></div>
-      <div class="img-gallery" id="m-gallery"></div>
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);margin-bottom:8px">ข้อมูลเพิ่มเติม</div>
-      <div id="m-details" style="font-size:13px"></div>
-    </div>
-    <div>
-      <h3 id="m-name" style="font-size:18px;font-weight:600;margin-bottom:4px"></h3>
-      <div id="m-name-en" style="font-family:var(--mono);font-size:11px;color:var(--g400);margin-bottom:12px"></div>
-      <div style="font-family:var(--mono);font-size:22px;font-weight:500;margin-bottom:4px" id="m-price"></div>
-      <div id="m-compare" style="font-family:var(--mono);font-size:12px;color:var(--g400);text-decoration:line-through;margin-bottom:12px"></div>
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);margin-bottom:8px">ร้านค้า</div>
-      <div id="m-seller" style="font-size:13px;margin-bottom:16px;padding:10px;background:var(--g50);border:var(--border)"></div>
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);margin-bottom:8px">คำอธิบายสินค้า</div>
-      <div id="m-desc" style="font-size:13px;color:var(--g600);line-height:1.7;margin-bottom:16px;max-height:120px;overflow-y:auto"></div>
-      <div id="m-status-area"></div>
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);margin-bottom:8px;margin-top:16px">Admin Note</div>
-      <textarea class="ta" id="m-note" placeholder="หมายเหตุถึงร้านค้า (optional)..." rows="2"></textarea>
-    </div>
-  </div>
-  <div class="modal-foot">
-    <button class="btn btn-o btn-sm" onclick="closeModal()">ปิด</button>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-sm" style="background:var(--red);color:var(--white)" id="m-reject-btn" onclick="openReject()">✕ ปฏิเสธ</button>
-      <button class="btn btn-g btn-sm" id="m-approve-btn" onclick="doApprove()">✓ อนุมัติสินค้า</button>
-    </div>
-  </div>
+<div class="card">
+<div class="card-head">
+<div style="font-size:13px;font-weight:600">📋 รายการสินค้า</div>
+<div class="tabs">
+<button class="tab on" onclick="fSt(this,'pending')">รออนุมัติ</button>
+<button class="tab" onclick="fSt(this,'active')">Active</button>
+<button class="tab" onclick="fSt(this,'rejected')">ปฏิเสธ</button>
+<button class="tab" onclick="fSt(this,null)">ทั้งหมด</button>
 </div>
 </div>
-
-<!-- REJECT REASON MODAL -->
-<div class="reject-modal" id="rmodal">
-<div class="reject-box">
-  <div style="padding:18px 20px;border-bottom:var(--border);font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase">✕ ระบุเหตุผลที่ปฏิเสธ</div>
-  <div style="padding:20px">
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="rr" value="ละเมิดนโยบายสินค้าต้องห้าม"> ละเมิดนโยบายสินค้าต้องห้าม</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="rr" value="รูปภาพไม่ครบหรือคุณภาพต่ำ"> รูปภาพไม่ครบหรือคุณภาพต่ำ</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="rr" value="ราคาไม่เหมาะสม"> ราคาไม่เหมาะสม</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="rr" value="คำโฆษณาเกินจริง / ข้อมูลเท็จ"> คำโฆษณาเกินจริง / ข้อมูลเท็จ</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="rr" value="สินค้าละเมิดทรัพย์สินทางปัญญา"> สินค้าละเมิดทรัพย์สินทางปัญญา</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="radio" name="rr" value="อื่นๆ"> อื่นๆ (ระบุด้านล่าง)</label>
-    </div>
-    <label class="lbl">เหตุผลเพิ่มเติม</label>
-    <textarea class="ta" id="rtext" placeholder="อธิบายเพิ่มเติมให้ร้านค้าทราบ..." rows="3"></textarea>
-  </div>
-  <div style="padding:14px 20px;border-top:var(--border);display:flex;justify-content:flex-end;gap:8px">
-    <button class="btn btn-o btn-sm" onclick="closeReject()">ยกเลิก</button>
-    <button class="btn btn-sm" style="background:var(--red);color:var(--white)" onclick="doReject()">ยืนยันการปฏิเสธ</button>
-  </div>
+<div id="list"><div class="empty">⏳ กำลังโหลด...</div></div>
 </div>
-</div>
-
-<div class="tw" id="tw"></div>
+</main>
+<div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════════
-// Supabase config (anon key, public)
-// ══════════════════════════════════════════════════════════════
-const SUPABASE_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU3MjAwMDAsImV4cCI6MjA1MTI5NjAwMH0.PLACEHOLDER';
-const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _sb = window.supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'PLACEHOLDER_ANON_KEY');
+let _st='pending';
 
-let _currentUser = null;
-let curPage = 1, curStatus = 'pending', viewId = null;
-const selectedIds = new Set();
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(m,k){const t=document.getElementById('toast');t.textContent=m;t.style.background=k==='ok'?'#10B981':k==='err'?'#E63329':'#0A0A0A';t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3500);}
+function time(d){if(!d)return'';const n=(Date.now()-new Date(d).getTime())/1000;if(n<3600)return Math.floor(n/60)+'น.';if(n<86400)return Math.floor(n/3600)+'ชม.';return new Date(d).toLocaleDateString('th-TH');}
 
-// ── Auth Gate ──
-async function checkAuth() {
-  try {
-    const { data: { user } } = await _sb.auth.getUser();
-    if (!user) {
-      document.getElementById('gate').style.display = 'flex';
-      document.getElementById('app').style.display = 'none';
-      return false;
-    }
-    // ตรวจว่าเป็น admin
-    const { data: { user: u } } = await _sb.auth.getUser();
-    const email = u?.email;
-    const { data: userRow } = await _sb.from('users').select('id, role').eq('email', email).maybeSingle();
-    if (!userRow || !['admin', 'super_admin'].includes(userRow.role)) {
-      alert('❌ ต้องเป็น Admin เท่านั้น');
-      await _sb.auth.signOut();
-      document.getElementById('gate').style.display = 'flex';
-      document.getElementById('app').style.display = 'none';
-      return false;
-    }
-    _currentUser = { id: userRow.id, email, role: userRow.role };
-    document.getElementById('gate').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    document.getElementById('admin-av').textContent = (email[0] || 'A').toUpperCase();
-    document.querySelectorAll('.ftab').forEach(b => b.classList.remove('on'));
-    document.querySelector('.ftab-pend')?.classList.add('on');
-    await loadStats();
-    await loadProds();
-    return true;
-  } catch (e) {
-    console.error('auth check:', e);
-    document.getElementById('gate').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-    return false;
-  }
+async function checkAdmin(){
+  const{data:{user}}=await _sb.auth.getUser();
+  if(!user){location.href='login.html?next='+encodeURIComponent('admin-products.html');return null;}
+  const{data:u}=await _sb.from('users').select('*').eq('email',user.email).maybeSingle();
+  if(!u||!['admin','super_admin'].includes(u.role)){toast('❌ ต้องเป็น Admin','err');setTimeout(()=>location.href='index.html',1500);return null;}
+  return u;
 }
 
-async function doLogin() {
-  const email = document.getElementById('le').value.trim();
-  const pwd = document.getElementById('lp').value;
-  if (!email || !pwd) return toast('กรุณากรอก email และ password');
-  try {
-    const { error } = await _sb.auth.signInWithPassword({ email, password: pwd });
-    if (error) throw error;
-    await checkAuth();
-  } catch (e) {
-    toast('เข้าสู่ระบบไม่สำเร็จ: ' + e.message);
-  }
-}
-
-async function doLogout() {
-  await _sb.auth.signOut();
-  location.reload();
-}
-
-function toast(msg) {
-  let t = document.getElementById('_toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = '_toast';
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;padding:12px 24px;border-radius:4px;z-index:9999;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.3)';
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 3000);
-}
-
-// ── Load Stats ──
-async function loadStats() {
-  try {
-    const [{ count: pending }, { count: active }, { count: rejected }, { count: today }] = await Promise.all([
-      _sb.from('products').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      _sb.from('products').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-      _sb.from('products').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
-      _sb.from('products').select('id', { count: 'exact', head: true }).eq('status', 'active').gte('updated_at', new Date(Date.now() - 86400000).toISOString())
+async function loadStats(){
+  try{
+    const[p,a,r,t]=await Promise.all([
+      _sb.from('products').select('id',{count:'exact',head:true}).eq('status','pending'),
+      _sb.from('products').select('id',{count:'exact',head:true}).eq('status','active'),
+      _sb.from('products').select('id',{count:'exact',head:true}).eq('status','rejected'),
+      _sb.from('products').select('id',{count:'exact',head:true})
     ]);
-    document.getElementById('st-pend').textContent = pending ?? 0;
-    document.getElementById('st-total').textContent = active ?? 0;
-    document.getElementById('st-rej').textContent = rejected ?? 0;
-    document.getElementById('st-approved').textContent = today ?? 0;
-    document.getElementById('sb-pending').textContent = pending ?? 0;
-    const banner = document.getElementById('alert-banner');
-    if (pending > 0) {
-      banner.style.display = 'flex';
-      document.getElementById('alert-count').textContent = pending;
-    } else {
-      banner.style.display = 'none';
-    }
-  } catch (e) {
-    console.warn('loadStats:', e);
-  }
+    document.getElementById('st-pending').textContent=p.count??0;
+    document.getElementById('st-active').textContent=a.count??0;
+    document.getElementById('st-rejected').textContent=r.count??0;
+    document.getElementById('st-total').textContent=t.count??0;
+  }catch(e){console.warn(e);}
 }
 
-// ── Load Products ──
-async function loadProds() {
-  selectedIds.clear();
-  updateBulkBar();
-  const tb = document.getElementById('tbody');
-  tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--g400)">⏳ กำลังโหลด...</td></tr>`;
-  try {
-    const PER_PAGE = 20;
-    let q = _sb.from('products')
-      .select('id, name_th, name_en, price, compare_at_price, stock, status, created_at, thumbnail, images, seller_id, category_id, description, sellers(shop_name), categories(name_th)', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range((curPage - 1) * PER_PAGE, curPage * PER_PAGE - 1);
-    if (curStatus) q = q.eq('status', curStatus);
-    const srch = document.getElementById('srch').value.trim();
-    if (srch) q = q.or(`name_th.ilike.%${srch}%,name_en.ilike.%${srch}%`);
-    const { data: products, count, error } = await q;
-    if (error) throw error;
-    if (!products || products.length === 0) {
-      tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:60px;color:var(--g400)">ไม่มีสินค้า</td></tr>`;
-      document.getElementById('pg').innerHTML = '';
-      return;
-    }
-    const SM = {
-      active: ['badge-ok', '✓ Active'],
-      pending: ['badge-warn', '⏳ รออนุมัติ'],
-      rejected: ['badge', '✕ ปฏิเสธ'],
-      draft: ['badge', '📝 Draft']
-    };
-    tb.innerHTML = products.map(p => {
-      const s = SM[p.status] || SM.draft;
-      const imgs = Array.isArray(p.images) ? p.images : [];
-      const img = imgs[0] || p.thumbnail || '';
+async function load(){
+  const wrap=document.getElementById('list');
+  wrap.innerHTML='<div class="empty">⏳</div>';
+  try{
+    let q=_sb.from('products').select('*, sellers(shop_name), categories(name_th)').order('created_at',{ascending:false}).limit(50);
+    if(_st)q=q.eq('status',_st);
+    const{data,error}=await q;
+    if(error)throw error;
+    if(!data||!data.length){wrap.innerHTML='<div class="empty">ไม่มีสินค้า</div>';return;}
+    wrap.innerHTML='<table><thead><tr><th>สินค้า</th><th>ร้าน</th><th>หมวด</th><th>ราคา</th><th>สต็อก</th><th>สถานะ</th><th>เวลา</th><th></th></tr></thead><tbody>'+
+    data.map(p=>{
+      const imgs=Array.isArray(p.images)?p.images:[];
+      const img=imgs[0]||p.thumbnail||'';
+      const SM={pending:['#FEF3C7','#92400E','⏳ รอ'],active:['#D1FAE5','#065F46','✓ Active'],rejected:['#FEE2E2','#991B1B','✕ ปฏิเสธ'],draft:['#F5F5F5','#525252','📝 Draft']};
+      const s=SM[p.status]||['#E5E5E5','#525252',p.status];
       return `<tr>
-        <td><input type="checkbox" data-id="${p.id}" onchange="toggleOne(this)"></td>
-        <td><div style="display:flex;gap:10px;align-items:center">
-          ${img ? `<img src="${img}" style="width:40px;height:40px;object-fit:cover;border:var(--border)" onerror="this.style.display='none'">` : '<div style="width:40px;height:40px;background:var(--g100);display:flex;align-items:center;justify-content:center">📦</div>'}
-          <div><div style="font-size:13px;font-weight:500">${esc(p.name_th || '—')}</div><div style="font-family:var(--mono);font-size:10px;color:var(--g400)">${esc(p.name_en || '')}</div></div>
-        </div></td>
-        <td style="font-size:12px">${esc(p.sellers?.shop_name || '—')}</td>
-        <td style="font-size:12px">${esc(p.categories?.name_th || '—')}</td>
-        <td style="font-family:var(--mono);font-size:13px">฿${Number(p.price || 0).toLocaleString()}</td>
-        <td style="font-family:var(--mono);font-size:12px">${p.stock ?? '—'}</td>
-        <td style="font-family:var(--mono);font-size:11px;color:var(--g500)">${formatDate(p.created_at)}</td>
-        <td><span class="badge ${s[0]}">${s[1]}</span></td>
-        <td><button class="btn btn-o btn-xs" onclick="openDetail('${p.id}')">ดู</button></td>
+        <td><div style="display:flex;gap:8px;align-items:center">${img?`<img src="${esc(img)}" style="width:40px;height:40px;object-fit:cover;border:1px solid #E5E5E5;border-radius:3px" onerror="this.style.display='none'">`:'<div style="width:40px;height:40px;background:#F5F5F5;display:flex;align-items:center;justify-content:center">📦</div>'}
+        <div><div style="font-weight:500">${esc((p.name_th||'').substring(0,40))}</div><div style="font-size:10px;color:#888;font-family:monospace">${esc((p.name_en||'').substring(0,30))}</div></div></div></td>
+        <td style="font-size:11px">${esc(p.sellers?.shop_name||'-')}</td>
+        <td style="font-size:11px">${esc(p.categories?.name_th||'-')}</td>
+        <td style="font-family:'DM Mono',monospace;font-weight:600">฿${Number(p.price||0).toLocaleString()}</td>
+        <td style="font-family:'DM Mono',monospace">${p.stock??'-'}</td>
+        <td><span class="badge" style="background:${s[0]};color:${s[1]}">${s[2]}</span></td>
+        <td style="font-size:11px;color:#888">${time(p.created_at)}</td>
+        <td style="text-align:right">
+          ${p.status==='pending'?`<button class="btn btn-ok" onclick="approve('${p.id}',true)">✓</button> <button class="btn btn-danger" onclick="approve('${p.id}',false)">✕</button>`:`<a href="product.html?id=${p.id}" target="_blank" class="btn">ดู</a>`}
+        </td>
       </tr>`;
-    }).join('');
-    // pagination
-    const total = count || 0;
-    const totalPages = Math.ceil(total / PER_PAGE);
-    let pg = '';
-    for (let i = 1; i <= Math.min(totalPages, 10); i++) {
-      pg += `<button class="ftab ${i === curPage ? 'on' : ''}" onclick="goP(${i})" style="min-width:36px">${i}</button> `;
-    }
-    document.getElementById('pg').innerHTML = pg;
-  } catch (e) {
-    tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--red)">❌ ${esc(e.message)}</td></tr>`;
-  }
+    }).join('')+'</tbody></table>';
+  }catch(e){wrap.innerHTML='<div class="empty" style="color:#E63329">❌ '+esc(e.message)+'</div>';}
 }
 
-function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function formatDate(d) {
-  if (!d) return '—';
-  const dt = new Date(d);
-  return dt.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
+function fSt(btn,s){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');_st=s;load();}
+
+async function approve(id,ok){
+  try{
+    const{error}=await _sb.rpc('admin_approve_product',{p_product_id:id,p_approve:ok});
+    if(error)throw error;
+    toast(ok?'✅ อนุมัติแล้ว':'✕ ปฏิเสธ','ok');
+    loadStats();load();
+  }catch(e){toast('❌ '+e.message,'err');}
 }
 
-function goP(p) { if (p < 1) return; curPage = p; loadProds(); }
-function fStatus(btn, st) {
-  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  curStatus = st;
-  curPage = 1;
-  loadProds();
-}
-
-// ── Detail Modal ──
-async function openDetail(id) {
-  viewId = id;
-  try {
-    const { data: p, error } = await _sb.from('products')
-      .select('*, sellers(shop_name, business_name), categories(name_th)')
-      .eq('id', id).single();
-    if (error) throw error;
-    document.getElementById('m-name').textContent = p.name_th || '—';
-    document.getElementById('m-name-en').textContent = p.name_en || '';
-    document.getElementById('m-price').textContent = '฿' + Number(p.price || 0).toLocaleString();
-    document.getElementById('m-compare').textContent = p.compare_at_price ? '฿' + Number(p.compare_at_price).toLocaleString() : '';
-    document.getElementById('m-seller').textContent = p.sellers?.shop_name || p.sellers?.business_name || '—';
-    document.getElementById('m-desc').textContent = p.description || '(ไม่มีคำอธิบาย)';
-    const imgs = Array.isArray(p.images) ? p.images : [];
-    const main = imgs[0] || p.thumbnail || '';
-    document.getElementById('m-main-img').src = main;
-    document.getElementById('m-main-img').style.display = main ? 'block' : 'none';
-    document.getElementById('m-gallery').innerHTML = imgs.slice(1, 5).map(i => `<img src="${i}" style="width:60px;height:60px;object-fit:cover;border:var(--border)" onerror="this.style.display='none'">`).join('');
-    document.getElementById('m-details').innerHTML = `
-      <div style="margin-bottom:8px"><b>หมวด:</b> ${esc(p.categories?.name_th || '—')}</div>
-      <div style="margin-bottom:8px"><b>สต็อก:</b> ${p.stock ?? '—'}</div>
-      <div style="margin-bottom:8px"><b>SKU:</b> ${esc(p.sku || '—')}</div>
-      <div><b>สถานะ:</b> ${esc(p.status || '—')}</div>
-    `;
-    const isPending = p.status === 'pending';
-    document.getElementById('m-approve-btn').style.display = isPending ? 'inline-flex' : 'none';
-    document.getElementById('m-reject-btn').style.display = isPending ? 'inline-flex' : 'none';
-    document.getElementById('modal').classList.add('on');
-  } catch (e) {
-    toast('โหลดไม่ได้: ' + e.message);
-  }
-}
-
-function closeModal() { document.getElementById('modal').classList.remove('on'); }
-
-// ── Approve / Reject ──
-async function doApprove() {
-  if (!viewId) return;
-  try {
-    const { error } = await _sb.rpc('admin_approve_product', { p_product_id: viewId, p_approve: true });
-    if (error) throw error;
-    toast('✅ อนุมัติแล้ว');
-    closeModal();
-    await loadStats();
-    await loadProds();
-  } catch (e) {
-    toast('❌ ' + e.message);
-  }
-}
-
-function openReject() {
-  document.getElementById('rmodal').classList.add('on');
-}
-function closeReject() { document.getElementById('rmodal').classList.remove('on'); }
-
-async function doReject() {
-  if (!viewId) return;
-  const reason = document.getElementById('reject-reason').value.trim();
-  if (!reason) return toast('กรุณาระบุเหตุผล');
-  try {
-    const { error } = await _sb.rpc('admin_approve_product', { p_product_id: viewId, p_approve: false });
-    if (error) throw error;
-    // เก็บเหตุผล (optional, ถ้ามี column rejection_reason)
-    await _sb.from('products').update({ rejection_reason: reason }).eq('id', viewId);
-    toast('✕ ปฏิเสธแล้ว');
-    closeModal();
-    closeReject();
-    document.getElementById('reject-reason').value = '';
-    await loadStats();
-    await loadProds();
-  } catch (e) {
-    toast('❌ ' + e.message);
-  }
-}
-
-// ── Bulk ──
-function toggleAll(el) {
-  document.querySelectorAll('tbody input[type=checkbox][data-id]').forEach(cb => {
-    cb.checked = el.checked;
-    const id = cb.dataset.id;
-    if (el.checked) selectedIds.add(id);
-    else selectedIds.delete(id);
-  });
-  updateBulkBar();
-}
-
-function toggleOne(cb) {
-  if (cb.checked) selectedIds.add(cb.dataset.id);
-  else selectedIds.delete(cb.dataset.id);
-  updateBulkBar();
-}
-
-function updateBulkBar() {
-  const bar = document.getElementById('bulk-bar');
-  if (selectedIds.size > 0) {
-    bar.style.display = 'flex';
-    document.getElementById('bulk-count').textContent = selectedIds.size;
-  } else {
-    bar.style.display = 'none';
-  }
-}
-
-async function bulkApprove() {
-  if (!selectedIds.size) return;
-  if (!confirm(`อนุมัติ ${selectedIds.size} รายการ?`)) return;
-  try {
-    for (const id of selectedIds) {
-      await _sb.rpc('admin_approve_product', { p_product_id: id, p_approve: true });
-    }
-    toast(`✅ อนุมัติ ${selectedIds.size} รายการแล้ว`);
-    selectedIds.clear();
-    await loadStats();
-    await loadProds();
-  } catch (e) {
-    toast('❌ ' + e.message);
-  }
-}
-
-function openBulkReject() {
-  if (!selectedIds.size) return;
-  if (!confirm(`ปฏิเสธ ${selectedIds.size} รายการ?`)) return;
-  bulkReject();
-}
-
-async function bulkReject() {
-  try {
-    for (const id of selectedIds) {
-      await _sb.rpc('admin_approve_product', { p_product_id: id, p_approve: false });
-    }
-    toast(`✕ ปฏิเสธ ${selectedIds.size} รายการแล้ว`);
-    selectedIds.clear();
-    await loadStats();
-    await loadProds();
-  } catch (e) {
-    toast('❌ ' + e.message);
-  }
-}
-
-// ── Init ──
-document.addEventListener('DOMContentLoaded', checkAuth);
-document.getElementById('srch')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadProds(); });
+(async()=>{if(await checkAdmin()){loadStats();load();}})();
 </script>
 </body>
 </html>
