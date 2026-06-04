@@ -501,6 +501,18 @@ nav, .nav {
   .nav-top{padding:0 12px!important;gap:4px!important}
 }
 </style>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// Performance Widget Stub (จะถูก override โดย script จริงทีหลัง)
+// แก้ปัญหา: renderPerformanceWidget is not defined
+// ════════════════════════════════════════════════════════════
+window.renderPerformanceWidget = window.renderPerformanceWidget || function(){
+  // stub ที่ไม่ทำอะไร — ป้องกัน ReferenceError ตอน load
+  return Promise.resolve();
+};
+window.renderDashboardLive = window.renderDashboardLive || function(){};
+</script>
 </head>
 <body>
 
