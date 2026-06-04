@@ -9265,5 +9265,266 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
 
 </script>
 
+
+<!-- ========== Returns Fix Patch (2026.06.05) ========== -->
+<script>
+// ════════════════════════════════════════════════════════════
+// RETURNS FIX PATCH (2026.06.05)
+// แก้: หน้าค้าง "กำลังโหลด..." เพราะ _sellerSellerId เป็น null
+// ════════════════════════════════════════════════════════════
+
+(function(){
+  if (window._rtFixApplied) return;
+  window._rtFixApplied = true;
+
+  const sb = () => window._sb;
+
+  // ── Override renderReturnsLive ให้ทำงานแม้ไม่มี seller_id ──
+  window.renderReturnsLive = async function(){
+    const wrap = document.getElementById('rt-list-wrap');
+    if (!wrap) return;
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#888">⏳ กำลังโหลด...</div>';
+
+    try {
+      let sellerId = window._sellerSellerId;
+
+      // ถ้ายังไม่มี sellerId ลองหาใหม่
+      if (!sellerId) {
+        const { data: { user } } = await sb().auth.getUser();
+        if (user) {
+          // ลองหา seller จาก user.id โดยตรง (auth.uid)
+          let { data: s } = await sb().from('sellers').select('id').eq('user_id', user.id).maybeSingle();
+          // ถ้าไม่เจอ ลองดู role admin → ดูทั้งหมด
+          if (!s) {
+            const { data: u } = await sb().from('users').select('id, role').eq('email', user.email).maybeSingle();
+            if (u) {
+              const r2 = await sb().from('sellers').select('id').eq('user_id', u.id).maybeSingle();
+              s = r2.data;
+              window._sellerUserId = u.id;
+              if (u.role === 'admin' || u.role === 'super_admin') {
+                window._isAdmin = true;
+              }
+            }
+          }
+          if (s) {
+            sellerId = s.id;
+            window._sellerSellerId = s.id;
+          }
+        }
+      }
+
+      // ── ดึง return requests ──
+      let query = sb().from('return_requests')
+        .select('*, orders(id,order_number,total_amount,total)')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      // ถ้าเป็น seller → กรองเฉพาะของร้าน
+      if (sellerId) {
+        // หา orders ที่มีสินค้าของร้านนี้
+        const { data: products } = await sb().from('products').select('id').eq('seller_id', sellerId);
+        const productIds = (products || []).map(p => p.id);
+
+        if (productIds.length) {
+          const { data: orderItems } = await sb().from('order_items').select('order_id').in('product_id', productIds);
+          const orderIds = [...new Set((orderItems || []).map(oi => oi.order_id))];
+          if (orderIds.length) {
+            query = query.in('order_id', orderIds);
+          } else {
+            // ไม่มีออเดอร์ที่ขายให้ลูกค้าเลย
+            window._rtRequests = [];
+            wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#888"><div style="font-size:36px;margin-bottom:8px">📦</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">ยังไม่มีคำขอคืนสินค้า</div><div style="font-size:12px;color:#aaa">เมื่อมีลูกค้าขอคืนสินค้า รายการจะมาแสดงที่นี่</div></div>';
+            updateStats();
+            return;
+          }
+        } else {
+          // ไม่มีสินค้าในร้าน
+          window._rtRequests = [];
+          wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#888"><div style="font-size:36px;margin-bottom:8px">📦</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">ยังไม่มีสินค้าในร้าน</div><div style="font-size:12px;color:#aaa">กรุณาเพิ่มสินค้าก่อน — กดเมนู "สินค้าของฉัน"</div></div>';
+          updateStats();
+          return;
+        }
+      }
+      // ถ้าไม่มี sellerId (admin) → ดูทั้งหมด
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const requests = data || [];
+      window._rtRequests = requests;
+
+      // Hydrate users
+      const userIds = [...new Set(requests.map(r => r.user_id).filter(Boolean))];
+      window._rtUserCache = window._rtUserCache || {};
+      const needFetch = userIds.filter(id => !window._rtUserCache[id]);
+      if (needFetch.length) {
+        const { data: users } = await sb().from('users').select('id, email, name, display_name, phone').in('id', needFetch);
+        (users || []).forEach(u => window._rtUserCache[u.id] = u);
+      }
+
+      updateStats();
+      renderList();
+    } catch(e) {
+      console.error('renderReturnsLive:', e);
+      wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#E63329"><div style="font-size:32px;margin-bottom:8px">❌</div><div style="font-size:13px">${(e.message||'').replace(/[<>]/g,'')}</div></div>`;
+    }
+  };
+
+  // ── Update stats cards ──
+  function updateStats(){
+    const reqs = window._rtRequests || [];
+    const stats = { total: reqs.length, pending: 0, approved: 0, refunded: 0 };
+    reqs.forEach(r => {
+      if (stats[r.status] !== undefined) stats[r.status]++;
+    });
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('rt-stat-total', stats.total);
+    set('rt-stat-pending', stats.pending);
+    set('rt-stat-approved', stats.approved);
+    set('rt-stat-refunded', stats.refunded);
+
+    // Sidebar badge
+    const badge = document.getElementById('returns-badge');
+    if (badge) {
+      if (stats.pending > 0) {
+        badge.textContent = stats.pending;
+        badge.style.display = 'inline-flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  }
+
+  // ── Render list ตาม filter ──
+  function renderList(){
+    const wrap = document.getElementById('rt-list-wrap');
+    if (!wrap) return;
+
+    const reqs = window._rtRequests || [];
+    const filter = window._rtFilter || 'pending';
+    const filtered = (filter === 'all') ? reqs : reqs.filter(r => r.status === filter);
+
+    if (!filtered.length) {
+      const msg = filter === 'pending' ? 'ไม่มีคำขอที่รอดำเนินการ' :
+                  filter === 'approved' ? 'ไม่มีคำขอที่อนุมัติแล้ว' :
+                  filter === 'rejected' ? 'ไม่มีคำขอที่ปฏิเสธ' :
+                  filter === 'refunded' ? 'ไม่มีคำขอที่คืนเงินแล้ว' :
+                  'ยังไม่มีคำขอคืนสินค้า';
+      wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#888"><div style="font-size:36px;margin-bottom:8px">${reqs.length===0?'📦':'🔍'}</div><div style="font-size:14px">${msg}</div></div>`;
+      return;
+    }
+
+    const reasonLabels = {
+      damaged: 'สินค้าเสียหาย',
+      wrong_item: 'ส่งผิดรายการ',
+      not_as_described: 'ไม่ตรงกับคำอธิบาย',
+      quality_issue: 'คุณภาพไม่ดี',
+      changed_mind: 'เปลี่ยนใจ',
+      other: 'อื่นๆ'
+    };
+
+    const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const fmtB = n => '฿' + Number(n||0).toLocaleString('th-TH');
+    const fmtDate = d => d ? new Date(d).toLocaleDateString('th-TH') : '-';
+
+    wrap.innerHTML = filtered.map(r => {
+      const u = window._rtUserCache[r.user_id] || {};
+      const order = r.orders || {};
+      const orderTotal = order.total_amount || order.total || 0;
+      const imgs = Array.isArray(r.evidence_images) ? r.evidence_images : [];
+      const mainImg = imgs[0] || '';
+
+      return `<div class="rt-card ${esc(r.status)}">
+        <div class="rt-img" ${mainImg ? `onclick="window.open('${esc(mainImg)}','_blank')"` : ''}>
+          ${mainImg ? `<img src="${esc(mainImg)}">` : '📦'}
+        </div>
+        <div>
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:5px">
+            <span style="font-weight:600">#${esc(order.order_number || (r.order_id||'').slice(0,8))}</span>
+            <span class="rt-pill ${esc(r.status)}">${esc(r.status)}</span>
+          </div>
+          <div style="font-size:12px;color:#666;margin-bottom:3px">👤 ${esc(u.display_name || u.name || u.email || 'ลูกค้า')}</div>
+          <div style="font-size:12px;margin-bottom:3px"><strong>เหตุผล:</strong> ${esc(reasonLabels[r.reason_category] || r.reason_category || '')} ${r.reason ? '- ' + esc(r.reason) : ''}</div>
+          ${r.description ? `<div style="font-size:12px;color:#666;margin-bottom:3px"><strong>รายละเอียด:</strong> ${esc(r.description)}</div>` : ''}
+          <div style="font-size:11px;color:#888">📅 ${fmtDate(r.created_at)} · 💰 ขอคืน ${fmtB(r.requested_amount || orderTotal)}</div>
+          ${imgs.length > 1 ? `<div style="margin-top:6px;display:flex;gap:4px">${imgs.slice(1,4).map(img => `<img src="${esc(img)}" onclick="window.open('${esc(img)}','_blank')" style="width:40px;height:40px;object-fit:cover;border-radius:3px;cursor:pointer">`).join('')}</div>` : ''}
+          ${r.decision_note ? `<div style="font-size:11px;color:#666;margin-top:5px;padding:6px;background:#FAFAFA;border-radius:3px"><strong>หมายเหตุของคุณ:</strong> ${esc(r.decision_note)}</div>` : ''}
+        </div>
+        <div style="min-width:120px">
+          ${r.status === 'pending' ? `
+            <button class="rt-btn primary" onclick="rtDecide('${r.id}','approved')">✅ อนุมัติ</button>
+            <button class="rt-btn danger" onclick="rtDecide('${r.id}','rejected')">❌ ปฏิเสธ</button>
+          ` : ''}
+          ${r.status === 'approved' ? `
+            <button class="rt-btn primary" onclick="rtMarkRefunded('${r.id}', ${r.requested_amount || orderTotal})">💰 บันทึกการคืนเงิน</button>
+          ` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Filter tabs ──
+  window.rtFilter = function(filter, btn) {
+    window._rtFilter = filter;
+    document.querySelectorAll('#page-returns .rt-tab').forEach(b => b.classList.remove('on'));
+    if (btn) btn.classList.add('on');
+    renderList();
+  };
+
+  // ── Approve/Reject ──
+  window.rtDecide = async function(id, status) {
+    const note = prompt(status === 'approved' ? 'หมายเหตุการอนุมัติ (ไม่บังคับ):' : 'เหตุผลการปฏิเสธ:');
+    if (status === 'rejected' && !note) return;
+    try {
+      const { error } = await sb().from('return_requests').update({
+        status: status,
+        decision_note: note || null,
+        decision_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+      if (error) throw error;
+      alert(status === 'approved' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธแล้ว');
+      window.renderReturnsLive();
+    } catch(e) { alert('❌ ' + e.message); }
+  };
+
+  // ── Mark refunded ──
+  window.rtMarkRefunded = async function(id, defaultAmount) {
+    const amt = prompt('จำนวนเงินที่คืน (บาท):', defaultAmount || 0);
+    if (!amt) return;
+    const amount = parseFloat(amt);
+    if (isNaN(amount)) { alert('กรอกตัวเลข'); return; }
+    try {
+      const { error } = await sb().from('return_requests').update({
+        status: 'refunded',
+        refunded_amount: amount,
+        refunded_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+      if (error) throw error;
+      alert('✅ บันทึกการคืนเงินแล้ว');
+      window.renderReturnsLive();
+    } catch(e) { alert('❌ ' + e.message); }
+  };
+
+  // ── เรียก renderReturnsLive ทันทีถ้าอยู่หน้า returns ──
+  setTimeout(() => {
+    const page = document.getElementById('page-returns');
+    if (page && (page.style.display !== 'none' || page.classList.contains('active'))) {
+      window.renderReturnsLive();
+    }
+  }, 1500);
+
+  // Hook into goto ให้แน่ใจ
+  const _origGoto = window.goto;
+  window.goto = function(name, el){
+    if (typeof _origGoto === 'function') _origGoto(name, el);
+    if (name === 'returns') {
+      setTimeout(() => window.renderReturnsLive(), 100);
+    }
+  };
+})();
+
+</script>
 </body>
 </html>
