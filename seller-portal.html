@@ -8142,412 +8142,7 @@ function spOpenDocPreview(ids, docType, paper, fmt) {
     </div>
     <div class="doc-grid">${blocks}</div>
   
-<!-- ========== Orders Management Patch (2026.06.03) ========== -->
-<script>
-// ════════════════════════════════════════════════════════════
-// SELLER PORTAL — Orders Management Patch (2026.06.03)
-// แก้ปัญหา: tabs, ปุ่ม action, render ไม่ทำงาน
-// ════════════════════════════════════════════════════════════
 
-(function(){
-  if (window._spOrdersPatched) return;
-  window._spOrdersPatched = true;
-
-  const sb = () => window._sb;
-
-  // Filter state
-  let _curFilter = null; // null = all
-  let _allOrders = [];
-
-  // ── Helper: ดึง seller_id ──
-  async function getSid(){
-    if (window._sellerSellerId) return window._sellerSellerId;
-    if (window._sellerId) return window._sellerId;
-    try {
-      const { data: { user } } = await sb().auth.getUser();
-      if (!user) return null;
-      const { data: u } = await sb().from('users').select('id').eq('email', user.email).maybeSingle();
-      if (!u) return null;
-      const { data: s } = await sb().from('sellers').select('id').eq('owner_user_id', u.id).maybeSingle();
-      if (s) {
-        window._sellerSellerId = s.id;
-        return s.id;
-      }
-    } catch(e) { console.warn('getSid:', e); }
-    return null;
-  }
-
-  // ── Load orders จาก DB จริง ──
-  async function loadOrders(){
-    const sid = await getSid();
-    if (!sid) {
-      console.warn('[orders] no seller_id');
-      return [];
-    }
-    try {
-      // ใช้ RPC ถ้ามี (ก่อน fallback ไปใช้ select ตรง)
-      let data, error;
-      try {
-        const r = await sb().rpc('seller_recent_orders', {
-          p_seller_id: sid, p_status: null, p_limit: 200, p_offset: 0
-        });
-        if (!r.error) {
-          // map RPC fields เป็น format ที่ใช้กับตาราง
-          data = (r.data || []).map(o => ({
-            id: o.order_id,
-            order_code: o.order_code,
-            order_number: o.order_code,
-            status: o.status,
-            shipping_name: o.customer_name || o.customer_email,
-            total_amount: o.total_amount,
-            payment_method: '-',
-            created_at: o.created_at,
-            order_items: [{
-              name_th: o.first_product_name,
-              thumbnail: o.first_product_image,
-              quantity: o.items_count
-            }]
-          }));
-        } else error = r.error;
-      } catch(e) { error = e; }
-
-      // Fallback ถ้า RPC ใช้ไม่ได้
-      if (!data) {
-        const r = await sb()
-          .from('orders')
-          .select('id, order_code, order_number, status, total_amount, payment_method, shipping_name, tracking_number, created_at, order_items!inner(seller_id, name_th, product_name, thumbnail, product_image, quantity)')
-          .eq('order_items.seller_id', sid)
-          .order('created_at', { ascending: false })
-          .limit(200);
-        if (r.error) throw r.error;
-        data = (r.data || []).map(o => ({
-          ...o,
-          order_items: (o.order_items || []).map(i => ({
-            name_th: i.name_th || i.product_name,
-            thumbnail: i.thumbnail || i.product_image,
-            quantity: i.quantity
-          }))
-        }));
-      }
-
-      _allOrders = data || [];
-      return _allOrders;
-    } catch(e) {
-      console.error('[orders] load fail:', e);
-      return [];
-    }
-  }
-
-  // ── Status mapping ──
-  const STATUS_GROUPS = {
-    pending:    ['pending'],
-    processing: ['paid','confirmed','preparing','processing'],
-    shipped:    ['shipped'],
-    completed:  ['completed','delivered'],
-    cancelled:  ['cancelled','rejected','returned','refunded']
-  };
-
-  const STATUS_LABEL = {
-    pending: 'รอชำระ',
-    paid: 'ชำระแล้ว',
-    confirmed: 'ยืนยันแล้ว',
-    preparing: 'กำลังเตรียม',
-    processing: 'กำลังเตรียม',
-    shipped: 'จัดส่งแล้ว',
-    completed: 'สำเร็จ',
-    delivered: 'สำเร็จ',
-    cancelled: 'ยกเลิก',
-    rejected: 'ปฏิเสธ',
-    returned: 'คืน',
-    refunded: 'คืนเงิน'
-  };
-
-  const STATUS_COLOR = {
-    pending: ['#FEF3C7','#92400E'],
-    paid: ['#DBEAFE','#1E40AF'],
-    confirmed: ['#DBEAFE','#1E40AF'],
-    preparing: ['#FED7AA','#C2410C'],
-    processing: ['#FED7AA','#C2410C'],
-    shipped: ['#A7F3D0','#065F46'],
-    completed: ['#D1FAE5','#065F46'],
-    delivered: ['#D1FAE5','#065F46'],
-    cancelled: ['#FEE2E2','#991B1B'],
-    rejected: ['#FEE2E2','#991B1B'],
-    returned: ['#FEE2E2','#991B1B'],
-    refunded: ['#E5E5E5','#525252']
-  };
-
-  function fmt(s){return(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  function fmtB(n){return'฿'+Number(n||0).toLocaleString('th-TH');}
-  function fmtDate(d){if(!d)return'-';const dt=new Date(d);return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'});}
-
-  // ── Filter orders ตาม tab ──
-  function filterOrders(){
-    if (!_curFilter) return _allOrders;
-    const statuses = STATUS_GROUPS[_curFilter] || [];
-    return _allOrders.filter(o => statuses.includes(o.status));
-  }
-
-  // ── Render orders ──
-  function render(){
-    const tbody = document.getElementById('orders-table');
-    if (!tbody) return;
-
-    const orders = filterOrders();
-    if (!orders.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:48px;color:#888"><div style="font-size:36px;margin-bottom:8px">🛒</div><div>ยังไม่มีคำสั่งซื้อ</div></td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = orders.map(o => {
-      const item = (o.order_items || [])[0] || {};
-      const sc = STATUS_COLOR[o.status] || ['#F5F5F5','#525252'];
-      const sl = STATUS_LABEL[o.status] || o.status || '-';
-
-      // ปุ่ม action ตาม status
-      let actions = `<button onclick="spOrderDetail('${o.id}')" style="background:none;border:1px solid #E5E5E5;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px">ดู</button>`;
-      if (o.status === 'pending') {
-        actions += ` <button onclick="spConfirmOrder('${o.id}')" style="background:#2563EB;color:#fff;border:none;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px;margin-left:4px">ยืนยัน</button>`;
-      } else if (['paid','confirmed'].includes(o.status)) {
-        actions += ` <button onclick="spPrepare('${o.id}')" style="background:#7C3AED;color:#fff;border:none;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px;margin-left:4px">📦 เตรียม</button>`;
-      } else if (['preparing','processing'].includes(o.status)) {
-        actions += ` <button onclick="spShipOrder('${o.id}')" style="background:#0891B2;color:#fff;border:none;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px;margin-left:4px">🚚 ส่ง</button>`;
-      } else if (o.status === 'shipped') {
-        actions += ` <button onclick="spMarkDelivered('${o.id}')" style="background:#10B981;color:#fff;border:none;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px;margin-left:4px">✓ ส่งถึงแล้ว</button>`;
-      }
-
-      const code = o.order_code || o.order_number || (o.id||'').substring(0,8);
-
-      return `<tr style="border-bottom:1px solid #F2F2F2">
-        <td style="padding:10px 12px;font-family:monospace;font-size:11px;color:#E63329;font-weight:600">${fmt(code)}</td>
-        <td style="padding:10px 12px">
-          <div style="display:flex;align-items:center;gap:8px">
-            ${item.thumbnail ? `<img src="${fmt(item.thumbnail)}" style="width:32px;height:32px;object-fit:cover;border:1px solid #E5E5E5;border-radius:3px" onerror="this.style.display='none'">` : '<div style="width:32px;height:32px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>'}
-            <span style="font-size:12px">${fmt((item.name_th || '').substring(0,30))}</span>
-          </div>
-        </td>
-        <td style="padding:10px 12px;font-size:12px">${fmt(o.shipping_name || '-')}</td>
-        <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(o.total_amount)}</td>
-        <td style="padding:10px 12px;font-size:11px;color:#888">${fmt(o.payment_method || '-')}</td>
-        <td style="padding:10px 12px"><span style="background:${sc[0]};color:${sc[1]};padding:3px 10px;font-size:11px;border-radius:12px;white-space:nowrap">${sl}</span></td>
-        <td style="padding:10px 12px;white-space:nowrap">${actions}</td>
-      </tr>`;
-    }).join('');
-  }
-
-  // ── Update tab counts ──
-  function updateTabs(){
-    const counts = {
-      all: _allOrders.length,
-      pending: 0,
-      shipped: 0,
-      completed: 0,
-      cancelled: 0
-    };
-    _allOrders.forEach(o => {
-      Object.keys(STATUS_GROUPS).forEach(g => {
-        if (STATUS_GROUPS[g].includes(o.status)) counts[g] = (counts[g]||0) + 1;
-      });
-    });
-
-    const tabs = document.querySelectorAll('#page-orders .itab');
-    tabs.forEach(tab => {
-      const txt = tab.textContent.trim();
-      if (txt.startsWith('ทั้งหมด')) tab.textContent = `ทั้งหมด (${counts.all})`;
-      else if (txt.startsWith('รอดำเนินการ')) tab.textContent = `รอดำเนินการ (${counts.pending + counts.processing||0})`;
-      else if (txt.startsWith('จัดส่งแล้ว')) tab.textContent = `จัดส่งแล้ว (${counts.shipped})`;
-      else if (txt.startsWith('สำเร็จ')) tab.textContent = `สำเร็จ (${counts.completed})`;
-      else if (txt.startsWith('ยกเลิก')) tab.textContent = `ยกเลิก (${counts.cancelled})`;
-    });
-  }
-
-  // ── Action functions ──
-  window.spOrderDetail = function(id){
-    const o = _allOrders.find(x => x.id === id);
-    if (!o) return;
-    location.href = 'order-detail.html?id=' + id;
-  };
-
-  window.spConfirmOrder = async function(id){
-    if (!confirm('ยืนยันออเดอร์นี้?')) return;
-    try {
-      const { error } = await sb().from('orders').update({
-        status: 'confirmed', updated_at: new Date().toISOString()
-      }).eq('id', id);
-      if (error) throw error;
-      window.toast?.('✅ ยืนยันแล้ว', 'ok') || alert('✅ ยืนยันแล้ว');
-      await refresh();
-    } catch(e) { alert('❌ ' + e.message); }
-  };
-
-  window.spPrepare = async function(id){
-    if (!confirm('เปลี่ยนเป็น "กำลังเตรียมพัสดุ"?')) return;
-    try {
-      const { error } = await sb().from('orders').update({
-        status: 'preparing', updated_at: new Date().toISOString()
-      }).eq('id', id);
-      if (error) throw error;
-      window.toast?.('📦 เตรียมพัสดุแล้ว', 'ok') || alert('📦 เตรียมพัสดุแล้ว');
-      await refresh();
-    } catch(e) { alert('❌ ' + e.message); }
-  };
-
-  window.spShipOrder = async function(id){
-    const tracking = prompt('กรอกเลขพัสดุ (Tracking Number):');
-    if (!tracking || !tracking.trim()) return;
-    const carrier = prompt('ค่ายขนส่ง (kerry/flash/jnt/scg/thaipost/ninjavan/grab):', 'kerry');
-    if (!carrier) return;
-
-    // ลองใช้ RPC ก่อน
-    try {
-      const r = await sb().rpc('seller_ship_order', {
-        p_order_id: id,
-        p_courier_code: carrier.trim().toLowerCase(),
-        p_tracking_no: tracking.trim()
-      });
-      if (r.error) throw r.error;
-      window.toast?.('🚚 จัดส่งแล้ว', 'ok') || alert('🚚 จัดส่งสำเร็จ\nTracking: ' + tracking);
-      await refresh();
-    } catch(e) {
-      // Fallback ถ้า RPC ไม่มี
-      try {
-        const { error } = await sb().from('orders').update({
-          status: 'shipped',
-          tracking_number: tracking.trim(),
-          shipping_courier: carrier.trim().toLowerCase(),
-          shipped_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }).eq('id', id);
-        if (error) throw error;
-        window.toast?.('🚚 จัดส่งแล้ว', 'ok') || alert('🚚 จัดส่งสำเร็จ\nTracking: ' + tracking);
-        await refresh();
-      } catch(e2) { alert('❌ ' + e2.message); }
-    }
-  };
-
-  window.spMarkDelivered = async function(id){
-    if (!confirm('ยืนยันว่าพัสดุถึงมือลูกค้าแล้ว?')) return;
-    try {
-      const { error } = await sb().from('orders').update({
-        status: 'completed', // หรือ 'delivered'
-        delivered_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }).eq('id', id);
-      if (error) throw error;
-      window.toast?.('✅ สำเร็จ', 'ok') || alert('✅ ส่งถึงมือลูกค้าแล้ว');
-      await refresh();
-    } catch(e) { alert('❌ ' + e.message); }
-  };
-
-  // ── Tab switching ──
-  window.selITab = function(el){
-    document.querySelectorAll('#page-orders .itab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    const txt = el.textContent.trim();
-    if (txt.startsWith('ทั้งหมด')) _curFilter = null;
-    else if (txt.startsWith('รอดำเนินการ')) _curFilter = 'pending'; // จะรวม pending+processing ในการ filter
-    else if (txt.startsWith('จัดส่งแล้ว')) _curFilter = 'shipped';
-    else if (txt.startsWith('สำเร็จ')) _curFilter = 'completed';
-    else if (txt.startsWith('ยกเลิก')) _curFilter = 'cancelled';
-    render();
-  };
-
-  // ── Override filter ใน selITab — "รอดำเนินการ" ต้องรวม pending + processing
-  const _origFilter = filterOrders;
-  function filterOrdersV2(){
-    if (!_curFilter) return _allOrders;
-    if (_curFilter === 'pending') {
-      const all = [...(STATUS_GROUPS.pending || []), ...(STATUS_GROUPS.processing || [])];
-      return _allOrders.filter(o => all.includes(o.status));
-    }
-    const statuses = STATUS_GROUPS[_curFilter] || [];
-    return _allOrders.filter(o => statuses.includes(o.status));
-  }
-  // เปลี่ยน reference (ใช้ใน render)
-  filterOrders = filterOrdersV2;
-
-  // ── Refresh (reload + re-render) ──
-  async function refresh(){
-    await loadOrders();
-    render();
-    updateTabs();
-  }
-
-  // ── Listen to "select dropdown" (ทุกสถานะ) ──
-  function bindDropdown(){
-    const sel = document.querySelector('#page-orders select.fi');
-    if (!sel) return;
-    if (sel._tmBound) return;
-    sel._tmBound = true;
-    sel.addEventListener('change', () => {
-      const val = sel.value;
-      // sync to tabs
-      const tabs = document.querySelectorAll('#page-orders .itab');
-      let targetTab = null;
-      if (val.includes('ทุก')) targetTab = tabs[0];
-      else if (val.includes('รอดำเนิน')) targetTab = tabs[1];
-      else if (val.includes('จัดส่ง')) targetTab = tabs[2];
-      else if (val.includes('สำเร็จ')) targetTab = tabs[3];
-      if (targetTab) window.selITab(targetTab);
-    });
-  }
-
-  // ── Export CSV ──
-  window.exportOrdersCSV = function(){
-    if (!_allOrders.length) { alert('ไม่มีข้อมูล'); return; }
-    const rows = [['Order Code','Customer','Total','Status','Created']];
-    _allOrders.forEach(o => {
-      rows.push([
-        o.order_code || o.order_number || o.id,
-        o.shipping_name || '',
-        o.total_amount,
-        o.status,
-        o.created_at
-      ]);
-    });
-    const csv = rows.map(r => r.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob = new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // ── Initial load + interval refresh ──
-  let _initialized = false;
-
-  async function initOrdersPage(){
-    if (_initialized) return;
-    _initialized = true;
-    await refresh();
-    bindDropdown();
-  }
-
-  // เรียกเมื่อเข้า page-orders
-  const _origGoto = window.goto;
-  window.goto = function(page, el){
-    if (typeof _origGoto === 'function') _origGoto(page, el);
-    if (page === 'orders') {
-      setTimeout(() => {
-        _initialized = false; // re-init เพื่อ refresh
-        initOrdersPage();
-      }, 100);
-    }
-  };
-
-  // ถ้าเริ่มต้นที่หน้า orders เลย
-  setTimeout(() => {
-    const orderPage = document.getElementById('page-orders');
-    if (orderPage && orderPage.style.display !== 'none') {
-      initOrdersPage();
-    }
-  }, 1500);
-
-})();
-
-</script>
 </body></html>`);
   w.document.close();
 }
@@ -9278,7 +8873,414 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
 </script>
 
 
-<!-- ========== Returns Fix Patch (2026.06.05) ========== -->
+
+
+<!-- ========== Orders Management Patch (2026.06.03) ========== -->
+<script>
+// ════════════════════════════════════════════════════════════
+// SELLER PORTAL — Orders Management Patch (2026.06.03)
+// แก้ปัญหา: tabs, ปุ่ม action, render ไม่ทำงาน
+// ════════════════════════════════════════════════════════════
+
+(function(){
+  if (window._spOrdersPatched) return;
+  window._spOrdersPatched = true;
+
+  const sb = () => window._sb;
+
+  // Filter state
+  let _curFilter = null; // null = all
+  let _allOrders = [];
+
+  // ── Helper: ดึง seller_id ──
+  async function getSid(){
+    if (window._sellerSellerId) return window._sellerSellerId;
+    if (window._sellerId) return window._sellerId;
+    try {
+      const { data: { user } } = await sb().auth.getUser();
+      if (!user) return null;
+      const { data: u } = await sb().from('users').select('id').eq('email', user.email).maybeSingle();
+      if (!u) return null;
+      const { data: s } = await sb().from('sellers').select('id').eq('owner_user_id', u.id).maybeSingle();
+      if (s) {
+        window._sellerSellerId = s.id;
+        return s.id;
+      }
+    } catch(e) { console.warn('getSid:', e); }
+    return null;
+  }
+
+  // ── Load orders จาก DB จริง ──
+  async function loadOrders(){
+    const sid = await getSid();
+    if (!sid) {
+      console.warn('[orders] no seller_id');
+      return [];
+    }
+    try {
+      // ใช้ RPC ถ้ามี (ก่อน fallback ไปใช้ select ตรง)
+      let data, error;
+      try {
+        const r = await sb().rpc('seller_recent_orders', {
+          p_seller_id: sid, p_status: null, p_limit: 200, p_offset: 0
+        });
+        if (!r.error) {
+          // map RPC fields เป็น format ที่ใช้กับตาราง
+          data = (r.data || []).map(o => ({
+            id: o.order_id,
+            order_code: o.order_code,
+            order_number: o.order_code,
+            status: o.status,
+            shipping_name: o.customer_name || o.customer_email,
+            total_amount: o.total_amount,
+            payment_method: '-',
+            created_at: o.created_at,
+            order_items: [{
+              name_th: o.first_product_name,
+              thumbnail: o.first_product_image,
+              quantity: o.items_count
+            }]
+          }));
+        } else error = r.error;
+      } catch(e) { error = e; }
+
+      // Fallback ถ้า RPC ใช้ไม่ได้
+      if (!data) {
+        const r = await sb()
+          .from('orders')
+          .select('id, order_code, order_number, status, total_amount, payment_method, shipping_name, tracking_number, created_at, order_items!inner(seller_id, name_th, product_name, thumbnail, product_image, quantity)')
+          .eq('order_items.seller_id', sid)
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (r.error) throw r.error;
+        data = (r.data || []).map(o => ({
+          ...o,
+          order_items: (o.order_items || []).map(i => ({
+            name_th: i.name_th || i.product_name,
+            thumbnail: i.thumbnail || i.product_image,
+            quantity: i.quantity
+          }))
+        }));
+      }
+
+      _allOrders = data || [];
+      return _allOrders;
+    } catch(e) {
+      console.error('[orders] load fail:', e);
+      return [];
+    }
+  }
+
+  // ── Status mapping ──
+  const STATUS_GROUPS = {
+    pending:    ['pending'],
+    processing: ['paid','confirmed','preparing','processing'],
+    shipped:    ['shipped'],
+    completed:  ['completed','delivered'],
+    cancelled:  ['cancelled','rejected','returned','refunded']
+  };
+
+  const STATUS_LABEL = {
+    pending: 'รอชำระ',
+    paid: 'ชำระแล้ว',
+    confirmed: 'ยืนยันแล้ว',
+    preparing: 'กำลังเตรียม',
+    processing: 'กำลังเตรียม',
+    shipped: 'จัดส่งแล้ว',
+    completed: 'สำเร็จ',
+    delivered: 'สำเร็จ',
+    cancelled: 'ยกเลิก',
+    rejected: 'ปฏิเสธ',
+    returned: 'คืน',
+    refunded: 'คืนเงิน'
+  };
+
+  const STATUS_COLOR = {
+    pending: ['#FEF3C7','#92400E'],
+    paid: ['#DBEAFE','#1E40AF'],
+    confirmed: ['#DBEAFE','#1E40AF'],
+    preparing: ['#FED7AA','#C2410C'],
+    processing: ['#FED7AA','#C2410C'],
+    shipped: ['#A7F3D0','#065F46'],
+    completed: ['#D1FAE5','#065F46'],
+    delivered: ['#D1FAE5','#065F46'],
+    cancelled: ['#FEE2E2','#991B1B'],
+    rejected: ['#FEE2E2','#991B1B'],
+    returned: ['#FEE2E2','#991B1B'],
+    refunded: ['#E5E5E5','#525252']
+  };
+
+  function fmt(s){return(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function fmtB(n){return'฿'+Number(n||0).toLocaleString('th-TH');}
+  function fmtDate(d){if(!d)return'-';const dt=new Date(d);return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'});}
+
+  // ── Filter orders ตาม tab ──
+  function filterOrders(){
+    if (!_curFilter) return _allOrders;
+    const statuses = STATUS_GROUPS[_curFilter] || [];
+    return _allOrders.filter(o => statuses.includes(o.status));
+  }
+
+  // ── Render orders ──
+  function render(){
+    const tbody = document.getElementById('orders-table');
+    if (!tbody) return;
+
+    const orders = filterOrders();
+    if (!orders.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:48px;color:#888"><div style="font-size:36px;margin-bottom:8px">🛒</div><div>ยังไม่มีคำสั่งซื้อ</div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = orders.map(o => {
+      const item = (o.order_items || [])[0] || {};
+      const sc = STATUS_COLOR[o.status] || ['#F5F5F5','#525252'];
+      const sl = STATUS_LABEL[o.status] || o.status || '-';
+
+      // ปุ่ม action ตาม status
+      let actions = `<button onclick="spOrderDetail('${o.id}')" style="background:none;border:1px solid #E5E5E5;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px">ดู</button>`;
+      if (o.status === 'pending') {
+        actions += ` <button onclick="spConfirmOrder('${o.id}')" style="background:#2563EB;color:#fff;border:none;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px;margin-left:4px">ยืนยัน</button>`;
+      } else if (['paid','confirmed'].includes(o.status)) {
+        actions += ` <button onclick="spPrepare('${o.id}')" style="background:#7C3AED;color:#fff;border:none;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px;margin-left:4px">📦 เตรียม</button>`;
+      } else if (['preparing','processing'].includes(o.status)) {
+        actions += ` <button onclick="spShipOrder('${o.id}')" style="background:#0891B2;color:#fff;border:none;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px;margin-left:4px">🚚 ส่ง</button>`;
+      } else if (o.status === 'shipped') {
+        actions += ` <button onclick="spMarkDelivered('${o.id}')" style="background:#10B981;color:#fff;border:none;padding:4px 10px;font-size:11px;cursor:pointer;border-radius:3px;margin-left:4px">✓ ส่งถึงแล้ว</button>`;
+      }
+
+      const code = o.order_code || o.order_number || (o.id||'').substring(0,8);
+
+      return `<tr style="border-bottom:1px solid #F2F2F2">
+        <td style="padding:10px 12px;font-family:monospace;font-size:11px;color:#E63329;font-weight:600">${fmt(code)}</td>
+        <td style="padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            ${item.thumbnail ? `<img src="${fmt(item.thumbnail)}" style="width:32px;height:32px;object-fit:cover;border:1px solid #E5E5E5;border-radius:3px" onerror="this.style.display='none'">` : '<div style="width:32px;height:32px;background:#F5F5F5;display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>'}
+            <span style="font-size:12px">${fmt((item.name_th || '').substring(0,30))}</span>
+          </div>
+        </td>
+        <td style="padding:10px 12px;font-size:12px">${fmt(o.shipping_name || '-')}</td>
+        <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(o.total_amount)}</td>
+        <td style="padding:10px 12px;font-size:11px;color:#888">${fmt(o.payment_method || '-')}</td>
+        <td style="padding:10px 12px"><span style="background:${sc[0]};color:${sc[1]};padding:3px 10px;font-size:11px;border-radius:12px;white-space:nowrap">${sl}</span></td>
+        <td style="padding:10px 12px;white-space:nowrap">${actions}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Update tab counts ──
+  function updateTabs(){
+    const counts = {
+      all: _allOrders.length,
+      pending: 0,
+      shipped: 0,
+      completed: 0,
+      cancelled: 0
+    };
+    _allOrders.forEach(o => {
+      Object.keys(STATUS_GROUPS).forEach(g => {
+        if (STATUS_GROUPS[g].includes(o.status)) counts[g] = (counts[g]||0) + 1;
+      });
+    });
+
+    const tabs = document.querySelectorAll('#page-orders .itab');
+    tabs.forEach(tab => {
+      const txt = tab.textContent.trim();
+      if (txt.startsWith('ทั้งหมด')) tab.textContent = `ทั้งหมด (${counts.all})`;
+      else if (txt.startsWith('รอดำเนินการ')) tab.textContent = `รอดำเนินการ (${counts.pending + counts.processing||0})`;
+      else if (txt.startsWith('จัดส่งแล้ว')) tab.textContent = `จัดส่งแล้ว (${counts.shipped})`;
+      else if (txt.startsWith('สำเร็จ')) tab.textContent = `สำเร็จ (${counts.completed})`;
+      else if (txt.startsWith('ยกเลิก')) tab.textContent = `ยกเลิก (${counts.cancelled})`;
+    });
+  }
+
+  // ── Action functions ──
+  window.spOrderDetail = function(id){
+    const o = _allOrders.find(x => x.id === id);
+    if (!o) return;
+    location.href = 'order-detail.html?id=' + id;
+  };
+
+  window.spConfirmOrder = async function(id){
+    if (!confirm('ยืนยันออเดอร์นี้?')) return;
+    try {
+      const { error } = await sb().from('orders').update({
+        status: 'confirmed', updated_at: new Date().toISOString()
+      }).eq('id', id);
+      if (error) throw error;
+      window.toast?.('✅ ยืนยันแล้ว', 'ok') || alert('✅ ยืนยันแล้ว');
+      await refresh();
+    } catch(e) { alert('❌ ' + e.message); }
+  };
+
+  window.spPrepare = async function(id){
+    if (!confirm('เปลี่ยนเป็น "กำลังเตรียมพัสดุ"?')) return;
+    try {
+      const { error } = await sb().from('orders').update({
+        status: 'preparing', updated_at: new Date().toISOString()
+      }).eq('id', id);
+      if (error) throw error;
+      window.toast?.('📦 เตรียมพัสดุแล้ว', 'ok') || alert('📦 เตรียมพัสดุแล้ว');
+      await refresh();
+    } catch(e) { alert('❌ ' + e.message); }
+  };
+
+  window.spShipOrder = async function(id){
+    const tracking = prompt('กรอกเลขพัสดุ (Tracking Number):');
+    if (!tracking || !tracking.trim()) return;
+    const carrier = prompt('ค่ายขนส่ง (kerry/flash/jnt/scg/thaipost/ninjavan/grab):', 'kerry');
+    if (!carrier) return;
+
+    // ลองใช้ RPC ก่อน
+    try {
+      const r = await sb().rpc('seller_ship_order', {
+        p_order_id: id,
+        p_courier_code: carrier.trim().toLowerCase(),
+        p_tracking_no: tracking.trim()
+      });
+      if (r.error) throw r.error;
+      window.toast?.('🚚 จัดส่งแล้ว', 'ok') || alert('🚚 จัดส่งสำเร็จ\nTracking: ' + tracking);
+      await refresh();
+    } catch(e) {
+      // Fallback ถ้า RPC ไม่มี
+      try {
+        const { error } = await sb().from('orders').update({
+          status: 'shipped',
+          tracking_number: tracking.trim(),
+          shipping_courier: carrier.trim().toLowerCase(),
+          shipped_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }).eq('id', id);
+        if (error) throw error;
+        window.toast?.('🚚 จัดส่งแล้ว', 'ok') || alert('🚚 จัดส่งสำเร็จ\nTracking: ' + tracking);
+        await refresh();
+      } catch(e2) { alert('❌ ' + e2.message); }
+    }
+  };
+
+  window.spMarkDelivered = async function(id){
+    if (!confirm('ยืนยันว่าพัสดุถึงมือลูกค้าแล้ว?')) return;
+    try {
+      const { error } = await sb().from('orders').update({
+        status: 'completed', // หรือ 'delivered'
+        delivered_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+      if (error) throw error;
+      window.toast?.('✅ สำเร็จ', 'ok') || alert('✅ ส่งถึงมือลูกค้าแล้ว');
+      await refresh();
+    } catch(e) { alert('❌ ' + e.message); }
+  };
+
+  // ── Tab switching ──
+  window.selITab = function(el){
+    document.querySelectorAll('#page-orders .itab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const txt = el.textContent.trim();
+    if (txt.startsWith('ทั้งหมด')) _curFilter = null;
+    else if (txt.startsWith('รอดำเนินการ')) _curFilter = 'pending'; // จะรวม pending+processing ในการ filter
+    else if (txt.startsWith('จัดส่งแล้ว')) _curFilter = 'shipped';
+    else if (txt.startsWith('สำเร็จ')) _curFilter = 'completed';
+    else if (txt.startsWith('ยกเลิก')) _curFilter = 'cancelled';
+    render();
+  };
+
+  // ── Override filter ใน selITab — "รอดำเนินการ" ต้องรวม pending + processing
+  const _origFilter = filterOrders;
+  function filterOrdersV2(){
+    if (!_curFilter) return _allOrders;
+    if (_curFilter === 'pending') {
+      const all = [...(STATUS_GROUPS.pending || []), ...(STATUS_GROUPS.processing || [])];
+      return _allOrders.filter(o => all.includes(o.status));
+    }
+    const statuses = STATUS_GROUPS[_curFilter] || [];
+    return _allOrders.filter(o => statuses.includes(o.status));
+  }
+  // เปลี่ยน reference (ใช้ใน render)
+  filterOrders = filterOrdersV2;
+
+  // ── Refresh (reload + re-render) ──
+  async function refresh(){
+    await loadOrders();
+    render();
+    updateTabs();
+  }
+
+  // ── Listen to "select dropdown" (ทุกสถานะ) ──
+  function bindDropdown(){
+    const sel = document.querySelector('#page-orders select.fi');
+    if (!sel) return;
+    if (sel._tmBound) return;
+    sel._tmBound = true;
+    sel.addEventListener('change', () => {
+      const val = sel.value;
+      // sync to tabs
+      const tabs = document.querySelectorAll('#page-orders .itab');
+      let targetTab = null;
+      if (val.includes('ทุก')) targetTab = tabs[0];
+      else if (val.includes('รอดำเนิน')) targetTab = tabs[1];
+      else if (val.includes('จัดส่ง')) targetTab = tabs[2];
+      else if (val.includes('สำเร็จ')) targetTab = tabs[3];
+      if (targetTab) window.selITab(targetTab);
+    });
+  }
+
+  // ── Export CSV ──
+  window.exportOrdersCSV = function(){
+    if (!_allOrders.length) { alert('ไม่มีข้อมูล'); return; }
+    const rows = [['Order Code','Customer','Total','Status','Created']];
+    _allOrders.forEach(o => {
+      rows.push([
+        o.order_code || o.order_number || o.id,
+        o.shipping_name || '',
+        o.total_amount,
+        o.status,
+        o.created_at
+      ]);
+    });
+    const csv = rows.map(r => r.map(c => `"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Initial load + interval refresh ──
+  let _initialized = false;
+
+  async function initOrdersPage(){
+    if (_initialized) return;
+    _initialized = true;
+    await refresh();
+    bindDropdown();
+  }
+
+  // เรียกเมื่อเข้า page-orders
+  const _origGoto = window.goto;
+  window.goto = function(page, el){
+    if (typeof _origGoto === 'function') _origGoto(page, el);
+    if (page === 'orders') {
+      setTimeout(() => {
+        _initialized = false; // re-init เพื่อ refresh
+        initOrdersPage();
+      }, 100);
+    }
+  };
+
+  // ถ้าเริ่มต้นที่หน้า orders เลย
+  setTimeout(() => {
+    const orderPage = document.getElementById('page-orders');
+    if (orderPage && orderPage.style.display !== 'none') {
+      initOrdersPage();
+    }
+  }, 1500);
+
+})();
+
+</script><!-- ========== Returns Fix Patch (2026.06.05) ========== -->
 <script>
 // ════════════════════════════════════════════════════════════
 // RETURNS FIX PATCH (2026.06.05)
