@@ -402,7 +402,81 @@ nav { display: block !important; height: auto !important; }
   .nav-top{padding:0 12px!important;gap:4px!important}
 }
 </style>
-  <link rel="stylesheet" href="mobile-nav-fix.css"> </head>
+  <link rel="stylesheet" href="mobile-nav-fix.css"> 
+<script>
+// ════════════════════════════════════════════════════════════
+// ADMIN GUARD — block non-admin จากเข้า admin-cms
+// ════════════════════════════════════════════════════════════
+(async function(){
+  if (window._adminGuardChecked) return;
+  window._adminGuardChecked = true;
+
+  if (typeof window.supabase === 'undefined') {
+    await new Promise(r => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.onload = r; s.onerror = r;
+      document.head.appendChild(s);
+    });
+  }
+
+  const sb = window.supabase.createClient(
+    'https://qmgyimsptzewwyafvjzk.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+  );
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      location.href = 'login.html?next=' + encodeURIComponent(location.pathname);
+      return;
+    }
+
+    const { data: u } = await sb.from('users')
+      .select('role')
+      .eq('email', session.user.email)
+      .maybeSingle();
+
+    const role = u?.role || 'buyer';
+    const isAdmin = role === 'admin' || role === 'super_admin';
+
+    if (!isAdmin) {
+      document.documentElement.innerHTML = `
+        <head><meta charset="UTF-8"><title>Access Denied</title>
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+          *{margin:0;padding:0;box-sizing:border-box}
+          body{font-family:'IBM Plex Sans Thai',sans-serif;background:#FAFAFA;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+          .card{background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:50px 40px;max-width:500px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.04)}
+          .icon{font-size:80px;margin-bottom:18px}
+          h1{font-size:24px;font-weight:700;color:#0A0A0A;margin-bottom:10px}
+          p{font-size:14px;color:#737373;line-height:1.6;margin-bottom:24px}
+          .btn{display:inline-block;padding:13px 28px;background:#E63329;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;margin:4px}
+          .btn:hover{background:#B5261F}
+          .btn-out{background:#fff;color:#404040;border:1px solid #E5E5E5}
+        </style></head>
+        <body>
+        <div class="card">
+          <div class="icon">⛔</div>
+          <h1>เฉพาะ Admin เท่านั้น</h1>
+          <p>หน้านี้สำหรับผู้ดูแลระบบเท่านั้น<br>คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p>
+          <a href="profile.html" class="btn">← กลับโปรไฟล์</a>
+          <a href="index.html" class="btn btn-out">หน้าแรก</a>
+        </div>
+        </body>
+      `;
+      throw new Error('ACCESS_DENIED');
+    }
+
+    console.log('[admin-guard] ✅ Access granted');
+  } catch(e) {
+    if (e.message === 'ACCESS_DENIED') throw e;
+    console.warn('[admin-guard]', e);
+  }
+})();
+</script>
+
+</head>
 <body>
 
 <!-- ══════════════════════════════════════════════════════ -->
