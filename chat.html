@@ -721,7 +721,7 @@ async function loadThreads() {
   LOG('loadThreads, role=', _userRole);
   let query = sb.from('chat_threads')
     .select('*')
-    .order('last_at', { ascending: false });
+    .order('last_message_at', { ascending: false });
 
   if (_userRole === 'seller') {
     if (!_mySellerIds.length) { _threads = []; renderThreads(); return; }
@@ -790,14 +790,14 @@ function renderThreads() {
     if (_userRole === 'seller') {
       const buyer = _userCache[t.buyer_id];
       displayName = (buyer && (buyer.display_name || buyer.email)) || 'ลูกค้า';
-      unread = t.unread_seller || 0;
+      unread = t.seller_unread_count || 0;
     } else {
       const seller = _sellerCache[t.seller_id];
       displayName = (seller && seller.shop_name) || 'ร้านค้า';
-      unread = t.unread_buyer || 0;
+      unread = t.buyer_unread_count || 0;
     }
-    const lastMsg = t.last_message || 'เริ่มสนทนา...';
-    const time = t.last_at ? fmtTime(t.last_at) : '';
+    const lastMsg = t.last_message_preview || 'เริ่มสนทนา...';
+    const time = t.last_message_at ? fmtTime(t.last_message_at) : '';
     const isActive = t.id === _activeThreadId;
     const ico = shopAvatar(displayName);
     const bg = shopBg(displayName);
@@ -905,8 +905,8 @@ async function openThread(threadId) {
   } catch(e) { ERR('mark_thread_read exception:', e); }
 
   // Reset unread badge in UI
-  if (_userRole === 'buyer') _activeThread.unread_buyer = 0;
-  else _activeThread.unread_seller = 0;
+  if (_userRole === 'buyer') _activeThread.buyer_unread_count = 0;
+  else _activeThread.seller_unread_count = 0;
   renderThreads();
 
   // Update URL
