@@ -2,1276 +2,309 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#0A0A0A">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thailand Market — เข้าสู่ระบบ</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style id="tm-base">
-:root{
-  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
-  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
-  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
-  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
-  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
-  /* legacy compat */
-  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
-  --bg:#FAFAFA;--white-off:#FAFAFA;
-  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
-  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
-  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
-  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
-  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
-  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
-  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
-  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
-  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
-  --sidebar:220px;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
-
-/* ── NAV ── */
-#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
-.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
-.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
-.tn-logo .dot{color:var(--red)}
-.tn-links{display:flex;flex:1;overflow:hidden}
-.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
-.tn-link:hover{color:var(--black)}
-.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
-.tn-search{position:relative;margin-left:auto}
-.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
-.tn-search input:focus{border-color:var(--black)}
-.tn-search input::placeholder{color:var(--g400)}
-.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
-.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
-.tn-btn:hover{color:var(--black)}
-.tn-btn.sell{color:var(--red)}
-.tn-ico{font-size:15px;position:relative;line-height:1}
-.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
-.tn-cats{border-top:var(--border)}
-.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
-.tn-cats-inner::-webkit-scrollbar{display:none}
-.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
-.tn-cat:hover{color:var(--black)}
-.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
-
-/* ── GLOBAL BUTTONS ── */
-.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
-.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
-.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
-.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
-.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
-.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
-
-/* old btn-primary / btn-secondary overrides */
-.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.btn-primary:hover{background:var(--g800)!important}
-.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
-
-/* legacy btn-cart / btn-buy → new style */
-.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
-.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
-.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
-.btn-buy:hover{background:var(--g800)!important}
-.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
-.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
-
-/* ── CARDS ── */
-.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
-.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
-
-/* ── SECTION ── */
-.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
-.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
-.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
-.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
-.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
-.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
-
-/* ── PRODUCT CARDS ── */
-.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
-.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
-.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
-.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
-.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
-.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
-.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
-.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
-.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
-.badge-hot{background:var(--black)!important;color:var(--white)!important}
-
-/* ── PRICE BOX ── */
-.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
-.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
-.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
-.flash-tag{background:var(--red)!important;border-radius:0!important}
-
-/* ── NAV OLD → NEW ── */
-.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
-.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
-.nav-search input{border:var(--border)!important;border-radius:0!important}
-.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
-.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
-.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
-.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
-.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
-.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
-.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
-
-/* ── FORMS ── */
-.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
-.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
-.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
-
-/* ── STATUS / BADGE ── */
-.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
-.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
-.status-badge,.badge{border-radius:0!important}
-
-/* ── TABLES ── */
-table{border-collapse:collapse}
-thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
-tbody td{border-bottom:var(--border)!important}
-tbody tr:hover td{background:var(--g50)!important}
-
-/* ── MODALS ── */
-.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
-.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
-.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
-
-/* ── SIDEBAR (seller) ── */
-.sidebar,.sb{background:var(--black)!important}
-.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
-.sni-badge{background:var(--red)!important}
-.sb-logo-mark{background:var(--red)!important}
-.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
-
-/* ── COLORS: strip all gradients/rounded corners ── */
-[style*="background:linear-gradient"]{background:var(--g50)!important}
-[style*="border-radius"]{border-radius:0!important}
-
-/* ── TOAST ── */
-.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
-.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
-@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-/* ── FOOTER ── */
-#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
-#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
-#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
-#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
-#tm-footer .tf-logo .dot{color:var(--red)}
-#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
-#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
-#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
-#tm-footer .tf-link:hover{color:var(--white)}
-#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
-
-/* ── RESPONSIVE ── */
-@media(max-width:768px){
-  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
-  .tn-links{display:none}
-  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
-}
-@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
-.ann{background:var(--black);color:var(--white);text-align:center;padding:8px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
-.ann-dot{color:var(--red);font-size:16px;line-height:0}
-.nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:999}
-.nav-top{max-width:var(--max);margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;gap:16px}
-.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);flex-shrink:0;margin-right:8px}
-.nav-logo .dot{color:var(--red)}
-.nav-links{display:flex;gap:0;align-items:center;overflow-x:auto;scrollbar-width:none;flex:1}
-.nav-links::-webkit-scrollbar{display:none}
-.nav-link{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:0 14px;height:56px;display:flex;align-items:center;white-space:nowrap;transition:color .15s;border-bottom:2px solid transparent}
-.nav-link:hover{color:var(--black)}
-.nav-link.hot{color:var(--red)}
-.nav-search{display:flex;align-items:center;border:var(--border);background:var(--g50);flex:1;max-width:360px;margin:0 8px}
-.nav-search input{flex:1;padding:8px 14px;border:none;background:none;font-size:13px;outline:none}
-.nav-search button{padding:8px 14px;background:var(--black);color:var(--white);border:none;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;transition:background .15s}
-.nav-search button:hover{background:var(--g800)}
-.nav-acts{display:flex;gap:0;flex-shrink:0}
-.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);border:none;background:none;transition:color .15s;position:relative;white-space:nowrap}
-.nav-btn:hover{color:var(--black)}
-.nav-btn.sell{color:var(--red)}
-.nav-btn-ico{font-size:16px;line-height:1}
-.nav-badge{position:absolute;top:4px;right:8px;background:var(--red);color:var(--white);font-size:8px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
-.nav-links{display:none}
-.nav-search{max-width:200px}
-.nav-btn.account-btn{position:relative}
-.account-dropdown{
-  position:absolute;top:calc(100% + 4px);right:0;
-  background:var(--white);border:1px solid var(--black);
-  min-width:200px;z-index:9999;
-  display:none;flex-direction:column;
-  box-shadow:0 4px 16px rgba(0,0,0,.12);
-}
-.account-dropdown.open{display:flex}
-.account-dropdown-header{
-  padding:14px 16px;border-bottom:1px solid var(--g200);
-  background:var(--g50);
-}
-.account-dropdown-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px}
-.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
-.account-dropdown-role{
-  display:inline-block;margin-top:5px;
-  padding:2px 8px;font-family:var(--mono);font-size:9px;
-  letter-spacing:.06em;text-transform:uppercase;
-  background:var(--black);color:var(--white);
-}
-.account-dropdown-role.admin{background:var(--red)}
-.account-dropdown-role.seller{background:#2563EB}
-.dropdown-item{
-  display:flex;align-items:center;gap:10px;
-  padding:11px 16px;font-size:13px;color:var(--g600);
-  cursor:pointer;transition:all .12s;text-decoration:none;border:none;
-  background:none;font-family:var(--font);width:100%;text-align:left;
-}
-.dropdown-item:hover{background:var(--g50);color:var(--black)}
-.dropdown-item.logout{color:var(--red);border-top:1px solid var(--g200)}
-.dropdown-item.logout:hover{background:#FFF5F5}
-.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
-.nav-avatar{
-  width:24px;height:24px;border-radius:50%;
-  background:var(--black);color:var(--white);
-  font-size:11px;font-weight:600;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-.account-dropdown{position:absolute;top:calc(100%+4px);right:0;background:#fff;border:1px solid var(--black);min-width:200px;z-index:9999;display:none;flex-direction:column;box-shadow:0 4px 16px rgba(0,0,0,.12)}
-.account-dropdown.open{display:flex}
-.account-dropdown-header{padding:14px 16px;border-bottom:var(--border);background:var(--g50)}
-.account-dropdown-name{font-size:13px;font-weight:600;margin-bottom:2px}
-.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400)}
-.account-dropdown-role{display:inline-block;margin-top:5px;padding:2px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:var(--black);color:#fff}
-.account-dropdown-role.admin{background:var(--red)}.account-dropdown-role.seller{background:#2563EB}
-.dropdown-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:var(--g600);cursor:pointer;transition:all .12s;text-decoration:none;border:none;background:none;font-family:var(--font);width:100%;text-align:left}
-.dropdown-item:hover{background:var(--g50);color:var(--black)}
-.dropdown-item.logout{color:var(--red);border-top:var(--border)}.dropdown-item.logout:hover{background:#FFF5F5}
-.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
-@keyframes tIn{from{transform:translateX(8px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-
-/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
-.ann {
-  width: 100% !important;
-  min-width: 100% !important;
-  flex-shrink: 0 !important;
-  flex-direction: row !important;
-}
-nav, .nav {
-  width: 100% !important;
-  min-width: 100% !important;
-  flex-shrink: 0 !important;
-  display: block !important;
-}
-body > .ann, body > nav {
-  position: relative !important;
-}
-
-
-/* ── GLOBAL NAV FIX ── */
-body { display: block !important; }
-.ann {
-  width: 100% !important; min-width: 100% !important;
-  height: auto !important; max-height: 60px !important;
-  display: flex !important; flex-direction: row !important;
-  flex-shrink: 0 !important;
-}
-nav, .nav { 
-  width: 100% !important; display: block !important;
-  height: auto !important; flex-shrink: 0 !important;
-}
-
-</style>
-<style id="page-css">
-
-:root{--primary:#0A0A0A;--accent:#E63329;--accent2:#D4D4D4;--teal:#404040;--gold:#F2F2F2;--bg:#FFFFFF;--white:#fff;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;--r8:8px;--r12:12px;--r16:16px}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;display:flex;align-items:stretch;margin:0;padding:0}
-/* ── fix nav overlap ── */
-#tm-nav{display:none!important}
-.tn-top{display:none!important}
-/* ── login wrapper ── */
-.login-wrap{display:flex;width:100%;min-height:100vh}
-.left{width:460px;min-width:380px;flex-shrink:0}
-.right{flex:1;min-width:320px}
-@media(max-width:800px){.login-wrap{flex-direction:column}.left{display:none!important}.right{padding:28px 20px;width:100%}}
-.left{width:48%;background:var(--primary);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:44px 52px}
-.bg-shape{position:absolute;inset:0;pointer-events:none}
-.bs{position:absolute;border-radius:50%}
-.left-content{position:relative}
-.brand{display:flex;align-items:center;gap:12px;margin-bottom:56px}
-.brand-logo{font-family:'DM Sans',sans-serif;font-weight:900;font-size:26px;color:#fff}
-.brand-logo span{color:var(--accent)}
-.eyebrow{font-size:11px;color:var(--accent2);letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:16px}
-.hero-txt{font-family:'DM Sans',sans-serif;font-size:38px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:18px}
-.hero-txt em{color:var(--gold);font-style:normal}
-.hero-sub{font-size:15px;color:rgba(255,255,255,0.5);line-height:1.7;max-width:340px}
-.features{display:flex;flex-direction:column;gap:16px;margin-top:36px}
-.feat{display:flex;align-items:flex-start;gap:14px}
-.feat-ico{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.feat-t{font-size:13px;font-weight:600;color:rgba(255,255,255,0.85)}
-.feat-s{font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px}
-.left-bottom{position:relative}
-.stats{display:flex;gap:32px}
-.stat-v{font-family:'DM Sans',sans-serif;font-size:24px;font-weight:800;color:#fff}
-.stat-l{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px}
-.right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 60px;background:#fff}
-.form-box{width:100%;max-width:420px}
-.tab-bar{display:flex;background:var(--g100);border-radius:4px;padding:4px;margin-bottom:30px}
-.tab{flex:1;text-align:center;padding:10px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--g500);border:none;background:none;font-family:'DM Sans',sans-serif}
-.tab.active{background:#fff;color:var(--g900);box-shadow:0 1px 4px rgba(0,0,0,0.1)}
-.form-title{font-family:'DM Sans',sans-serif;font-weight:800;font-size:26px;color:var(--g900);margin-bottom:6px}
-.form-sub{font-size:13px;color:var(--g500);margin-bottom:26px;line-height:1.6}
-.success-bar{background:#D1FAE5;border:1px solid #6EE7B7;border-radius:2px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;gap:10px;font-size:13px;color:#065F46;font-weight:500}
-.success-bar.show{display:flex}
+<title>เข้าสู่ระบบ — Thailand Market</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=DM+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--accent:#E63329;--g100:#F5F5F5;--g200:#E5E5E5;--g400:#A3A3A3;--g500:#737373;--g700:#404040;--mono:'DM Mono',monospace}
+body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;color:#0A0A0A;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border:1px solid var(--g200);border-radius:8px;padding:40px;max-width:420px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,.04)}
+.logo{font-family:'Inter';font-weight:800;font-size:24px;text-align:center;margin-bottom:8px}
+.logo .dot{color:var(--accent)}
+.subtitle{text-align:center;font-size:13px;color:var(--g500);margin-bottom:28px}
 .fg{margin-bottom:14px}
-.fl{display:block;font-size:12px;color:var(--g700);font-weight:600;margin-bottom:5px}
-.fi{width:100%;padding:11px 14px;border:1.5px solid var(--g200);border-radius:2px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--g900);outline:none;transition:all 0.2s}
-.fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(230,57,70,0.08)}
-.fi.err{border-color:var(--accent)}
-.fi-wrap{position:relative}
-.fi-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--g400)}
-.fi-pad{padding-left:40px}
-.fi-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:14px;color:var(--g400);background:none;border:none;padding:4px}
-.err-msg{font-size:11px;color:var(--accent);margin-top:4px;display:none}
-.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.role-card{border:1.5px solid var(--g200);border-radius:4px;padding:14px 12px;cursor:pointer;text-align:center;transition:all 0.2s}
-.role-card:hover{border-color:var(--g400)}
-.role-card.sel{border-color:var(--accent);background:#FFF5F5}
-.role-ico{font-size:26px;margin-bottom:6px}
-.role-nm{font-size:13px;font-weight:700;color:var(--g900)}
-.role-ds{font-size:11px;color:var(--g500);margin-top:2px}
-.strength-bar{display:flex;gap:4px;margin-top:5px}
-.sb-seg{flex:1;height:3px;background:var(--g200);border-radius:2px;transition:background 0.3s}
-.strength-txt{font-size:11px;margin-top:4px}
-.divider{display:flex;align-items:center;gap:12px;margin:18px 0}
-.div-line{flex:1;height:1px;background:var(--g200)}
-.div-txt{font-size:12px;color:var(--g400)}
-.social-btn{width:100%;padding:11px;border:1.5px solid var(--g200);border-radius:2px;background:#fff;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--g700);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s;margin-bottom:8px}
-.social-btn:hover{background:var(--g100);border-color:var(--g400)}
-.btn-main{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px}
-.btn-main:hover{background:#B5261F;transform:translateY(-1px)}
-.remember-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.chk-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--g700)}
-.chk-wrap input{accent-color:var(--accent);cursor:pointer}
-.forgot{font-size:13px;color:var(--accent);font-weight:600;cursor:pointer}
-.forgot:hover{opacity:0.8}
-.bottom-note{text-align:center;margin-top:18px;font-size:13px;color:var(--g500)}
-.bottom-note a{color:var(--accent);font-weight:700;cursor:pointer}
-.toast-wrap{position:fixed;top:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:999}
-.toast-item{background:var(--primary);color:#fff;padding:12px 18px;border-radius:4px;font-size:13px;animation:tIn 0.3s ease;display:flex;align-items:center;gap:8px}
-@keyframes tIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
-@media(max-width:800px){.left{display:none}.right{padding:28px 20px}}
+.lbl{font-size:11px;color:var(--g700);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block}
+.inp{width:100%;padding:11px 14px;border:1px solid var(--g200);border-radius:4px;font-family:inherit;font-size:14px;background:#fff}
+.inp:focus{outline:none;border-color:#0A0A0A}
+.btn{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:4px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px}
+.btn:hover{background:#B5261F}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-out{background:#fff;color:var(--g700);border:1px solid var(--g200)}
+.foot{text-align:center;margin-top:20px;font-size:13px;color:var(--g500)}
+.foot a{color:var(--accent);text-decoration:none;font-weight:500}
+.err{font-size:11px;color:var(--accent);margin-top:8px;text-align:center;display:none}
+.err.on{display:block}
+.divider{text-align:center;color:var(--g400);font-size:11px;margin:18px 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--g200)}
+.divider::before{left:0}
+.divider::after{right:0}
+.fpass{text-align:right;margin-top:6px}
+.fpass a{font-size:12px;color:var(--g500);text-decoration:none}
+.fpass a:hover{color:var(--accent)}
 
+/* 2FA step */
+.step{display:none}
+.step.on{display:block}
+.otp-box{display:flex;gap:8px;justify-content:center;margin:24px 0}
+.otp-inp{width:48px;height:56px;text-align:center;font-size:22px;font-family:var(--mono);font-weight:700;border:2px solid var(--g200);border-radius:6px;background:#fff}
+.otp-inp:focus{outline:none;border-color:var(--accent);background:#FEF2F2}
+.mfa-icon{font-size:50px;text-align:center;margin-bottom:14px}
+.mfa-info{text-align:center;font-size:13px;color:var(--g500);margin-bottom:6px}
 </style>
-<style id="tm-responsive">
-/* ── Mobile fixes ── */
-@media(max-width:768px){
-  .tn-links{display:none!important}
-  .tn-srch{display:none!important}
-  /* hamburger hint */
-  .tn-top{padding:0 16px}
-  .tn-logo{margin-right:auto}
-  /* sidebar pages on mobile */
-  .app{flex-direction:column}
-  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
-  .sb-logo,.sb-user{flex-basis:100%}
-  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
-  .sb-lbl{display:none}
-  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
-  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
-  .sb-foot{display:none}
-  .main{margin-left:0!important}
-  /* layout grids */
-  .layout{grid-template-columns:1fr!important}
-  .form-row{grid-template-columns:1fr!important}
-  /* tables */
-  table{font-size:12px}
-  td,th{padding:8px 10px!important}
-  /* stat grids */
-  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  [style*="grid-template-columns:repeat(3"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* hero */
-  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
-  .hero-right{display:none}
-  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
-  /* product grids */
-  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* footer */
-  #tm-footer .tf-grid{grid-template-columns:1fr!important}
-  /* wrap padding */
-  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
-}
-@media(max-width:480px){
-  .hero-h1{font-size:36px!important}
-  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
-  .hero-stat-row{grid-template-columns:1fr 1fr}
-}
-/* ── Print friendly ── */
-@media print{
-  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
-  body{font-size:12px}
-}
-/* ── Focus / accessibility ── */
-a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
-  outline:2px solid #0A0A0A;outline-offset:2px
-}
-/* ── Smooth image loading ── */
-img{max-width:100%;height:auto}
-/* ── Selection color ── */
-::selection{background:#0A0A0A;color:#fff}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script>
-window.TM_SB_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
-window.TM_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
-window._sb = supabase.createClient(window.TM_SB_URL, window.TM_SB_KEY);
-</script>
-  <link rel="stylesheet" href="mobile-nav-fix.css">
+</head>
 <body>
-<!-- ── ANNOUNCEMENT ── -->
-<div class="ann">
-  <span><span class="ann-dot">·</span> ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500</span>
-  <span><span class="ann-dot">·</span> Flash Sale ทุกวัน 10:00 / 14:00 / 20:00</span>
-  <span><span class="ann-dot">·</span> รับคูปองใหม่ทุกวัน</span>
-</div>
+<div class="card">
+<div class="logo">Thailand<span class="dot">.</span>Market</div>
+<div class="subtitle" id="subtitle">เข้าสู่ระบบ</div>
 
-
-<!-- ── NAVIGATION ── -->
-<nav class="nav" style="position:relative">
-  <div class="nav-top">
-    <a href="index.html" class="nav-logo">Thailand<span class="dot">.</span>Market</a>
-    <div class="nav-links" id="nav-links">
-      <a href="flash-sale.html" class="nav-link hot">⚡ Flash Sale</a>
-      <a href="live-shopping.html" class="nav-link">🔴 Live</a>
-      <a href="brand-day.html" class="nav-link">Brand Day</a>
-      <a href="coupon-hub.html" class="nav-link">Coupon</a>
-      <a href="loyalty-catalog.html" class="nav-link">Loyalty</a>
-      <a href="subscription.html" class="nav-link">TM Plus</a>
-      <a href="b2b-portal.html" class="nav-link">B2B</a>
-    </div>
-    <div class="nav-search">
-      <input type="text" id="search-inp" placeholder="ค้นหาสินค้า แบรนด์ หรือร้านค้า..." onkeydown="if(event.key==='Enter')doSearch()">
-      <button onclick="doSearch()">ค้นหา</button>
-    </div>
-    <div class="nav-acts">
-      <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
-      <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
-      <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
-        <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
-      </button>
-      <div style="position:relative">
-      <button class="nav-btn account-btn" id="account-nav-btn" style="flex-direction:column;gap:2px;padding:6px 12px">
-        <span class="nav-btn-ico" id="account-ico">👤</span>
-        <span class="nav-btn-lbl" style="font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500)">Account</span>
-      </button>
-      <!-- Dropdown -->
-      <div class="account-dropdown" id="account-dropdown">
-        <div class="account-dropdown-header">
-          <div class="account-dropdown-name" id="dd-name">กำลังโหลด...</div>
-          <div class="account-dropdown-email" id="dd-email"></div>
-          <span class="account-dropdown-role" id="dd-role">Member</span>
-        </div>
-        <a href="profile.html" class="dropdown-item">
-          <span class="dropdown-item-ico">👤</span>โปรไฟล์ของฉัน
-        </a>
-        <a href="order-history.html" class="dropdown-item">
-          <span class="dropdown-item-ico">📦</span>คำสั่งซื้อ
-        </a>
-        <a href="wishlist.html" class="dropdown-item">
-          <span class="dropdown-item-ico">❤️</span>รายการโปรด
-        </a>
-        <a href="coupon-hub.html" class="dropdown-item">
-          <span class="dropdown-item-ico">🎟️</span>คูปองของฉัน
-        </a>
-        <a href="seller-portal.html" class="dropdown-item" id="dd-seller" style="display:none">
-          <span class="dropdown-item-ico">🏪</span>Seller Portal
-        </a>
-        <a href="admin-cms.html" class="dropdown-item" id="dd-admin" style="display:none;background:var(--g50)">
-          <span class="dropdown-item-ico">⚙️</span>Admin CMS
-        </a>
-        <button class="dropdown-item logout" id="dd-logout">
-          <span class="dropdown-item-ico">🚪</span>ออกจากระบบ
-        </button>
-      </div>
-    </div>
-      <button class="nav-btn sell" onclick="location.href='seller-portal.html'"><span class="nav-btn-ico">🏪</span>Sell</button>
-    </div>
-  </div></nav>
-
-
-
-
-
-
-
-
-
-<div class="login-wrap"><div class="left">
-  <div class="bg-shape">
-    <div class="bs" style="width:500px;height:500px;background:rgba(230,57,70,0.06);top:-150px;right:-150px"></div>
-    <div class="bs" style="width:300px;height:300px;background:rgba(46,196,182,0.06);bottom:50px;left:-80px"></div>
-    <div class="bs" style="width:150px;height:150px;background:rgba(255,209,102,0.08);top:200px;right:80px"></div>
+<!-- STEP 1: Login -->
+<div class="step on" id="step-login">
+  <div class="fg"><label class="lbl">อีเมล</label>
+    <input class="inp" id="email" type="email" placeholder="your@email.com" autocomplete="username">
   </div>
-  <div class="left-content">
-    <div class="brand"><div class="brand-logo">Thailand <span>Market</span></div></div>
-    <div class="eyebrow">Thailand's #1 General Marketplace</div>
-    <div class="hero-txt">ช้อปครบ<br><em>ทุกอย่าง</em><br>ในที่เดียว</div>
-    <div class="hero-sub">Marketplace ที่รวบรวมสินค้าทุกหมวดหมู่ กว่า 500,000 รายการ จากร้านค้าที่ผ่านการยืนยัน</div>
-    <div class="features">
-      <div class="feat"><div class="feat-ico">⚡</div><div><div class="feat-t">Flash Sale ทุกวัน 3 รอบ</div><div class="feat-s">ลดสูงสุด 80% · จำกัดเวลา</div></div></div>
-      <div class="feat"><div class="feat-ico">🎟️</div><div><div class="feat-t">Coupon Wallet & Loyalty Points</div><div class="feat-s">สะสมแต้ม แลกของรางวัล</div></div></div>
-      <div class="feat"><div class="feat-ico">🚚</div><div><div class="feat-t">ส่งฟรี · Same-day ได้</div><div class="feat-s">Kerry, Flash, SCG ครอบคลุมทั่วไทย</div></div></div>
-      <div class="feat"><div class="feat-ico">💳</div><div><div class="feat-t">ผ่อน 0% สูงสุด 12 เดือน</div><div class="feat-s">ทุกธนาคารชั้นนำในไทย</div></div></div>
-    </div>
+  <div class="fg"><label class="lbl">รหัสผ่าน</label>
+    <input class="inp" id="pwd" type="password" placeholder="••••••••" autocomplete="current-password">
+    <div class="fpass"><a href="forgot-password.html">ลืมรหัสผ่าน?</a></div>
   </div>
-  <div class="left-bottom">
-    <div class="stats">
-      <div><div class="stat-v">500K+</div><div class="stat-l">สินค้า</div></div>
-      <div><div class="stat-v">50K+</div><div class="stat-l">ร้านค้า</div></div>
-      <div><div class="stat-v">2M+</div><div class="stat-l">ลูกค้า</div></div>
-      <div><div class="stat-v">4.9⭐</div><div class="stat-l">คะแนน</div></div>
-    </div>
+
+  <button class="btn" id="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
+
+  <div class="err" id="err-login"></div>
+
+  <div class="divider">หรือ</div>
+
+  <button class="btn btn-out" onclick="loginWithOtp()">📧 รับ OTP ทางอีเมล (ไม่ใช้รหัสผ่าน)</button>
+
+  <div class="foot">
+    ยังไม่มีบัญชี? <a href="signup.html">สมัครสมาชิก</a>
   </div>
 </div>
-<div class="right">
-  <div class="form-box">
-    <div class="tab-bar">
-      <button class="tab active" id="tab-login" onclick="switchTab('login')">เข้าสู่ระบบ</button>
-      <button class="tab" id="tab-register" onclick="switchTab('register')">สมัครสมาชิก</button>
-    </div>
-    <div class="success-bar" id="success-bar"><span>✅</span><span id="success-msg">สำเร็จ!</span></div>
 
-    <!-- LOGIN -->
-    <div id="frm-login">
-      <div class="form-title">ยินดีต้อนรับ 👋</div>
-      <div class="form-sub">เข้าสู่ระบบเพื่อช้อปและจัดการบัญชี</div>
-      <div class="fg">
-        <label class="fl">อีเมล หรือ เบอร์โทรศัพท์</label>
-        <div class="fi-wrap"><span class="fi-icon">📧</span><input class="fi fi-pad" id="l-email" placeholder="กรอกอีเมลหรือเบอร์โทร" oninput="clearE('l-email')"></div>
-        <div class="err-msg" id="e-l-email">กรุณากรอกอีเมลหรือเบอร์โทร</div>
-      </div>
-      <div class="fg">
-        <label class="fl">รหัสผ่าน</label>
-        <div class="fi-wrap"><span class="fi-icon">🔑</span><input class="fi fi-pad" type="password" id="l-pass" placeholder="รหัสผ่าน" oninput="clearE('l-pass')"><button class="fi-eye" onclick="togglePw('l-pass',this)">👁️</button></div>
-        <div class="err-msg" id="e-l-pass">กรุณากรอกรหัสผ่าน</div>
-      </div>
-      <div class="remember-row">
-        <label class="chk-wrap"><input type="checkbox" id="remember"> จดจำฉันไว้</label>
-        <span class="forgot" onclick="doForgotPassword()"><a href="forgot-password.html" style="color:var(--black)">ลืมรหัสผ่าน</a>?</span>
-      </div>
-      <button class="btn-main" onclick="doLogin()">🔐 เข้าสู่ระบบ</button>
-      <div class="divider"><div class="div-line"></div><div class="div-txt">หรือ</div><div class="div-line"></div></div>
-      <button class="social-btn" onclick="doLoginGoogle()"><span style="font-size:18px">🌐</span>เข้าสู่ระบบด้วย Google</button>
-      <button class="social-btn" onclick="doLoginLine()"><span style="font-size:18px;color:#00B900">💬</span>เข้าสู่ระบบด้วย LINE</button>
-      <div class="bottom-note">ยังไม่มีบัญชี? <a onclick="switchTab('register')">สมัครฟรีเลย →</a></div>
-    </div>
+<!-- STEP 2: 2FA Challenge -->
+<div class="step" id="step-2fa">
+  <div class="mfa-icon">🛡️</div>
+  <div class="mfa-info" style="font-weight:600;color:#0A0A0A;font-size:14px;margin-bottom:4px">ยืนยันตัวตน 2 ขั้น</div>
+  <div class="mfa-info">เปิดแอป Authenticator แล้วใส่รหัส 6 หลัก</div>
 
-    <!-- REGISTER -->
-    <div id="frm-register" style="display:none">
-      <div class="form-title">สร้างบัญชีใหม่ 🎉</div>
-      <div class="form-sub">เลือกประเภทบัญชีที่ต้องการ</div>
-      <div class="role-grid">
-        <div class="role-card sel" id="role-buyer" onclick="selRole('buyer')"><div class="role-ico">🛒</div><div class="role-nm">ผู้ซื้อ</div><div class="role-ds">ซื้อสินค้าทุกหมวด</div></div>
-        <div class="role-card" id="role-seller" onclick="selRole('seller')"><div class="role-ico">🏪</div><div class="role-nm">ผู้ขาย</div><div class="role-ds">เปิดร้านและขายสินค้า</div></div>
-      </div>
-      <div class="fg-row">
-        <div class="fg"><label class="fl">ชื่อ</label><input class="fi" id="r-fname" placeholder="สมชาย" oninput="clearE('r-fname')"><div class="err-msg" id="e-r-fname">กรุณากรอกชื่อ</div></div>
-        <div class="fg"><label class="fl">นามสกุล</label><input class="fi" id="r-lname" placeholder="ใจดี" oninput="clearE('r-lname')"><div class="err-msg" id="e-r-lname">กรุณากรอกนามสกุล</div></div>
-      </div>
-      <div class="fg"><label class="fl">อีเมล</label><div class="fi-wrap"><span class="fi-icon">📧</span><input class="fi fi-pad" type="email" id="r-email" placeholder="email@example.com" oninput="clearE('r-email')"></div><div class="err-msg" id="e-r-email">กรุณากรอกอีเมลให้ถูกต้อง</div></div>
-      <div class="fg"><label class="fl">เบอร์โทรศัพท์</label><div class="fi-wrap"><span class="fi-icon">📱</span><input class="fi fi-pad" type="tel" id="r-tel" placeholder="08X-XXX-XXXX" oninput="clearE('r-tel')"></div><div class="err-msg" id="e-r-tel">กรุณากรอกเบอร์โทร</div></div>
-      <div id="seller-fields" style="display:none">
-        <div class="fg"><label class="fl">ชื่อร้านค้า</label><div class="fi-wrap"><span class="fi-icon">🏪</span><input class="fi fi-pad" id="r-shop" placeholder="ชื่อร้านของคุณ"></div></div>
-        <div class="fg"><label class="fl">หมวดหมู่หลัก</label><select class="fi" id="r-cat"><option>เลือกหมวดหมู่...</option><option>Home & Furniture</option><option>แฟชั่น</option><option>Beauty & Health</option><option>FMCG & อาหาร</option><option>Tech & Gadgets</option><option>ยานยนต์</option><option>สัตว์เลี้ยง</option><option>การศึกษา</option></select></div>
-      </div>
-      <div class="fg"><label class="fl">รหัสผ่าน</label><div class="fi-wrap"><span class="fi-icon">🔑</span><input class="fi fi-pad" type="password" id="r-pass" placeholder="อย่างน้อย 8 ตัวอักษร" oninput="checkStr(this.value);clearE('r-pass')"><button class="fi-eye" onclick="togglePw('r-pass',this)">👁️</button></div>
-        <div class="strength-bar"><div class="sb-seg" id="s1"></div><div class="sb-seg" id="s2"></div><div class="sb-seg" id="s3"></div><div class="sb-seg" id="s4"></div></div>
-        <div class="strength-txt" id="str-txt" style="color:var(--g400)">ความปลอดภัยของรหัสผ่าน</div>
-        <div class="err-msg" id="e-r-pass">รหัสผ่านต้องมีอย่างน้อย 8 ตัว</div>
-      </div>
-      <div class="fg"><label class="fl">ยืนยันรหัสผ่าน</label><div class="fi-wrap"><span class="fi-icon">🔐</span><input class="fi fi-pad" type="password" id="r-pass2" placeholder="กรอกซ้ำอีกครั้ง" oninput="clearE('r-pass2')"><button class="fi-eye" onclick="togglePw('r-pass2',this)">👁️</button></div><div class="err-msg" id="e-r-pass2">รหัสผ่านไม่ตรงกัน</div></div>
-      <div class="fg" style="margin-bottom:18px"><label class="chk-wrap"><input type="checkbox" id="agree"> ยอมรับ <a style="color:var(--accent);font-weight:600">ข้อกำหนดการใช้งาน</a> และ <a style="color:var(--accent);font-weight:600">นโยบายความเป็นส่วนตัว</a></label></div>
-      <button class="btn-main" onclick="doRegister()">✨ สมัครสมาชิกฟรี</button>
-      <div class="divider"><div class="div-line"></div><div class="div-txt">หรือ</div><div class="div-line"></div></div>
-      <button class="social-btn" onclick="doLoginGoogle()"><span style="font-size:18px">🌐</span>สมัครด้วย Google</button>
-      <div class="bottom-note">มีบัญชีแล้ว? <a onclick="switchTab('login')">เข้าสู่ระบบ →</a></div>
-    </div>
+  <div class="otp-box">
+    <input class="otp-inp" maxlength="1" id="mfa-1" inputmode="numeric" oninput="mfaInput(this,1)">
+    <input class="otp-inp" maxlength="1" id="mfa-2" inputmode="numeric" oninput="mfaInput(this,2)">
+    <input class="otp-inp" maxlength="1" id="mfa-3" inputmode="numeric" oninput="mfaInput(this,3)">
+    <input class="otp-inp" maxlength="1" id="mfa-4" inputmode="numeric" oninput="mfaInput(this,4)">
+    <input class="otp-inp" maxlength="1" id="mfa-5" inputmode="numeric" oninput="mfaInput(this,5)">
+    <input class="otp-inp" maxlength="1" id="mfa-6" inputmode="numeric" oninput="mfaInput(this,6)">
+  </div>
+
+  <button class="btn" id="btn-verify-mfa" onclick="verifyMFA()">ยืนยัน</button>
+
+  <div class="err" id="err-mfa"></div>
+
+  <div class="foot" style="margin-top:24px">
+    <a onclick="cancelMFA()" style="cursor:pointer">← เปลี่ยนบัญชี</a>
   </div>
 </div>
-<div class="toast-wrap" id="tw"></div>
+
+<!-- STEP 3: OTP Login -->
+<div class="step" id="step-otp-login">
+  <div class="mfa-icon">📧</div>
+  <div class="mfa-info" style="font-weight:600;color:#0A0A0A;font-size:14px;margin-bottom:4px">ส่ง OTP ทางอีเมลแล้ว</div>
+  <div class="mfa-info">ใส่รหัส 6 หลักที่ได้รับ</div>
+  <div class="mfa-info" style="font-family:var(--mono);font-weight:600;color:#0A0A0A" id="otp-login-email"></div>
+
+  <div class="otp-box">
+    <input class="otp-inp" maxlength="1" id="ol-1" inputmode="numeric" oninput="olInput(this,1)">
+    <input class="otp-inp" maxlength="1" id="ol-2" inputmode="numeric" oninput="olInput(this,2)">
+    <input class="otp-inp" maxlength="1" id="ol-3" inputmode="numeric" oninput="olInput(this,3)">
+    <input class="otp-inp" maxlength="1" id="ol-4" inputmode="numeric" oninput="olInput(this,4)">
+    <input class="otp-inp" maxlength="1" id="ol-5" inputmode="numeric" oninput="olInput(this,5)">
+    <input class="otp-inp" maxlength="1" id="ol-6" inputmode="numeric" oninput="olInput(this,6)">
+  </div>
+
+  <button class="btn" onclick="verifyOtpLogin()">เข้าสู่ระบบ</button>
+
+  <div class="err" id="err-otp-login"></div>
+
+  <div class="foot" style="margin-top:24px">
+    <a onclick="goLoginStep()" style="cursor:pointer">← กลับ</a>
+  </div>
+</div>
+</div>
+
 <script>
-// ── Supabase client ────────────────────────────────────────
-const sb = window._sb;
-let curRole = 'buyer';
+const _sb = window.supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'PLACEHOLDER_ANON_KEY');
+let _factorId = null, _challengeId = null, _otpEmail = '';
 
-// ── Tab switch ─────────────────────────────────────────────
-function switchTab(t) {
-  const isL = t === 'login';
-  document.getElementById('tab-login').classList.toggle('active', isL);
-  document.getElementById('tab-register').classList.toggle('active', !isL);
-  document.getElementById('frm-login').style.display = isL ? 'block' : 'none';
-  document.getElementById('frm-register').style.display = isL ? 'none' : 'block';
-  document.getElementById('success-bar').classList.remove('show');
+function showErr(id, msg, ok){
+  const el = document.getElementById('err-'+id);
+  if (el) { el.textContent = msg; el.classList.add('on'); el.style.color = ok ? '#10B981' : '#E63329'; }
+}
+function clearErr(id){document.getElementById('err-'+id)?.classList.remove('on');}
+
+function goStep(id){
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('on'));
+  document.getElementById('step-'+id).classList.add('on');
 }
 
-function selRole(r) {
-  curRole = r;
-  document.getElementById('role-buyer').classList.toggle('sel', r === 'buyer');
-  document.getElementById('role-seller').classList.toggle('sel', r === 'seller');
-  const sf = document.getElementById('seller-fields');
-  if (sf) sf.style.display = r === 'seller' ? 'block' : 'none';
-}
+function goLoginStep(){goStep('login');}
 
-function togglePw(id, btn) {
-  const i = document.getElementById(id);
-  i.type = i.type === 'password' ? 'text' : 'password';
-  btn.textContent = i.type === 'password' ? '👁️' : '🙈';
-}
+// ── Password login ──
+async function doLogin(){
+  clearErr('login');
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const pwd = document.getElementById('pwd').value;
+  if (!email || !pwd) { showErr('login', '⚠️ กรุณากรอกอีเมลและรหัสผ่าน'); return; }
 
-function clearE(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove('err');
-  const e = document.getElementById('e-' + id);
-  if (e) e.style.display = 'none';
-}
-
-function showE(id, msg) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('err');
-  const e = document.getElementById('e-' + id);
-  if (e) { e.textContent = msg || e.textContent; e.style.display = 'block'; }
-  return false;
-}
-
-function checkStr(pw) {
-  const s = [
-    document.getElementById('s1'), document.getElementById('s2'),
-    document.getElementById('s3'), document.getElementById('s4')
-  ];
-  const t = document.getElementById('str-txt');
-  if (!s[0]) return;
-  let sc = 0;
-  if (pw.length >= 8) sc++;
-  if (/[A-Z]/.test(pw)) sc++;
-  if (/[0-9]/.test(pw)) sc++;
-  if (/[^A-Za-z0-9]/.test(pw)) sc++;
-  const cls = ['#E63329','#D4D4D4','#2563EB','#16A34A'];
-  const lbl = ['อ่อนมาก','ปานกลาง','ดี','แข็งแกร่ง'];
-  s.forEach((seg, i) => { if (seg) seg.style.background = i < sc ? cls[sc - 1] : 'var(--g200)'; });
-  if (t && sc > 0) { t.textContent = 'ความปลอดภัย: ' + lbl[sc - 1]; t.style.color = cls[sc - 1]; }
-}
-
-// ── LOGIN (Supabase Auth) ──────────────────────────────────
-async function doLogin() {
-  const email = document.getElementById('l-email').value.trim();
-  const pass  = document.getElementById('l-pass').value;
-  let ok = true;
-  if (!email) ok = showE('l-email', 'กรุณากรอก Email หรือเบอร์โทร');
-  if (!pass)  ok = showE('l-pass', 'กรุณากรอกรหัสผ่าน');
-  if (!ok) return;
-
-  const btn = document.querySelector('#frm-login .btn-main');
-  if (btn) { btn.textContent = '🔐 กำลังเข้าสู่ระบบ...'; btn.disabled = true; }
-
-  try {
-    // ── 1. Supabase Auth ─────────────────────────────────────────────
-    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-    if (error) {
-      if (error.message.includes('Email not confirmed')) {
-        // Supabase confirm ยังไม่ผ่าน → แสดงหน้ายืนยัน email
-        showVerifyEmailScreen(email, email.split('@')[0], true);
-        return;
-      }
-      throw error;
-    }
-
-    // ── 2. ดึง user profile ─────────────────────────────────────────
-    const { data: userRow } = await sb.from('users')
-      .select('id,role,display_name,is_active,seller_id')
-      .or(`id.eq.${data.user.id},email.eq.${email}`)
-      .maybeSingle();
-
-    const role = userRow?.role || 'user';
-    const name = userRow?.display_name || email.split('@')[0];
-
-    // ── 3. ตรวจ is_active ─────────────────────────────────────────
-    if (userRow?.is_active === false) {
-      // ยังไม่ยืนยัน email → แสดงหน้ายืนยัน
-      await sb.auth.signOut();
-      showVerifyEmailScreen(email, name, role !== 'seller');
-      return;
-    }
-
-    localStorage.setItem('tm_user_email', email);
-    localStorage.setItem('tm_user_id', data.user.id);
-    localStorage.setItem('tm_user_role', role);
-    localStorage.setItem('tm_user_name', name);
-
-    toast('✅ ยินดีต้อนรับ คุณ' + name + '!');
-
-    // ── 4. Redirect ตาม role ────────────────────────────────────────
-    const redirect = new URLSearchParams(location.search).get('from') || 'index.html';
-    setTimeout(() => {
-      if      (role === 'admin')  location.href = 'admin-cms.html';
-      else if (role === 'seller') location.href = 'seller-portal.html';
-      else                        location.href = redirect;
-    }, 800);
-
-  } catch (err) {
-    const msg = err.message || '';
-    if (msg.includes('Invalid login') || msg.includes('invalid_credentials')) {
-      showE('l-pass', 'Email หรือรหัสผ่านไม่ถูกต้อง');
-    } else if (msg.includes('Email not confirmed')) {
-      const email2 = document.getElementById('l-email').value.trim();
-      showVerifyEmailScreen(email2, email2.split('@')[0], true);
-    } else if (msg.includes('Too many requests')) {
-      showE('l-email', 'ลองใหม่อีกครั้งในอีกสักครู่');
-    } else {
-      toast('❌ ' + msg, 'error');
-    }
-    if (btn) { btn.textContent = 'เข้าสู่ระบบ'; btn.disabled = false; }
-  }
-}
-
-// ── Google OAuth ────────────────────────────────────────────────────────
-async function doLoginGoogle() {
-  try {
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: location.origin + '/login.html?verified=1',
-        queryParams: { access_type:'offline', prompt:'consent' },
-      }
-    });
-    if (error) throw error;
-    // Supabase จะ redirect ไป Google และกลับมาที่ redirectTo อัตโนมัติ
-  } catch(e) {
-    toast('❌ Google Login: ' + e.message, 'error');
-  }
-}
-
-// ── LINE OAuth (placeholder — ต้องตั้งค่า LINE provider ใน Supabase) ───
-async function doLoginLine() {
-  try {
-    // LINE ต้องเปิดใช้งานใน Supabase Dashboard ก่อน
-    // Auth → Providers → LINE → เปิด + ใส่ Channel ID & Secret
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'line',
-      options: { redirectTo: location.origin + '/login.html?verified=1' }
-    });
-    if (error) throw error;
-  } catch(e) {
-    // LINE ยังไม่ได้ตั้งค่า → แจ้ง
-    if (e.message.includes('provider') || e.message.includes('not enabled')) {
-      toast('⚠️ LINE Login ยังไม่ได้เปิดใช้งาน กรุณา Login ด้วย Email แทน');
-    } else {
-      toast('❌ LINE Login: ' + e.message, 'error');
-    }
-  }
-}
-
-
-// ── REGISTER
-// ── REGISTER (Supabase Auth) ───────────────────────────────
-async function doRegister() {
-  const fname = document.getElementById('r-fname').value.trim();
-  const lname = document.getElementById('r-lname').value.trim();
-  const email = document.getElementById('r-email').value.trim();
-  const tel   = document.getElementById('r-tel')?.value?.trim() || '';
-  const pass  = document.getElementById('r-pass').value;
-  const pass2 = document.getElementById('r-pass2').value;
-  const agree = document.getElementById('agree')?.checked;
-
-  let ok = true;
-  if (!fname) ok = showE('r-fname', 'กรุณากรอกชื่อ');
-  if (!lname) ok = showE('r-lname', 'กรุณากรอกนามสกุล');
-  if (!email || !/\S+@\S+\.\S+/.test(email)) ok = showE('r-email', 'Email ไม่ถูกต้อง');
-  if (pass.length < 8) ok = showE('r-pass', 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
-  if (pass !== pass2)  ok = showE('r-pass2', 'รหัสผ่านไม่ตรงกัน');
-  if (!agree) { toast('⚠️ กรุณายอมรับข้อกำหนดการใช้งาน'); ok = false; }
-  if (!ok) return;
-
-  const btn = document.querySelector('#frm-register .btn-main');
-  btn.textContent = '✨ กำลังสร้างบัญชี...';
+  const btn = document.getElementById('btn-login');
   btn.disabled = true;
+  btn.textContent = '⏳ กำลังเข้าสู่ระบบ...';
 
   try {
-    const displayName = `${fname} ${lname}`;
+    const { data, error } = await _sb.auth.signInWithPassword({ email, password: pwd });
+    if (error) throw error;
 
-    // ── สมัครสมาชิก (ผู้ซื้อ): ไม่ต้องยืนยัน Email ──────────
-    const isBuyer = (curRole === 'buyer' || curRole === 'user' || !curRole);
+    // ตรวจว่ามี 2FA factor ไหม
+    const { data: factors } = await _sb.auth.mfa.listFactors();
+    const verified = (factors?.totp || []).filter(f => f.status === 'verified');
 
-    const { data, error } = await sb.auth.signUp({
+    if (verified.length > 0) {
+      // ต้อง verify 2FA
+      _factorId = verified[0].id;
+      const { data: ch, error: chErr } = await _sb.auth.mfa.challenge({ factorId: _factorId });
+      if (chErr) throw chErr;
+      _challengeId = ch.id;
+      goStep('2fa');
+      setTimeout(() => document.getElementById('mfa-1').focus(), 200);
+    } else {
+      // เข้าได้เลย
+      redirectAfterLogin();
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'เข้าสู่ระบบ';
+    showErr('login', '❌ ' + (e.message.includes('Invalid') ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' : e.message));
+  }
+}
+
+// ── 2FA verify ──
+function mfaInput(el, idx){
+  el.value = el.value.replace(/\D/g, '');
+  if (el.value && idx < 6) document.getElementById('mfa-' + (idx+1)).focus();
+  if (idx === 6 && el.value) setTimeout(verifyMFA, 100);
+}
+
+async function verifyMFA(){
+  clearErr('mfa');
+  const code = [1,2,3,4,5,6].map(i => document.getElementById('mfa-'+i).value).join('');
+  if (code.length !== 6) { showErr('mfa', '⚠️ กรอก 6 หลักให้ครบ'); return; }
+
+  const btn = document.getElementById('btn-verify-mfa');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังยืนยัน...';
+
+  try {
+    const { error } = await _sb.auth.mfa.verify({
+      factorId: _factorId,
+      challengeId: _challengeId,
+      code: code
+    });
+    if (error) throw error;
+    redirectAfterLogin();
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'ยืนยัน';
+    showErr('mfa', '❌ รหัสไม่ถูกต้อง');
+    [1,2,3,4,5,6].forEach(i => document.getElementById('mfa-'+i).value='');
+    document.getElementById('mfa-1').focus();
+  }
+}
+
+function cancelMFA(){
+  _sb.auth.signOut();
+  goStep('login');
+}
+
+// ── Login via OTP (no password) ──
+async function loginWithOtp(){
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  if (!email.match(/^\S+@\S+\.\S+$/)) { showErr('login', '⚠️ กรอกอีเมลก่อน'); return; }
+
+  try {
+    const { error } = await _sb.auth.signInWithOtp({
       email,
-      password: pass,
-      options: {
-        data: { display_name: displayName, role: curRole || 'user' },
-        // ไม่ redirect ไป email confirm สำหรับ buyer
-        emailRedirectTo: isBuyer ? null : `${location.origin}/login.html`,
-      }
+      options: { shouldCreateUser: false }  // ไม่สร้าง user ใหม่ ต้องสมัครก่อน
     });
     if (error) throw error;
-
-    // ── บันทึกลง users table ทันที (active=true ไม่รอยืนยัน) ───────
-    if (data.user) {
-      await sb.from('users').upsert({
-        id:           data.user.id,
-        email:        email,
-        display_name: displayName,
-        role:         isBuyer ? 'user' : (curRole || 'user'),
-        is_active:    true,          // ← buyer ผ่านเลย ไม่รอ confirm
-        loyalty_pts:  0,
-        created_at:   new Date().toISOString(),
-        updated_at:   new Date().toISOString(),
-      }, { onConflict: 'email', ignoreDuplicates: false });
-
-    // ── 3. ถ้าเป็น Seller → สร้าง sellers record รอ Admin อนุมัติ ─────
-    if (!isBuyer && data.user) {
-      await sb.from('sellers').upsert({
-        user_id:    data.user.id,
-        shop_name:  displayName + ' Shop',
-        status:     'pending',
-        email:      email,
-        phone:      tel || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id', ignoreDuplicates: true });
-    }
-    }
-
-    if (isBuyer) {
-      // ── Buyer: auto-login ทันที ────────────────────────────
-      // Supabase อาจ return session ทันที (ถ้า email confirm ปิดใน dashboard)
-      // ถ้าไม่มี session → ลอง signIn ต่อ
-      let session = data.session;
-      if (!session) {
-        const loginRes = await sb.auth.signInWithPassword({ email, password: pass });
-        session = loginRes.data?.session;
-      }
-
-      if (session) {
-        // Login สำเร็จ → redirect ทันที
-        toast('✅ ยินดีต้อนรับ คุณ' + fname + '! 🎉');
-        const redirect = new URLSearchParams(location.search).get('from') || 'index.html';
-        setTimeout(() => { location.href = redirect; }, 800);
-      } else {
-        // Supabase บังคับ confirm อยู่ → แจ้งให้ตรวจ email
-        switchTab('login');
-        const bar = document.getElementById('success-bar');
-        const msg = document.getElementById('success-msg');
-        if (bar && msg) {
-          msg.textContent = 'สมัครสมาชิกสำเร็จ! คุณ' + fname + ' กรุณายืนยัน Email ก่อนเข้าใช้งาน 📧';
-          bar.classList.add('show');
-        }
-        toast('📧 กรุณาตรวจสอบ Email เพื่อยืนยันบัญชี');
-      }
-    } else {
-      // ── Seller: แจ้งรอ Admin อนุมัติ ───────────────────────
-      switchTab('login');
-      const bar = document.getElementById('success-bar');
-      const msg = document.getElementById('success-msg');
-      if (bar && msg) {
-        msg.textContent = 'สมัครเป็น Seller สำเร็จ! คุณ' + fname + ' ทีม Admin จะตรวจสอบและแจ้งผลภายใน 24 ชั่วโมง 🏪';
-        bar.classList.add('show');
-      }
-      toast('✅ สมัคร Seller สำเร็จ รอ Admin อนุมัติ');
-    }
-
-  } catch (err) {
-    const msg = (err.message || '').toLowerCase();
-
-    if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already registered')) {
-      showE('r-email', 'Email นี้มีบัญชีอยู่แล้ว กรุณา Login');
-    } else if (msg.includes('password should be') || msg.includes('password')) {
-      showE('r-pass', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
-    } else if (msg.includes('rate limit') || msg.includes('email rate limit') || msg.includes('too many') || msg.includes('over_email_send_rate_limit')) {
-      // Supabase จำกัด email ต่อชั่วโมง (Free plan: 3/hour)
-      showRateLimitMessage();
-    } else if (msg.includes('invalid email') || msg.includes('unable to validate')) {
-      showE('r-email', 'รูปแบบ Email ไม่ถูกต้อง');
-    } else if (msg.includes('network') || msg.includes('fetch')) {
-      toast('❌ ไม่สามารถเชื่อมต่อได้ กรุณาตรวจสอบอินเทอร์เน็ต');
-    } else {
-      toast('❌ ' + (err.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่'));
-    }
-    btn.textContent = 'สมัครสมาชิก';
-    btn.disabled = false;
-  }
-}
-
-// ── FORGOT PASSWORD ────────────────────────────────────────
-async function doForgotPassword() {
-  const email = document.getElementById('l-email').value.trim();
-  if (!email) { showE('l-email', 'กรุณากรอก Email ก่อน'); return; }
-  try {
-    await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: location.origin + '/login.html'
-    });
-    toast('📧 ส่ง Email รีเซ็ตรหัสผ่านแล้ว กรุณาตรวจสอบ inbox');
-  } catch(e) { toast('❌ ' + e.message); }
-}
-
-
-
-// ════════════════════════════════════════════════════════════════════════
-//  EMAIL VERIFICATION FLOW
-// ════════════════════════════════════════════════════════════════════════
-
-function showVerifyEmailScreen(email, fname, isBuyer) {
-  const existing = document.getElementById('verify-email-screen');
-  if (existing) existing.remove();
-  const screen = document.createElement('div');
-  screen.id = 'verify-email-screen';
-  screen.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
-  screen.innerHTML = `
-    <div style="max-width:480px;width:100%;text-align:center">
-      <div style="width:80px;height:80px;background:#FEF3C7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px">&#128231;</div>
-      <h2 style="font-size:24px;font-weight:700;margin-bottom:8px;font-family:var(--font,inherit)">ยืนยัน Email ของคุณ</h2>
-      <p style="font-size:14px;color:#737373;line-height:1.7;margin-bottom:24px">
-        เราส่ง Email ยืนยันไปที่<br>
-        <strong style="color:#0A0A0A">${email}</strong><br>
-        กรุณากดลิงก์ใน Email เพื่อเปิดใช้งานบัญชี
-      </p>
-      <div style="background:#F9FAFB;border:1px solid #E5E5E5;padding:20px;text-align:left;margin-bottom:24px;border-radius:2px">
-        <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">ขั้นตอน</div>
-        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
-          <div style="width:22px;height:22px;background:#0A0A0A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">1</div>
-          <span style="font-size:13px;line-height:1.5">เปิด Email inbox ของคุณ</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
-          <div style="width:22px;height:22px;background:#0A0A0A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">2</div>
-          <span style="font-size:13px;line-height:1.5">ค้นหา Email จาก <strong>Thailand Market</strong></span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
-          <div style="width:22px;height:22px;background:#0A0A0A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">3</div>
-          <span style="font-size:13px;line-height:1.5">กดปุ่ม <strong>"ยืนยันบัญชี"</strong> ในอีเมล</span>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:12px">
-          <div style="width:22px;height:22px;background:#0A0A0A;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">4</div>
-          <span style="font-size:13px;line-height:1.5">กลับมา Login และเริ่มช้อปปิ้งได้เลย</span>
-        </div>
-      </div>
-      ${!isBuyer ? `
-      <div style="background:#FEF3C7;border:1px solid #F59E0B;padding:14px;margin-bottom:20px;text-align:left;border-radius:2px">
-        <div style="font-size:13px;font-weight:600;color:#D97706;margin-bottom:4px">&#127978; สำหรับผู้ขาย</div>
-        <div style="font-size:12px;color:#92400E;line-height:1.6">หลังยืนยัน Email แล้ว ทีม Admin จะตรวจสอบและอนุมัติร้านค้าภายใน 24 ชั่วโมง</div>
-      </div>` : ''}
-      <button id="resend-btn" onclick="resendVerifyEmail('${email}')"
-        style="width:100%;padding:13px;background:#E63329;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:all .15s">
-        &#128228; ส่ง Email ยืนยันอีกครั้ง
-      </button>
-      <button onclick="backToLogin()"
-        style="width:100%;padding:12px;background:none;border:1px solid #E5E5E5;font-size:13px;cursor:pointer;font-family:inherit;color:#737373">
-        &#8592; กลับไปหน้า Login
-      </button>
-      <div id="resend-msg" style="margin-top:12px;font-size:12px;min-height:18px"></div>
-      <div style="margin-top:20px;font-size:12px;color:#A3A3A3;line-height:1.7">
-        ไม่เจอ Email? ตรวจกล่อง Spam / Junk<br>หรือตรวจว่ากรอก Email ถูกต้อง
-      </div>
-    </div>
-  `;
-  document.body.appendChild(screen);
-}
-
-async function resendVerifyEmail(email) {
-  const btn = document.getElementById('resend-btn');
-  const msg = document.getElementById('resend-msg');
-  if (!btn) return;
-  btn.disabled = true;
-  btn.textContent = 'กำลังส่ง...';
-  try {
-    const { error } = await sb.auth.resend({
-      type: 'signup',
-      email: email,
-      options: { emailRedirectTo: location.origin + '/login.html?verified=1' }
-    });
-    if (error) throw error;
-    if (msg) { msg.textContent = 'ส่ง Email ยืนยันแล้ว กรุณาตรวจสอบ inbox'; msg.style.color = '#16A34A'; }
-    let cd = 60;
-    btn.textContent = 'รอ ' + cd + ' วิ';
-    const timer = setInterval(() => {
-      cd--;
-      btn.textContent = 'รอ ' + cd + ' วิ';
-      if (cd <= 0) {
-        clearInterval(timer);
-        btn.textContent = 'ส่ง Email ยืนยันอีกครั้ง';
-        btn.disabled = false;
-        if (msg) msg.textContent = '';
-      }
-    }, 1000);
+    _otpEmail = email;
+    document.getElementById('otp-login-email').textContent = email;
+    goStep('otp-login');
+    setTimeout(() => document.getElementById('ol-1').focus(), 200);
   } catch(e) {
-    if (msg) { msg.textContent = (e.message.includes('rate') ? 'ส่งบ่อยเกินไป รอสักครู่' : e.message); msg.style.color = '#E63329'; }
-    btn.textContent = 'ส่ง Email ยืนยันอีกครั้ง';
-    btn.disabled = false;
+    showErr('login', '❌ ' + e.message);
   }
 }
 
-function backToLogin() {
-  const el = document.getElementById('verify-email-screen');
-  if (el) el.remove();
-  if (typeof switchTab === 'function') switchTab('login');
-  const btn = document.querySelector('#frm-register .btn-main');
-  if (btn) { btn.textContent = 'สมัครสมาชิก'; btn.disabled = false; }
+function olInput(el, idx){
+  el.value = el.value.replace(/\D/g, '');
+  if (el.value && idx < 6) document.getElementById('ol-' + (idx+1)).focus();
+  if (idx === 6 && el.value) setTimeout(verifyOtpLogin, 100);
 }
 
-function showVerifiedSuccess(user) {
-  const screen = document.createElement('div');
-  screen.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
-  screen.innerHTML = `
-    <div style="max-width:440px;width:100%;text-align:center">
-      <div style="width:80px;height:80px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 24px">&#9989;</div>
-      <h2 style="font-size:24px;font-weight:700;margin-bottom:8px;font-family:var(--font,inherit)">ยืนยัน Email สำเร็จ!</h2>
-      <p style="font-size:14px;color:#737373;line-height:1.7;margin-bottom:28px">
-        บัญชีของคุณพร้อมใช้งานแล้ว<br>
-        <strong style="color:#0A0A0A">${user.email || ''}</strong>
-      </p>
-      <div style="background:#DCFCE7;border:1px solid #86EFAC;padding:14px;margin-bottom:24px;font-size:13px;color:#166534;line-height:1.6">
-        &#127881; ยินดีต้อนรับสู่ Thailand Market!<br>
-        คุณสามารถเริ่มช้อปปิ้งได้ทันที
-      </div>
-      <button onclick="location.href='index.html'"
-        style="width:100%;padding:13px;background:#E63329;color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">
-        เริ่มช้อปปิ้งเลย &#8594;
-      </button>
-      <button onclick="document.querySelector('[id*=login-screen],[id*=login]')?.style.setProperty('display','block');this.parentElement.parentElement.remove()"
-        style="width:100%;padding:12px;background:none;border:1px solid #E5E5E5;font-size:13px;cursor:pointer;font-family:inherit;color:#737373">
-        Login เข้าสู่ระบบ
-      </button>
-    </div>
-  `;
-  document.body.appendChild(screen);
+async function verifyOtpLogin(){
+  clearErr('otp-login');
+  const otp = [1,2,3,4,5,6].map(i => document.getElementById('ol-'+i).value).join('');
+  if (otp.length !== 6) { showErr('otp-login', '⚠️ กรอก 6 หลักให้ครบ'); return; }
+
+  try {
+    const { error } = await _sb.auth.verifyOtp({
+      email: _otpEmail,
+      token: otp,
+      type: 'email'
+    });
+    if (error) throw error;
+    redirectAfterLogin();
+  } catch(e) {
+    showErr('otp-login', '❌ OTP ไม่ถูกต้องหรือหมดอายุ');
+    [1,2,3,4,5,6].forEach(i => document.getElementById('ol-'+i).value='');
+    document.getElementById('ol-1').focus();
+  }
 }
 
-
-// ── Auto-redirect ถ้า login อยู่แล้ว ──────────────────────
-
-// ── Rate Limit Handler ─────────────────────────────────────────────────
-function showRateLimitMessage() {
-  // ซ่อน form และแสดงข้อความ rate limit สวยงาม
-  const existing = document.getElementById('rate-limit-screen');
-  if (existing) existing.remove();
-
-  const screen = document.createElement('div');
-  screen.id = 'rate-limit-screen';
-  screen.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,10,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)';
-  screen.innerHTML = `
-    <div style="background:#fff;max-width:440px;width:100%;padding:36px;text-align:center;position:relative">
-      <button onclick="document.getElementById('rate-limit-screen').remove()"
-        style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1">✕</button>
-
-      <div style="font-size:52px;margin-bottom:16px">📧</div>
-      <h3 style="font-size:18px;font-weight:700;margin-bottom:10px;color:#0A0A0A">ส่ง Email ได้เกินกำหนด</h3>
-      <p style="font-size:13px;color:#737373;line-height:1.7;margin-bottom:20px">
-        ระบบจำกัดการส่ง Email ยืนยันบัญชีเพื่อป้องกัน spam<br>
-        กรุณารอ <strong style="color:#E63329">1 ชั่วโมง</strong> แล้วลองสมัครใหม่
-      </p>
-
-      <div style="background:#FEF3C7;border:1px solid #F59E0B;padding:14px;text-align:left;margin-bottom:20px">
-        <div style="font-size:12px;font-weight:600;color:#D97706;margin-bottom:8px">💡 วิธีแก้ปัญหา</div>
-        <div style="font-size:12px;color:#92400E;line-height:1.7">
-          • ถ้าสมัครไปแล้ว — ตรวจกล่อง Email (รวม Spam)<br>
-          • ถ้ายังไม่ได้รับ — รอ 1 ชั่วโมงแล้วลองใหม่<br>
-          • หรือใช้ Google Login แทนการสมัครด้วย Email
-        </div>
-      </div>
-
-      <button onclick="doLoginGoogle();document.getElementById('rate-limit-screen').remove()"
-        style="width:100%;padding:12px;background:#4285F4;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit">
-        🌐 เข้าสู่ระบบด้วย Google แทน
-      </button>
-      <button onclick="document.getElementById('rate-limit-screen').remove()"
-        style="width:100%;padding:12px;background:none;border:1px solid #E5E5E5;font-size:13px;cursor:pointer;font-family:inherit;color:#737373">
-        ปิด
-      </button>
-    </div>
-  `;
-  document.body.appendChild(screen);
-}
-
-async function checkSession() {
-  const params   = new URLSearchParams(location.search);
-  const hashP    = new URLSearchParams(location.hash.replace('#',''));
-
-  // ── OAuth / email-verify callback (Supabase ส่ง token กลับมา) ─────
-  const accessToken = hashP.get('access_token') || params.get('access_token');
-  if (accessToken) {
-    const refreshToken = hashP.get('refresh_token') || params.get('refresh_token') || '';
-    const { data, error } = await sb.auth.setSession({ access_token:accessToken, refresh_token:refreshToken });
-    if (!error && data.session) {
-      // อัปเดต is_active = TRUE (ยืนยัน email แล้ว)
-      await sb.from('users').update({
-        is_active: true,
-        email_verified_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq('id', data.session.user.id);
-      showVerifiedSuccess(data.session.user);
-      return;
+// ── Handle backspace ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Backspace' && e.target.classList?.contains('otp-inp')) {
+    if (!e.target.value) {
+      const parts = e.target.id.split('-');
+      const idx = parseInt(parts[1]);
+      const prefix = parts[0];
+      if (idx > 1) document.getElementById(prefix + '-' + (idx-1)).focus();
     }
   }
+});
 
-  // ── verified=1 query (redirect หลัง email confirm) ────────────────
-  if (params.get('verified') === '1') {
-    const { data:{ session } } = await sb.auth.getSession();
-    if (session) {
-      await sb.from('users').update({
-        is_active: true,
-        email_verified_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq('id', session.user.id);
-      showVerifiedSuccess(session.user);
-      return;
-    }
-  }
-
-  // ── Login อยู่แล้ว → redirect ─────────────────────────────────────
-  const { data:{ session } } = await sb.auth.getSession();
-  if (session) {
-    const { data: userRow } = await sb.from('users')
-      .select('role,is_active,display_name')
-      .eq('id', session.user.id).maybeSingle();
-
-    // ยังไม่ยืนยัน email → แสดงหน้ารอ
-    if (userRow?.is_active === false) {
-      showVerifyEmailScreen(session.user.email, userRow?.display_name || session.user.email.split('@')[0], userRow?.role !== 'seller');
-      return;
-    }
-
-    const role = userRow?.role || localStorage.getItem('tm_user_role') || 'user';
-    const redirect = params.get('from') || 'index.html';
-    if      (role === 'admin')  location.href = 'admin-cms.html';
-    else if (role === 'seller') location.href = 'seller-portal.html';
-    else                        location.href = redirect;
-  }
-}
-checkSession();
-
-// ── Toast ──────────────────────────────────────────────────
-function toast(msg) {
-  const w = document.getElementById('tw') || document.getElementById('tmToastWrap');
-  if (!w) return;
-  const t = document.createElement('div');
-  t.className = 'toast-item';
-  t.textContent = msg;
-  w.appendChild(t);
-  setTimeout(() => t.remove(), 4000);
-}
-</script>
-
-
-
-
-
-<div class="tm-toast-wrap" id="tmToastWrap"></div></div>
-<script>
-function tmToast(msg){
-  var w=document.getElementById('tmToastWrap');
-  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
-  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
-  w.appendChild(t);setTimeout(function(){t.remove()},2600);
-}
-</script>
-<footer id="tm-footer">
-  <div class="tf-inner">
-    <div class="tf-grid">
-      <div>
-        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
-        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
-      </div>
-      <div>
-        <div class="tf-title">ช้อปปิ้ง</div>
-        <a href="index.html" class="tf-link">หน้าแรก</a>
-        <a href="category.html" class="tf-link">หมวดหมู่</a>
-        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
-        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
-        <a href="brand-day.html" class="tf-link">Brand Day</a>
-        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
-      </div>
-      <div>
-        <div class="tf-title">บัญชีของฉัน</div>
-        <a href="profile.html" class="tf-link">โปรไฟล์</a>
-        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
-        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
-        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
-        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
-        <a href="returns.html" class="tf-link">คืนสินค้า</a>
-      </div>
-      <div>
-        <div class="tf-title">ผู้ขาย</div>
-        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
-        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
-        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
-        <a href="seller-analytics.html" class="tf-link">Analytics</a>
-        <a href="b2b-portal.html" class="tf-link">B2B</a>
-        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
-      </div>
-      <div>
-        <div class="tf-title">ช่วยเหลือ</div>
-        <a href="help-center.html" class="tf-link">Help Center</a>
-        <a href="chat.html" class="tf-link">แชทกับเรา</a>
-        <a href="subscription.html" class="tf-link">TM Plus</a>
-        <a href="gift-card.html" class="tf-link">Gift Card</a>
-        <a href="sitemap.html" class="tf-link">Site Map</a>
-        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
-      </div>
-    </div>
-    <div class="tf-bottom">
-      <span>© 2026 Thailand Market · All rights reserved</span>
-      <span>TH · EN · 🔒 SSL · PCI DSS</span>
-    </div>
-  </div>
-</footer>
-<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
-<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
-<script>
-// ── Account Nav (shared) ─────────────────────────────────
-(async function initAccountNav() {
-  const sb  = (window._sb) || supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
-  window._sb = sb;
-  const btn  = document.getElementById('account-nav-btn');
-  const drop = document.getElementById('account-dropdown');
-  if (!btn || !drop) return;
-  const { data:{ session } } = await sb.auth.getSession();
-  if (!session) {
-    btn.onclick = () => location.href='login.html?from='+encodeURIComponent(location.pathname);
-    return;
-  }
-  const email = session.user.email;
-  const { data:user } = await sb.from('users').select('display_name,role,avatar_url').eq('email',email).maybeSingle();
-  const name = user?.display_name || email.split('@')[0];
-  const role = user?.role || 'buyer';
-  const ini  = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-  const ico = document.getElementById('account-ico');
-  const lbl = document.getElementById('account-lbl');
-  if (ico) ico.innerHTML = `<div style="width:22px;height:22px;border-radius:50%;background:var(--black);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">${ini}</div>`;
-  if (lbl) lbl.textContent = name.split(' ')[0];
-  ['dd-name','dd-email'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=id==='dd-name'?name:email; });
-  const dr=document.getElementById('dd-role');
-  if(dr){ dr.textContent=role==='admin'?'Admin':role==='seller'?'Seller':'Member'; dr.className='account-dropdown-role '+role; }
-  const da=document.getElementById('dd-admin'); if(da) da.style.display=role==='admin'?'flex':'none';
-  const ds=document.getElementById('dd-seller'); if(ds) ds.style.display=(role==='seller'||role==='admin')?'flex':'none';
-  btn.onclick=e=>{ e.stopPropagation(); drop.classList.toggle('open'); };
-  document.addEventListener('click',()=>drop.classList.remove('open'));
-  document.getElementById('dd-logout')?.addEventListener('click',async()=>{
-    await sb.auth.signOut();
-    location.href='index.html';
+// ── Enter to submit ──
+['email','pwd'].forEach(id => {
+  document.getElementById(id)?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
   });
+});
+
+function redirectAfterLogin(){
+  const next = new URLSearchParams(location.search).get('next') || 'index.html';
+  location.href = next;
+}
+
+// ── ถ้า login อยู่แล้ว ตรวจ AAL2 ──
+(async () => {
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) return;
+
+  const { data: aalData } = await _sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aalData?.currentLevel === 'aal1' && aalData?.nextLevel === 'aal2') {
+    // ต้อง verify 2FA
+    const { data: factors } = await _sb.auth.mfa.listFactors();
+    const verified = (factors?.totp || []).filter(f => f.status === 'verified');
+    if (verified.length > 0) {
+      _factorId = verified[0].id;
+      const { data: ch } = await _sb.auth.mfa.challenge({ factorId: _factorId });
+      _challengeId = ch.id;
+      goStep('2fa');
+      setTimeout(() => document.getElementById('mfa-1').focus(), 200);
+      return;
+    }
+  }
+  redirectAfterLogin();
 })();
 </script>
 </body>
