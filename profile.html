@@ -1644,5 +1644,216 @@ function setAvatarUI(url) {
   console.log('✅ Profile orders patch v2 loaded — ' + new Date().toLocaleTimeString());
 })();</script>
 
+
+<!-- ════════════════════════════════════════════════════════════
+     ROLE-BASED PROFILE PATCH (2026.06.11)
+     - ซ่อน/แสดง menu ตาม role
+     - เพิ่ม seller/admin sections
+     - ตรวจ access control
+     ════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  if (window._profileRoleApplied) return;
+  window._profileRoleApplied = true;
+
+  // รอ user role โหลดเสร็จ
+  function waitForRole(retries) {
+    retries = retries || 0;
+    const roleEl = document.getElementById('sb-role');
+    const roleText = roleEl?.textContent?.trim();
+
+    // ยังโหลดไม่เสร็จ — ลองใหม่
+    if (!roleText || roleText === 'MEMBER' || retries > 10) {
+      if (retries < 30) {
+        return setTimeout(() => waitForRole(retries + 1), 300);
+      }
+    }
+    applyRoleFilter();
+  }
+
+  async function applyRoleFilter() {
+    // ดึง role จาก Supabase โดยตรง (เผื่อยังโหลดไม่เสร็จ)
+    let role = 'buyer';
+    let sellerId = null;
+    let isVerifiedSeller = false;
+
+    try {
+      const sb = window._sb || window.sb;
+      if (sb) {
+        const { data: { user } } = await sb.auth.getUser();
+        if (user) {
+          const { data: u } = await sb.from('users')
+            .select('id, role')
+            .eq('email', user.email)
+            .maybeSingle();
+          if (u) {
+            role = u.role || 'buyer';
+            // เช็คว่ามี seller record (สมัครขายแล้ว)
+            const { data: s } = await sb.from('sellers')
+              .select('id, status')
+              .eq('user_id', u.id)
+              .maybeSingle();
+            if (s) {
+              sellerId = s.id;
+              isVerifiedSeller = s.status === 'active' || role === 'seller' || role === 'admin';
+            }
+          }
+        }
+      }
+    } catch(e) { console.warn('role detect:', e); }
+
+    const isAdmin = role === 'admin' || role === 'super_admin';
+    const isSeller = isVerifiedSeller || role === 'seller' || isAdmin;
+    const isBuyer = !isSeller && !isAdmin;
+
+    console.log('[role-patch] role:', role, '| seller:', isSeller, '| admin:', isAdmin);
+
+    // ── 1. ซ่อน/เปลี่ยนปุ่ม "Sell" บน top nav ──
+    const sellBtn = document.querySelector('.nav-btn.sell, [href="seller-portal.html"].nav-btn');
+    if (sellBtn) {
+      if (isSeller) {
+        sellBtn.innerHTML = '<span class="nav-btn-ico">🏪</span>ร้านค้าของฉัน';
+        sellBtn.href = 'seller-portal.html';
+        sellBtn.style.display = '';
+      } else {
+        sellBtn.innerHTML = '<span class="nav-btn-ico">➕</span>สมัครเป็นผู้ขาย';
+        sellBtn.href = 'seller-onboarding.html';
+        sellBtn.title = 'คลิกเพื่อสมัครเปิดร้านขายของ';
+      }
+    }
+
+    // ── 2. ซ่อนเมนูดรอปดาวน์ตาม role ──
+    const ddSeller = document.getElementById('dd-seller');
+    const ddAdmin = document.getElementById('dd-admin');
+    if (ddSeller) ddSeller.style.display = isSeller ? '' : 'none';
+    if (ddAdmin) ddAdmin.style.display = isAdmin ? '' : 'none';
+
+    // ── 3. แก้ Sidebar — แสดงเมนูตาม role ──
+    const sidebar = document.querySelector('.sb-nav');
+    if (sidebar) {
+      // เพิ่มเมนูพิเศษสำหรับ seller (ถ้ายังไม่มี)
+      if (isSeller && !document.getElementById('sb-seller-section')) {
+        const sellerSection = document.createElement('div');
+        sellerSection.id = 'sb-seller-section';
+        sellerSection.innerHTML = `
+          <div class="sb-div"></div>
+          <div style="padding:8px 18px 4px;font-size:9px;color:#A3A3A3;letter-spacing:.08em;text-transform:uppercase;font-weight:600">🏪 ร้านค้าของฉัน</div>
+          <a href="seller-portal.html" class="sb-item" style="text-decoration:none;color:inherit">
+            <span class="sb-ico">📊</span>Dashboard ร้าน
+          </a>
+          <a href="seller-portal.html#products" class="sb-item" style="text-decoration:none;color:inherit">
+            <span class="sb-ico">📦</span>สินค้าของร้าน
+          </a>
+          <a href="seller-portal.html#orders" class="sb-item" style="text-decoration:none;color:inherit">
+            <span class="sb-ico">📋</span>ออเดอร์ที่ขาย
+          </a>
+          <a href="seller-portal.html#finance" class="sb-item" style="text-decoration:none;color:inherit">
+            <span class="sb-ico">💰</span>การเงิน & รายได้
+          </a>
+        `;
+        // แทรกก่อน logout
+        const logoutBtn = sidebar.querySelector('.sb-item.logout');
+        if (logoutBtn) {
+          sidebar.insertBefore(sellerSection, logoutBtn.previousElementSibling || logoutBtn);
+        } else {
+          sidebar.appendChild(sellerSection);
+        }
+      }
+
+      // เพิ่มเมนู admin
+      if (isAdmin && !document.getElementById('sb-admin-section')) {
+        const adminSection = document.createElement('div');
+        adminSection.id = 'sb-admin-section';
+        adminSection.innerHTML = `
+          <div class="sb-div"></div>
+          <div style="padding:8px 18px 4px;font-size:9px;color:#A3A3A3;letter-spacing:.08em;text-transform:uppercase;font-weight:600">⚙️ Admin</div>
+          <a href="admin-cms.html" class="sb-item" style="text-decoration:none;color:inherit">
+            <span class="sb-ico">📊</span>Admin CMS
+          </a>
+          <a href="admin-slips.html" class="sb-item" style="text-decoration:none;color:inherit">
+            <span class="sb-ico">💳</span>ตรวจสลิป
+          </a>
+          <a href="admin-bank-accounts.html" class="sb-item" style="text-decoration:none;color:inherit">
+            <span class="sb-ico">🏦</span>เลขบัญชี
+          </a>
+        `;
+        const logoutBtn = sidebar.querySelector('.sb-item.logout');
+        if (logoutBtn) {
+          sidebar.insertBefore(adminSection, logoutBtn.previousElementSibling || logoutBtn);
+        } else {
+          sidebar.appendChild(adminSection);
+        }
+      }
+
+      // ถ้าเป็น buyer ปกติ → เพิ่ม "สมัครเป็นผู้ขาย" CTA
+      if (isBuyer && !document.getElementById('sb-become-seller')) {
+        const cta = document.createElement('div');
+        cta.id = 'sb-become-seller';
+        cta.innerHTML = `
+          <div class="sb-div"></div>
+          <a href="seller-onboarding.html" class="sb-item" style="text-decoration:none;color:inherit;background:linear-gradient(135deg,#FEF3C7,#FCD34D20);border-left:2px solid #F59E0B">
+            <span class="sb-ico">🏪</span>
+            <div>
+              <div style="font-weight:600">สมัครเป็นผู้ขาย</div>
+              <div style="font-size:10px;color:#737373;margin-top:1px">เริ่มขายของกับเรา</div>
+            </div>
+          </a>
+        `;
+        const logoutBtn = sidebar.querySelector('.sb-item.logout');
+        if (logoutBtn) {
+          sidebar.insertBefore(cta, logoutBtn.previousElementSibling || logoutBtn);
+        } else {
+          sidebar.appendChild(cta);
+        }
+      }
+    }
+
+    // ── 4. แก้ Role badge ใน sidebar ──
+    const sbRole = document.getElementById('sb-role');
+    if (sbRole) {
+      if (isAdmin) {
+        sbRole.textContent = 'ADMIN';
+        sbRole.style.color = '#E63329';
+      } else if (isSeller) {
+        sbRole.textContent = 'SELLER';
+        sbRole.style.color = '#2563EB';
+      } else {
+        sbRole.textContent = 'MEMBER';
+        sbRole.style.color = '#A3A3A3';
+      }
+    }
+
+    // ── 5. เพิ่ม Role badge ที่ header (profile-header) ──
+    const phBadge = document.getElementById('ph-role-badge');
+    if (phBadge) {
+      if (isAdmin) {
+        phBadge.textContent = 'ADMIN';
+        phBadge.style.background = '#E63329';
+        phBadge.style.display = 'inline-flex';
+      } else if (isSeller) {
+        phBadge.textContent = 'SELLER';
+        phBadge.style.background = '#2563EB';
+        phBadge.style.display = 'inline-flex';
+      } else {
+        phBadge.style.display = 'none';
+      }
+    }
+
+    // ── 6. Account dropdown — role display ──
+    const ddRole = document.getElementById('dd-role');
+    if (ddRole) {
+      ddRole.textContent = isAdmin ? 'Admin' : isSeller ? 'Seller' : 'Member';
+      ddRole.className = 'account-dropdown-role ' + (isAdmin ? 'admin' : isSeller ? 'seller' : '');
+    }
+  }
+
+  // เริ่มทำงาน
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => waitForRole(0));
+  } else {
+    setTimeout(() => waitForRole(0), 500);
+  }
+})();
+</script>
 </body>
 </html>
