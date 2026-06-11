@@ -959,7 +959,7 @@ window.viewSellerInfo = function() {
 async function loadMessages(threadId) {
   LOG('loadMessages:', threadId);
   const { data, error } = await sb.from('chat_messages')
-    .select('*').eq('thread_id', threadId).eq('is_deleted', false)
+    .select('*').eq('thread_id', threadId)
     .order('created_at', { ascending: true });
   if (error) {
     ERR('loadMessages:', error);
@@ -991,19 +991,19 @@ function renderMessages() {
       html += `<div class="system-msg">📅 ${dateStr}</div>`;
       lastDate = dateStr;
     }
-    if (m.msg_type === 'system') {
+    if (m.message_type === 'system') {
       html += `<div class="system-msg">${escapeHtml(m.body || '')}</div>`;
       return;
     }
-    const isMine = m.sender_type === _userRole;
+    const isMine = m.sender_role === _userRole;
     const time = d.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
-    const avatar = m.sender_type === 'seller' ? '🛒' : (((_user && _user.display_name) || '?').slice(0, 2));
-    const avBg = m.sender_type === 'seller' ? '#EFF6FF' : '#FFF5F5';
+    const avatar = m.sender_role === 'seller' ? '🛒' : (((_user && _user.display_name) || '?').slice(0, 2));
+    const avBg = m.sender_role === 'seller' ? '#EFF6FF' : '#FFF5F5';
 
     let bubble = '';
-    if (m.msg_type === 'image' && m.meta && m.meta.image_url) {
+    if (m.message_type === 'image' && m.meta && m.meta.image_url) {
       bubble = `<div class="msg-bubble" style="padding:4px"><img src="${escapeHtml(m.meta.image_url)}" style="max-width:240px;max-height:240px;border-radius:8px;display:block"></div>`;
-    } else if (m.msg_type === 'product' && m.meta && m.meta.product_id) {
+    } else if (m.message_type === 'product' && m.meta && m.meta.product_id) {
       bubble = `<div class="msg-bubble" style="padding:8px;cursor:pointer" onclick="location.href='product.html?id=${m.meta.product_id}'">
         📦 ${escapeHtml(m.meta.product_name || 'สินค้า')}<br>
         <span style="font-size:11px;color:#666">฿${Number(m.meta.product_price||0).toLocaleString()}</span>
@@ -1014,9 +1014,9 @@ function renderMessages() {
     const readMark = isMine
       ? ((_userRole === 'buyer' ? m.is_read_seller : m.is_read_buyer) ? ' ✓✓' : ' ✓')
       : '';
-    const otherAv = m.sender_type === 'seller'
+    const otherAv = m.sender_role === 'seller'
       ? '🛒'
-      : (m.sender_type === 'buyer' ? 'ลค' : '');
+      : (m.sender_role === 'buyer' ? 'ลค' : '');
     html += `<div class="msg${isMine?' mine':''}">
       ${!isMine ? `<div class="msg-av" style="background:${avBg};font-size:13px">${otherAv}</div>` : ''}
       <div style="display:flex;flex-direction:column;gap:2px;${isMine?'align-items:flex-end':''}">
@@ -1046,7 +1046,7 @@ function subscribeToThread(threadId) {
         _messages.push(newMsg);
         renderMessages();
         // Mark as read ถ้าจาก opposite role
-        if (newMsg.sender_type !== _userRole && newMsg.sender_type !== 'system') {
+        if (newMsg.sender_role !== _userRole && newMsg.sender_role !== 'system') {
           sb.rpc('mark_thread_read', { p_thread_id: threadId, p_role: _userRole });
         }
       }
@@ -1124,10 +1124,10 @@ async function sendMsg() {
     // buyer: insert ตรงๆ
     const result = await sb.from('chat_messages').insert({
       thread_id: _activeThreadId,
-      sender_type: 'buyer',
+      sender_role: 'buyer',
       sender_id: _user.id,
       body: txt,
-      msg_type: 'text'
+      message_type: 'text'
     }).select().single();
     data = result.data;
     error = result.error;
