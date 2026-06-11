@@ -124,7 +124,7 @@ body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;colo
 </div>
 
 <script>
-const _sb = window.supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'PLACEHOLDER_ANON_KEY');
+const _sb = window.supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
 let _email = '', _pwd = '', _name = '', _phone = '', _resendCountdown = 0;
 
 function showErr(f, m){const el=document.getElementById('err-'+f);if(el){el.textContent=m;el.classList.add('on');}}
