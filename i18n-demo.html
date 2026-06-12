@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ทดสอบระบบ 2 ภาษา</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'IBM Plex Sans Thai',sans-serif;background:#FAFAFA;padding:30px;color:#0A0A0A}
+.demo{max-width:700px;margin:0 auto;background:#fff;padding:30px;border-radius:8px;border:1px solid #E5E5E5}
+h1{margin-bottom:20px;font-size:24px}
+.section{margin-bottom:24px;padding:16px;background:#F5F5F5;border-radius:6px}
+.section h2{font-size:16px;margin-bottom:10px;color:#E63329}
+button,a{padding:8px 14px;background:#E63329;color:#fff;border:none;border-radius:4px;text-decoration:none;display:inline-block;margin:4px;font-family:inherit}
+input{padding:9px 12px;border:1px solid #E5E5E5;border-radius:4px;font-family:inherit;width:200px}
+.label{font-size:11px;color:#737373;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.value{font-size:14px;font-weight:600;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>🌐 ทดสอบระบบ 2 ภาษา</h1>
+
+<div class="section">
+<h2>Navigation</h2>
+<a>หน้าแรก</a>
+<a>หมวดหมู่</a>
+<a>ค้นหา</a>
+<a>ตะกร้า</a>
+<a>โปรไฟล์</a>
+<a>เข้าสู่ระบบ</a>
+</div>
+
+<div class="section">
+<h2>E-commerce</h2>
+<div class="label">สินค้าของฉัน</div>
+<div class="value">ออเดอร์ทั้งหมด: 5 รายการ</div>
+<div class="value">ยอดรวม: ฿1,250</div>
+<button>เพิ่มลงตะกร้า</button>
+<button>ซื้อเลย</button>
+</div>
+
+<div class="section">
+<h2>Payment</h2>
+<div class="value">วิธีชำระเงิน: โอนเงินเข้าบัญชี</div>
+<div class="value">รอ Admin ตรวจ</div>
+<button>ส่งสลิปให้ Admin ตรวจ</button>
+</div>
+
+<div class="section">
+<h2>Auth</h2>
+<input placeholder="อีเมล">
+<input placeholder="รหัสผ่าน" type="password">
+<br>
+<button>เข้าสู่ระบบ</button>
+<button>สมัครสมาชิก</button>
+<a>ลืมรหัสผ่าน?</a>
+</div>
+
+<div class="section">
+<h2>Order Status</h2>
+<div>● รอชำระเงิน</div>
+<div>● จัดส่งแล้ว</div>
+<div>● ส่งถึงปลายทาง</div>
+</div>
+
+<p style="text-align:center;color:#737373;font-size:13px;margin-top:20px">
+👇 กดปุ่มมุมขวาล่างเพื่อสลับภาษา
+</p>
+</div>
+
+<!-- โหลด i18n -->
+<script src="i18n.js"></script>
+</body>
+</html>
