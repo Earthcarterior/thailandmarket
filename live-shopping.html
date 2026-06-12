@@ -81,9 +81,9 @@ body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:var(--bg);co
 
 <div class="hero">
   <h1>🔴 Live Shopping</h1>
-  <p>ช้อปสนุก ไลฟ์สดทุกวัน — paylayout</p>
-  <a href="https://www.youtube.com/@paylayout?sub_confirmation=1" target="_blank" class="channel-link">
-    <span>▶</span> Subscribe ช่อง paylayout
+  <p>ช้อปสนุก ไลฟ์สดทุกวัน — thailandmarketplace</p>
+  <a href="https://www.youtube.com/@thailandmarketplace?sub_confirmation=1" target="_blank" class="channel-link">
+    <span>▶</span> Subscribe ช่อง thailandmarketplace
   </a>
 </div>
 
@@ -97,15 +97,15 @@ body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:var(--bg);co
     <div class="video-wrap">
       <iframe 
         id="live-iframe"
-        src="https://www.youtube.com/embed/live_stream?channel=UC_XpBf3vy5dgTR7gstpyCtA&autoplay=0"
+        src="https://www.youtube.com/embed/live_stream?channel=UC_dX4692y2CZYzDQiEzZWiA&autoplay=0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen>
       </iframe>
     </div>
     <div class="video-info">
-      <div class="video-title" id="live-title">paylayout • Live Stream</div>
+      <div class="video-title" id="live-title">thailandmarketplace • Live Stream</div>
       <div class="video-meta">
-        <span>📺 <span id="live-channel">paylayout</span></span>
+        <span>📺 <span id="live-channel">thailandmarketplace</span></span>
         <span id="live-current-status">⏳ กำลังตรวจสอบ live...</span>
       </div>
     </div>
@@ -127,8 +127,8 @@ body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:var(--bg);co
 </main>
 
 <script>
-const CHANNEL_ID = 'UC_XpBf3vy5dgTR7gstpyCtA';
-const CHANNEL_HANDLE = 'paylayout';
+const CHANNEL_ID = 'UC_dX4692y2CZYzDQiEzZWiA';
+const CHANNEL_HANDLE = 'thailandmarketplace';
 
 function esc(s){return(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -177,7 +177,7 @@ async function loadVideos() {
       container.innerHTML = '<div class="empty">' +
         '<div class="empty-ico">📹</div>' +
         '<div class="empty-title">ยังไม่มีวิดีโอในช่อง</div>' +
-        '<div class="empty-desc">paylayout ยังไม่ได้อัปโหลดวิดีโอ<br>กด Subscribe เพื่อรับการแจ้งเตือนเมื่อมีวิดีโอใหม่</div>' +
+        '<div class="empty-desc">Thailand Market ยังไม่ได้อัปโหลดวิดีโอ<br>กด Subscribe เพื่อรับการแจ้งเตือนเมื่อมีวิดีโอใหม่</div>' +
         '<a href="https://www.youtube.com/@' + CHANNEL_HANDLE + '?sub_confirmation=1" target="_blank" class="btn btn-yt">▶ Subscribe</a>' +
       '</div>';
       return;
@@ -192,7 +192,7 @@ async function loadVideos() {
       container.innerHTML = '<div class="empty">' +
         '<div class="empty-ico">📹</div>' +
         '<div class="empty-title">ยังไม่มีวิดีโอ</div>' +
-        '<div class="empty-desc">paylayout ยังไม่ได้อัปโหลดวิดีโอ</div>' +
+        '<div class="empty-desc">Thailand Market ยังไม่ได้อัปโหลดวิดีโอ</div>' +
         '<a href="https://www.youtube.com/@' + CHANNEL_HANDLE + '" target="_blank" class="btn btn-yt">▶ เปิดดูช่อง</a>' +
       '</div>';
       return;
