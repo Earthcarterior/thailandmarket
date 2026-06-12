@@ -1,835 +1,314 @@
-<!DOCTYPE html><html lang="th"><head>
+<!DOCTYPE html>
+<html lang="th">
+<head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#0A0A0A">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Thailand Market — การแจ้งเตือน</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style id="tm-base">
-:root{
-  --black:#0A0A0A;--white:#FFFFFF;--red:#E63329;--red-dim:#B5261F;
-  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
-  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;
-  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
-  --border:1px solid #E5E5E5;--border-dark:1px solid #0A0A0A;
-  /* legacy compat */
-  --primary:#0A0A0A;--accent:#E63329;--teal:#737373;--gold:#F2F2F2;
-  --bg:#FAFAFA;--white-off:#FAFAFA;
-  --gray50:#FAFAFA;--gray100:#F2F2F2;--gray200:#E5E5E5;
-  --gray300:#D4D4D4;--gray400:#A3A3A3;--gray500:#737373;
-  --gray600:#525252;--gray700:#404040;--gray900:#0A0A0A;
-  --g50:#FAFAFA;--g100:#F2F2F2;--g200:#E5E5E5;--g300:#D4D4D4;
-  --g400:#A3A3A3;--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#0A0A0A;
-  --r4:2px;--r6:2px;--r8:2px;--r12:4px;--r16:4px;--r24:4px;
-  --shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 12px rgba(0,0,0,0.09);
-  --green:#16A34A;--amber:#D97706;--blue:#2563EB;
-  --gn:#16A34A;--rd:#E63329;--am:#D97706;--bl:#2563EB;
-  --sidebar:220px;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--white);color:var(--black);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
-a{text-decoration:none;color:inherit}img{display:block}button{font-family:var(--font);cursor:pointer}
+<title>การแจ้งเตือน — Thailand Market</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=DM+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--accent:#E63329;--g50:#FAFAFA;--g100:#F5F5F5;--g200:#E5E5E5;--g300:#D4D4D4;--g400:#A3A3A3;--g500:#737373;--g700:#404040}
+body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;color:#0A0A0A;font-size:14px;min-height:100vh}
+.nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--g200);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;z-index:100;flex-wrap:wrap;gap:8px}
+.logo{font-family:'Inter';font-weight:800;font-size:18px;text-decoration:none;color:#0A0A0A}.logo .dot{color:var(--accent)}
+.back{padding:6px 12px;background:#fff;border:1px solid var(--g200);border-radius:4px;text-decoration:none;color:var(--g700);font-size:12px;font-family:inherit;cursor:pointer}
+.back:hover{background:var(--g100)}
+.main{padding:24px 16px;max-width:780px;margin:0 auto}
+.page-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.ph-title{font-size:22px;font-weight:700}
+.unread-cnt{background:var(--accent);color:#fff;padding:4px 12px;border-radius:99px;font-size:12px;font-weight:600}
+.ph-actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.act-btn{padding:7px 12px;background:#fff;border:1px solid var(--g200);border-radius:4px;cursor:pointer;font-size:12px;color:var(--g700);font-family:inherit;font-weight:500}
+.act-btn:hover{background:var(--g100);border-color:#0A0A0A}
 
-/* ── NAV ── */
-#tm-nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:9999}
-.tn-top{max-width:1280px;margin:0 auto;padding:0 24px;height:52px;display:flex;align-items:center}
-.tn-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--black);margin-right:32px;flex-shrink:0;text-decoration:none}
-.tn-logo .dot{color:var(--red)}
-.tn-links{display:flex;flex:1;overflow:hidden}
-.tn-link{padding:0 13px;height:52px;display:flex;align-items:center;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);transition:color .15s;white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none}
-.tn-link:hover{color:var(--black)}
-.tn-link.active{color:var(--black);border-bottom-color:var(--red)}
-.tn-search{position:relative;margin-left:auto}
-.tn-search input{width:190px;padding:7px 12px;border:var(--border);font-size:13px;font-family:var(--font);background:var(--white);outline:none;transition:border-color .15s}
-.tn-search input:focus{border-color:var(--black)}
-.tn-search input::placeholder{color:var(--g400)}
-.tn-acts{display:flex;align-items:center;gap:1px;margin-left:10px}
-.tn-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 9px;font-size:9px;font-weight:500;letter-spacing:0.05em;color:var(--g500);border:none;background:none;font-family:var(--font);text-transform:uppercase;cursor:pointer;transition:color .15s}
-.tn-btn:hover{color:var(--black)}
-.tn-btn.sell{color:var(--red)}
-.tn-ico{font-size:15px;position:relative;line-height:1}
-.tn-dot{position:absolute;top:-3px;right:-5px;background:var(--red);color:var(--white);font-size:8px;width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
-.tn-cats{border-top:var(--border)}
-.tn-cats-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto;scrollbar-width:none}
-.tn-cats-inner::-webkit-scrollbar{display:none}
-.tn-cat{padding:8px 14px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
-.tn-cat:hover{color:var(--black)}
-.tn-cat.active{color:var(--black);border-bottom-color:var(--red)}
+.filter-tabs{display:flex;gap:6px;margin-bottom:18px;overflow-x:auto;padding-bottom:4px}
+.ft{padding:8px 14px;background:#fff;border:1px solid var(--g200);border-radius:99px;cursor:pointer;font-size:12px;color:var(--g700);white-space:nowrap;display:flex;align-items:center;gap:6px;font-family:inherit;font-weight:500}
+.ft.active{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+.ft-cnt{background:rgba(0,0,0,.1);padding:1px 7px;border-radius:9px;font-size:10px;font-weight:600;min-width:18px;text-align:center}
+.ft.active .ft-cnt{background:rgba(255,255,255,.2)}
+.ft-cnt.unread{background:var(--accent);color:#fff}
 
-/* ── GLOBAL BUTTONS ── */
-.btn,.tm-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:none;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none}
-.btn-black,.tm-btn-black{background:var(--black);color:var(--white)}.btn-black:hover,.tm-btn-black:hover{background:var(--g800)}
-.btn-red,.tm-btn-red{background:var(--red);color:var(--white)}.btn-red:hover,.tm-btn-red:hover{background:var(--red-dim)}
-.btn-outline,.tm-btn-outline{background:var(--white);color:var(--black);border:var(--border-dark)}.btn-outline:hover,.tm-btn-outline:hover{background:var(--black);color:var(--white)}
-.btn-ghost,.tm-btn-ghost{background:transparent;color:var(--g500);border:var(--border);padding:8px 16px}.btn-ghost:hover,.tm-btn-ghost:hover{border-color:var(--black);color:var(--black)}
-.btn-sm,.tm-btn-sm{padding:7px 14px;font-size:11px}.btn-xs,.tm-btn-xs{padding:5px 10px;font-size:10px}
+.notif{display:flex;gap:12px;padding:14px;background:#fff;border:1px solid var(--g200);border-radius:8px;margin-bottom:8px;cursor:pointer;transition:.15s;align-items:flex-start}
+.notif:hover{border-color:#0A0A0A;transform:translateX(2px)}
+.notif.unread{background:#FFF7ED;border-left:3px solid var(--accent)}
+.notif-ico{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:#F5F5F5}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-weight:600;font-size:14px;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.notif-text{font-size:13px;color:var(--g700);line-height:1.5;margin-bottom:4px;word-break:break-word}
+.notif-time{font-size:11px;color:var(--g400)}
 
-/* old btn-primary / btn-secondary overrides */
-.btn-primary{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:11px 24px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.btn-primary:hover{background:var(--g800)!important}
-.btn-secondary{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:11px 22px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all .15s}
-.btn-secondary:hover{background:var(--black)!important;color:var(--white)!important}
+.empty{padding:60px 20px;text-align:center;background:#fff;border-radius:8px;border:1px solid var(--g200)}
+.empty-icon{font-size:50px;margin-bottom:14px;opacity:.7}
+.empty-title{font-size:15px;font-weight:600;margin-bottom:6px}
+.empty-desc{font-size:13px;color:var(--g500);margin-bottom:18px}
+.empty .btn{display:inline-block;padding:11px 24px;background:var(--accent);color:#fff;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px}
 
-/* legacy btn-cart / btn-buy → new style */
-.btn-cart{background:var(--white)!important;color:var(--black)!important;border:var(--border-dark)!important;border-radius:0!important;padding:12px!important;font-family:var(--font)!important;font-size:12px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
-.btn-cart:hover{background:var(--black)!important;color:var(--white)!important}
-.btn-buy{background:var(--black)!important;color:var(--white)!important;border:none!important;border-radius:0!important;padding:13px!important;font-family:var(--font)!important;font-size:13px!important;font-weight:500!important;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer!important;transition:all .15s!important;display:flex;align-items:center;justify-content:center;gap:6px}
-.btn-buy:hover{background:var(--g800)!important}
-.btn-add-cart,.btn-add{background:var(--white);color:var(--black);border:var(--border-dark);border-radius:0;padding:9px;font-family:var(--font);font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all .15s;width:100%}
-.btn-add-cart:hover,.btn-add:hover{background:var(--black);color:var(--white)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;padding:11px 20px;border-radius:6px;z-index:9999;font-size:13px;opacity:0;transition:.3s;pointer-events:none}
+.toast.on{opacity:1}
 
-/* ── CARDS ── */
-.card,.tm-card{background:var(--white);border:var(--border);padding:24px;border-radius:0!important;box-shadow:none!important}
-.card-dark,.tm-card-dark{background:var(--black);color:var(--white);border:none;padding:24px}
-
-/* ── SECTION ── */
-.section,.tm-section{max-width:1280px;margin:0 auto;padding:48px 24px}
-.wrap,.tm-wrap{max-width:1280px;margin:0 auto;padding:0 24px}
-.sec-head,.tm-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;padding-bottom:12px;border-bottom:var(--border)}
-.sec-title,.tm-sec-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase}
-.sec-link,.tm-sec-link{font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:var(--g500);text-decoration:underline;text-underline-offset:3px;transition:color .15s;cursor:pointer}
-.sec-link:hover,.tm-sec-link:hover{color:var(--black)}
-
-/* ── PRODUCT CARDS ── */
-.prod-card{border:var(--border)!important;margin:-1px 0 0 -1px!important;cursor:pointer!important;transition:border-color .15s!important;background:var(--white)!important;border-radius:0!important;box-shadow:none!important;transform:none!important}
-.prod-card:hover{border-color:var(--black)!important;z-index:1;position:relative}
-.prod-img,.prod-img-area{background:var(--g50)!important;border-radius:0!important}
-.prod-price,.prod-price-s{font-family:var(--mono)!important;color:var(--black)!important;font-weight:500!important}
-.prod-old,.price-old{font-family:var(--mono)!important;color:var(--g400)!important;text-decoration:line-through!important}
-.prod-discount,.price-save,.prod-disc{background:none!important;color:var(--red)!important;font-family:var(--mono)!important;font-weight:500!important;font-size:10px!important;border-radius:0!important;padding:0!important}
-.badge-sale,.badge-new,.badge-hot,.badge-flash,.g-badge,.gb-sale,.gb-new,.prod-badge{border-radius:0!important}
-.badge-sale,.gb-sale,.b-sale,.b-flash{background:var(--red)!important;color:var(--white)!important}
-.badge-new,.gb-new,.b-new,.b-hot{background:var(--black)!important;color:var(--white)!important}
-.badge-hot{background:var(--black)!important;color:var(--white)!important}
-
-/* ── PRICE BOX ── */
-.price-box{background:var(--g50)!important;border:var(--border)!important;border-radius:0!important}
-.price-main{font-family:var(--mono)!important;color:var(--black)!important;font-weight:700!important}
-.ins-badge{background:var(--g100)!important;color:var(--black)!important;border-radius:0!important}
-.flash-tag{background:var(--red)!important;border-radius:0!important}
-
-/* ── NAV OLD → NEW ── */
-.nav,.nav-inner{background:var(--white)!important;border-bottom:var(--border)!important}
-.nav-logo,.nav-logo *{font-family:var(--mono)!important;color:var(--black)!important;font-size:14px!important}
-.nav-search input{border:var(--border)!important;border-radius:0!important}
-.nav-btn{color:var(--g500)!important;background:none!important;border-radius:0!important}
-.nav-btn:hover{background:var(--g50)!important;color:var(--black)!important}
-.cart-badge,.nav-cart-badge{background:var(--red)!important;border-radius:50%!important}
-.nav-cats,.nav-catbar{background:var(--white)!important;border-top:var(--border)!important}
-.ncat,.cat-link,.cat-lnk{color:var(--g500)!important;font-size:11px!important;letter-spacing:0.05em!important;text-transform:uppercase!important}
-.ncat:hover,.cat-link:hover,.cat-lnk:hover{color:var(--black)!important}
-.ncat.active,.cat-link.active,.cat-lnk.active{color:var(--black)!important;border-bottom-color:var(--red)!important}
-
-/* ── FORMS ── */
-.form-input,.inp,.form-in,input[type=text],input[type=email],input[type=number],input[type=tel],input[type=password],input[type=date],textarea,select{border-radius:0!important}
-.form-input:focus,.inp:focus{border-color:var(--black)!important;outline:none}
-.form-label,.lbl,.form-lbl{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;color:var(--g600)!important}
-
-/* ── STATUS / BADGE ── */
-.status-active,.s-active{background:none!important;border:var(--border-dark)!important;color:var(--black)!important;border-radius:0!important}
-.status-pending,.s-pending{border:1px solid var(--g400)!important;color:var(--g500)!important;border-radius:0!important;background:none!important}
-.status-badge,.badge{border-radius:0!important}
-
-/* ── TABLES ── */
-table{border-collapse:collapse}
-thead th{font-family:var(--mono)!important;font-size:10px!important;letter-spacing:0.08em!important;text-transform:uppercase!important;background:var(--g50)!important;border-bottom:var(--border)!important;color:var(--g500)!important}
-tbody td{border-bottom:var(--border)!important}
-tbody tr:hover td{background:var(--g50)!important}
-
-/* ── MODALS ── */
-.modal,.modal-box,.tm-modal{background:var(--white)!important;border:var(--border-dark)!important;border-radius:0!important;box-shadow:none!important}
-.modal-overlay,.tm-modal-overlay{backdrop-filter:blur(2px)}
-.modal-title,.modal-head-title,.modal-ttl,.tm-modal-title{font-family:var(--mono)!important;font-size:11px!important;letter-spacing:0.08em!important;text-transform:uppercase!important}
-
-/* ── SIDEBAR (seller) ── */
-.sidebar,.sb{background:var(--black)!important}
-.sni.active{background:rgba(230,51,41,0.12)!important;border-left-color:var(--red)!important}
-.sni-badge{background:var(--red)!important}
-.sb-logo-mark{background:var(--red)!important}
-.topbar{background:var(--white)!important;border-bottom:var(--border)!important;box-shadow:none!important}
-
-/* ── COLORS: strip all gradients/rounded corners ── */
-[style*="background:linear-gradient"]{background:var(--g50)!important}
-[style*="border-radius"]{border-radius:0!important}
-
-/* ── TOAST ── */
-.toast-wrap,.tm-toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999}
-.toast,.tm-toast{background:var(--black)!important;color:var(--white)!important;padding:11px 18px;font-size:12.5px;border-radius:0!important;display:flex;align-items:center;gap:10px;border-left:3px solid var(--red);animation:tmIn 0.2s ease}
-@keyframes tmIn{from{transform:translateX(16px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-/* ── FOOTER ── */
-#tm-footer{background:var(--black);color:var(--g500);padding:56px 24px 28px;border-top:var(--border)}
-#tm-footer .tf-inner{max-width:1280px;margin:0 auto}
-#tm-footer .tf-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
-#tm-footer .tf-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
-#tm-footer .tf-logo .dot{color:var(--red)}
-#tm-footer .tf-about{font-size:12px;line-height:1.8;max-width:220px}
-#tm-footer .tf-title{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--white);margin-bottom:14px}
-#tm-footer .tf-link{display:block;font-size:12px;margin-bottom:7px;color:var(--g600);transition:color .15s;text-decoration:none}
-#tm-footer .tf-link:hover{color:var(--white)}
-#tm-footer .tf-bottom{border-top:1px solid var(--g800);padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--g700);letter-spacing:0.04em;flex-wrap:wrap;gap:8px}
-
-/* ── RESPONSIVE ── */
-@media(max-width:768px){
-  #tm-footer .tf-grid{grid-template-columns:1fr 1fr}
-  .tn-links{display:none}
-  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
-}
-@media(max-width:480px){#tm-footer .tf-grid{grid-template-columns:1fr}}
-.ann{background:var(--black);color:var(--white);text-align:center;padding:8px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}
-.ann-dot{color:var(--red);font-size:16px;line-height:0}
-.nav{background:var(--white);border-bottom:var(--border);position:sticky;top:0;z-index:999}
-.nav-top{max-width:var(--max);margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;gap:16px}
-.nav-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);flex-shrink:0;margin-right:8px}
-.nav-logo .dot{color:var(--red)}
-.nav-links{display:flex;gap:0;align-items:center;overflow-x:auto;scrollbar-width:none;flex:1}
-.nav-links::-webkit-scrollbar{display:none}
-.nav-link{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--g500);padding:0 14px;height:56px;display:flex;align-items:center;white-space:nowrap;transition:color .15s;border-bottom:2px solid transparent}
-.nav-link:hover{color:var(--black)}
-.nav-link.hot{color:var(--red)}
-.nav-search{display:flex;align-items:center;border:var(--border);background:var(--g50);flex:1;max-width:360px;margin:0 8px}
-.nav-search input{flex:1;padding:8px 14px;border:none;background:none;font-size:13px;outline:none}
-.nav-search button{padding:8px 14px;background:var(--black);color:var(--white);border:none;font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;transition:background .15s}
-.nav-search button:hover{background:var(--g800)}
-.nav-acts{display:flex;gap:0;flex-shrink:0}
-.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500);border:none;background:none;transition:color .15s;position:relative;white-space:nowrap}
-.nav-btn:hover{color:var(--black)}
-.nav-btn.sell{color:var(--red)}
-.nav-btn-ico{font-size:16px;line-height:1}
-.nav-badge{position:absolute;top:4px;right:8px;background:var(--red);color:var(--white);font-size:8px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
-.nav-links{display:none}
-.nav-search{max-width:200px}
-.nav-btn.account-btn{position:relative}
-.account-dropdown{
-  position:absolute;top:calc(100% + 4px);right:0;
-  background:var(--white);border:1px solid var(--black);
-  min-width:200px;z-index:9999;
-  display:none;flex-direction:column;
-  box-shadow:0 4px 16px rgba(0,0,0,.12);
-}
-.account-dropdown.open{display:flex}
-.account-dropdown-header{
-  padding:14px 16px;border-bottom:1px solid var(--g200);
-  background:var(--g50);
-}
-.account-dropdown-name{font-size:13px;font-weight:600;color:var(--black);margin-bottom:2px}
-.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400);letter-spacing:.03em}
-.account-dropdown-role{
-  display:inline-block;margin-top:5px;
-  padding:2px 8px;font-family:var(--mono);font-size:9px;
-  letter-spacing:.06em;text-transform:uppercase;
-  background:var(--black);color:var(--white);
-}
-.account-dropdown-role.admin{background:var(--red)}
-.account-dropdown-role.seller{background:#2563EB}
-.dropdown-item{
-  display:flex;align-items:center;gap:10px;
-  padding:11px 16px;font-size:13px;color:var(--g600);
-  cursor:pointer;transition:all .12s;text-decoration:none;border:none;
-  background:none;font-family:var(--font);width:100%;text-align:left;
-}
-.dropdown-item:hover{background:var(--g50);color:var(--black)}
-.dropdown-item.logout{color:var(--red);border-top:1px solid var(--g200)}
-.dropdown-item.logout:hover{background:#FFF5F5}
-.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
-.nav-avatar{
-  width:24px;height:24px;border-radius:50%;
-  background:var(--black);color:var(--white);
-  font-size:11px;font-weight:600;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-.account-dropdown{position:absolute;top:calc(100%+4px);right:0;background:#fff;border:1px solid var(--black);min-width:200px;z-index:9999;display:none;flex-direction:column;box-shadow:0 4px 16px rgba(0,0,0,.12)}
-.account-dropdown.open{display:flex}
-.account-dropdown-header{padding:14px 16px;border-bottom:var(--border);background:var(--g50)}
-.account-dropdown-name{font-size:13px;font-weight:600;margin-bottom:2px}
-.account-dropdown-email{font-family:var(--mono);font-size:10px;color:var(--g400)}
-.account-dropdown-role{display:inline-block;margin-top:5px;padding:2px 8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:var(--black);color:#fff}
-.account-dropdown-role.admin{background:var(--red)}.account-dropdown-role.seller{background:#2563EB}
-.dropdown-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;color:var(--g600);cursor:pointer;transition:all .12s;text-decoration:none;border:none;background:none;font-family:var(--font);width:100%;text-align:left}
-.dropdown-item:hover{background:var(--g50);color:var(--black)}
-.dropdown-item.logout{color:var(--red);border-top:var(--border)}.dropdown-item.logout:hover{background:#FFF5F5}
-.dropdown-item-ico{font-size:15px;width:18px;flex-shrink:0}
-@keyframes tIn{from{transform:translateX(8px);opacity:0}to{transform:translateX(0);opacity:1}}
-
-.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
-.toast{background:var(--black);color:#fff;padding:11px 18px;font-size:13px;display:flex;align-items:center;gap:10px;min-width:240px;border-left:3px solid var(--red);animation:tIn .2s ease;pointer-events:all}
-.toast.ok{border-left-color:#16A34A}
-
-
-/* ── NAV FIX: ป้องกัน ann bar เป็น vertical ── */
-.ann {
-  width: 100% !important;
-  min-width: 100% !important;
-  flex-shrink: 0 !important;
-  flex-direction: row !important;
-}
-nav, .nav {
-  width: 100% !important;
-  min-width: 100% !important;
-  flex-shrink: 0 !important;
-  display: block !important;
-}
-body > .ann, body > nav {
-  position: relative !important;
-}
-
-
-/* ── GLOBAL NAV FIX ── */
-body { display: block !important; }
-.ann {
-  width: 100% !important; min-width: 100% !important;
-  height: auto !important; max-height: 60px !important;
-  display: flex !important; flex-direction: row !important;
-  flex-shrink: 0 !important;
-}
-nav, .nav { 
-  width: 100% !important; display: block !important;
-  height: auto !important; flex-shrink: 0 !important;
-}
-
-</style>
-<style id="page-css">
-
-:root{--primary:#0A0A0A;--accent:#E63329;--teal:#404040;--bg:#FFFFFF;--white:#fff;--g100:#F3F4F6;--g200:#E5E7EB;--g400:#9CA3AF;--g500:#6B7280;--g700:#374151;--g900:#111827;--gn:#16A34A;--r8:8px;--r12:12px;--r16:16px}
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);font-size:14px}
-.nav{background:var(--primary);padding:11px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
-.nav-logo{font-family:'DM Sans',sans-serif;font-weight:900;font-size:20px;color:#fff}.nav-logo span{color:var(--accent)}
-.page{max-width:760px;margin:24px auto;padding:0 16px}
-.page-header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.ph-title{font-family:'DM Sans',sans-serif;font-weight:800;font-size:20px}
-.unread-cnt{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
-.ph-actions{margin-left:auto;display:flex;gap:8px}
-.act-btn{padding:6px 12px;border:1px solid var(--g200);border-radius:2px;background:#fff;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--g700);cursor:pointer;transition:all 0.15s}
-.act-btn:hover{border-color:var(--accent);color:var(--accent)}
-.filter-tabs{display:flex;gap:0;border-bottom:1px solid var(--g200);margin-bottom:16px;background:#fff;border-radius:4px 4px 0 0;padding:0 4px;overflow-x:auto}
-.ft{padding:11px 16px;cursor:pointer;color:var(--g400);font-size:13px;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s;display:flex;align-items:center;gap:5px}
-.ft:hover{color:var(--g900)}
-.ft.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
-.ft-cnt{font-size:10px;background:var(--g100);color:var(--g500);padding:1px 6px;border-radius:10px}
-.ft-cnt.unread{background:#FEE2E2;color:var(--accent)}
-.notif-group{margin-bottom:16px}
-.ng-date{font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;padding:0 4px}
-.notif-item{background:#fff;border:1px solid var(--g200);border-radius:4px;padding:14px;margin-bottom:8px;display:flex;gap:12px;cursor:pointer;transition:all 0.15s;position:relative}
-.notif-item:hover{border-color:rgba(0,0,0,0.12);box-shadow:0 2px 8px rgba(0,0,0,0.06)}
-.notif-item.unread{background:#FFFBF0;border-color:#FDE68A}
-.notif-item.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:4px 0 0 4px}
-.ni-ico{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.ni-body{flex:1;min-width:0}
-.ni-title{font-size:13px;font-weight:600;color:var(--g900);margin-bottom:2px;line-height:1.4}
-.ni-body-txt{font-size:12px;color:var(--g500);line-height:1.6;margin-bottom:6px}
-.ni-time{font-size:10px;color:var(--g400)}
-.ni-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-.na-btn{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;border:none}
-.na-primary{background:var(--accent);color:#fff}
-.na-primary:hover{background:#B5261F}
-.na-secondary{background:var(--g100);color:var(--g700)}
-.na-secondary:hover{background:var(--g200)}
-.ni-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;flex-shrink:0;align-self:flex-start;margin-top:2px}
-.nt-order{background:#DCFCE7;color:#15803D}
-.nt-promo{background:#FEE2E2;color:#B91C1C}
-.nt-info{background:#DBEAFE;color:#1D4ED8}
-.nt-loyalty{background:#FEF3C7;color:#92400E}
-.nt-system{background:var(--g100);color:var(--g500)}
-.notif-item.dismissed{opacity:0.4;pointer-events:none}
-.load-more{width:100%;padding:12px;background:#fff;border:1px solid var(--g200);border-radius:4px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--g500);cursor:pointer;transition:all 0.15s}
-.load-more:hover{border-color:var(--accent);color:var(--accent)}
-.empty-state{text-align:center;padding:48px 20px}
-.es-ico{font-size:48px;margin-bottom:12px}
-.es-title{font-size:16px;font-weight:600;color:var(--g700);margin-bottom:4px}
-.es-sub{font-size:13px;color:var(--g400)}
-.toast-wrap{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999}
-.toast{background:var(--primary);color:#fff;padding:11px 16px;border-radius:4px;font-size:13px;animation:tIn 0.3s ease}
-@keyframes tIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-</style>
-<style id="tm-responsive">
-/* ── Mobile fixes ── */
-@media(max-width:768px){
-  .tn-links{display:none!important}
-  .tn-srch{display:none!important}
-  /* hamburger hint */
-  .tn-top{padding:0 16px}
-  .tn-logo{margin-right:auto}
-  /* sidebar pages on mobile */
-  .app{flex-direction:column}
-  .sb{width:100%!important;position:relative!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap}
-  .sb-logo,.sb-user{flex-basis:100%}
-  .sb-nav{display:flex;flex-wrap:wrap;padding:4px}
-  .sb-lbl{display:none}
-  .sni{padding:7px 10px;font-size:11px;border-left:none!important;border-bottom:2px solid transparent}
-  .sni.on{border-bottom-color:var(--red)!important;background:none!important}
-  .sb-foot{display:none}
-  .main{margin-left:0!important}
-  /* layout grids */
-  .layout{grid-template-columns:1fr!important}
-  .form-row{grid-template-columns:1fr!important}
-  /* tables */
-  table{font-size:12px}
-  td,th{padding:8px 10px!important}
-  /* stat grids */
-  [style*="grid-template-columns:repeat(4"],[style*="grid-template-columns:repeat(5"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  [style*="grid-template-columns:repeat(3"]{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* hero */
-  .hero-main{grid-template-columns:1fr!important;padding:40px 0 32px!important}
-  .hero-right{display:none}
-  .hero-stat-row{grid-template-columns:repeat(2,1fr)}
-  /* product grids */
-  .prod-grid-5,.prod-grid-6,.flash-grid,.cat-prods,.related-grid{
-    grid-template-columns:repeat(2,1fr)!important
-  }
-  /* footer */
-  #tm-footer .tf-grid{grid-template-columns:1fr!important}
-  /* wrap padding */
-  .wrap,.section,.tm-wrap,.tm-section{padding-left:16px!important;padding-right:16px!important}
-}
 @media(max-width:480px){
-  .hero-h1{font-size:36px!important}
-  .prod-grid-5,.prod-grid-6,.flash-grid{grid-template-columns:1fr 1fr!important}
-  .hero-stat-row{grid-template-columns:1fr 1fr}
+  .ph-title{font-size:18px}
+  .ph-actions{margin-left:0;width:100%}
+  .act-btn{flex:1}
 }
-/* ── Print friendly ── */
-@media print{
-  #tn,#tm-nav,.tw,.sb,#tm-footer{display:none!important}
-  body{font-size:12px}
-}
-/* ── Focus / accessibility ── */
-a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
-  outline:2px solid #0A0A0A;outline-offset:2px
-}
-/* ── Smooth image loading ── */
-img{max-width:100%;height:auto}
-/* ── Selection color ── */
-::selection{background:#0A0A0A;color:#fff}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-</head><body>
-<!-- ── ANNOUNCEMENT ── -->
-<div class="ann">
-  <span><span class="ann-dot">·</span> ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500</span>
-  <span><span class="ann-dot">·</span> Flash Sale ทุกวัน 10:00 / 14:00 / 20:00</span>
-  <span><span class="ann-dot">·</span> รับคูปองใหม่ทุกวัน</span>
-</div>
+</head>
+<body>
+<nav class="nav">
+  <a href="profile.html" class="back">← โปรไฟล์</a>
+  <a href="index.html" class="logo">Thailand<span class="dot">.</span>Market</a>
+  <a href="chat.html" class="back">💬 แชท</a>
+</nav>
 
-
-<!-- ── NAVIGATION ── -->
-<nav class="nav" style="position:relative">
-  <div class="nav-top">
-    <a href="index.html" class="nav-logo">Thailand<span class="dot">.</span>Market</a>
-    <div class="nav-links" id="nav-links">
-      <a href="flash-sale.html" class="nav-link hot">⚡ Flash Sale</a>
-      <a href="live-shopping.html" class="nav-link">🔴 Live</a>
-      <a href="brand-day.html" class="nav-link">Brand Day</a>
-      <a href="coupon-hub.html" class="nav-link">Coupon</a>
-      <a href="loyalty-catalog.html" class="nav-link">Loyalty</a>
-      <a href="subscription.html" class="nav-link">TM Plus</a>
-      <a href="b2b-portal.html" class="nav-link">B2B</a>
-    </div>
-    <div class="nav-search">
-      <input type="text" id="search-inp" placeholder="ค้นหาสินค้า แบรนด์ หรือร้านค้า..." onkeydown="if(event.key==='Enter')doSearch()">
-      <button onclick="doSearch()">ค้นหา</button>
-    </div>
-    <div class="nav-acts">
-      <button class="nav-btn" onclick="location.href='wishlist.html'"><span class="nav-btn-ico">♡</span>Saved</button>
-      <button class="nav-btn" onclick="location.href='notification-center.html'"><span class="nav-btn-ico">🔔</span>Alerts</button>
-      <button class="nav-btn" onclick="location.href='cart.html'" style="position:relative">
-        <span class="nav-btn-ico">🛒<span class="nav-badge" id="cart-badge">0</span></span>Cart
-      </button>
-      <div style="position:relative">
-      <button class="nav-btn account-btn" id="account-nav-btn" style="flex-direction:column;gap:2px;padding:6px 12px">
-        <span class="nav-btn-ico" id="account-ico">👤</span>
-        <span class="nav-btn-lbl" style="font-size:9px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--g500)">Account</span>
-      </button>
-      <!-- Dropdown -->
-      <div class="account-dropdown" id="account-dropdown">
-        <div class="account-dropdown-header">
-          <div class="account-dropdown-name" id="dd-name">กำลังโหลด...</div>
-          <div class="account-dropdown-email" id="dd-email"></div>
-          <span class="account-dropdown-role" id="dd-role">Member</span>
-        </div>
-        <a href="profile.html" class="dropdown-item">
-          <span class="dropdown-item-ico">👤</span>โปรไฟล์ของฉัน
-        </a>
-        <a href="order-history.html" class="dropdown-item">
-          <span class="dropdown-item-ico">📦</span>คำสั่งซื้อ
-        </a>
-        <a href="wishlist.html" class="dropdown-item">
-          <span class="dropdown-item-ico">❤️</span>รายการโปรด
-        </a>
-        <a href="coupon-hub.html" class="dropdown-item">
-          <span class="dropdown-item-ico">🎟️</span>คูปองของฉัน
-        </a>
-        <a href="seller-portal.html" class="dropdown-item" id="dd-seller" style="display:none">
-          <span class="dropdown-item-ico">🏪</span>Seller Portal
-        </a>
-        <a href="admin-cms.html" class="dropdown-item" id="dd-admin" style="display:none;background:var(--g50)">
-          <span class="dropdown-item-ico">⚙️</span>Admin CMS
-        </a>
-        <button class="dropdown-item logout" id="dd-logout">
-          <span class="dropdown-item-ico">🚪</span>ออกจากระบบ
-        </button>
-      </div>
-    </div>
-      <button class="nav-btn sell" onclick="location.href='seller-portal.html'"><span class="nav-btn-ico">🏪</span>Sell</button>
-    </div>
-  </div></nav>
-
-
-
-
-
-
-
-
-
-
-<div class="page">
+<main class="main">
   <div class="page-header">
     <div class="ph-title">🔔 การแจ้งเตือน</div>
-    <div class="unread-cnt">5 ใหม่</div>
+    <div class="unread-cnt" id="unread-count">— ใหม่</div>
     <div class="ph-actions">
       <button class="act-btn" onclick="markAllRead()">✓ อ่านทั้งหมด</button>
-      <button class="act-btn" onclick="toast('⚙️ ตั้งค่าการแจ้งเตือน')">⚙️ ตั้งค่า</button>
+      <button class="act-btn" onclick="loadNotifications(_curFilter)">🔄 รีเฟรช</button>
     </div>
   </div>
-  <div class="filter-tabs">
-    <div class="ft active" onclick="selTab(this,'all')">ทั้งหมด <span class="ft-cnt">18</span></div>
-    <div class="ft" onclick="selTab(this,'order')">📦 ออเดอร์ <span class="ft-cnt unread">3</span></div>
-    <div class="ft" onclick="selTab(this,'promo')">🎟️ โปรโมชัน <span class="ft-cnt unread">2</span></div>
-    <div class="ft" onclick="selTab(this,'loyalty')">⭐ Loyalty <span class="ft-cnt">4</span></div>
-    <div class="ft" onclick="selTab(this,'system')">🔧 ระบบ <span class="ft-cnt">9</span></div>
-  </div>
-  <div id="notif-list"></div>
-  <button class="load-more" onclick="toast('📋 โหลดการแจ้งเตือนเพิ่มเติม...')">โหลดเพิ่มเติม (32 รายการ)</button>
-</div>
-<div class="toast-wrap" id="tw"></div>
-<script>
-let NOTIFS = [];
-let _userRole = 'guest';
-let _curFilter = 'all';
 
-const _sb = window._sb || (window.supabase && window.supabase.createClient(
+  <div class="filter-tabs">
+    <button class="ft active" data-filter="all">
+      ทั้งหมด <span class="ft-cnt" id="cnt-all">0</span>
+    </button>
+    <button class="ft" data-filter="order">
+      📦 ออเดอร์ <span class="ft-cnt" id="cnt-order">0</span>
+    </button>
+    <button class="ft" data-filter="promo">
+      🎟️ โปรโมชัน <span class="ft-cnt" id="cnt-promo">0</span>
+    </button>
+    <button class="ft" data-filter="loyalty">
+      ⭐ Loyalty <span class="ft-cnt" id="cnt-loyalty">0</span>
+    </button>
+    <button class="ft" data-filter="system">
+      🔧 ระบบ <span class="ft-cnt" id="cnt-system">0</span>
+    </button>
+  </div>
+
+  <div id="notif-list">
+    <div class="empty">
+      <div class="empty-icon">⏳</div>
+      <div class="empty-title">กำลังโหลด...</div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Supabase ──
+const _sb = window.supabase.createClient(
   'https://qmgyimsptzewwyafvjzk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
-));
-if (_sb && !window._sb) window._sb = _sb;
+);
+window._sb = _sb;
 
-async function loadNotifications(filter) {
-  filter = filter || 'all';
-  _curFilter = filter;
-  
-  const wrap = document.getElementById('notif-list');
-  if (wrap) wrap.innerHTML = '<div style="padding:60px;text-align:center;color:#888">⏳ กำลังโหลด...</div>';
-  
-  try {
-    const { data: { user } } = await _sb.auth.getUser();
-    if (!user) {
-      if (wrap) wrap.innerHTML = `<div style="padding:60px;text-align:center;color:#888">
-        <div style="font-size:48px;margin-bottom:12px">🔒</div>
-        <div style="font-size:15px;font-weight:600;margin-bottom:6px">ยังไม่ได้เข้าสู่ระบบ</div>
-        <div style="font-size:13px;color:#aaa;margin-bottom:18px">เข้าสู่ระบบเพื่อดูการแจ้งเตือนของคุณ</div>
-        <a href="login.html?next=${encodeURIComponent('notification-center.html')}" style="display:inline-block;padding:11px 24px;background:#E63329;color:#fff;border-radius:6px;text-decoration:none;font-weight:600">เข้าสู่ระบบ</a>
-      </div>`;
-      return;
-    }
-    
-    // เรียก RPC get_my_notifications
-    const { data, error } = await _sb.rpc('get_my_notifications', { 
-      p_filter: filter, 
-      p_limit: 50, 
-      p_offset: 0 
-    });
-    
-    if (error) {
-      // fallback - query โดยตรง
-      const { data: udata } = await _sb.from('users').select('id').eq('email', user.email).maybeSingle();
-      if (udata) {
-        let q = _sb.from('notifications').select('*')
-          .or(`user_id.eq.${udata.id},target.eq.all_users`)
-          .order('created_at', { ascending: false }).limit(50);
-        if (filter !== 'all') q = q.eq('type', filter);
-        const r = await q;
-        if (r.error) throw r.error;
-        NOTIFS = (r.data || []).map(n => ({
-          id: n.id, type: n.type, ico: n.icon || '🔔',
-          title: n.title, body: n.message || n.body || '',
-          time: timeAgo(n.created_at), unread: !n.is_read, tag: n.type,
-          link: n.link
-        }));
-      } else throw error;
-    } else {
-      NOTIFS = (data || []).map(n => ({
-        id: n.id, type: n.type, ico: n.icon || '🔔',
-        title: n.title, body: n.message || n.body || '',
-        time: n.age_text, unread: !n.is_read, tag: n.type,
-        link: n.link
-      }));
-    }
-    
-    updateCounts();
-    renderNotifs();
-    
-  } catch(e) {
-    console.error('loadNotifications:', e);
-    if (wrap) wrap.innerHTML = `<div style="padding:60px;text-align:center;color:#E63329">
-      <div style="font-size:48px;margin-bottom:12px">⚠️</div>
-      <div style="font-size:14px">${(e.message||'').replace(/[<>]/g,'')}</div>
-    </div>`;
-  }
+let _curFilter = 'all';
+let _notifs = [];
+let _userId = null;
+
+// ── Helpers ──
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function toast(msg, kind){
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.background = kind === 'ok' ? '#10B981' : kind === 'err' ? '#E63329' : '#0A0A0A';
+  t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 2500);
 }
 
-function timeAgo(d) {
+function timeAgo(d){
   if (!d) return '';
   const diff = (Date.now() - new Date(d).getTime()) / 1000;
   if (diff < 60) return 'เมื่อสักครู่';
-  if (diff < 3600) return `เมื่อ ${Math.floor(diff/60)} นาทีที่แล้ว`;
-  if (diff < 86400) return `เมื่อ ${Math.floor(diff/3600)} ชั่วโมงที่แล้ว`;
-  if (diff < 604800) return `เมื่อ ${Math.floor(diff/86400)} วันที่แล้ว`;
+  if (diff < 3600) return 'เมื่อ ' + Math.floor(diff/60) + ' นาทีที่แล้ว';
+  if (diff < 86400) return 'เมื่อ ' + Math.floor(diff/3600) + ' ชั่วโมงที่แล้ว';
+  if (diff < 604800) return 'เมื่อ ' + Math.floor(diff/86400) + ' วันที่แล้ว';
   return new Date(d).toLocaleDateString('th-TH');
 }
 
-function updateCounts() {
-  const counts = { all: NOTIFS.length, order: 0, promo: 0, loyalty: 0, system: 0 };
-  let unread = 0;
-  NOTIFS.forEach(n => {
-    if (counts[n.tag] !== undefined) counts[n.tag]++;
-    if (n.unread) unread++;
-  });
-  
-  // update tab counts
-  document.querySelectorAll('.filter-tabs .ft').forEach(ft => {
-    const cnt = ft.querySelector('.ft-cnt');
-    if (!cnt) return;
-    const txt = ft.textContent.trim();
-    if (txt.includes('ทั้งหมด')) cnt.textContent = counts.all;
-    else if (txt.includes('ออเดอร์')) cnt.textContent = counts.order;
-    else if (txt.includes('โปรโมชัน')) cnt.textContent = counts.promo;
-    else if (txt.includes('Loyalty')) cnt.textContent = counts.loyalty;
-    else if (txt.includes('ระบบ')) cnt.textContent = counts.system;
-  });
-  
-  // unread count
-  const unreadEl = document.querySelector('.unread-cnt');
-  if (unreadEl) unreadEl.textContent = unread + ' ใหม่';
-}
+// ── โหลด notifications ──
+async function loadNotifications(filter){
+  filter = filter || 'all';
+  _curFilter = filter;
 
-function renderNotifs() {
   const wrap = document.getElementById('notif-list');
-  if (!wrap) return;
-  
-  if (!NOTIFS.length) {
-    wrap.innerHTML = `<div style="padding:60px;text-align:center;color:#888">
-      <div style="font-size:48px;margin-bottom:12px">🔔</div>
-      <div style="font-size:15px;font-weight:600;margin-bottom:6px">ยังไม่มีการแจ้งเตือน</div>
-      <div style="font-size:13px;color:#aaa">เมื่อมีอัปเดตใหม่ จะแสดงที่นี่</div>
-    </div>`;
-    return;
-  }
-  
-  const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  
-  wrap.innerHTML = NOTIFS.map(n => `
-    <div class="notif ${n.unread?'unread':''}" data-id="${n.id}" onclick="onNotifClick('${n.id}', ${JSON.stringify(n.link||'').replace(/"/g,'&quot;')})">
-      <div class="notif-ico" style="background:${n.unread?'#FEE2E2':'#F5F5F5'}">${esc(n.ico)}</div>
-      <div class="notif-body">
-        <div class="notif-title">${esc(n.title)}${n.unread?' <span class="dot"></span>':''}</div>
-        <div class="notif-text">${esc(n.body)}</div>
-        <div class="notif-time">${esc(n.time)}</div>
-      </div>
-    </div>
-  `).join('');
-}
+  wrap.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><div class="empty-title">กำลังโหลด...</div></div>';
 
-async function onNotifClick(id, link) {
   try {
-    await _sb.rpc('mark_notification_read', { p_id: id }).catch(() => {
-      // fallback
-      return _sb.from('notifications').update({ is_read: true }).eq('id', id);
-    });
-  } catch(e) { console.warn(e); }
-  if (link) location.href = link;
-}
+    const { data: { user } } = await _sb.auth.getUser();
+    if (!user) {
+      wrap.innerHTML = '<div class="empty">' +
+        '<div class="empty-icon">🔒</div>' +
+        '<div class="empty-title">ยังไม่ได้เข้าสู่ระบบ</div>' +
+        '<div class="empty-desc">เข้าสู่ระบบเพื่อดูการแจ้งเตือนของคุณ</div>' +
+        '<a href="login.html?next=' + encodeURIComponent('notification-center.html') + '" class="btn">เข้าสู่ระบบ</a>' +
+        '</div>';
+      // hide controls
+      document.querySelector('.ph-actions').style.display = 'none';
+      document.querySelector('.filter-tabs').style.display = 'none';
+      document.getElementById('unread-count').style.display = 'none';
+      return;
+    }
 
-async function markAllRead() {
-  try {
-    await _sb.rpc('mark_all_notifications_read').catch(async () => {
-      const { data: { user } } = await _sb.auth.getUser();
-      if (!user) return;
-      const { data: u } = await _sb.from('users').select('id').eq('email', user.email).maybeSingle();
-      if (u) await _sb.from('notifications').update({ is_read: true }).or(`user_id.eq.${u.id},target.eq.all_users`).eq('is_read', false);
-    });
-    toast('✓ อ่านทั้งหมดแล้ว');
-    loadNotifications(_curFilter);
+    // ดึง user_id
+    if (!_userId) {
+      const { data: udata } = await _sb.from('users').select('id').eq('email', user.email).maybeSingle();
+      _userId = udata ? udata.id : user.id;
+    }
+
+    // ดึง notifications ตรงๆ (ไม่ผ่าน RPC เพื่อ compatible)
+    let q = _sb.from('notifications').select('*');
+    
+    // user ของตัวเอง + global
+    q = q.or('user_id.eq.' + _userId + ',target.eq.all_users');
+    
+    // filter type
+    if (filter !== 'all') q = q.eq('type', filter);
+    
+    const { data, error } = await q.order('created_at', { ascending: false }).limit(100);
+    
+    if (error) throw error;
+    
+    _notifs = data || [];
+    updateCounts();
+    renderList();
+    
   } catch(e) {
-    toast('❌ ' + e.message);
+    console.error('loadNotifications:', e);
+    wrap.innerHTML = '<div class="empty">' +
+      '<div class="empty-icon">⚠️</div>' +
+      '<div class="empty-title">เกิดข้อผิดพลาด</div>' +
+      '<div class="empty-desc">' + esc(e.message || 'ไม่สามารถโหลดข้อมูลได้') + '</div>' +
+      '<button class="btn" onclick="loadNotifications(_curFilter)">ลองใหม่</button>' +
+      '</div>';
   }
 }
 
-function selTab(el, filter) {
-  document.querySelectorAll('.filter-tabs .ft').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  loadNotifications(filter);
-}
-
-function toast(msg) {
-  const tw = document.getElementById('tw');
-  if (!tw) return alert(msg);
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  t.style.cssText = 'background:#0A0A0A;color:#fff;padding:10px 20px;border-radius:6px;margin:4px 0;font-size:13px';
-  tw.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
-}
-
-// Start
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => loadNotifications('all'));
-} else {
-  loadNotifications('all');
-}
-const TAG_MAP={order:'nt-order',promo:'nt-promo',loyalty:'nt-loyalty',system:'nt-system'};
-const TAG_LABEL={order:'ออเดอร์',promo:'โปรโมชัน',loyalty:'Loyalty',system:'ระบบ'};
-let curTab='all';
-function renderNotifs(){
-  const filtered=curTab==='all'?NOTIFS:NOTIFS.filter(n=>n.type===curTab);
-  if(filtered.length===0){
-    document.getElementById('notif-list').innerHTML=`<div class="empty-state"><div class="es-ico">🔕</div><div class="es-title">ไม่มีการแจ้งเตือน</div><div class="es-sub">ยังไม่มีการแจ้งเตือนในหมวดนี้</div></div>`;return;
+// ── Update counts ──
+function updateCounts(){
+  const counts = { all: 0, order: 0, promo: 0, loyalty: 0, system: 0 };
+  let unread = 0;
+  
+  _notifs.forEach(n => {
+    counts.all++;
+    if (counts[n.type] !== undefined) counts[n.type]++;
+    if (!n.is_read) unread++;
+  });
+  
+  // ถ้า filter ไม่ใช่ all → ต้องดึง count ของ filter อื่นๆ ด้วย
+  // ทำง่ายๆ: นับเฉพาะที่ filter ปัจจุบันแสดง
+  
+  Object.keys(counts).forEach(k => {
+    const el = document.getElementById('cnt-' + k);
+    if (el) {
+      el.textContent = counts[k];
+    }
+  });
+  
+  const unreadEl = document.getElementById('unread-count');
+  if (unreadEl) {
+    unreadEl.textContent = unread + ' ใหม่';
+    unreadEl.style.display = unread > 0 ? '' : 'none';
   }
-  const today=filtered.filter(n=>n.time.includes('นาที')||n.time.includes('ชั่วโมง'));
-  const older=filtered.filter(n=>!today.includes(n));
-  let html='';
-  if(today.length)html+=`<div class="notif-group"><div class="ng-date">วันนี้</div>${today.map(renderNotif).join('')}</div>`;
-  if(older.length)html+=`<div class="notif-group"><div class="ng-date">ก่อนหน้า</div>${older.map(renderNotif).join('')}</div>`;
-  document.getElementById('notif-list').innerHTML=html;
 }
-function renderNotif(n){
-  return `<div class="notif-item ${n.unread?'unread':''}" id="ni-${n.id}" onclick="readNotif(${n.id})">
-    <div class="ni-ico" style="background:${n.bg}">${n.ico}</div>
-    <div class="ni-body">
-      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:3px">
-        <div class="ni-title" style="flex:1">${n.title}</div>
-        <span class="ni-tag ${TAG_MAP[n.tag]}">${TAG_LABEL[n.tag]}</span>
-      </div>
-      <div class="ni-body-txt">${n.body}</div>
-      <div class="ni-time">${n.time}</div>
-      <div class="ni-actions">${n.actions.map(a=>`<button class="na-btn ${a.primary?'na-primary':'na-secondary'}" onclick="event.stopPropagation();${a.fn}">${a.label}</button>`).join('')}</div>
-    </div>
-  </div>`;
-}
-function readNotif(id){const el=document.getElementById('ni-'+id);if(el)el.classList.remove('unread');const n=NOTIFS.find(x=>x.id===id);if(n)n.unread=false;}
-function markAllRead(){NOTIFS.forEach(n=>n.unread=false);renderNotifs();toast('✓ อ่านการแจ้งเตือนทั้งหมดแล้ว');}
-function dismiss(id){const el=document.getElementById('ni-'+id);if(el){el.classList.add('dismissed');setTimeout(()=>el.remove(),300);}}
-function selTab(el,tab){curTab=tab;document.querySelectorAll('.ft').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderNotifs();}
-renderNotifs();
-function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
-</script>
 
-
-
-
-<div class="tm-toast-wrap" id="tmToastWrap"></div>
-<script>
-function tmToast(msg){
-  var w=document.getElementById('tmToastWrap');
-  if(!w){w=document.createElement('div');w.className='tm-toast-wrap';w.id='tmToastWrap';document.body.appendChild(w)}
-  var t=document.createElement('div');t.className='tm-toast';t.textContent=msg;
-  w.appendChild(t);setTimeout(function(){t.remove()},2600);
-}
-</script>
-<footer id="tm-footer">
-  <div class="tf-inner">
-    <div class="tf-grid">
-      <div>
-        <div class="tf-logo">Thailand<span class="dot">.</span>Market</div>
-        <div class="tf-about">General Marketplace ไทย ครบทุกหมวดหมู่ 500,000+ รายการ 50,000+ ร้านค้า ส่งฟรีทั่วประเทศ</div>
-      </div>
-      <div>
-        <div class="tf-title">ช้อปปิ้ง</div>
-        <a href="index.html" class="tf-link">หน้าแรก</a>
-        <a href="category.html" class="tf-link">หมวดหมู่</a>
-        <a href="flash-sale.html" class="tf-link">Flash Sale</a>
-        <a href="live-shopping.html" class="tf-link">Live Shopping</a>
-        <a href="brand-day.html" class="tf-link">Brand Day</a>
-        <a href="compare.html" class="tf-link">เปรียบเทียบ</a>
-      </div>
-      <div>
-        <div class="tf-title">บัญชีของฉัน</div>
-        <a href="profile.html" class="tf-link">โปรไฟล์</a>
-        <a href="wishlist.html" class="tf-link">รายการโปรด</a>
-        <a href="loyalty-catalog.html" class="tf-link">Loyalty</a>
-        <a href="coupon-hub.html" class="tf-link">คูปอง</a>
-        <a href="tracking.html" class="tf-link">ติดตามพัสดุ</a>
-        <a href="returns.html" class="tf-link">คืนสินค้า</a>
-      </div>
-      <div>
-        <div class="tf-title">ผู้ขาย</div>
-        <a href="seller-portal.html" class="tf-link">Seller Portal</a>
-        <a href="seller-products.html" class="tf-link">จัดการสินค้า</a>
-        <a href="seller-ads.html" class="tf-link">Seller Ads</a>
-        <a href="seller-analytics.html" class="tf-link">Analytics</a>
-        <a href="b2b-portal.html" class="tf-link">B2B</a>
-        <a href="onboarding.html" class="tf-link">สมัครขายของ</a>
-      </div>
-      <div>
-        <div class="tf-title">ช่วยเหลือ</div>
-        <a href="help-center.html" class="tf-link">Help Center</a>
-        <a href="chat.html" class="tf-link">แชทกับเรา</a>
-        <a href="subscription.html" class="tf-link">TM Plus</a>
-        <a href="gift-card.html" class="tf-link">Gift Card</a>
-        <a href="sitemap.html" class="tf-link">Site Map</a>
-        <a href="login.html" class="tf-link">เข้าสู่ระบบ</a>
-      </div>
-    </div>
-    <div class="tf-bottom">
-      <span>© 2026 Thailand Market · All rights reserved</span>
-      <span>TH · EN · 🔒 SSL · PCI DSS</span>
-    </div>
-  </div>
-</footer>
-<div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
-<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
-<script>
-// ── Account Nav (shared) ─────────────────────────────────
-(async function initAccountNav() {
-  const sb  = (window._sb) || supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
-  window._sb = sb;
-  const btn  = document.getElementById('account-nav-btn');
-  const drop = document.getElementById('account-dropdown');
-  if (!btn || !drop) return;
-  const { data:{ session } } = await sb.auth.getSession();
-  if (!session) {
-    btn.onclick = () => location.href='login.html?from='+encodeURIComponent(location.pathname);
+// ── Render list ──
+function renderList(){
+  const wrap = document.getElementById('notif-list');
+  
+  if (!_notifs || _notifs.length === 0) {
+    wrap.innerHTML = '<div class="empty">' +
+      '<div class="empty-icon">🔔</div>' +
+      '<div class="empty-title">ยังไม่มีการแจ้งเตือน</div>' +
+      '<div class="empty-desc">เมื่อมีอัปเดตใหม่ จะแสดงที่นี่</div>' +
+      '</div>';
     return;
   }
-  const email = session.user.email;
-  const { data:user } = await sb.from('users').select('display_name,role,avatar_url').eq('email',email).maybeSingle();
-  const name = user?.display_name || email.split('@')[0];
-  const role = user?.role || 'buyer';
-  const ini  = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-  const ico = document.getElementById('account-ico');
-  const lbl = document.getElementById('account-lbl');
-  if (ico) ico.innerHTML = `<div style="width:22px;height:22px;border-radius:50%;background:var(--black);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">${ini}</div>`;
-  if (lbl) lbl.textContent = name.split(' ')[0];
-  ['dd-name','dd-email'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=id==='dd-name'?name:email; });
-  const dr=document.getElementById('dd-role');
-  if(dr){ dr.textContent=role==='admin'?'Admin':role==='seller'?'Seller':'Member'; dr.className='account-dropdown-role '+role; }
-  const da=document.getElementById('dd-admin'); if(da) da.style.display=role==='admin'?'flex':'none';
-  const ds=document.getElementById('dd-seller'); if(ds) ds.style.display=(role==='seller'||role==='admin')?'flex':'none';
-  btn.onclick=e=>{ e.stopPropagation(); drop.classList.toggle('open'); };
-  document.addEventListener('click',()=>drop.classList.remove('open'));
-  document.getElementById('dd-logout')?.addEventListener('click',async()=>{
-    await sb.auth.signOut();
-    location.href='index.html';
+  
+  const html = _notifs.map(n => {
+    const ico = n.icon || '🔔';
+    const title = esc(n.title || '');
+    const body = esc(n.message || n.body || '');
+    const time = timeAgo(n.created_at);
+    const unread = !n.is_read;
+    const link = n.link || '';
+    
+    return '<div class="notif' + (unread ? ' unread' : '') + '" onclick="onClickNotif(\'' + n.id + '\', \'' + esc(link).replace(/'/g, '\\\'') + '\')">' +
+      '<div class="notif-ico">' + esc(ico) + '</div>' +
+      '<div class="notif-body">' +
+        '<div class="notif-title">' + title + (unread ? '<span class="notif-dot"></span>' : '') + '</div>' +
+        '<div class="notif-text">' + body + '</div>' +
+        '<div class="notif-time">' + esc(time) + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  
+  wrap.innerHTML = html;
+}
+
+// ── คลิก notification ──
+async function onClickNotif(id, link){
+  try {
+    await _sb.from('notifications').update({ is_read: true }).eq('id', id);
+    
+    // update local state
+    const n = _notifs.find(x => x.id === id);
+    if (n) n.is_read = true;
+    
+    updateCounts();
+    
+    // ถ้ามี link ให้ไป
+    if (link && link !== 'null' && link !== '') {
+      location.href = link;
+    } else {
+      renderList();
+    }
+  } catch(e) {
+    console.warn('mark read:', e);
+    if (link && link !== 'null' && link !== '') location.href = link;
+  }
+}
+
+// ── Mark all read ──
+async function markAllRead(){
+  if (!_userId) return;
+  
+  try {
+    const { error } = await _sb.from('notifications')
+      .update({ is_read: true })
+      .or('user_id.eq.' + _userId + ',target.eq.all_users')
+      .eq('is_read', false);
+    
+    if (error) throw error;
+    
+    _notifs.forEach(n => n.is_read = true);
+    updateCounts();
+    renderList();
+    toast('✓ อ่านทั้งหมดแล้ว', 'ok');
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
+}
+
+// ── Filter tabs ──
+document.querySelectorAll('.filter-tabs .ft').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-tabs .ft').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadNotifications(btn.getAttribute('data-filter'));
   });
-})();
+});
+
+// ── Init ──
+loadNotifications('all');
 </script>
-</body></html>
+</body>
+</html>
