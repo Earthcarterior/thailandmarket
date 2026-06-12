@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>จัดการ Brand Day — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=DM+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--accent:#E63329;--blue:#2563EB;--green:#10B981;--gold:#F59E0B;--g100:#F5F5F5;--g200:#E5E5E5;--g400:#A3A3A3;--g500:#737373;--g700:#404040;--mono:'DM Mono',monospace}
+body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;color:#0A0A0A;font-size:14px;min-height:100vh}
+
+.nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--g200);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;z-index:100;gap:12px;flex-wrap:wrap}
+.logo{font-family:'Inter';font-weight:800;font-size:18px;text-decoration:none;color:#0A0A0A}.logo .dot{color:var(--accent)}
+.nav-link{padding:6px 12px;background:#fff;border:1px solid var(--g200);border-radius:4px;text-decoration:none;color:var(--g700);font-size:12px;font-family:inherit;cursor:pointer}
+.nav-link:hover{background:var(--g100)}
+.nav-link.active{background:#0A0A0A;color:#fff;border-color:#0A0A0A}
+
+.main{max-width:1200px;margin:0 auto;padding:24px 16px}
+.page-header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.ph-title{font-size:22px;font-weight:700}
+
+.btn{padding:9px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#B5261F}
+.btn-out{background:#fff;color:var(--g700);border:1px solid var(--g200)}
+.btn-out:hover{background:var(--g100)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-danger{background:#EF4444}
+.btn-danger:hover{background:#DC2626}
+.btn-success{background:var(--green)}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--g200);margin-bottom:18px;overflow-x:auto}
+.tab{padding:11px 18px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--g500);border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover:not(.active){color:#0A0A0A}
+
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* Table */
+.tbl-wrap{background:#fff;border:1px solid var(--g200);border-radius:8px;overflow:hidden;margin-bottom:18px}
+table{width:100%;border-collapse:collapse}
+th{background:var(--g100);padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--g700);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--g200)}
+td{padding:12px 14px;border-bottom:1px solid var(--g100);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFAFA}
+
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.status-live{background:#FEE2E2;color:var(--accent)}
+.status-live::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite}
+.status-upcoming{background:#DBEAFE;color:var(--blue)}
+.status-ended{background:var(--g100);color:var(--g500)}
+.status-inactive{background:#FEF3C7;color:var(--gold)}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+.row-actions{display:flex;gap:4px;flex-wrap:wrap}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-bg.on{display:flex}
+.modal{background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--g200);display:flex;justify-content:space-between;align-items:center}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--g500);line-height:1;padding:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.modal-close:hover{background:var(--g100)}
+.modal-body{padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--g200);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+
+.field{margin-bottom:14px}
+.field-label{display:block;font-size:11px;font-weight:600;color:var(--g700);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.field-input{width:100%;padding:10px 12px;border:1px solid var(--g200);border-radius:6px;font-family:inherit;font-size:14px;background:#fff}
+.field-input:focus{outline:none;border-color:#0A0A0A}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+select.field-input{cursor:pointer}
+
+.empty{padding:60px 20px;text-align:center;color:var(--g500)}
+.empty-ico{font-size:60px;margin-bottom:14px;opacity:.6}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;padding:11px 22px;border-radius:6px;z-index:9999;font-size:13px;opacity:0;transition:.3s;pointer-events:none}
+.toast.on{opacity:1}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border:1px solid var(--g200);border-radius:8px;padding:16px}
+.stat-val{font-family:var(--mono);font-size:24px;font-weight:700;margin-bottom:4px}
+.stat-lbl{font-size:11px;color:var(--g500);text-transform:uppercase;letter-spacing:.04em}
+
+.loading{padding:40px;text-align:center;color:var(--g500)}
+.spinner{display:inline-block;width:22px;height:22px;border:2px solid var(--g200);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:560px){
+  .field-row{grid-template-columns:1fr}
+  th,td{padding:8px 10px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- Access Guard -->
+<script>
+(async function(){
+  if (window._adminGuardChecked) return;
+  window._adminGuardChecked = true;
+  
+  if (typeof window.supabase === 'undefined') {
+    await new Promise(r => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.onload = r; s.onerror = r;
+      document.head.appendChild(s);
+    });
+  }
+  
+  const sb = window.supabase.createClient(
+    'https://qmgyimsptzewwyafvjzk.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+  );
+  window._sb = sb;
+  
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      location.href = 'login.html?next=' + encodeURIComponent(location.pathname);
+      return;
+    }
+    
+    const { data: u } = await sb.from('users').select('role').eq('email', session.user.email).maybeSingle();
+    const role = u?.role || 'buyer';
+    const isAdmin = role === 'admin' || role === 'super_admin';
+    
+    if (!isAdmin) {
+      document.documentElement.innerHTML = `
+        <head><meta charset="UTF-8"><title>Access Denied</title>
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+          *{margin:0;padding:0;box-sizing:border-box}
+          body{font-family:'IBM Plex Sans Thai',sans-serif;background:#FAFAFA;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+          .card{background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:50px 40px;max-width:500px;text-align:center}
+          .icon{font-size:80px;margin-bottom:18px}
+          h1{font-size:24px;font-weight:700;margin-bottom:10px}
+          p{font-size:14px;color:#737373;line-height:1.6;margin-bottom:24px}
+          .btn{display:inline-block;padding:13px 28px;background:#E63329;color:#fff;border-radius:6px;text-decoration:none;font-weight:600}
+        </style></head>
+        <body>
+        <div class="card">
+          <div class="icon">⛔</div>
+          <h1>เฉพาะ Admin เท่านั้น</h1>
+          <p>หน้านี้สำหรับผู้ดูแลระบบเท่านั้น</p>
+          <a href="profile.html" class="btn">← กลับโปรไฟล์</a>
+        </div></body>`;
+      throw new Error('ACCESS_DENIED');
+    }
+    
+    window._currentUser = session.user;
+    console.log('[admin-guard] ✅ Access granted');
+  } catch(e) {
+    if (e.message === 'ACCESS_DENIED') throw e;
+    console.warn('[admin-guard]', e);
+  }
+})();
+</script>
+
+<nav class="nav">
+  <a href="admin-cms.html" class="nav-link">← Admin CMS</a>
+  <a href="index.html" class="logo">Thailand<span class="dot">.</span>Market</a>
+  <a href="brand-day.html" class="nav-link" target="_blank">🔗 ดูหน้า Brand Day</a>
+</nav>
+
+<main class="main">
+
+<div class="page-header">
+  <div>
+    <div class="ph-title">🏆 จัดการ Brand Day</div>
+    <div style="font-size:13px;color:var(--g500);margin-top:4px">สร้าง · แก้ไข · ลบ Brand Day Events</div>
+  </div>
+  <button class="btn" onclick="openCreateModal()">+ สร้าง Brand Day ใหม่</button>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" data-tab="events" onclick="switchTab('events')">📅 Brand Day Events</button>
+  <button class="tab" data-tab="brands" onclick="switchTab('brands')">🏷️ Brands</button>
+</div>
+
+<!-- Tab: Events -->
+<div class="tab-pane active" id="tab-events">
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-val">—</div><div class="stat-lbl">Total Events</div></div>
+    <div class="stat-card"><div class="stat-val">—</div><div class="stat-lbl">Live Now</div></div>
+    <div class="stat-card"><div class="stat-val">—</div><div class="stat-lbl">Upcoming</div></div>
+    <div class="stat-card"><div class="stat-val">—</div><div class="stat-lbl">Total Views</div></div>
+  </div>
+  
+  <div id="events-table">
+    <div class="loading"><div class="spinner"></div><div>กำลังโหลด...</div></div>
+  </div>
+</div>
+
+<!-- Tab: Brands -->
+<div class="tab-pane" id="tab-brands">
+  <div style="margin-bottom:14px">
+    <button class="btn btn-sm" onclick="openBrandModal()">+ เพิ่ม Brand</button>
+  </div>
+  <div id="brands-table">
+    <div class="loading"><div class="spinner"></div><div>กำลังโหลด...</div></div>
+  </div>
+</div>
+
+</main>
+
+<!-- Create/Edit Event Modal -->
+<div class="modal-bg" id="modal-event">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">สร้าง Brand Day ใหม่</div>
+      <button class="modal-close" onclick="closeModal('event')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ev-id">
+      
+      <div class="field">
+        <label class="field-label">🏷️ Brand *</label>
+        <select class="field-input" id="ev-brand-id">
+          <option value="">-- เลือก Brand --</option>
+        </select>
+      </div>
+      
+      <div class="field">
+        <label class="field-label">📝 ชื่อ Event *</label>
+        <input type="text" class="field-input" id="ev-title" placeholder="เช่น Samsung Brand Day 2026">
+      </div>
+      
+      <div class="field">
+        <label class="field-label">📄 คำอธิบาย</label>
+        <input type="text" class="field-input" id="ev-subtitle" placeholder="เช่น ทีวี · มือถือ · เครื่องเสียง">
+      </div>
+      
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label">📅 เริ่ม *</label>
+          <input type="datetime-local" class="field-input" id="ev-start">
+        </div>
+        <div class="field">
+          <label class="field-label">📅 สิ้นสุด *</label>
+          <input type="datetime-local" class="field-input" id="ev-end">
+        </div>
+      </div>
+      
+      <div class="field">
+        <label class="field-label">💰 ส่วนลดสูงสุด (%) *</label>
+        <input type="number" class="field-input" id="ev-discount" min="1" max="99" value="50">
+      </div>
+      
+      <div class="field" id="ev-active-wrap" style="display:none">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="ev-active" checked> เปิดใช้งาน
+        </label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-out" onclick="closeModal('event')">ยกเลิก</button>
+      <button class="btn" id="btn-save-event" onclick="saveEvent()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Brand Modal -->
+<div class="modal-bg" id="modal-brand">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">เพิ่ม Brand ใหม่</div>
+      <button class="modal-close" onclick="closeModal('brand')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="field-label">ชื่อ Brand *</label>
+        <input type="text" class="field-input" id="br-name" placeholder="เช่น Samsung">
+      </div>
+      <div class="field">
+        <label class="field-label">Slug *</label>
+        <input type="text" class="field-input" id="br-slug" placeholder="เช่น samsung (ลิงก์ URL)">
+      </div>
+      <div class="field">
+        <label class="field-label">Logo URL</label>
+        <input type="url" class="field-input" id="br-logo" placeholder="https://...">
+      </div>
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="br-featured"> Featured Brand
+        </label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-out" onclick="closeModal('brand')">ยกเลิก</button>
+      <button class="btn" onclick="saveBrand()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let _events = [];
+let _brands = [];
+
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg, kind){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = kind === 'ok' ? '#10B981' : kind === 'err' ? '#E63329' : '#0A0A0A';
+  t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 2800);
+}
+
+function fmtDate(d){
+  if (!d) return '-';
+  return new Date(d).toLocaleString('th-TH', {
+    day: '2-digit', month: 'short', year: '2-digit',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function fmtMoney(n){return '฿' + Number(n||0).toLocaleString('th-TH');}
+
+function toDatetimeLocal(d){
+  if (!d) return '';
+  const dt = new Date(d);
+  // adjust for timezone
+  const offset = dt.getTimezoneOffset() * 60000;
+  return new Date(dt - offset).toISOString().slice(0, 16);
+}
+
+// ── Tab switching ──
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+}
+
+// ── Load events ──
+async function loadEvents(){
+  const wrap = document.getElementById('events-table');
+  wrap.innerHTML = '<div class="loading"><div class="spinner"></div><div>กำลังโหลด...</div></div>';
+  
+  try {
+    const { data, error } = await window._sb.rpc('admin_list_brand_days');
+    if (error) throw error;
+    
+    _events = data || [];
+    renderEvents();
+    updateStats();
+  } catch(e) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-ico">⚠️</div><div>' + esc(e.message) + '</div></div>';
+  }
+}
+
+function updateStats(){
+  const total = _events.length;
+  const live = _events.filter(e => e.status_text === 'live').length;
+  const upcoming = _events.filter(e => e.status_text === 'upcoming').length;
+  const views = _events.reduce((s, e) => s + (e.view_count || 0), 0);
+  
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total Events</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${live}</div><div class="stat-lbl">Live Now</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--blue)">${upcoming}</div><div class="stat-lbl">Upcoming</div></div>
+    <div class="stat-card"><div class="stat-val">${views.toLocaleString()}</div><div class="stat-lbl">Total Views</div></div>
+  `;
+}
+
+function renderEvents(){
+  const wrap = document.getElementById('events-table');
+  
+  if (!_events.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-ico">📅</div><div>ยังไม่มี Brand Day Events</div><div style="margin-top:14px"><button class="btn" onclick="openCreateModal()">+ สร้าง Event แรก</button></div></div>';
+    return;
+  }
+  
+  wrap.innerHTML = `
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Brand</th>
+            <th>Event</th>
+            <th>เวลา</th>
+            <th>ส่วนลด</th>
+            <th>Views</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${_events.map(e => `
+            <tr>
+              <td><span class="status-badge status-${esc(e.status_text)}">${getStatusLabel(e.status_text)}</span></td>
+              <td><strong>${esc(e.brand_name || '-')}</strong></td>
+              <td>
+                <div style="font-weight:600">${esc(e.title)}</div>
+                ${e.subtitle ? '<div style="font-size:11px;color:var(--g500);margin-top:2px">' + esc(e.subtitle) + '</div>' : ''}
+              </td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--g700)">
+                ${fmtDate(e.start_at)}<br>
+                <span style="color:var(--g400)">→ ${fmtDate(e.end_at)}</span>
+              </td>
+              <td><strong style="color:var(--accent)">-${e.max_discount_percent}%</strong></td>
+              <td style="font-family:var(--mono)">${(e.view_count || 0).toLocaleString()}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="btn btn-sm btn-out" onclick="editEvent('${esc(e.id)}')">✏️</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteEvent('${esc(e.id)}', '${esc(e.title).replace(/'/g,"\\'")}')">🗑️</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function getStatusLabel(s){
+  return { live: '🔴 LIVE', upcoming: '⏳ Upcoming', ended: '⏸ Ended', inactive: '💤 Inactive' }[s] || s;
+}
+
+// ── Load brands ──
+async function loadBrands(){
+  const wrap = document.getElementById('brands-table');
+  wrap.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  
+  try {
+    const { data, error } = await window._sb.rpc('admin_list_brands');
+    if (error) throw error;
+    
+    _brands = data || [];
+    
+    if (!_brands.length) {
+      wrap.innerHTML = '<div class="empty"><div class="empty-ico">🏷️</div><div>ยังไม่มี Brand</div></div>';
+      // populate event modal dropdown
+      updateBrandDropdown();
+      return;
+    }
+    
+    wrap.innerHTML = `
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Brand</th><th>Slug</th><th>Featured</th><th>สินค้า</th></tr>
+          </thead>
+          <tbody>
+            ${_brands.map(b => `
+              <tr>
+                <td>
+                  ${b.logo_url ? '<img src="' + esc(b.logo_url) + '" style="width:28px;height:28px;border-radius:4px;vertical-align:middle;margin-right:8px">' : ''}
+                  <strong>${esc(b.name)}</strong>
+                </td>
+                <td style="font-family:var(--mono);color:var(--g500)">${esc(b.slug)}</td>
+                <td>${b.is_featured ? '⭐' : ''}</td>
+                <td style="font-family:var(--mono)">${b.product_count}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+    
+    updateBrandDropdown();
+  } catch(e) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-ico">⚠️</div><div>' + esc(e.message) + '</div></div>';
+  }
+}
+
+function updateBrandDropdown(){
+  const sel = document.getElementById('ev-brand-id');
+  sel.innerHTML = '<option value="">-- เลือก Brand --</option>' + 
+    _brands.map(b => `<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
+}
+
+// ── Modals ──
+function openCreateModal(){
+  document.getElementById('modal-title').textContent = 'สร้าง Brand Day ใหม่';
+  document.getElementById('ev-id').value = '';
+  document.getElementById('ev-brand-id').value = '';
+  document.getElementById('ev-title').value = '';
+  document.getElementById('ev-subtitle').value = '';
+  
+  // Default: today midnight - tomorrow midnight
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0);
+  const tomorrowStart = new Date(todayStart.getTime() + 24 * 3600 * 1000);
+  document.getElementById('ev-start').value = toDatetimeLocal(todayStart);
+  document.getElementById('ev-end').value = toDatetimeLocal(tomorrowStart);
+  
+  document.getElementById('ev-discount').value = 50;
+  document.getElementById('ev-active-wrap').style.display = 'none';
+  document.getElementById('modal-event').classList.add('on');
+}
+
+function editEvent(id){
+  const e = _events.find(x => x.id === id);
+  if (!e) return;
+  
+  document.getElementById('modal-title').textContent = 'แก้ไข Brand Day';
+  document.getElementById('ev-id').value = e.id;
+  document.getElementById('ev-brand-id').value = e.brand_id;
+  document.getElementById('ev-title').value = e.title || '';
+  document.getElementById('ev-subtitle').value = e.subtitle || '';
+  document.getElementById('ev-start').value = toDatetimeLocal(e.start_at);
+  document.getElementById('ev-end').value = toDatetimeLocal(e.end_at);
+  document.getElementById('ev-discount').value = e.max_discount_percent || 50;
+  document.getElementById('ev-active').checked = !!e.is_active;
+  document.getElementById('ev-active-wrap').style.display = '';
+  document.getElementById('modal-event').classList.add('on');
+}
+
+function closeModal(name){
+  document.getElementById('modal-' + name).classList.remove('on');
+}
+
+async function saveEvent(){
+  const id = document.getElementById('ev-id').value;
+  const brandId = document.getElementById('ev-brand-id').value;
+  const title = document.getElementById('ev-title').value.trim();
+  const subtitle = document.getElementById('ev-subtitle').value.trim();
+  const startAt = document.getElementById('ev-start').value;
+  const endAt = document.getElementById('ev-end').value;
+  const discount = parseInt(document.getElementById('ev-discount').value);
+  const isActive = document.getElementById('ev-active').checked;
+  
+  if (!brandId) return toast('⚠️ เลือก Brand', 'err');
+  if (!title) return toast('⚠️ ใส่ชื่อ Event', 'err');
+  if (!startAt || !endAt) return toast('⚠️ ใส่วันเวลา', 'err');
+  if (new Date(startAt) >= new Date(endAt)) return toast('⚠️ เวลาสิ้นสุดต้องหลังเวลาเริ่ม', 'err');
+  
+  const btn = document.getElementById('btn-save-event');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังบันทึก...';
+  
+  try {
+    if (id) {
+      // update
+      const { error } = await window._sb.rpc('admin_update_brand_day', {
+        p_id: id,
+        p_title: title,
+        p_subtitle: subtitle,
+        p_start_at: new Date(startAt).toISOString(),
+        p_end_at: new Date(endAt).toISOString(),
+        p_max_discount_percent: discount,
+        p_is_active: isActive
+      });
+      if (error) throw error;
+      toast('✓ บันทึกแล้ว', 'ok');
+    } else {
+      // create
+      const { error } = await window._sb.rpc('admin_create_brand_day', {
+        p_brand_id: brandId,
+        p_title: title,
+        p_subtitle: subtitle,
+        p_start_at: new Date(startAt).toISOString(),
+        p_end_at: new Date(endAt).toISOString(),
+        p_max_discount_percent: discount
+      });
+      if (error) throw error;
+      toast('✓ สร้าง Brand Day แล้ว', 'ok');
+    }
+    
+    closeModal('event');
+    loadEvents();
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'บันทึก';
+  }
+}
+
+async function deleteEvent(id, title){
+  if (!confirm('แน่ใจที่จะลบ "' + title + '"?')) return;
+  try {
+    const { error } = await window._sb.rpc('admin_delete_brand_day', { p_id: id });
+    if (error) throw error;
+    toast('✓ ลบแล้ว', 'ok');
+    loadEvents();
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
+}
+
+// ── Brand modal ──
+function openBrandModal(){
+  document.getElementById('br-name').value = '';
+  document.getElementById('br-slug').value = '';
+  document.getElementById('br-logo').value = '';
+  document.getElementById('br-featured').checked = false;
+  document.getElementById('modal-brand').classList.add('on');
+}
+
+async function saveBrand(){
+  const name = document.getElementById('br-name').value.trim();
+  const slug = document.getElementById('br-slug').value.trim().toLowerCase();
+  const logo = document.getElementById('br-logo').value.trim();
+  const featured = document.getElementById('br-featured').checked;
+  
+  if (!name) return toast('⚠️ ใส่ชื่อ Brand', 'err');
+  if (!slug) return toast('⚠️ ใส่ Slug', 'err');
+  if (!/^[a-z0-9-]+$/.test(slug)) return toast('⚠️ Slug ใช้ a-z, 0-9, - เท่านั้น', 'err');
+  
+  try {
+    const { error } = await window._sb.rpc('admin_create_brand', {
+      p_name: name,
+      p_slug: slug,
+      p_logo_url: logo || null,
+      p_is_featured: featured
+    });
+    if (error) throw error;
+    
+    toast('✓ สร้าง Brand แล้ว', 'ok');
+    closeModal('brand');
+    loadBrands();
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
+}
+
+// Click outside modal to close
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => {
+    if (e.target === bg) bg.classList.remove('on');
+  });
+});
+
+// Auto generate slug from name
+document.getElementById('br-name').addEventListener('input', e => {
+  const slug = document.getElementById('br-slug');
+  if (!slug.value || slug._autoFilled) {
+    slug.value = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    slug._autoFilled = true;
+  }
+});
+document.getElementById('br-slug').addEventListener('input', e => { e.target._autoFilled = false; });
+
+// ── Init ──
+setTimeout(() => {
+  loadEvents();
+  loadBrands();
+}, 800);
+</script>
+</body>
+</html>
