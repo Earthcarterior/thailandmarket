@@ -512,16 +512,190 @@ img{max-width:100%;height:auto}
 </div>
 <div class="toast-wrap" id="tw"></div>
 <script>
-const NOTIFS=[
-  {id:1,type:'order',ico:'📦',bg:'#DCFCE7',title:'พัสดุออกจากคลังแล้ว! 🚚',body:'Samsung 55" QLED TV (ออเดอร์ #ZM-2604-002847) ถูกส่งออกแล้ว Kerry Express รหัสติดตาม: TH0123456789',time:'เมื่อ 5 นาทีที่แล้ว',unread:true,tag:'order',actions:[{label:'ติดตามพัสดุ',primary:true,fn:"window.location.href='tracking.html'"},{label:'ดูออเดอร์',primary:false,fn:"toast('📦 ออเดอร์ #ZM-2604-002847')"}]},
-  {id:2,type:'promo',ico:'⚡',bg:'#FEE2E2',title:'Flash Sale กำลังจะเริ่ม! ⏰',body:'รอบ 3 เริ่ม 20:00 น. วันนี้ — สินค้าที่คุณ Wishlist ไว้ลดถึง 45%! Samsung S25 Ultra ราคาพิเศษ ฿38,900',time:'เมื่อ 12 นาทีที่แล้ว',unread:true,tag:'promo',actions:[{label:'ดู Flash Sale',primary:true,fn:"window.location.href='flash-sale.html'"},{label:'ดู Wishlist',primary:false,fn:"toast('❤️ Wishlist ของคุณ')"}]},
-  {id:3,type:'loyalty',ico:'⭐',bg:'#FEF3C7',title:'ได้รับ ThaiPoints แล้ว! 🎉',body:'คุณได้รับ 14,900 แต้มจากการซื้อ Samsung TV ยอดแต้มรวมของคุณตอนนี้: 21,149 แต้ม (฿211.49) พร้อมแลก!',time:'เมื่อ 2 ชั่วโมงที่แล้ว',unread:true,tag:'loyalty',actions:[{label:'แลกแต้ม',primary:true,fn:"window.location.href='profile.html'"},{label:'ดูประวัติ',primary:false,fn:"toast('📊 ประวัติ ThaiPoints')"}]},
-  {id:4,type:'order',ico:'✅',bg:'#DCFCE7',title:'ชำระเงินสำเร็จ ✓',body:'ออเดอร์ #ZM-2604-002847 ยอดรวม ฿19,990 — KBank Mastercard ****4521 ขอบคุณที่เลือกใช้ Thailand Market!',time:'เมื่อ 3 ชั่วโมงที่แล้ว',unread:false,tag:'order',actions:[{label:'ดูออเดอร์',primary:true,fn:"window.location.href='tracking.html'"}]},
-  {id:5,type:'promo',ico:'🎁',bg:'#FEE2E2',title:'คูปองพิเศษเฉพาะคุณ! 🎁',body:'สวัสดีวันเกิดล่วงหน้า! 🎂 รับคูปองพิเศษ BDAY30 ลด 30% สูงสุด ฿500 ใช้ได้ถึง 30 พ.ค. 2026',time:'เมื่อ 1 วันที่แล้ว',unread:true,tag:'promo',actions:[{label:'ใช้คูปอง',primary:true,fn:"toast('🎟️ คัดลอก: BDAY30')"},{label:'ช้อปเลย',primary:false,fn:"window.location.href='index.html'"}]},
-  {id:6,type:'order',ico:'⭐',bg:'#FEF3C7',title:'รีวิวสินค้าของคุณ',body:'คุณเคยซื้อ Galaxy Buds 3 Pro ไปเมื่อ 2 สัปดาห์ที่แล้ว แชร์ประสบการณ์ให้คนอื่นรู้ด้วยนะ! รับโบนัส 50 แต้ม',time:'เมื่อ 2 วันที่แล้ว',unread:false,tag:'order',actions:[{label:'เขียนรีวิว',primary:true,fn:"toast('📝 เปิดหน้าเขียนรีวิว')"},{label:'ข้ามไปก่อน',primary:false,fn:"dismiss(6)"}]},
-  {id:7,type:'loyalty',ico:'🏆',bg:'#FEF3C7',title:'อัปเกรดเป็น Gold Member! 🏅',body:'ยินดีด้วย! คุณซื้อสะสมครบ ฿50,000 แล้ว อัปเกรดเป็น Gold Member รับสิทธิ์ส่งฟรีทุกออเดอร์ + ลด 8% เพิ่มเติม',time:'เมื่อ 5 วันที่แล้ว',unread:false,tag:'loyalty',actions:[{label:'ดูสิทธิพิเศษ',primary:true,fn:"window.location.href='profile.html'"}]},
-  {id:8,type:'system',ico:'🔒',bg:'#DBEAFE',title:'อัปเดตรหัสผ่านสำเร็จ',body:'รหัสผ่านบัญชีของคุณถูกเปลี่ยนแปลงเมื่อ 20 เมษายน 2026 เวลา 14:23 น. หากไม่ใช่คุณ กรุณาติดต่อ support ทันที',time:'เมื่อ 8 วันที่แล้ว',unread:false,tag:'system',actions:[{label:'ไม่ใช่ฉัน!',primary:false,fn:"toast('🚨 แจ้ง support แล้ว')"}]},
-];
+let NOTIFS = [];
+let _userRole = 'guest';
+let _curFilter = 'all';
+
+const _sb = window._sb || (window.supabase && window.supabase.createClient(
+  'https://qmgyimsptzewwyafvjzk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+));
+if (_sb && !window._sb) window._sb = _sb;
+
+async function loadNotifications(filter) {
+  filter = filter || 'all';
+  _curFilter = filter;
+  
+  const wrap = document.getElementById('notif-list');
+  if (wrap) wrap.innerHTML = '<div style="padding:60px;text-align:center;color:#888">⏳ กำลังโหลด...</div>';
+  
+  try {
+    const { data: { user } } = await _sb.auth.getUser();
+    if (!user) {
+      if (wrap) wrap.innerHTML = `<div style="padding:60px;text-align:center;color:#888">
+        <div style="font-size:48px;margin-bottom:12px">🔒</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px">ยังไม่ได้เข้าสู่ระบบ</div>
+        <div style="font-size:13px;color:#aaa;margin-bottom:18px">เข้าสู่ระบบเพื่อดูการแจ้งเตือนของคุณ</div>
+        <a href="login.html?next=${encodeURIComponent('notification-center.html')}" style="display:inline-block;padding:11px 24px;background:#E63329;color:#fff;border-radius:6px;text-decoration:none;font-weight:600">เข้าสู่ระบบ</a>
+      </div>`;
+      return;
+    }
+    
+    // เรียก RPC get_my_notifications
+    const { data, error } = await _sb.rpc('get_my_notifications', { 
+      p_filter: filter, 
+      p_limit: 50, 
+      p_offset: 0 
+    });
+    
+    if (error) {
+      // fallback - query โดยตรง
+      const { data: udata } = await _sb.from('users').select('id').eq('email', user.email).maybeSingle();
+      if (udata) {
+        let q = _sb.from('notifications').select('*')
+          .or(`user_id.eq.${udata.id},target.eq.all_users`)
+          .order('created_at', { ascending: false }).limit(50);
+        if (filter !== 'all') q = q.eq('type', filter);
+        const r = await q;
+        if (r.error) throw r.error;
+        NOTIFS = (r.data || []).map(n => ({
+          id: n.id, type: n.type, ico: n.icon || '🔔',
+          title: n.title, body: n.message || n.body || '',
+          time: timeAgo(n.created_at), unread: !n.is_read, tag: n.type,
+          link: n.link
+        }));
+      } else throw error;
+    } else {
+      NOTIFS = (data || []).map(n => ({
+        id: n.id, type: n.type, ico: n.icon || '🔔',
+        title: n.title, body: n.message || n.body || '',
+        time: n.age_text, unread: !n.is_read, tag: n.type,
+        link: n.link
+      }));
+    }
+    
+    updateCounts();
+    renderNotifs();
+    
+  } catch(e) {
+    console.error('loadNotifications:', e);
+    if (wrap) wrap.innerHTML = `<div style="padding:60px;text-align:center;color:#E63329">
+      <div style="font-size:48px;margin-bottom:12px">⚠️</div>
+      <div style="font-size:14px">${(e.message||'').replace(/[<>]/g,'')}</div>
+    </div>`;
+  }
+}
+
+function timeAgo(d) {
+  if (!d) return '';
+  const diff = (Date.now() - new Date(d).getTime()) / 1000;
+  if (diff < 60) return 'เมื่อสักครู่';
+  if (diff < 3600) return `เมื่อ ${Math.floor(diff/60)} นาทีที่แล้ว`;
+  if (diff < 86400) return `เมื่อ ${Math.floor(diff/3600)} ชั่วโมงที่แล้ว`;
+  if (diff < 604800) return `เมื่อ ${Math.floor(diff/86400)} วันที่แล้ว`;
+  return new Date(d).toLocaleDateString('th-TH');
+}
+
+function updateCounts() {
+  const counts = { all: NOTIFS.length, order: 0, promo: 0, loyalty: 0, system: 0 };
+  let unread = 0;
+  NOTIFS.forEach(n => {
+    if (counts[n.tag] !== undefined) counts[n.tag]++;
+    if (n.unread) unread++;
+  });
+  
+  // update tab counts
+  document.querySelectorAll('.filter-tabs .ft').forEach(ft => {
+    const cnt = ft.querySelector('.ft-cnt');
+    if (!cnt) return;
+    const txt = ft.textContent.trim();
+    if (txt.includes('ทั้งหมด')) cnt.textContent = counts.all;
+    else if (txt.includes('ออเดอร์')) cnt.textContent = counts.order;
+    else if (txt.includes('โปรโมชัน')) cnt.textContent = counts.promo;
+    else if (txt.includes('Loyalty')) cnt.textContent = counts.loyalty;
+    else if (txt.includes('ระบบ')) cnt.textContent = counts.system;
+  });
+  
+  // unread count
+  const unreadEl = document.querySelector('.unread-cnt');
+  if (unreadEl) unreadEl.textContent = unread + ' ใหม่';
+}
+
+function renderNotifs() {
+  const wrap = document.getElementById('notif-list');
+  if (!wrap) return;
+  
+  if (!NOTIFS.length) {
+    wrap.innerHTML = `<div style="padding:60px;text-align:center;color:#888">
+      <div style="font-size:48px;margin-bottom:12px">🔔</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px">ยังไม่มีการแจ้งเตือน</div>
+      <div style="font-size:13px;color:#aaa">เมื่อมีอัปเดตใหม่ จะแสดงที่นี่</div>
+    </div>`;
+    return;
+  }
+  
+  const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  
+  wrap.innerHTML = NOTIFS.map(n => `
+    <div class="notif ${n.unread?'unread':''}" data-id="${n.id}" onclick="onNotifClick('${n.id}', ${JSON.stringify(n.link||'').replace(/"/g,'&quot;')})">
+      <div class="notif-ico" style="background:${n.unread?'#FEE2E2':'#F5F5F5'}">${esc(n.ico)}</div>
+      <div class="notif-body">
+        <div class="notif-title">${esc(n.title)}${n.unread?' <span class="dot"></span>':''}</div>
+        <div class="notif-text">${esc(n.body)}</div>
+        <div class="notif-time">${esc(n.time)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function onNotifClick(id, link) {
+  try {
+    await _sb.rpc('mark_notification_read', { p_id: id }).catch(() => {
+      // fallback
+      return _sb.from('notifications').update({ is_read: true }).eq('id', id);
+    });
+  } catch(e) { console.warn(e); }
+  if (link) location.href = link;
+}
+
+async function markAllRead() {
+  try {
+    await _sb.rpc('mark_all_notifications_read').catch(async () => {
+      const { data: { user } } = await _sb.auth.getUser();
+      if (!user) return;
+      const { data: u } = await _sb.from('users').select('id').eq('email', user.email).maybeSingle();
+      if (u) await _sb.from('notifications').update({ is_read: true }).or(`user_id.eq.${u.id},target.eq.all_users`).eq('is_read', false);
+    });
+    toast('✓ อ่านทั้งหมดแล้ว');
+    loadNotifications(_curFilter);
+  } catch(e) {
+    toast('❌ ' + e.message);
+  }
+}
+
+function selTab(el, filter) {
+  document.querySelectorAll('.filter-tabs .ft').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  loadNotifications(filter);
+}
+
+function toast(msg) {
+  const tw = document.getElementById('tw');
+  if (!tw) return alert(msg);
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  t.style.cssText = 'background:#0A0A0A;color:#fff;padding:10px 20px;border-radius:6px;margin:4px 0;font-size:13px';
+  tw.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// Start
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => loadNotifications('all'));
+} else {
+  loadNotifications('all');
+}
 const TAG_MAP={order:'nt-order',promo:'nt-promo',loyalty:'nt-loyalty',system:'nt-system'};
 const TAG_LABEL={order:'ออเดอร์',promo:'โปรโมชัน',loyalty:'Loyalty',system:'ระบบ'};
 let curTab='all';
