@@ -78,13 +78,12 @@ body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;colo
   <div class="mfa-info" style="font-weight:600;color:#0A0A0A;font-size:14px;margin-bottom:4px">ยืนยันตัวตน 2 ขั้น</div>
   <div class="mfa-info">เปิดแอป Authenticator แล้วใส่รหัส 6 หลัก</div>
 
-  <div class="otp-box">
-    <input class="otp-inp" maxlength="1" id="mfa-1" inputmode="numeric" oninput="mfaInput(this,1)">
-    <input class="otp-inp" maxlength="1" id="mfa-2" inputmode="numeric" oninput="mfaInput(this,2)">
-    <input class="otp-inp" maxlength="1" id="mfa-3" inputmode="numeric" oninput="mfaInput(this,3)">
-    <input class="otp-inp" maxlength="1" id="mfa-4" inputmode="numeric" oninput="mfaInput(this,4)">
-    <input class="otp-inp" maxlength="1" id="mfa-5" inputmode="numeric" oninput="mfaInput(this,5)">
-    <input class="otp-inp" maxlength="1" id="mfa-6" inputmode="numeric" oninput="mfaInput(this,6)">
+  <div style="margin:24px 0">
+    <input class="inp" id="mfa-single" inputmode="numeric" autocomplete="one-time-code"
+      style="text-align:center;font-family:var(--mono);font-size:24px;letter-spacing:6px;font-weight:700;padding:14px"
+      placeholder="------"
+      maxlength="6">
+    <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--g500)">🛡️ TOTP 6 หลัก จาก Authenticator</div>
   </div>
 
   <button class="btn" id="btn-verify-mfa" onclick="verifyMFA()">ยืนยัน</button>
@@ -103,13 +102,12 @@ body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;colo
   <div class="mfa-info">ใส่รหัส 6 หลักที่ได้รับ</div>
   <div class="mfa-info" style="font-family:var(--mono);font-weight:600;color:#0A0A0A" id="otp-login-email"></div>
 
-  <div class="otp-box">
-    <input class="otp-inp" maxlength="1" id="ol-1" inputmode="numeric" oninput="olInput(this,1)">
-    <input class="otp-inp" maxlength="1" id="ol-2" inputmode="numeric" oninput="olInput(this,2)">
-    <input class="otp-inp" maxlength="1" id="ol-3" inputmode="numeric" oninput="olInput(this,3)">
-    <input class="otp-inp" maxlength="1" id="ol-4" inputmode="numeric" oninput="olInput(this,4)">
-    <input class="otp-inp" maxlength="1" id="ol-5" inputmode="numeric" oninput="olInput(this,5)">
-    <input class="otp-inp" maxlength="1" id="ol-6" inputmode="numeric" oninput="olInput(this,6)">
+  <div style="margin:24px 0">
+    <input class="inp" id="ol-single" inputmode="numeric" autocomplete="one-time-code"
+      style="text-align:center;font-family:var(--mono);font-size:24px;letter-spacing:6px;font-weight:700;padding:14px"
+      placeholder="------"
+      maxlength="10">
+    <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--g500)">💡 รองรับ 6 หรือ 8 หลัก</div>
   </div>
 
   <button class="btn" onclick="verifyOtpLogin()">เข้าสู่ระบบ</button>
@@ -165,7 +163,7 @@ async function doLogin(){
       if (chErr) throw chErr;
       _challengeId = ch.id;
       goStep('2fa');
-      setTimeout(() => document.getElementById('mfa-1').focus(), 200);
+      setTimeout(() => { const i=document.getElementById('mfa-single'); if(i) i.focus(); }, 200);
     } else {
       // เข้าได้เลย
       redirectAfterLogin();
@@ -186,8 +184,9 @@ function mfaInput(el, idx){
 
 async function verifyMFA(){
   clearErr('mfa');
-  const code = [1,2,3,4,5,6].map(i => document.getElementById('mfa-'+i).value).join('');
-  if (code.length !== 6) { showErr('mfa', '⚠️ กรอก 6 หลักให้ครบ'); return; }
+  const inp = document.getElementById('mfa-single');
+  let code = (inp ? inp.value : '').replace(/[^0-9]/g, '').trim();
+  if (code.length !== 6) { showErr('mfa', '⚠️ TOTP 6 หลัก'); return; }
 
   const btn = document.getElementById('btn-verify-mfa');
   btn.disabled = true;
@@ -205,8 +204,7 @@ async function verifyMFA(){
     btn.disabled = false;
     btn.textContent = 'ยืนยัน';
     showErr('mfa', '❌ รหัสไม่ถูกต้อง');
-    [1,2,3,4,5,6].forEach(i => document.getElementById('mfa-'+i).value='');
-    document.getElementById('mfa-1').focus();
+    const i=document.getElementById('mfa-single'); if(i){i.value='';i.focus();}
   }
 }
 
@@ -229,7 +227,7 @@ async function loginWithOtp(){
     _otpEmail = email;
     document.getElementById('otp-login-email').textContent = email;
     goStep('otp-login');
-    setTimeout(() => document.getElementById('ol-1').focus(), 200);
+    setTimeout(() => { const i=document.getElementById('ol-single'); if(i) i.focus(); }, 200);
   } catch(e) {
     showErr('login', '❌ ' + e.message);
   }
@@ -243,8 +241,9 @@ function olInput(el, idx){
 
 async function verifyOtpLogin(){
   clearErr('otp-login');
-  const otp = [1,2,3,4,5,6].map(i => document.getElementById('ol-'+i).value).join('');
-  if (otp.length !== 6) { showErr('otp-login', '⚠️ กรอก 6 หลักให้ครบ'); return; }
+  const inp = document.getElementById('ol-single');
+  let otp = (inp ? inp.value : '').replace(/[^0-9]/g, '').trim();
+  if (otp.length !== 6 && otp.length !== 8) { showErr('otp-login', '⚠️ OTP 6 หรือ 8 หลัก'); return; }
 
   try {
     const { error } = await _sb.auth.verifyOtp({
@@ -256,8 +255,7 @@ async function verifyOtpLogin(){
     redirectAfterLogin();
   } catch(e) {
     showErr('otp-login', '❌ OTP ไม่ถูกต้องหรือหมดอายุ');
-    [1,2,3,4,5,6].forEach(i => document.getElementById('ol-'+i).value='');
-    document.getElementById('ol-1').focus();
+    const i=document.getElementById('ol-single'); if(i){i.value='';i.focus();}
   }
 }
 
@@ -300,7 +298,7 @@ function redirectAfterLogin(){
       const { data: ch } = await _sb.auth.mfa.challenge({ factorId: _factorId });
       _challengeId = ch.id;
       goStep('2fa');
-      setTimeout(() => document.getElementById('mfa-1').focus(), 200);
+      setTimeout(() => { const i=document.getElementById('mfa-single'); if(i) i.focus(); }, 200);
       return;
     }
   }

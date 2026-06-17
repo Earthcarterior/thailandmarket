@@ -91,13 +91,14 @@ body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;colo
   <div class="otp-info"><strong id="otp-email"></strong></div>
   <div class="otp-info">กรุณาตรวจสอบกล่องอีเมล (รวมถึง Spam)</div>
 
-  <div class="otp-box">
-    <input class="otp-inp" maxlength="1" id="otp-1" inputmode="numeric" oninput="otpInput(this,1)">
-    <input class="otp-inp" maxlength="1" id="otp-2" inputmode="numeric" oninput="otpInput(this,2)">
-    <input class="otp-inp" maxlength="1" id="otp-3" inputmode="numeric" oninput="otpInput(this,3)">
-    <input class="otp-inp" maxlength="1" id="otp-4" inputmode="numeric" oninput="otpInput(this,4)">
-    <input class="otp-inp" maxlength="1" id="otp-5" inputmode="numeric" oninput="otpInput(this,5)">
-    <input class="otp-inp" maxlength="1" id="otp-6" inputmode="numeric" oninput="otpInput(this,6)">
+  <div style="margin:24px 0">
+    <input class="inp" id="otp-single" inputmode="numeric" autocomplete="one-time-code" 
+      style="text-align:center;font-family:var(--mono);font-size:24px;letter-spacing:6px;font-weight:700;padding:14px;max-width:100%" 
+      placeholder="------" 
+      maxlength="10">
+    <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--g500)">
+      💡 รองรับ OTP 6 หรือ 8 หลัก · ใส่จากอีเมลทั้งหมด
+    </div>
   </div>
 
   <div class="err" id="err-otp" style="text-align:center"></div>
@@ -178,7 +179,7 @@ async function sendOTP(){
     document.getElementById('otp-email').textContent = _email;
     goStep(2);
     startResendTimer();
-    setTimeout(() => document.getElementById('otp-1').focus(), 200);
+    setTimeout(() => { const inp = document.getElementById('otp-single'); if (inp) inp.focus(); }, 200);
     btn.disabled = false;
     btn.textContent = '📧 ส่ง OTP ไปที่อีเมล';
 
@@ -214,8 +215,13 @@ document.addEventListener('keydown', e => {
 
 async function verifyOTP(){
   clearErr('otp');
-  const otp = [1,2,3,4,5,6].map(i => document.getElementById('otp-'+i).value).join('');
-  if (otp.length !== 6) { showErr('otp', 'กรอก OTP 6 หลักให้ครบ'); return; }
+  // รับ OTP จาก input เดียว — รองรับ 6 หรือ 8 หลัก
+  const inp = document.getElementById('otp-single');
+  let otp = (inp.value || '').replace(/[^0-9]/g, '').trim();
+  if (otp.length !== 6 && otp.length !== 8) { 
+    showErr('otp', '⚠️ OTP ต้องเป็น 6 หรือ 8 หลัก (ใส่ได้ ' + otp.length + ' หลัก)'); 
+    return; 
+  }
 
   const btn = document.getElementById('btn-verify');
   btn.disabled = true;
@@ -236,10 +242,10 @@ async function verifyOTP(){
   } catch(e) {
     btn.disabled = false;
     btn.textContent = '✓ ยืนยันรหัส';
-    showErr('otp', '❌ OTP ไม่ถูกต้องหรือหมดอายุ — ขอใหม่ได้');
+    showErr('otp', '❌ OTP ไม่ถูกต้องหรือหมดอายุ (เช็คอีเมลใหม่ + ขอ OTP ใหม่)');
     // เคลียร์ช่อง OTP
-    [1,2,3,4,5,6].forEach(i => document.getElementById('otp-'+i).value='');
-    document.getElementById('otp-1').focus();
+    const inp = document.getElementById('otp-single');
+    if (inp) { inp.value = ''; inp.focus(); }
   }
 }
 
