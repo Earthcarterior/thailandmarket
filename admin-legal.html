@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>จัดการนโยบาย — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=DM+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--accent:#E63329;--green:#10B981;--blue:#2563EB;--g50:#FAFAFA;--g100:#F5F5F5;--g200:#E5E5E5;--g400:#A3A3A3;--g500:#737373;--g700:#404040;--mono:'DM Mono',monospace}
+body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:var(--g50);color:#0A0A0A;font-size:14px;min-height:100vh}
+
+.nav{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--g200);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;z-index:100;gap:12px;flex-wrap:wrap}
+.logo{font-family:'Inter';font-weight:800;font-size:18px;text-decoration:none;color:#0A0A0A}.logo .dot{color:var(--accent)}
+.nav-link{padding:6px 12px;background:#fff;border:1px solid var(--g200);border-radius:4px;text-decoration:none;color:var(--g700);font-size:12px;cursor:pointer;font-family:inherit}
+.nav-link:hover{background:var(--g100)}
+
+.main{max-width:1400px;margin:0 auto;padding:24px 16px}
+.page-header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.ph-title{font-size:22px;font-weight:700}
+.ph-sub{font-size:13px;color:var(--g500);margin-top:4px}
+
+.btn{padding:9px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#B5261F}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-out{background:#fff;color:var(--g700);border:1px solid var(--g200)}
+.btn-out:hover{background:var(--g100)}
+.btn-danger{background:#EF4444}
+.btn-danger:hover{background:#DC2626}
+.btn-success{background:var(--green)}
+
+.tbl-wrap{background:#fff;border:1px solid var(--g200);border-radius:8px;overflow:hidden;margin-bottom:18px}
+table{width:100%;border-collapse:collapse}
+th{background:var(--g100);padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--g700);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--g200)}
+td{padding:12px 14px;border-bottom:1px solid var(--g100);font-size:13px;vertical-align:middle}
+tr:hover td{background:#FAFAFA}
+
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+.status-published{background:#D1FAE5;color:#065F46}
+.status-draft{background:#FEF3C7;color:#92400E}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-bg.on{display:flex}
+.modal{background:#fff;border-radius:12px;max-width:800px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--g200);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:5}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--g500);line-height:1;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.modal-close:hover{background:var(--g100)}
+.modal-body{padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--g200);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;position:sticky;bottom:0;background:#fff}
+
+.field{margin-bottom:14px}
+.field-label{display:block;font-size:11px;font-weight:600;color:var(--g700);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.field-input{width:100%;padding:10px 12px;border:1px solid var(--g200);border-radius:6px;font-family:inherit;font-size:14px;background:#fff}
+.field-input:focus{outline:none;border-color:#0A0A0A}
+.field-input.mono{font-family:var(--mono)}
+.field-textarea{width:100%;padding:12px;border:1px solid var(--g200);border-radius:6px;font-family:var(--mono);font-size:13px;line-height:1.6;background:#fff;min-height:400px;resize:vertical}
+.field-textarea:focus{outline:none;border-color:#0A0A0A}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+.hint{font-size:11px;color:var(--g500);margin-top:4px}
+.preview{background:var(--g100);border:1px dashed var(--g200);padding:14px;border-radius:6px;font-size:13px;line-height:1.6;max-height:300px;overflow-y:auto;display:none}
+.preview.on{display:block}
+.preview h1{font-size:18px;margin:10px 0 6px}
+.preview h2{font-size:15px;margin:8px 0 4px}
+.preview ul{margin-left:18px}
+
+.empty{padding:60px 20px;text-align:center;color:var(--g500);background:#fff;border-radius:8px;border:1px solid var(--g200)}
+.empty-ico{font-size:50px;margin-bottom:14px;opacity:.6}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;padding:11px 22px;border-radius:6px;z-index:9999;font-size:13px;opacity:0;transition:.3s;pointer-events:none}
+.toast.on{opacity:1}
+
+.tab-toggle{display:flex;background:var(--g100);padding:3px;border-radius:6px;margin-bottom:10px;width:fit-content}
+.tab-toggle button{padding:6px 14px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;color:var(--g500);border-radius:4px}
+.tab-toggle button.on{background:#fff;color:#0A0A0A;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+.loading{padding:40px;text-align:center;color:var(--g500)}
+.spinner{display:inline-block;width:22px;height:22px;border:2px solid var(--g200);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- Admin Guard -->
+<script>
+(async function(){
+  if (window._adminGuardChecked) return;
+  window._adminGuardChecked = true;
+  if (typeof window.supabase === 'undefined') {
+    await new Promise(r => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.onload = r; s.onerror = r;
+      document.head.appendChild(s);
+    });
+  }
+  const sb = window.supabase.createClient(
+    'https://qmgyimsptzewwyafvjzk.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+  );
+  window._sb = sb;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      location.href = 'login.html?next=' + encodeURIComponent(location.pathname);
+      return;
+    }
+    const { data: u } = await sb.from('users').select('role').eq('email', session.user.email).maybeSingle();
+    const role = u?.role || 'buyer';
+    const isAdmin = role === 'admin' || role === 'super_admin';
+    if (!isAdmin) {
+      document.documentElement.innerHTML = '<head><meta charset="UTF-8"><title>Access Denied</title><style>body{font-family:sans-serif;text-align:center;padding:60px}</style></head><body><h1>⛔ เฉพาะ Admin เท่านั้น</h1><a href="profile.html">← กลับ</a></body>';
+      throw new Error('ACCESS_DENIED');
+    }
+  } catch(e) {
+    if (e.message === 'ACCESS_DENIED') throw e;
+    console.warn('[admin-guard]', e);
+  }
+})();
+</script>
+
+<nav class="nav">
+  <a href="admin-cms.html" class="nav-link">← Admin CMS</a>
+  <a href="index.html" class="logo">Thailand<span class="dot">.</span>Market</a>
+  <a href="policy.html" class="nav-link" target="_blank">🔗 ดูหน้านโยบาย</a>
+</nav>
+
+<main class="main">
+
+<div class="page-header">
+  <div>
+    <div class="ph-title">📋 จัดการนโยบายและข้อกำหนด</div>
+    <div class="ph-sub">ข้อกำหนดการใช้งาน · นโยบายความเป็นส่วนตัว · ข้อกำหนดสำหรับผู้ขาย</div>
+  </div>
+  <button class="btn" onclick="openCreateModal()">+ สร้างเอกสารใหม่</button>
+</div>
+
+<div id="docs-table">
+  <div class="loading"><div class="spinner"></div><div>กำลังโหลด...</div></div>
+</div>
+
+</main>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal-doc">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">สร้างเอกสารใหม่</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="doc-id">
+      
+      <div class="field">
+        <label class="field-label">📝 ชื่อเอกสาร *</label>
+        <input type="text" class="field-input" id="doc-title" placeholder="เช่น ข้อกำหนดการใช้งาน">
+      </div>
+      
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label">🔗 Slug (URL) *</label>
+          <input type="text" class="field-input mono" id="doc-slug" placeholder="terms-of-service">
+          <div class="hint">a-z, 0-9, hyphen เท่านั้น · ใช้ใน URL</div>
+        </div>
+        <div class="field">
+          <label class="field-label">📁 หมวด</label>
+          <select class="field-input" id="doc-category">
+            <option value="legal">⚖️ Legal</option>
+            <option value="seller">🏪 Seller</option>
+            <option value="buyer">🛒 Buyer</option>
+            <option value="general">📋 General</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="field-row-3">
+        <div class="field">
+          <label class="field-label">🔖 เวอร์ชั่น</label>
+          <input type="text" class="field-input mono" id="doc-version" placeholder="1.0" value="1.0">
+        </div>
+        <div class="field">
+          <label class="field-label">📅 มีผลตั้งแต่</label>
+          <input type="date" class="field-input" id="doc-effective">
+        </div>
+        <div class="field">
+          <label class="field-label">🔢 ลำดับแสดง</label>
+          <input type="number" class="field-input mono" id="doc-order" value="0">
+        </div>
+      </div>
+      
+      <div class="field">
+        <label class="field-label">📄 เนื้อหา (Markdown) *</label>
+        <div class="tab-toggle">
+          <button type="button" class="on" onclick="toggleView('edit')">✏️ Edit</button>
+          <button type="button" onclick="toggleView('preview')">👁️ Preview</button>
+        </div>
+        <textarea class="field-textarea" id="doc-content" placeholder="# หัวข้อหลัก&#10;&#10;## หัวข้อรอง&#10;&#10;- รายการ 1&#10;- รายการ 2&#10;&#10;**ตัวหนา** และ *ตัวเอียง*"></textarea>
+        <div class="preview" id="doc-preview"></div>
+        <div class="hint">รองรับ Markdown: # ## ### **bold** *italic* - lists --- (เส้นคั่น)</div>
+      </div>
+      
+      <div class="field">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="doc-published" checked> 🌐 เผยแพร่ (Published)
+        </label>
+        <div class="hint">ถ้าไม่ติ๊ก จะเก็บเป็น draft - ผู้ใช้ทั่วไปไม่เห็น</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-out" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn" id="btn-save" onclick="saveDoc()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let _docs = [];
+
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(msg, kind){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = kind === 'ok' ? '#10B981' : kind === 'err' ? '#E63329' : '#0A0A0A';
+  t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 2800);
+}
+
+function fmtDate(d){
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
+}
+
+function md2html(text){
+  if (!text) return '';
+  let h = esc(text);
+  h = h.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+  h = h.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+  h = h.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  h = h.replace(/`(.+?)`/g, '<code>$1</code>');
+  h = h.replace(/^---$/gm, '<hr>');
+  const lines = h.split('\n');
+  let result = [];
+  let inUl = false;
+  for (let line of lines) {
+    if (/^[\-\*] /.test(line)) {
+      if (!inUl) { result.push('<ul>'); inUl = true; }
+      result.push('<li>' + line.replace(/^[\-\*] /, '') + '</li>');
+    } else {
+      if (inUl) { result.push('</ul>'); inUl = false; }
+      if (line.trim() && !line.startsWith('<h') && !line.startsWith('<hr')) {
+        result.push('<p>' + line + '</p>');
+      } else {
+        result.push(line);
+      }
+    }
+  }
+  if (inUl) result.push('</ul>');
+  return result.join('\n');
+}
+
+async function loadDocs(){
+  const wrap = document.getElementById('docs-table');
+  wrap.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const { data, error } = await window._sb.rpc('admin_list_legal_documents');
+    if (error) throw error;
+    _docs = data || [];
+    renderTable();
+  } catch(e) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-ico">⚠️</div><div>' + esc(e.message) + '</div></div>';
+  }
+}
+
+function renderTable(){
+  const wrap = document.getElementById('docs-table');
+  if (!_docs.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-ico">📋</div><div>ยังไม่มีเอกสาร</div><div style="margin-top:14px"><button class="btn" onclick="openCreateModal()">+ สร้างเอกสารแรก</button></div></div>';
+    return;
+  }
+  
+  wrap.innerHTML = `
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>เอกสาร</th>
+            <th>Slug</th>
+            <th>หมวด</th>
+            <th>เวอร์ชั่น</th>
+            <th>มีผล</th>
+            <th>สถานะ</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${_docs.map(d => `
+            <tr>
+              <td><strong>${esc(d.title)}</strong></td>
+              <td><code style="font-size:11px;background:var(--g100);padding:2px 6px;border-radius:3px">${esc(d.slug)}</code></td>
+              <td><span style="font-size:12px;color:var(--g500)">${esc(d.category || '-')}</span></td>
+              <td style="font-family:var(--mono);font-size:12px">v${esc(d.version || '1.0')}</td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--g500)">${fmtDate(d.effective_date)}</td>
+              <td>
+                <span class="status-badge ${d.is_published ? 'status-published' : 'status-draft'}">
+                  ${d.is_published ? '🌐 เผยแพร่' : '📝 Draft'}
+                </span>
+              </td>
+              <td>
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  <button class="btn btn-sm btn-out" onclick="editDoc('${esc(d.id)}')">✏️</button>
+                  <a class="btn btn-sm btn-out" href="policy.html?doc=${esc(d.slug)}" target="_blank">👁️</a>
+                  <button class="btn btn-sm btn-danger" onclick="deleteDoc('${esc(d.id)}', '${esc(d.title).replace(/'/g,"\\'")}')">🗑️</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openCreateModal(){
+  document.getElementById('modal-title').textContent = 'สร้างเอกสารใหม่';
+  document.getElementById('doc-id').value = '';
+  document.getElementById('doc-title').value = '';
+  document.getElementById('doc-slug').value = '';
+  document.getElementById('doc-category').value = 'legal';
+  document.getElementById('doc-version').value = '1.0';
+  document.getElementById('doc-effective').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('doc-order').value = (_docs.length + 1) * 10;
+  document.getElementById('doc-content').value = '';
+  document.getElementById('doc-published').checked = true;
+  toggleView('edit');
+  document.getElementById('modal-doc').classList.add('on');
+}
+
+function editDoc(id){
+  const d = _docs.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('modal-title').textContent = 'แก้ไข: ' + d.title;
+  document.getElementById('doc-id').value = d.id;
+  document.getElementById('doc-title').value = d.title || '';
+  document.getElementById('doc-slug').value = d.slug || '';
+  document.getElementById('doc-category').value = d.category || 'legal';
+  document.getElementById('doc-version').value = d.version || '1.0';
+  document.getElementById('doc-effective').value = d.effective_date ? d.effective_date.slice(0, 10) : '';
+  document.getElementById('doc-order').value = d.display_order || 0;
+  document.getElementById('doc-content').value = d.content || '';
+  document.getElementById('doc-published').checked = !!d.is_published;
+  toggleView('edit');
+  document.getElementById('modal-doc').classList.add('on');
+}
+
+function closeModal(){
+  document.getElementById('modal-doc').classList.remove('on');
+}
+
+function toggleView(mode){
+  const ta = document.getElementById('doc-content');
+  const pv = document.getElementById('doc-preview');
+  const btns = document.querySelectorAll('.tab-toggle button');
+  btns.forEach(b => b.classList.remove('on'));
+  if (mode === 'preview') {
+    ta.style.display = 'none';
+    pv.classList.add('on');
+    pv.innerHTML = md2html(ta.value);
+    btns[1].classList.add('on');
+  } else {
+    ta.style.display = 'block';
+    pv.classList.remove('on');
+    btns[0].classList.add('on');
+  }
+}
+
+async function saveDoc(){
+  const id = document.getElementById('doc-id').value || null;
+  const title = document.getElementById('doc-title').value.trim();
+  const slug = document.getElementById('doc-slug').value.trim().toLowerCase();
+  const category = document.getElementById('doc-category').value;
+  const version = document.getElementById('doc-version').value.trim();
+  const effective = document.getElementById('doc-effective').value;
+  const order = parseInt(document.getElementById('doc-order').value) || 0;
+  const content = document.getElementById('doc-content').value.trim();
+  const published = document.getElementById('doc-published').checked;
+  
+  if (!title) return toast('⚠️ ใส่ชื่อเอกสาร', 'err');
+  if (!slug) return toast('⚠️ ใส่ Slug', 'err');
+  if (!/^[a-z0-9-]+$/.test(slug)) return toast('⚠️ Slug ใช้ a-z, 0-9, - เท่านั้น', 'err');
+  if (!content) return toast('⚠️ ใส่เนื้อหา', 'err');
+  
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังบันทึก...';
+  
+  try {
+    const { error } = await window._sb.rpc('admin_save_legal_document', {
+      p_id: id,
+      p_slug: slug,
+      p_title: title,
+      p_content: content,
+      p_category: category,
+      p_version: version,
+      p_is_published: published,
+      p_display_order: order,
+      p_effective_date: effective
+    });
+    if (error) throw error;
+    toast('✓ บันทึกสำเร็จ', 'ok');
+    closeModal();
+    loadDocs();
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 บันทึก';
+  }
+}
+
+async function deleteDoc(id, title){
+  if (!confirm('แน่ใจที่จะลบ "' + title + '"?\n\nหน้าที่ลิงก์มาจะแสดงข้อความ "ไม่พบเอกสาร"')) return;
+  try {
+    const { error } = await window._sb.rpc('admin_delete_legal_document', { p_id: id });
+    if (error) throw error;
+    toast('✓ ลบแล้ว', 'ok');
+    loadDocs();
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
+}
+
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => {
+    if (e.target === bg) closeModal();
+  });
+});
+
+// Auto-generate slug from title
+document.getElementById('doc-title').addEventListener('input', e => {
+  const slugInp = document.getElementById('doc-slug');
+  if (!slugInp.value || slugInp._auto) {
+    slugInp.value = e.target.value.toLowerCase()
+      .replace(/[ก-๛]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    slugInp._auto = true;
+  }
+});
+document.getElementById('doc-slug').addEventListener('input', e => { e.target._auto = false; });
+
+setTimeout(loadDocs, 800);
+</script>
+</body>
+</html>
