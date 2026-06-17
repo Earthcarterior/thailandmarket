@@ -483,9 +483,11 @@ img{max-width:100%;height:auto}
       </div>
       <div class="card">
         <div class="card-title">📋 ข้อกำหนดและเงื่อนไข</div>
-        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
-          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="agree1" style="margin-top:2px;accent-color:var(--pr)"><span>ข้าพเจ้ายอมรับ <a href="policy.html?doc=terms-of-service" target="_blank" style="color:var(--pr)">ข้อกำหนดการใช้งาน</a> และ <a href="policy.html?doc=privacy-policy" target="_blank" style="color:var(--pr)">นโยบายความเป็นส่วนตัว</a> ของ Thailand.Market</span></label>
-          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer"><input type="checkbox" id="agree2" style="margin-top:2px;accent-color:var(--pr)"><span>ข้าพเจ้ายอมรับ <a href="policy.html?doc=seller-agreement" target="_blank" style="color:var(--pr)">ข้อกำหนดสำหรับผู้ขาย</a> และอัตราค่าคอมมิชชัน (GP)</span></label>
+        <div id="policies-list" style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+          <div style="color:#999;font-size:12px;padding:10px;text-align:center">⏳ กำลังโหลดนโยบาย...</div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#999;padding-top:10px;border-top:1px solid #eee">
+          💡 ผู้ขายต้องอ่านและยอมรับทุกข้อกำหนดเพื่อสมัครเป็นผู้ขาย
         </div>
       </div>
       <div class="btn-row"><button class="btn-p" onclick="next(1)">ถัดไป →</button></div>
@@ -863,6 +865,78 @@ function tmToast(msg){
 </script>
 
 <div class="tm-toast-wrap" id="tmToastWrap" style="position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:9999"></div>
-<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}</script>
+<script>function tmToast(m){var w=document.getElementById("tmToastWrap");if(!w)return;var t=document.createElement("div");t.className="tm-toast";t.textContent=m;w.appendChild(t);setTimeout(function(){t.remove()},2600)}
+// === Dynamic Policies Loader ===
+(async function loadPolicies(){
+  try {
+    // รอ supabase พร้อม
+    let tries = 0;
+    while (!window.supabase && tries < 50) { 
+      await new Promise(r => setTimeout(r, 100)); 
+      tries++; 
+    }
+    if (!window.supabase) return;
+    
+    const sb = window._sb || window.supabase.createClient(
+      'https://qmgyimsptzewwyafvjzk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+    );
+    
+    const { data, error } = await sb.rpc('list_legal_documents');
+    
+    const wrap = document.getElementById('policies-list');
+    if (!wrap) return;
+    
+    if (error || !data || !data.length) {
+      wrap.innerHTML = '<div style="color:#999;font-size:12px;padding:10px">ไม่พบนโยบายในระบบ — กรุณาติดต่อ admin</div>';
+      return;
+    }
+    
+    // Group ตาม category
+    const allPolicies = data;
+    const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    
+    wrap.innerHTML = allPolicies.map((p, idx) => 
+      '<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">' +
+        '<input type="checkbox" class="policy-agree" id="agree-' + esc(p.slug) + '" data-slug="' + esc(p.slug) + '" style="margin-top:2px;accent-color:var(--pr,#E63329)">' +
+        '<span>ข้าพเจ้ายอมรับ <a href="policy.html?doc=' + esc(p.slug) + '" target="_blank" style="color:var(--pr,#E63329)">' + esc(p.title) + '</a></span>' +
+      '</label>'
+    ).join('');
+    
+    console.log('[policies] loaded', allPolicies.length, 'policies');
+    
+    // Override next button validator ให้ check ทุก checkbox
+    window._allPoliciesRequired = allPolicies.map(p => 'agree-' + p.slug);
+    
+  } catch(e) {
+    console.warn('[policies]', e);
+    const wrap = document.getElementById('policies-list');
+    if (wrap) wrap.innerHTML = '<div style="color:#E63329;font-size:12px;padding:10px">⚠️ โหลดนโยบายไม่สำเร็จ — กรุณารีเฟรช</div>';
+  }
+})();
+
+// Override next() function เพื่อเช็คทุก policy
+(function(){
+  const _origNext = window.next;
+  window.next = function(step){
+    // เช็คเฉพาะถ้าเป็น step 1 → 2 (page agreement)
+    if (step === 1 && window._allPoliciesRequired && window._allPoliciesRequired.length) {
+      const unchecked = window._allPoliciesRequired.filter(id => {
+        const el = document.getElementById(id);
+        return el && !el.checked;
+      });
+      if (unchecked.length > 0) {
+        alert('⚠️ กรุณายอมรับทุกข้อกำหนดก่อนดำเนินการต่อ');
+        // scroll ไปที่ checkbox แรกที่ยังไม่ได้ติ๊ก
+        const firstUnchecked = document.getElementById(unchecked[0]);
+        if (firstUnchecked) firstUnchecked.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+    if (typeof _origNext === 'function') return _origNext(step);
+  };
+})();
+
+</script>
 </body>
 </html>
