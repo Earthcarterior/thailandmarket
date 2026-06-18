@@ -4724,7 +4724,7 @@ async function loadProducts() {
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="btn btn-o btn-xs" onclick="editProduct('${p.id}')">✏️ แก้ไข</button>
-            ${currentRole==='admin' && p.status==='pending_review' ? `<button class="btn btn-g btn-xs" onclick="quickApprove('${p.id}')">✓ อนุมัติ</button>` : ''}
+            ${(currentRole === 'admin' || currentRole === 'super_admin') && p.status==='pending_review' ? `<button class="btn btn-g btn-xs" onclick="quickApprove('${p.id}')">✓ อนุมัติ</button>` : ''}
             <button class="btn btn-xs" style="border:1px solid var(--red);color:var(--red);background:var(--white)" onclick="deleteProduct('${p.id}','${p.name_th.replace(/'/g,"\\'")}')">🗑️</button>
           </div>
         </td>
@@ -4869,7 +4869,7 @@ function openProductModal(data) {
   document.getElementById('f-discount').style.color = 'var(--g500)';
   document.getElementById('f-category').value = '';
   const fb = document.getElementById('f-brand'); if (fb) fb.value = '';
-  document.getElementById('f-publish-status').value = currentRole==='admin' ? 'active' : 'pending_review';
+  document.getElementById('f-publish-status').value = (currentRole === 'admin' || currentRole === 'super_admin') ? 'active' : 'pending_review';
   document.getElementById('img-previews').innerHTML = '';
   document.getElementById('desc-count').textContent = '0/3000';
 
@@ -5594,7 +5594,15 @@ async function checkSession() {
   if (session) {
     currentUser = session.user;
     const { data: profile } = await sb.from('users').select('role').eq('email', session.user.email).maybeSingle();
-    currentRole = profile?.role || 'seller';
+    // ใช้ is_admin RPC fallback
+    let detectedRole = profile?.role;
+    if (!detectedRole) {
+      try {
+        const { data: isAdminR } = await sb.rpc('is_admin');
+        if (isAdminR === true) detectedRole = 'super_admin';
+      } catch(e) {}
+    }
+    currentRole = detectedRole || 'seller';
     showApp(session.user, currentRole);
   }
 }
