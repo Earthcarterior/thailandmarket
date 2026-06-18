@@ -481,6 +481,47 @@ nav { display: block !important; height: auto !important; }
 })();
 </script>
 
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- GLOBAL SB — ให้ทุก function ในไฟล์ใช้ตัวเดียวกัน               -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<script>
+// รอ Supabase library โหลด แล้วสร้าง global sb
+(async function initGlobalSb() {
+  let tries = 0;
+  while (typeof window.supabase === 'undefined' && tries < 50) {
+    await new Promise(r => setTimeout(r, 100));
+    tries++;
+  }
+  if (typeof window.supabase === 'undefined') {
+    console.error('[init] Supabase library not loaded');
+    return;
+  }
+  
+  // ใช้ตัวเดียวกับ admin guard ถ้ามี
+  if (window._sb) {
+    window.sb = window._sb;
+  } else {
+    const client = window.supabase.createClient(
+      'https://qmgyimsptzewwyafvjzk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+    );
+    window._sb = client;
+    window.sb = client;
+  }
+  console.log('[init] ✅ global sb ready');
+})();
+
+// Polyfill: declare global sb variable
+var sb = window.sb || window._sb;
+
+// ── Polyfill sb เมื่อ init เสร็จ ──
+window.addEventListener('DOMContentLoaded', () => {
+  if (!sb && (window.sb || window._sb)) {
+    sb = window.sb || window._sb;
+  }
+});
+</script>
+
 </head>
 <body>
 
