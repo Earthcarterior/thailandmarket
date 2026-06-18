@@ -4530,7 +4530,7 @@ function showPanel(name) {
   if (name === 'approve') loadPending();
   if (name === 'orders') orLoad();
   if (name === 'users') loadUsers();
-  if (name === 'members' && typeof loadMembers === 'function') loadMembers();
+  if (name === 'members' && typeof loadMembers === 'function') { loadMembers(); if(typeof loadMemberStats === 'function') loadMemberStats(); }
   if (name === 'categories') loadCategories();
   if (name === 'brands' && typeof loadBrands === 'function') loadBrands();
   if (name === 'flash' && typeof loadFlash === 'function') loadFlash();
@@ -7680,6 +7680,26 @@ window.submitReject = async function() {
 // ══════════════════════════════════════════════════════════════════════════
 //  MEMBER MANAGEMENT
 // ══════════════════════════════════════════════════════════════════════════
+async function loadMemberStats() {
+  const wrap = document.getElementById('member-stats');
+  if (!wrap) return;
+  const _sb = window._sb || window.sb || sb;
+  try {
+    const { data, error } = await _sb.rpc('admin_member_stats');
+    if (error) return;
+    const s = data;
+    wrap.innerHTML = `
+      <div style="background:#fff;border:1px solid #E5E5E5;padding:14px;border-radius:6px"><div style="font-family:monospace;font-size:22px;font-weight:700">${s.total}</div><div style="font-size:11px;color:#737373;text-transform:uppercase">ทั้งหมด</div></div>
+      <div style="background:#fff;border:1px solid #E5E5E5;padding:14px;border-radius:6px"><div style="font-family:monospace;font-size:22px;font-weight:700;color:#16A34A">${s.active}</div><div style="font-size:11px;color:#737373;text-transform:uppercase">Active</div></div>
+      <div style="background:#fff;border:1px solid #E5E5E5;padding:14px;border-radius:6px"><div style="font-family:monospace;font-size:22px;font-weight:700;color:#D97706">${s.unconfirmed}</div><div style="font-size:11px;color:#737373;text-transform:uppercase">รอยืนยัน</div></div>
+      <div style="background:#fff;border:1px solid #E5E5E5;padding:14px;border-radius:6px"><div style="font-family:monospace;font-size:22px;font-weight:700;color:#E63329">${s.admins}</div><div style="font-size:11px;color:#737373;text-transform:uppercase">Admins</div></div>
+    `;
+    // update pending count badge
+    const pending = document.getElementById('member-pending-cnt');
+    if (pending) pending.textContent = s.unconfirmed || 0;
+  } catch(e) { console.warn('loadMemberStats:', e); }
+}
+
 async function loadMembers(filter = '', search = '') {
   const tbody = document.getElementById('member-tbody');
   const statsEl = document.getElementById('member-stats');
@@ -7718,18 +7738,27 @@ async function loadMembers(filter = '', search = '') {
         if (el) el.textContent = r.count || 0;
       });
 
-    // Build query
-    let q = sb.from('users')
-      .select('id,email,display_name,role,is_active,created_at,seller_id,loyalty_pts,avatar_url')
-      .order('created_at', { ascending: false }).limit(100);
-
-    if (search) q = q.ilike('email', `%${search}%`);
-    if (filter === 'active')       q = q.eq('is_active', true);
-    if (filter === 'banned')       q = q.eq('is_active', false);
-    if (filter === 'unconfirmed')  q = q.is('is_active', null);
-
-    const { data: users, error } = await q;
-    if (error) throw error;
+    // ใช้ admin_list_users RPC แทน — bypass RLS ได้
+    const _sb = window._sb || window.sb || sb;
+    const { data: users, error } = await _sb.rpc('admin_list_users', {
+      p_filter: filter || '',
+      p_search: search || '',
+      p_limit: 100
+    });
+    if (error) {
+      // Fallback: ลอง direct query (อาจโดน RLS block)
+      console.warn('admin_list_users RPC failed, fallback to direct:', error);
+      let q = _sb.from('users')
+        .select('id,email,display_name,role,is_active,created_at,seller_id,loyalty_pts,avatar_url,phone')
+        .order('created_at', { ascending: false }).limit(100);
+      if (search) q = q.ilike('email', `%${search}%`);
+      if (filter === 'active')       q = q.eq('is_active', true);
+      if (filter === 'banned')       q = q.eq('is_active', false);
+      if (filter === 'unconfirmed')  q = q.is('is_active', null);
+      const fallback = await q;
+      if (fallback.error) throw fallback.error;
+      var users = fallback.data;
+    }
 
     if (!users?.length) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:#888">ไม่มีข้อมูลสมาชิก</td></tr>';
@@ -7792,16 +7821,21 @@ async function loadMembers(filter = '', search = '') {
 }
 
 async function setUserRole(userId, newRole) {
-  // อัปเดต role — ใช้ .select() เพื่อเช็คว่ามีแถวถูกแก้จริงไหม (RLS อาจบล็อก)
-  const { data: updated, error } = await sb.from('users')
-    .update({ role: newRole, updated_at: new Date().toISOString() })
-    .eq('id', userId)
-    .select('id,role');
-  if (error) { toast('❌ ' + error.message); return; }
-  if (!updated || updated.length === 0) {
-    toast('⚠️ เปลี่ยนไม่สำเร็จ — สิทธิ์ไม่พอ (RLS) กรุณารัน users-rls-fix SQL', 'error');
-    return;
+  const _sb = window._sb || window.sb || sb;
+  // ใช้ RPC admin_update_user_role (bypass RLS)
+  const { error } = await _sb.rpc('admin_update_user_role', {
+    p_user_id: userId,
+    p_new_role: newRole
+  });
+  if (error) { 
+    if (error.message?.includes('cannot_remove_last_admin')) {
+      toast('⚠️ ไม่สามารถลบ admin ตัวสุดท้ายได้', 'error');
+    } else {
+      toast('❌ ' + error.message); 
+    }
+    return; 
   }
+  toast('✅ เปลี่ยน role สำเร็จ');
 
   // ถ้าเปลี่ยนเป็น seller → สร้าง sellers row + link seller_id (ถ้ายังไม่มี)
   if (newRole === 'seller') {
