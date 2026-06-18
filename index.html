@@ -3122,15 +3122,15 @@ init().catch(e => console.error('[TM] init crashed:', e));
   if (dName)  dName.textContent  = displayName;
   if (dEmail) dEmail.textContent = email;
   if (dRole) {
-    dRole.textContent = role === 'admin' ? 'Admin' : role === 'seller' ? 'Seller' : 'Member';
-    dRole.className   = 'account-dropdown-role ' + role;
+    dRole.textContent = (role === 'admin' || role === 'super_admin') ? 'Admin' : role === 'seller' ? 'Seller' : 'Member';
+    dRole.className   = 'account-dropdown-role ' + ((role === 'super_admin') ? 'admin' : role);
   }
 
   // ── Admin/Seller เมนูพิเศษ ──
   const adminMenu = document.getElementById('dd-admin');
   const sellerMenu = document.getElementById('dd-seller');
-  if (adminMenu)  adminMenu.style.display = role === 'admin' ? 'flex' : 'none';
-  if (sellerMenu) sellerMenu.style.display = (role === 'seller' || role === 'admin') ? 'flex' : 'none';
+  if (adminMenu)  adminMenu.style.display = (role === 'admin' || role === 'super_admin') ? 'flex' : 'none';
+  if (sellerMenu) sellerMenu.style.display = (role === 'seller' || role === 'admin' || role === 'super_admin') ? 'flex' : 'none';
 
   // ── Toggle dropdown ──
   btn.onclick = (e) => {
