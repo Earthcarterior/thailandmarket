@@ -589,32 +589,64 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
     }
 
     const userEmail = session.user.email;
+    const userId = session.user.id;
 
-    // หา user + role
-    const { data: u, error: uErr } = await sb.from('users')
-      .select('id, role, email')
-      .eq('email', userEmail)
-      .maybeSingle();
+    // ── 1. ลอง direct query ก่อน ──
+    let role = 'buyer';
+    let userRow = null;
+    
+    try {
+      const { data: u } = await sb.from('users')
+        .select('id, role, email')
+        .eq('email', userEmail)
+        .maybeSingle();
+      if (u) {
+        userRow = u;
+        if (u.role) role = u.role;
+      }
+    } catch(e) { console.warn('[guard] direct query failed:', e); }
 
-    if (uErr) console.warn('[guard] user query error:', uErr);
+    // ── 2. Fallback: ใช้ is_admin() RPC ──
+    let isAdmin = (role === 'admin' || role === 'super_admin');
+    if (!isAdmin) {
+      try {
+        const { data: isAdminResult } = await sb.rpc('is_admin');
+        if (isAdminResult === true) {
+          isAdmin = true;
+          role = 'super_admin';
+          console.log('[guard] ✅ is_admin() RPC returned TRUE');
+        }
+      } catch(e) { console.warn('[guard] is_admin RPC failed:', e); }
+    }
 
-    const role = u?.role || 'buyer';
-    const isAdmin = role === 'admin' || role === 'super_admin';
     const isSellerRole = role === 'seller';
 
-    // เช็ค sellers table
+    // ── 3. เช็ค sellers table ──
     let hasSellerRecord = false;
-    if (u?.id) {
-      const { data: s } = await sb.from('sellers')
-        .select('id, status')
-        .eq('user_id', u.id)
-        .maybeSingle();
-      hasSellerRecord = !!s && ['active', 'pending'].includes(s.status);
+    if (userRow?.id) {
+      try {
+        const { data: s } = await sb.from('sellers')
+          .select('id, status')
+          .eq('user_id', userRow.id)
+          .maybeSingle();
+        hasSellerRecord = !!s && ['active', 'pending'].includes(s.status);
+      } catch(e) {}
+    }
+    
+    // ── 4. Fallback: เช็ค sellers ด้วย auth.uid() ──
+    if (!hasSellerRecord) {
+      try {
+        const { data: s2 } = await sb.from('sellers')
+          .select('id, status, user_id, users!inner(email)')
+          .eq('users.email', userEmail)
+          .maybeSingle();
+        hasSellerRecord = !!s2 && ['active', 'pending'].includes(s2.status);
+      } catch(e) {}
     }
 
     const allowAccess = isAdmin || isSellerRole || hasSellerRecord;
 
-    console.log('[guard v2]', {
+    console.log('[guard v3]', {
       email: userEmail,
       role,
       isAdmin,
@@ -628,7 +660,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
       return;
     }
 
-    console.log('[guard v2] ✅ Access granted');
+    console.log('[guard v3] ✅ Access granted (role: ' + role + ')');
   } catch(e) {
     if (e.message === 'ACCESS_DENIED') throw e;
     console.error('[guard v2]', e);
@@ -5125,9 +5157,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   if (lbl) lbl.textContent = name.split(' ')[0];
   ['dd-name','dd-email'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=id==='dd-name'?name:email; });
   const dr=document.getElementById('dd-role');
-  if(dr){ dr.textContent=role==='admin'?'Admin':role==='seller'?'Seller':'Member'; dr.className='account-dropdown-role '+role; }
-  const da=document.getElementById('dd-admin'); if(da) da.style.display=role==='admin'?'flex':'none';
-  const ds=document.getElementById('dd-seller'); if(ds) ds.style.display=(role==='seller'||role==='admin')?'flex':'none';
+  if(dr){ 
+    const isA = (role==='admin'||role==='super_admin');
+    dr.textContent= isA ? 'Admin' : role==='seller' ? 'Seller' : 'Member'; 
+    dr.className='account-dropdown-role '+(isA?'admin':role); 
+  }
+  const da=document.getElementById('dd-admin'); if(da) da.style.display=(role==='admin'||role==='super_admin')?'flex':'none';
+  const ds=document.getElementById('dd-seller'); if(ds) ds.style.display=(role==='seller'||role==='admin'||role==='super_admin')?'flex':'none';
   btn.onclick=e=>{ e.stopPropagation(); drop.classList.toggle('open'); };
   document.addEventListener('click',()=>drop.classList.remove('open'));
   document.getElementById('dd-logout')?.addEventListener('click',async()=>{
