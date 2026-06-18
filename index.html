@@ -3099,16 +3099,33 @@ init().catch(e => console.error('[TM] init crashed:', e));
   let displayName = localName || email.split('@')[0];
   let role = localRole;
 
-  // ดึงจาก DB (ถ้ายังไม่มีใน local)
+  // ── 1. ลองดึงจาก DB direct query ──
   try {
     const { data: u } = await sbClient.from('users').select('display_name,role').eq('email', email).maybeSingle();
     if (u) {
       displayName = u.display_name || displayName;
-      role = u.role || role;
-      localStorage.setItem('tm_user_name', displayName);
-      localStorage.setItem('tm_user_role', role);
+      if (u.role) {
+        role = u.role;
+        localStorage.setItem('tm_user_role', role);
+      }
+      if (displayName) localStorage.setItem('tm_user_name', displayName);
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[role] direct query failed:', e); }
+
+  // ── 2. Fallback: ใช้ is_admin() RPC (bypass RLS) ──
+  // ถ้า role ยังเป็น buyer/null — ลองเช็คผ่าน RPC
+  if (role === 'buyer' || !role || role === 'null') {
+    try {
+      const { data: isAdminResult } = await sbClient.rpc('is_admin');
+      if (isAdminResult === true) {
+        role = 'super_admin';
+        localStorage.setItem('tm_user_role', role);
+        console.log('[role] is_admin() RPC = true → upgraded to super_admin');
+      }
+    } catch(e) { console.warn('[role] is_admin RPC failed:', e); }
+  }
+  
+  console.log('[role] Final role:', role);
 
   // ── อัปเดต UI ──
   const ico  = btn.querySelector('.nav-btn-ico');
