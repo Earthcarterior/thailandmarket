@@ -7377,14 +7377,38 @@ async function loadSellers(statusFilter = 'pending') {
       if (pendingCnt) pendingCnt.textContent = pendingRes.count || 0;
     }
 
-    // โหลด sellers list
-    let query = sb.from('sellers')
-      .select('id,shop_name,description,phone,email,status,created_at,updated_at,logo_url,user_id,users(display_name,email,created_at,loyalty_pts)')
-      .order('created_at', { ascending: false });
-
-    if (statusFilter) query = query.eq('status', statusFilter);
-
-    const { data: sellers, error } = await query;
+    // ใช้ admin_list_sellers RPC (bypass RLS)
+    const _sb = window._sb || window.sb || sb;
+    let sellers, error;
+    try {
+      const r = await _sb.rpc('admin_list_sellers', { p_status: statusFilter || '' });
+      sellers = r.data;
+      error = r.error;
+      
+      // แปลง format ให้ตรงกับ direct query เก่า
+      if (sellers && sellers.length > 0) {
+        sellers = sellers.map(s => ({
+          ...s,
+          users: {
+            display_name: s.display_name,
+            email: s.email,
+            created_at: s.created_at,
+            loyalty_pts: 0
+          }
+        }));
+      }
+    } catch(e) {
+      // Fallback: ลอง direct query
+      console.warn('admin_list_sellers RPC failed, fallback:', e);
+      let query = _sb.from('sellers')
+        .select('id,shop_name,description,phone,email,status,created_at,updated_at,logo_url,user_id')
+        .order('created_at', { ascending: false });
+      if (statusFilter) query = query.eq('status', statusFilter);
+      const r = await query;
+      sellers = r.data;
+      error = r.error;
+    }
+    
     if (error) throw error;
 
     if (!sellers?.length) {
