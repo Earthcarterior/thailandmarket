@@ -1125,9 +1125,11 @@ async function sendMsg() {
     const result = await sb.from('chat_messages').insert({
       thread_id: _activeThreadId,
       sender_role: 'buyer',
+      sender_type: 'buyer',
       sender_id: _user.id,
       body: txt,
-      message_type: 'text'
+      message_type: 'text',
+      msg_type: 'text'
     }).select().single();
     data = result.data;
     error = result.error;
