@@ -7759,11 +7759,16 @@ async function loadMembers(filter = '', search = '') {
 
     // ใช้ admin_list_users RPC แทน — bypass RLS ได้
     const _sb = window._sb || window.sb || sb;
-    const { data: users, error } = await _sb.rpc('admin_list_users', {
-      p_filter: filter || '',
-      p_search: search || '',
-      p_limit: 100
-    });
+    let users, error;
+    {
+      const r = await _sb.rpc('admin_list_users', {
+        p_filter: filter || '',
+        p_search: search || '',
+        p_limit: 100
+      });
+      users = r.data;
+      error = r.error;
+    }
     if (error) {
       // Fallback: ลอง direct query (อาจโดน RLS block)
       console.warn('admin_list_users RPC failed, fallback to direct:', error);
@@ -7776,7 +7781,7 @@ async function loadMembers(filter = '', search = '') {
       if (filter === 'unconfirmed')  q = q.is('is_active', null);
       const fallback = await q;
       if (fallback.error) throw fallback.error;
-      var users = fallback.data;
+      users = fallback.data;
     }
 
     if (!users?.length) {
