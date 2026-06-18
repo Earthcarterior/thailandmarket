@@ -1360,8 +1360,28 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
       <div>
         <div class="card" style="margin-bottom:12px">
           <div class="ct" style="margin-bottom:10px">รูปร้านค้า</div>
-          <div class="upload-zone" style="padding:16px;margin-bottom:8px" onclick="toast('📸 เลือกโลโก้ร้าน')"><div style="font-size:22px;margin-bottom:4px">🏪</div><div style="font-size:11px;font-weight:500">โลโก้ร้าน</div></div>
-          <div class="upload-zone" style="padding:16px" onclick="toast('🖼️ เลือกรูปหน้าปก')"><div style="font-size:22px;margin-bottom:4px">🖼️</div><div style="font-size:11px;font-weight:500">รูปหน้าปก</div></div>
+          
+          <input type="file" id="shop-logo-input" accept="image/*" style="display:none" onchange="uploadShopImage(this,'logo')">
+          <div class="upload-zone" id="shop-logo-zone" style="padding:16px;margin-bottom:8px;cursor:pointer;position:relative;overflow:hidden" onclick="document.getElementById('shop-logo-input').click()">
+            <img id="shop-logo-preview" style="display:none;width:100%;max-height:120px;object-fit:contain;border-radius:6px">
+            <div id="shop-logo-placeholder">
+              <div style="font-size:22px;margin-bottom:4px">🏪</div>
+              <div style="font-size:11px;font-weight:500">โลโก้ร้าน</div>
+              <div style="font-size:10px;color:#999;margin-top:3px">คลิกเพื่ออัปโหลด (JPG/PNG/WebP, ≤5MB)</div>
+            </div>
+            <div id="shop-logo-status" style="display:none;font-size:11px;color:#10B981;margin-top:6px"></div>
+          </div>
+          
+          <input type="file" id="shop-cover-input" accept="image/*" style="display:none" onchange="uploadShopImage(this,'cover')">
+          <div class="upload-zone" id="shop-cover-zone" style="padding:16px;cursor:pointer;position:relative;overflow:hidden" onclick="document.getElementById('shop-cover-input').click()">
+            <img id="shop-cover-preview" style="display:none;width:100%;max-height:120px;object-fit:cover;border-radius:6px">
+            <div id="shop-cover-placeholder">
+              <div style="font-size:22px;margin-bottom:4px">🖼️</div>
+              <div style="font-size:11px;font-weight:500">รูปหน้าปก</div>
+              <div style="font-size:10px;color:#999;margin-top:3px">คลิกเพื่ออัปโหลด</div>
+            </div>
+            <div id="shop-cover-status" style="display:none;font-size:11px;color:#10B981;margin-top:6px"></div>
+          </div>
         </div>
         <div class="card">
           <div class="ct" style="margin-bottom:10px">สถานะร้านค้า</div>
@@ -9670,6 +9690,151 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       setTimeout(() => window.renderReturnsLive(), 100);
     }
   };
+})();
+
+</script>
+
+<script>
+
+// === Shop Image Upload (Logo + Cover) ===
+async function uploadShopImage(input, kind) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  // Validate
+  if (file.size > 5 * 1024 * 1024) {
+    toast('❌ ไฟล์ใหญ่เกิน 5MB');
+    input.value = '';
+    return;
+  }
+  if (!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)) {
+    toast('❌ รองรับ JPG/PNG/WebP/GIF');
+    input.value = '';
+    return;
+  }
+  
+  const statusEl = document.getElementById('shop-' + kind + '-status');
+  const previewEl = document.getElementById('shop-' + kind + '-preview');
+  const placeholderEl = document.getElementById('shop-' + kind + '-placeholder');
+  
+  statusEl.style.display = 'block';
+  statusEl.style.color = '#737373';
+  statusEl.textContent = '⏳ กำลังอัปโหลด...';
+  
+  try {
+    const sb = window._sb || window.supabase.createClient(
+      'https://qmgyimsptzewwyafvjzk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+    );
+    
+    // get current user
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) {
+      toast('❌ กรุณา login ก่อน');
+      return;
+    }
+    
+    // file path: {user_id}/{kind}_{timestamp}.{ext}
+    const ext = file.name.split('.').pop().toLowerCase();
+    const fileName = kind + '_' + Date.now() + '.' + ext;
+    const filePath = user.id + '/' + fileName;
+    
+    // Upload
+    const { data, error } = await sb.storage
+      .from('shop-assets')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+    
+    if (error) {
+      // ลองอีกครั้งด้วย upsert + ลบของเก่า
+      if (error.message?.includes('already exists')) {
+        await sb.storage.from('shop-assets').remove([filePath]);
+        const retry = await sb.storage.from('shop-assets').upload(filePath, file);
+        if (retry.error) throw retry.error;
+      } else {
+        throw error;
+      }
+    }
+    
+    // get public URL
+    const { data: urlData } = sb.storage.from('shop-assets').getPublicUrl(filePath);
+    const publicUrl = urlData.publicUrl;
+    
+    // update sellers table
+    const col = kind === 'logo' ? 'logo_url' : 'cover_url';
+    const { error: updErr } = await sb.from('sellers')
+      .update({ [col]: publicUrl, updated_at: new Date().toISOString() })
+      .eq('user_id', user.id);
+    
+    if (updErr) {
+      // ลอง update ด้วย email
+      const { data: u } = await sb.from('users').select('id').eq('email', user.email).maybeSingle();
+      if (u) {
+        await sb.from('sellers').update({ [col]: publicUrl }).eq('user_id', u.id);
+      }
+    }
+    
+    // show preview
+    previewEl.src = publicUrl + '?t=' + Date.now();
+    previewEl.style.display = 'block';
+    placeholderEl.style.display = 'none';
+    statusEl.style.color = '#10B981';
+    statusEl.textContent = '✅ อัปโหลดสำเร็จ';
+    
+    toast('✅ บันทึก' + (kind === 'logo' ? 'โลโก้' : 'หน้าปก') + 'สำเร็จ');
+    
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+    
+  } catch(e) {
+    console.error('upload error:', e);
+    statusEl.style.color = '#E63329';
+    statusEl.textContent = '❌ ' + (e.message || 'อัปโหลดไม่สำเร็จ');
+    toast('❌ ' + (e.message || 'อัปโหลดไม่สำเร็จ'));
+  } finally {
+    input.value = '';
+  }
+}
+
+// Load existing logos on page load
+(async function loadExistingShopImages() {
+  await new Promise(r => setTimeout(r, 1500)); // รอ supabase + user
+  
+  try {
+    const sb = window._sb;
+    if (!sb) return;
+    
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+    
+    const { data } = await sb.from('sellers')
+      .select('logo_url, cover_url')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (!data) return;
+    
+    if (data.logo_url) {
+      const img = document.getElementById('shop-logo-preview');
+      const ph = document.getElementById('shop-logo-placeholder');
+      if (img && ph) {
+        img.src = data.logo_url;
+        img.style.display = 'block';
+        ph.style.display = 'none';
+      }
+    }
+    
+    if (data.cover_url) {
+      const img = document.getElementById('shop-cover-preview');
+      const ph = document.getElementById('shop-cover-placeholder');
+      if (img && ph) {
+        img.src = data.cover_url;
+        img.style.display = 'block';
+        ph.style.display = 'none';
+      }
+    }
+  } catch(e) { console.warn('load shop images:', e); }
 })();
 
 </script>
