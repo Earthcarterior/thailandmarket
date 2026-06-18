@@ -7898,26 +7898,20 @@ async function setUserRole(userId, newRole) {
 
 async function banUser(userId) {
   if (!confirm('ระงับการใช้งาน User นี้?')) return;
-  const { data: updated, error } = await sb.from('users')
-    .update({ is_active: false, updated_at: new Date().toISOString() })
-    .eq('id', userId)
-    .select('id');
+  const _sb = window._sb || window.sb || sb;
+  const { error } = await _sb.rpc('admin_ban_user', { p_user_id: userId });
   if (error) { toast('❌ ' + error.message); return; }
-  if (!updated || updated.length === 0) {
-    toast('⚠️ ระงับไม่สำเร็จ — สิทธิ์ไม่พอ (RLS) กรุณารัน users-rls-fix SQL', 'error');
-    return;
-  }
-  toast('✅ ระงับ User แล้ว');
+  toast('🚫 ระงับ User แล้ว');
   if (typeof loadMembers === 'function') loadMembers();
+  if (typeof loadMemberStats === 'function') loadMemberStats();
   if (typeof loadUsers === 'function') loadUsers();
 }
 
 async function unbanUser(userId) {
-  const { data: updated, error } = await sb.from('users')
-    .update({ is_active: true, updated_at: new Date().toISOString() })
-    .eq('id', userId)
-    .select('id');
+  const _sb = window._sb || window.sb || sb;
+  const { error } = await _sb.rpc('admin_unban_user', { p_user_id: userId });
   if (error) { toast('❌ ' + error.message); return; }
+  const updated = [{ id: userId }]; // dummy
   if (!updated || updated.length === 0) {
     toast('⚠️ เปิดใช้งานไม่สำเร็จ — สิทธิ์ไม่พอ (RLS) กรุณารัน users-rls-fix SQL', 'error');
     return;
@@ -7936,12 +7930,28 @@ async function forceConfirmUser(userId) {
 }
 
 async function deleteUserConfirm(userId, name) {
-  if (!confirm(`⚠️ ลบ User "${name}" ออกจากระบบ?\nข้อมูลทั้งหมดจะถูกลบถาวร`)) return;
-  const { error } = await sb.from('users').delete().eq('id', userId);
-  if (error) { toast('❌ ' + error.message); return; }
-  toast(`✅ ลบ User แล้ว`);
+  if (!confirm(`⚠️ ลบ User "${name}" ออกจากระบบ?\n\nข้อมูลทั้งหมดจะถูกลบถาวร:\n• Account\n• Seller record (ถ้ามี)\n• Auth credentials\n\nไม่สามารถ undo ได้!`)) return;
+  
+  const _sb = window._sb || window.sb || sb;
+  const { data, error } = await _sb.rpc('admin_delete_user', { p_user_id: userId });
+  
+  if (error) {
+    if (error.message?.includes('cannot_delete_last_admin')) {
+      toast('⚠️ ไม่สามารถลบ admin คนสุดท้ายได้', 'error');
+    } else if (error.message?.includes('access_denied')) {
+      toast('⚠️ สิทธิ์ไม่พอ — login ใหม่', 'error');
+    } else {
+      toast('❌ ' + error.message);
+    }
+    return;
+  }
+  
+  toast(`✅ ลบ User "${name}" แล้ว`);
   const row = document.getElementById('user-row-' + userId);
   if (row) { row.style.opacity = '0'; setTimeout(() => row.remove(), 300); }
+  
+  // refresh stats + list
+  if (typeof loadMemberStats === 'function') loadMemberStats();
 }
 
 // ══════════════════════════════════════════════════════════════════════════
