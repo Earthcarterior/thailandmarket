@@ -139,7 +139,7 @@ async function load(){
 
   // ดึง products ของ seller นี้
   const { data: prods } = await sb.from('products')
-    .select('id, name_th, name_en, price, original_price, thumbnail, images, category_id, sales_count, rating_avg, review_count, in_stock, created_at')
+    .select('id, name_th, name_en, price, compare_price, thumbnail, images, category_id, sold_count, rating_avg, review_count, stock_quantity, status, created_at')
     .eq('seller_id', _seller.id)
     .order('created_at', {ascending: false})
     .limit(200);
@@ -155,7 +155,7 @@ function render(){
   const initial = (s.shop_name || 'S').charAt(0).toUpperCase();
 
   const dateJoined = s.created_at ? new Date(s.created_at).toLocaleDateString('th-TH', {year:'numeric', month:'long'}) : '-';
-  const totalSales = _products.reduce((sum, p) => sum + (p.sales_count||0), 0);
+  const totalSales = _products.reduce((sum, p) => sum + (p.sold_count||0), 0);
   const avgRating = _products.length > 0
     ? (_products.reduce((sum, p) => sum + (Number(p.rating_avg)||0), 0) / Math.max(1, _products.filter(p=>p.rating_avg).length))
     : 0;
@@ -241,11 +241,11 @@ function renderTab(){
   // Filter products by tab
   let list = [..._products];
   if (_activeTab === 'hot'){
-    list = list.filter(p => (p.sales_count||0) > 100).sort((a,b)=>(b.sales_count||0)-(a.sales_count||0));
+    list = list.filter(p => (p.sold_count||0) > 100).sort((a,b)=>(b.sold_count||0)-(a.sold_count||0));
   } else if (_activeTab === 'new'){
     list = list.slice().sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 50);
   } else if (_activeTab === 'sale'){
-    list = list.filter(p => p.original_price && Number(p.original_price) > Number(p.price));
+    list = list.filter(p => p.compare_price && Number(p.compare_price) > Number(p.price));
   }
 
   // Search
@@ -256,7 +256,7 @@ function renderTab(){
   // Sort
   if (_sortBy === 'price-asc') list.sort((a,b)=>Number(a.price)-Number(b.price));
   else if (_sortBy === 'price-desc') list.sort((a,b)=>Number(b.price)-Number(a.price));
-  else if (_sortBy === 'sales') list.sort((a,b)=>(b.sales_count||0)-(a.sales_count||0));
+  else if (_sortBy === 'sales') list.sort((a,b)=>(b.sold_count||0)-(a.sold_count||0));
 
   c.innerHTML = `
     <div class="filter-bar">
@@ -283,10 +283,10 @@ function renderTab(){
 
 function renderProductCard(p){
   const img = (Array.isArray(p.images) && p.images[0]) || p.thumbnail || '';
-  const isOnSale = p.original_price && Number(p.original_price) > Number(p.price);
-  const discPct = isOnSale ? Math.round((1 - Number(p.price)/Number(p.original_price))*100) : 0;
+  const isOnSale = p.compare_price && Number(p.compare_price) > Number(p.price);
+  const discPct = isOnSale ? Math.round((1 - Number(p.price)/Number(p.compare_price))*100) : 0;
   const isNew = p.created_at && (Date.now() - new Date(p.created_at).getTime()) < 7*24*3600*1000;
-  const isHot = (p.sales_count||0) > 200;
+  const isHot = (p.sold_count||0) > 200;
   const badge = isOnSale ? `-${discPct}%` : (isHot ? '🔥 HOT' : (isNew ? 'NEW' : ''));
 
   return `<div class="p-card" onclick="location.href='product.html?id=${p.id}'">
@@ -298,11 +298,11 @@ function renderProductCard(p){
       <div class="p-name">${p.name_th || p.name_en || '-'}</div>
       <div class="p-price">
         <span class="p-price-now">฿${Number(p.price).toLocaleString()}</span>
-        ${isOnSale ? `<span class="p-price-old">฿${Number(p.original_price).toLocaleString()}</span>` : ''}
+        ${isOnSale ? `<span class="p-price-old">฿${Number(p.compare_price).toLocaleString()}</span>` : ''}
       </div>
       <div class="p-meta">
         ${p.rating_avg ? `<span>⭐ ${Number(p.rating_avg).toFixed(1)}</span>` : ''}
-        ${p.sales_count ? `<span>· ขาย ${Number(p.sales_count).toLocaleString()}</span>` : ''}
+        ${p.sold_count ? `<span>· ขาย ${Number(p.sold_count).toLocaleString()}</span>` : ''}
       </div>
     </div>
   </div>`;
