@@ -438,7 +438,7 @@ nav { display: block !important; height: auto !important; }
       .maybeSingle();
 
     const role = u?.role || 'buyer';
-    const isAdmin = (role === 'admin' || role === 'super_admin') || role === 'super_admin';
+    const isAdmin = (role === 'admin' || role === 'super_admin');
 
     if (!isAdmin) {
       document.documentElement.innerHTML = `
@@ -5281,7 +5281,7 @@ async function loadUsers(search = '') {
           <select onchange="setUserRole('${u.id}', this.value)" style="background:${rc}15;color:${rc};border:1px solid ${rc}40;padding:3px 8px;font-size:11px;font-family:monospace;cursor:pointer">
             <option value="buyer" ${u.role==='buyer'||!u.role?'selected':''}>🟢 Buyer</option>
             <option value="seller" ${u.role==='seller'?'selected':''}>🟡 Seller</option>
-            <option value="admin" ${u.(role === 'admin' || role === 'super_admin')?'selected':''}>🔴 Admin</option>
+            <option value="admin" ${(u.role === 'admin' || u.role === 'super_admin')?'selected':''}>🔴 Admin</option>
           </select>
         </td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--g500)">${dt}</td>
@@ -7711,7 +7711,7 @@ async function loadMembers(filter = '', search = '') {
           <select onchange="setUserRole('${u.id}', this.value)" style="background:${roleColor[u.role]||'#888'}15;color:${roleColor[u.role]||'#888'};border:1px solid ${roleColor[u.role]||'#888'}40;padding:3px 8px;font-size:11px;font-family:monospace;cursor:pointer">
             <option value="buyer" ${u.role==='buyer'||!u.role?'selected':''}>ลูกค้า (Buyer)</option>
             <option value="seller" ${u.role==='seller'?'selected':''}>Seller</option>
-            <option value="admin" ${u.(role === 'admin' || role === 'super_admin')?'selected':''}>Admin</option>
+            <option value="admin" ${(u.role === 'admin' || u.role === 'super_admin')?'selected':''}>Admin</option>
           </select>
         </td>
         <td style="padding:10px 12px;font-size:11px;color:#888">${joinDate}</td>
