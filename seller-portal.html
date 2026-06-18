@@ -4010,14 +4010,24 @@ async function submitNewProduct(){
       if (btn) btn.textContent = '⏳ กำลังบันทึก...';
     }
     const slug=g('ap-slug')||(name_th.toLowerCase().replace(/[^a-z0-9ก-๙\s]/g,'').replace(/\s+/g,'-').slice(0,60)+'-'+Date.now());
-    const payload={name_th,price,stock_quantity:stock,category_id:_selectedCatId,name_en:g('ap-name-en')||name_th,description:g('ap-desc'),compare_price:cp,discount_percent:disc,sku:g('ap-sku'),brand:g('ap-brand'),tags:g('ap-tags')?g('ap-tags').split(',').map(t=>t.trim()).filter(Boolean):null,status:$('ap-status')?.value||'active',slug,weight:parseFloat($('ap-weight')?.value)||null,updated_at:new Date().toISOString()};
+    // validate category_id ต้องเป็น UUID เท่านั้น
+    let safeCatId = _selectedCatId;
+    if (safeCatId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(safeCatId)) {
+      console.warn('Invalid category_id:', safeCatId, '— setting to null');
+      safeCatId = null;
+    }
+    const payload={name_th,price,stock_quantity:stock,category_id:safeCatId,name_en:g('ap-name-en')||name_th,description:g('ap-desc'),compare_price:cp,discount_percent:disc,sku:g('ap-sku'),brand:g('ap-brand'),tags:g('ap-tags')?g('ap-tags').split(',').map(t=>t.trim()).filter(Boolean):null,status:$('ap-status')?.value||'active',slug,weight:parseFloat($('ap-weight')?.value)||null,updated_at:new Date().toISOString()};
     if(thumbnail) payload.thumbnail=thumbnail;
     if(imageUrls.length) payload.images=imageUrls;
     if(_sellerSellerId) payload.seller_id=_sellerSellerId;
     // [PATCH 2026-05-02] ลบ user_id ออก — schema products ไม่มี column นี้
     // (เคยทำให้เกิด error: Could not find the 'user_id' column of 'products' in the schema cache)
     // ถ้าต้องการเก็บ brand_id ให้ uncomment บรรทัดล่าง:
-    if(g('ap-brand-id')) payload.brand_id=g('ap-brand-id');
+    const brandIdVal = g('ap-brand-id');
+    // เช็คว่าเป็น UUID จริง (ไม่ใช่ '__custom__' หรือค่าพิเศษ)
+    if(brandIdVal && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(brandIdVal)) {
+      payload.brand_id = brandIdVal;
+    }
     let err, savedId = editId;
     if(editId){
       ({error:err}=await _sb.from('products').update(payload).eq('id',editId));
