@@ -438,7 +438,7 @@ nav { display: block !important; height: auto !important; }
       .maybeSingle();
 
     const role = u?.role || 'buyer';
-    const isAdmin = role === 'admin' || role === 'super_admin';
+    const isAdmin = (role === 'admin' || role === 'super_admin') || role === 'super_admin';
 
     if (!isAdmin) {
       document.documentElement.innerHTML = `
@@ -4406,17 +4406,17 @@ function showApp(user, role) {
   setEl('sb-name',       name);
   setEl('sb-email',      user.email || '');
   setEl('sb-username',   name);
-  setEl('sb-role-label', role === 'admin' ? '⚙️ Admin Panel' : '🏪 Seller Center');
-  setEl('sb-role',       role === 'admin' ? 'Administrator' : 'Seller');
+  setEl('sb-role-label', (role === 'admin' || role === 'super_admin') ? '⚙️ Admin Panel' : '🏪 Seller Center');
+  setEl('sb-role',       (role === 'admin' || role === 'super_admin') ? 'Administrator' : 'Seller');
 
   // ── แสดง/ซ่อน admin sections ──────────────────────────────
   document.querySelectorAll('.admin-only').forEach(el => {
-    el.style.display = role === 'admin' ? '' : 'none';
+    el.style.display = (role === 'admin' || role === 'super_admin') ? '' : 'none';
   });
   ['nav-approve','nav-users','nav-categories','nav-brands',
    'nav-reviews','nav-coupons','nav-banners','nav-articles'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.style.display = role === 'admin' ? 'flex' : 'none';
+    if (el) el.style.display = (role === 'admin' || role === 'super_admin') ? 'flex' : 'none';
   });
 
   // ── seller mode ────────────────────────────────────────────
@@ -5281,7 +5281,7 @@ async function loadUsers(search = '') {
           <select onchange="setUserRole('${u.id}', this.value)" style="background:${rc}15;color:${rc};border:1px solid ${rc}40;padding:3px 8px;font-size:11px;font-family:monospace;cursor:pointer">
             <option value="buyer" ${u.role==='buyer'||!u.role?'selected':''}>🟢 Buyer</option>
             <option value="seller" ${u.role==='seller'?'selected':''}>🟡 Seller</option>
-            <option value="admin" ${u.role==='admin'?'selected':''}>🔴 Admin</option>
+            <option value="admin" ${u.(role === 'admin' || role === 'super_admin')?'selected':''}>🔴 Admin</option>
           </select>
         </td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--g500)">${dt}</td>
@@ -7711,7 +7711,7 @@ async function loadMembers(filter = '', search = '') {
           <select onchange="setUserRole('${u.id}', this.value)" style="background:${roleColor[u.role]||'#888'}15;color:${roleColor[u.role]||'#888'};border:1px solid ${roleColor[u.role]||'#888'}40;padding:3px 8px;font-size:11px;font-family:monospace;cursor:pointer">
             <option value="buyer" ${u.role==='buyer'||!u.role?'selected':''}>ลูกค้า (Buyer)</option>
             <option value="seller" ${u.role==='seller'?'selected':''}>Seller</option>
-            <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+            <option value="admin" ${u.(role === 'admin' || role === 'super_admin')?'selected':''}>Admin</option>
           </select>
         </td>
         <td style="padding:10px 12px;font-size:11px;color:#888">${joinDate}</td>
@@ -7902,9 +7902,9 @@ window.showApp = function(user, role) {
   if (lbl) lbl.textContent = name.split(' ')[0];
   ['dd-name','dd-email'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=id==='dd-name'?name:email; });
   const dr=document.getElementById('dd-role');
-  if(dr){ dr.textContent=role==='admin'?'Admin':role==='seller'?'Seller':'Member'; dr.className='account-dropdown-role '+role; }
-  const da=document.getElementById('dd-admin'); if(da) da.style.display=role==='admin'?'flex':'none';
-  const ds=document.getElementById('dd-seller'); if(ds) ds.style.display=(role==='seller'||role==='admin')?'flex':'none';
+  if(dr){ dr.textContent=(role === 'admin' || role === 'super_admin')?'Admin':role==='seller'?'Seller':'Member'; dr.className='account-dropdown-role '+role; }
+  const da=document.getElementById('dd-admin'); if(da) da.style.display=(role === 'admin' || role === 'super_admin')?'flex':'none';
+  const ds=document.getElementById('dd-seller'); if(ds) ds.style.display=(role==='seller'||(role === 'admin' || role === 'super_admin'))?'flex':'none';
   btn.onclick=e=>{ e.stopPropagation(); drop.classList.toggle('open'); };
   document.addEventListener('click',()=>drop.classList.remove('open'));
   document.getElementById('dd-logout')?.addEventListener('click',async()=>{
