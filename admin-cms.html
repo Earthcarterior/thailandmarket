@@ -424,11 +424,16 @@ nav { display: block !important; height: auto !important; }
     'https://qmgyimsptzewwyafvjzk.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
   );
+  
+  // EXPOSE sb เป็น global ให้ doLogin() + อื่นๆ ใช้ได้
+  window._sb = sb;
+  window.sb = sb;
 
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) {
-      location.href = 'login.html?next=' + encodeURIComponent(location.pathname);
+      // ไม่ redirect — ปล่อยให้ login-screen ในไฟล์นี้รับหน้าที่
+      console.log('[admin-guard] no session — show login form');
       return;
     }
 
@@ -4343,18 +4348,22 @@ async function doLogin() {
 
   if (!email || !pw) { showLoginErr('กรุณากรอก Email และ Password'); return; }
   
+  // ใช้ sb จาก window._sb (จาก admin guard) หรือ global sb
+  const _sb = window._sb || window.sb || (typeof sb !== 'undefined' ? sb : null);
+  if (!_sb) { showLoginErr('ระบบยังไม่พร้อม กรุณา refresh หน้า'); return; }
+  
   btn.textContent = '⏳ กำลังเข้าสู่ระบบ...';
   btn.disabled = true;
   errEl.style.display = 'none';
 
   try {
-    const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+    const { data, error } = await _sb.auth.signInWithPassword({ email, password: pw });
     if (error) throw error;
 
     currentUser = data.user;
     
     // Get user profile for role
-    const { data: profile } = await sb
+    const { data: profile } = await _sb
       .from('users')
       .select('role, display_name, seller_id')
       .eq('email', email)
@@ -4365,7 +4374,7 @@ async function doLogin() {
     
     // Auto-create profile if not exists
     if (!profile) {
-      await sb.from('users').upsert({
+      await _sb.from('users').upsert({
         email: currentUser.email,
         display_name: currentUser.email.split('@')[0],
         role: selectedRole,
