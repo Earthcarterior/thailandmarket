@@ -77,17 +77,18 @@ input,select{font-family:var(--font)}
 /* ── scroll fade edges ── */
 .catbar::before,.catbar::after{content:'';position:absolute;top:0;bottom:0;width:40px;z-index:2;pointer-events:none}
 .catbar::before{left:0;background:linear-gradient(to right,var(--white),transparent)}
-.catbar::after{right:80px;background:linear-gradient(to left,var(--white),transparent)}
+.catbar::after{right:110px;background:linear-gradient(to left,var(--white),transparent);pointer-events:none}
 .catbar-inner{max-width:100%;padding:0 24px;display:flex;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth}
 .catbar-inner::-webkit-scrollbar{display:none}
 .catbar-item{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);padding:8px 14px;white-space:nowrap;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;flex-shrink:0;background:none;border-left:none;border-right:none;border-top:none}
 .catbar-item:hover{color:var(--black)}.catbar-item.on{color:var(--black);border-bottom-color:var(--red)}
 /* ── marquee loop container ── */
-.catbar-track{display:flex;gap:0;animation:catscroll 30s linear infinite}
+.catbar-track{display:flex;gap:0;animation:catscroll 30s linear infinite;pointer-events:auto}
+.catbar-seeall:hover{color:var(--black) !important;background:var(--g50) !important}
 .catbar-track:hover{animation-play-state:paused}
 @keyframes catscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 /* ── see all button ── */
-.catbar-seeall{position:absolute;right:0;top:0;bottom:0;display:flex;align-items:center;padding:0 16px;background:var(--white);border-left:var(--border);z-index:3;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);white-space:nowrap;transition:all .15s}
+.catbar-seeall{position:absolute;right:0;top:0;bottom:0;display:flex;align-items:center;padding:0 16px;background:var(--white);border-left:var(--border);z-index:10;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--g500);white-space:nowrap;transition:all .15s;text-decoration:none;pointer-events:auto !important}
 .catbar-seeall:hover{color:var(--black);background:var(--g50)}
 
 /* ── FLASH SALE ── */
