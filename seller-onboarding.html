@@ -745,35 +745,61 @@ function goStep(n){
 
 function next(step){
   if(step===1){
-    const fname=document.getElementById('fname').value.trim();
-    const email=document.getElementById('email').value.trim();
-    const pass=document.getElementById('pass').value;
-    const pass2=document.getElementById('pass2').value;
-    if(!fname){toast('⚠️ กรุณากรอกชื่อ');return;}
-    if(!email||!/\S+@\S+\.\S+/.test(email)){toast('⚠️ กรุณากรอกอีเมลให้ถูกต้อง');return;}
-    if(pass.length<8){toast('⚠️ รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');return;}
-    if(pass!==pass2){toast('⚠️ รหัสผ่านไม่ตรงกัน');return;}
+    const fname=(document.getElementById('fname')?.value||'').trim();
+    const lname=(document.getElementById('lname')?.value||'').trim();
+    const email=(document.getElementById('email')?.value||'').trim();
+    const phone=(document.getElementById('phone')?.value||'').trim();
+    const pass=document.getElementById('pass')?.value||'';
+    const pass2=document.getElementById('pass2')?.value||'';
     
-    // ตรวจ policies — รองรับทั้ง dynamic (agree-{slug}) และ hardcoded (agree1, agree2)
-    if (window._allPoliciesRequired && window._allPoliciesRequired.length) {
-      // Dynamic policies (โหลดมาจาก DB)
+    console.log('[next-1]', { fname, lname, email, phone, passLen: pass.length, pass2Len: pass2.length });
+    
+    if(!fname){toast('⚠️ กรุณากรอกชื่อ');document.getElementById('fname')?.focus();return;}
+    if(!lname){toast('⚠️ กรุณากรอกนามสกุล');document.getElementById('lname')?.focus();return;}
+    if(!email||!/\S+@\S+\.\S+/.test(email)){toast('⚠️ กรุณากรอกอีเมลให้ถูกต้อง');document.getElementById('email')?.focus();return;}
+    if(!phone||phone.length<9){toast('⚠️ กรุณากรอกเบอร์โทรศัพท์');document.getElementById('phone')?.focus();return;}
+    if(pass.length<8){toast('⚠️ รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');document.getElementById('pass')?.focus();return;}
+    if(pass!==pass2){toast('⚠️ รหัสผ่านไม่ตรงกัน');document.getElementById('pass2')?.focus();return;}
+    
+    // ตรวจ policies — รองรับทั้ง dynamic และ hardcoded
+    let dynamicChecked = false;
+    if (window._allPoliciesRequired && window._allPoliciesRequired.length > 0) {
+      dynamicChecked = true;
       const unchecked = window._allPoliciesRequired.filter(id => {
         const el = document.getElementById(id);
         return !el || !el.checked;
       });
+      console.log('[next-1] policies:', window._allPoliciesRequired.length, 'unchecked:', unchecked.length);
       if (unchecked.length > 0) {
-        toast('⚠️ กรุณายอมรับข้อกำหนดทุกข้อก่อน');
-        return;
-      }
-    } else {
-      // Fallback: hardcoded agree1, agree2
-      const a1Box = document.getElementById('agree1');
-      const a2Box = document.getElementById('agree2');
-      if (a1Box && a2Box && (!a1Box.checked || !a2Box.checked)) {
-        toast('⚠️ กรุณายอมรับข้อกำหนดก่อน');
+        toast('⚠️ กรุณายอมรับข้อกำหนดทุกข้อก่อน (' + unchecked.length + ' ข้อยังไม่ได้ติ๊ก)');
+        // scroll ไปที่ checkbox แรกที่ยังไม่ติ๊ก
+        const firstUnchecked = document.getElementById(unchecked[0]);
+        if (firstUnchecked) {
+          firstUnchecked.scrollIntoView({behavior: 'smooth', block: 'center'});
+          firstUnchecked.focus();
+        }
         return;
       }
     }
+    
+    // Fallback: hardcoded agree1, agree2 (ถ้าไม่มี dynamic)
+    if (!dynamicChecked) {
+      const a1Box = document.getElementById('agree1');
+      const a2Box = document.getElementById('agree2');
+      // ถ้าไม่มี element ทั้ง 2 → ผ่าน (policies ยังไม่โหลด หรือไม่มีจริง)
+      if (a1Box && a2Box) {
+        if (!a1Box.checked || !a2Box.checked) {
+          toast('⚠️ กรุณายอมรับข้อกำหนดก่อน');
+          return;
+        }
+      }
+      // ไม่มี a1/a2 และไม่มี dynamic → policies อาจกำลังโหลด → ให้ผ่าน + แจ้งเตือน
+      if (!a1Box && !a2Box) {
+        console.warn('[next-1] No policies found — allowing pass through');
+      }
+    }
+    
+    console.log('[next-1] ✅ Step 1 validation passed');
   }
   if(step===2){
     const sn=document.getElementById('shopname').value.trim();
