@@ -7992,7 +7992,9 @@ async function setUserRole(userId, newRole) {
           existingSeller = newSeller;
         }
         if (existingSeller) {
-          await sb.from('users').update({ seller_id: existingSeller.id }).eq('id', userId);
+          try {
+            await sb.from('users').update({ seller_id: existingSeller.id }).eq('id', userId);
+          } catch(e) { console.warn('users update skipped (RLS):', e); }
         }
       }
     } catch(e) { console.warn('ensure seller row:', e); }
