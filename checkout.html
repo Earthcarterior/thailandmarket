@@ -2069,8 +2069,12 @@ async function doCheckout(){
       });
     }
 
-    // 6. clear cart_items
-    await _sbCO.from('cart_items').delete().eq('user_id', user.id);
+    // 6. clear cart_items (ใช้ clear_cart RPC)
+    try {
+      await _sbCO.rpc('clear_cart');
+    } catch(e) {
+      try { await _sbCO.from('cart_items').delete().eq('user_id', user.id); } catch(e2) {}
+    }
     localStorage.removeItem('tm_cart');
     localStorage.removeItem('tm_cart_guest');
 
@@ -2273,33 +2277,70 @@ async function loadCheckoutData() {
     }
   } catch(e) { /* anon */ }
 
-  // ── 1. CART: try Supabase cart_items first, fallback to localStorage ──
+  // ── 1. CART: ใช้ RPC get_my_cart (bypass RLS + correct user_id) ──
   let cartItems = [];
   if (user) {
+    // Layer 1: RPC get_my_cart (best - bypass RLS)
     try {
-      const { data, error } = await _sbCO
-        .from('cart_items')
-        .select('id, product_id, quantity, variant_text, products(id, name_th, name_en, price, thumbnail, images, seller_id, sellers(shop_name))')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      cartItems = (data || []).map(row => {
-        const p = row.products || {};
-        const imgs = Array.isArray(p.images) ? p.images : [];
-        const img = imgs[0] || p.thumbnail || '';
-        return {
-          id: row.product_id,
-          seller_id: p.seller_id || null,   // ★ จำเป็นสำหรับ dropdown shipping ★
-          icon: img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover">` : '📦',
-          name: p.name_th || p.name_en || 'สินค้า',
-          var: row.variant_text || '',
-          shop: (p.sellers && p.sellers.shop_name) || 'Thailand Market',
-          price: Number(p.price || 0),
-          old: Number(p.price || 0),  // no old price from cart, default same
-          qty: row.quantity || 1
-        };
-      });
-    } catch(e) {
-      console.warn('loadCart from Supabase failed:', e?.message || e);
+      const { data: cartData, error: rpcErr } = await _sbCO.rpc('get_my_cart');
+      console.log('[checkout] RPC result:', cartData);
+      
+      if (!rpcErr && cartData?.items) {
+        // ดึง shop name เพิ่ม
+        const sellerIds = [...new Set(cartData.items.map(it => it.product?.seller_id).filter(Boolean))];
+        let sellerMap = {};
+        if (sellerIds.length) {
+          try {
+            const { data: sellers } = await _sbCO.from('sellers').select('id,shop_name').in('id', sellerIds);
+            (sellers || []).forEach(s => sellerMap[s.id] = s.shop_name);
+          } catch(e) {}
+        }
+        
+        cartItems = cartData.items.map(it => {
+          const p = it.product || {};
+          const imgs = Array.isArray(p.images) ? p.images : [];
+          const img = imgs[0] || p.thumbnail || '';
+          return {
+            id: it.product_id,
+            seller_id: p.seller_id || null,
+            icon: img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover">` : '📦',
+            name: p.name_th || 'สินค้า',
+            var: it.variant_text || '',
+            shop: sellerMap[p.seller_id] || 'Thailand Market',
+            price: Number(p.price || 0),
+            old: Number(p.compare_price || p.price || 0),
+            qty: it.quantity || 1
+          };
+        });
+        console.log('[checkout] loaded via RPC:', cartItems.length, 'items');
+      }
+    } catch(e) { console.warn('[checkout] RPC failed:', e); }
+    
+    // Layer 2: Direct query (fallback)
+    if (cartItems.length === 0) {
+      try {
+        const { data, error } = await _sbCO
+          .from('cart_items')
+          .select('id, product_id, quantity, variant_text, products(id, name_th, name_en, price, compare_price, thumbnail, images, seller_id, sellers(shop_name))')
+          .eq('user_id', user.id);
+        if (error) throw error;
+        cartItems = (data || []).map(row => {
+          const p = row.products || {};
+          const imgs = Array.isArray(p.images) ? p.images : [];
+          const img = imgs[0] || p.thumbnail || '';
+          return {
+            id: row.product_id,
+            seller_id: p.seller_id || null,
+            icon: img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover">` : '📦',
+            name: p.name_th || p.name_en || 'สินค้า',
+            var: row.variant_text || '',
+            shop: (p.sellers && p.sellers.shop_name) || 'Thailand Market',
+            price: Number(p.price || 0),
+            old: Number(p.compare_price || p.price || 0),
+            qty: row.quantity || 1
+          };
+        });
+      } catch(e) { console.warn('[checkout] direct query failed:', e); }
     }
   }
   // Fallback: localStorage (with auto-migration of legacy tm_cart_guest)
