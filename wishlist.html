@@ -1713,30 +1713,85 @@ function renderWishlistCards(items) {
 
 // ── Remove from Wishlist ───────────────────────────────────
 async function removeWish(productId, btn) {
-  if (!_userId) { tmToast('❌ กรุณาเข้าสู่ระบบก่อน','err'); return; }
-  
   const card = btn.closest('[onclick]') || btn.closest('.prod-card') || btn.parentElement;
   card.style.opacity = '0.4';
   card.style.pointerEvents = 'none';
 
-  const { error } = await sb.from('wishlist').delete()
-    .eq('user_id', _userId)
-    .eq('product_id', productId);
-
-  if (error) {
+  try {
+    // ── ใช้ RPC toggle_wishlist (bypass RLS) ──
+    const { data, error } = await sb.rpc('toggle_wishlist', { p_product_id: productId });
+    
+    if (error) {
+      // Fallback: direct delete
+      if (_userId) {
+        const { error: delErr } = await sb.from('wishlist').delete()
+          .eq('user_id', _userId).eq('product_id', productId);
+        if (delErr) {
+          card.style.opacity = '1';
+          card.style.pointerEvents = '';
+          tmToast('❌ ลบไม่สำเร็จ: ' + delErr.message);
+          return;
+        }
+      } else {
+        card.style.opacity = '1';
+        card.style.pointerEvents = '';
+        tmToast('❌ ลบไม่สำเร็จ: ' + error.message);
+        return;
+      }
+    }
+    
+    console.log('[removeWish] success:', productId);
+    
+    // ── อัปเดต state ──
+    if (_wishIds) _wishIds.delete(productId);
+    
+    // อัปเดต window._wlItems
+    if (window._wlItems) {
+      window._wlItems = window._wlItems.filter(it => it.product_id !== productId);
+    }
+    
+    // Animate remove
+    card.style.transform = 'scale(0)';
+    card.style.transition = 'all 0.3s';
+    setTimeout(() => {
+      card.remove();
+      
+      // ── Re-render เพื่อให้ tab counts + title ถูกต้อง ──
+      const remaining = window._wlItems?.length || document.querySelectorAll('#prodGrid .prod-card').length;
+      updateWishCount(remaining);
+      
+      // อัปเดต count title
+      const cntTitle = document.getElementById('wish-count-title');
+      if (cntTitle) cntTitle.textContent = remaining;
+      
+      // ── อัปเดต tab counts ──
+      if (typeof updateCollectionCounts === 'function') {
+        updateCollectionCounts();
+      }
+      
+      // ถ้าไม่มีเหลือ → แสดง empty state
+      if (remaining === 0) {
+        const grid = document.getElementById('prodGrid');
+        if (grid) {
+          grid.innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:80px 20px;color:#737373">
+              <div style="font-size:72px;margin-bottom:16px;opacity:0.4">💝</div>
+              <h2 style="font-size:18px;color:#404040;margin-bottom:8px;font-weight:600">ยังไม่มี Wishlist</h2>
+              <p style="font-size:13px;line-height:1.6;margin-bottom:24px">เพิ่มสินค้าที่ชอบโดยกดปุ่ม ❤️ ที่หน้าสินค้า</p>
+              <a href="index.html" style="display:inline-block;padding:12px 28px;background:#0A0A0A;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px">🛍️ ไปช้อปปิ้ง</a>
+            </div>
+          `;
+        }
+      }
+    }, 300);
+    
+    tmToast('💔 ลบออกจาก Wishlist แล้ว');
+  } catch(e) {
     card.style.opacity = '1';
     card.style.pointerEvents = '';
-    tmToast('❌ ลบไม่สำเร็จ: '+error.message, 'err');
-    return;
+    console.error('[removeWish]', e);
+    tmToast('❌ ' + e.message);
   }
-
-  _wishIds.delete(productId);
-  card.remove();
-  
-  // อัปเดต count
-  const remaining = document.querySelectorAll('.prod-card').length;
-  updateWishCount(remaining);
-  tmToast('💔 ลบออกจาก Wishlist แล้ว');
 }
 
 // ── Add to Cart ───────────────────────────────────────────
