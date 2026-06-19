@@ -2277,16 +2277,56 @@ async function loadCheckoutData() {
     }
   } catch(e) { /* anon */ }
 
-  // ── 1. CART: ใช้ RPC get_my_cart (bypass RLS + correct user_id) ──
+  // ── 1. CART: ใช้ localStorage เป็นหลัก (sync จาก cart.html) + DB fallback ──
   let cartItems = [];
-  if (user) {
-    // Layer 1: RPC get_my_cart (best - bypass RLS)
-    try {
-      const { data: cartData, error: rpcErr } = await _sbCO.rpc('get_my_cart');
-      console.log('[checkout] RPC result:', cartData);
+  
+  // PRIORITY 1: localStorage tm_cart (sync ล่าสุดจาก cart.html)
+  try {
+    const ls = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+    if (ls && ls.length > 0) {
+      console.log('[checkout] localStorage cart:', ls.length, 'items');
       
-      if (!rpcErr && cartData?.items) {
-        // ดึง shop name เพิ่ม
+      // Hydrate product info จาก DB
+      const pids = ls.map(c => c.id).filter(Boolean);
+      const productMap = {};
+      const sellerMap = {};
+      if (pids.length) {
+        try {
+          const { data: prods } = await _sbCO.from('products')
+            .select('id,name_th,name_en,price,compare_price,thumbnail,images,seller_id,sellers(id,shop_name)')
+            .in('id', pids);
+          (prods || []).forEach(p => { 
+            productMap[p.id] = p;
+            if (p.sellers) sellerMap[p.seller_id] = p.sellers.shop_name;
+          });
+        } catch(e) { console.warn('hydrate failed:', e); }
+      }
+      
+      cartItems = ls.map(c => {
+        const p = productMap[c.id] || {};
+        const imgs = Array.isArray(p.images) ? p.images : [];
+        const img = imgs[0] || p.thumbnail || c.img || '';
+        return {
+          id: c.id,
+          seller_id: p.seller_id || c.seller_id || null,
+          icon: img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover">` : '📦',
+          name: p.name_th || p.name_en || c.name || 'สินค้า',
+          var: c.var || c.variant_text || '',
+          shop: sellerMap[p.seller_id] || c.shop || 'Thailand Market',
+          price: Number(p.price || c.price || 0),
+          old: Number(p.compare_price || c.price_old || p.price || c.price || 0),
+          qty: c.qty || c.quantity || 1
+        };
+      });
+      console.log('[checkout] loaded from localStorage:', cartItems.length, 'items');
+    }
+  } catch(e) { console.warn('localStorage parse failed:', e); }
+  
+  // PRIORITY 2: ถ้า localStorage ว่าง → ใช้ DB ผ่าน RPC get_my_cart
+  if (cartItems.length === 0 && user) {
+    try {
+      const { data: cartData } = await _sbCO.rpc('get_my_cart');
+      if (cartData?.items?.length) {
         const sellerIds = [...new Set(cartData.items.map(it => it.product?.seller_id).filter(Boolean))];
         let sellerMap = {};
         if (sellerIds.length) {
@@ -2295,7 +2335,6 @@ async function loadCheckoutData() {
             (sellers || []).forEach(s => sellerMap[s.id] = s.shop_name);
           } catch(e) {}
         }
-        
         cartItems = cartData.items.map(it => {
           const p = it.product || {};
           const imgs = Array.isArray(p.images) ? p.images : [];
@@ -2312,37 +2351,17 @@ async function loadCheckoutData() {
             qty: it.quantity || 1
           };
         });
-        console.log('[checkout] loaded via RPC:', cartItems.length, 'items');
+        // เก็บลง localStorage
+        const lsCart = cartItems.map(c => ({
+          id: c.id, name: c.name, price: c.price, img: '', qty: c.qty, variants: {}
+        }));
+        localStorage.setItem('tm_cart', JSON.stringify(lsCart));
+        console.log('[checkout] loaded from DB:', cartItems.length, 'items (synced to localStorage)');
       }
     } catch(e) { console.warn('[checkout] RPC failed:', e); }
-    
-    // Layer 2: Direct query (fallback)
-    if (cartItems.length === 0) {
-      try {
-        const { data, error } = await _sbCO
-          .from('cart_items')
-          .select('id, product_id, quantity, variant_text, products(id, name_th, name_en, price, compare_price, thumbnail, images, seller_id, sellers(shop_name))')
-          .eq('user_id', user.id);
-        if (error) throw error;
-        cartItems = (data || []).map(row => {
-          const p = row.products || {};
-          const imgs = Array.isArray(p.images) ? p.images : [];
-          const img = imgs[0] || p.thumbnail || '';
-          return {
-            id: row.product_id,
-            seller_id: p.seller_id || null,
-            icon: img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover">` : '📦',
-            name: p.name_th || p.name_en || 'สินค้า',
-            var: row.variant_text || '',
-            shop: (p.sellers && p.sellers.shop_name) || 'Thailand Market',
-            price: Number(p.price || 0),
-            old: Number(p.compare_price || p.price || 0),
-            qty: row.quantity || 1
-          };
-        });
-      } catch(e) { console.warn('[checkout] direct query failed:', e); }
-    }
   }
+
+  // (Legacy fallback ถัดไป) ──
   // Fallback: localStorage (with auto-migration of legacy tm_cart_guest)
   if (!cartItems.length) {
     let ls = JSON.parse(localStorage.getItem('tm_cart') || '[]');
