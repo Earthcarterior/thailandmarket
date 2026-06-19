@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <!-- ── CACHE BUSTING ─────────────────────────────────────── -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">h
+<meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="version" content="2026-05-06-v3">
 <meta name="description" content="Thailand Market — General Marketplace ไทย ครบทุกหมวด 500,000+ รายการ ส่งฟรีทั่วประเทศ">
@@ -3672,6 +3672,69 @@ init().catch(e => console.error('[TM] init crashed:', e));
 
   window.TM_I18N = { setLang: setLang, getLang: getLang, toggle: toggleLang, translate: applyTranslation, dict: DICT };
 })();
+
+
+// ════════════════════════════════════════════════════════════
+// CART BADGE UPDATER — Update ทุก badge ที่มี id="cart-badge"
+// ════════════════════════════════════════════════════════════
+window.tmUpdateCartBadge = async function() {
+  let count = 0;
+  
+  // 1. นับจาก localStorage
+  try {
+    const cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+    count = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+  } catch(e) {}
+  
+  // 2. ถ้า login → ใช้ DB cart (จริงที่สุด)
+  try {
+    if (window._sb || window.sb) {
+      const _client = window._sb || window.sb;
+      const { data: { session } } = await _client.auth.getSession();
+      if (session) {
+        const { data: cartData } = await _client.rpc('get_my_cart');
+        if (cartData?.items) {
+          const dbCount = cartData.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0);
+          // ใช้ DB count (เพราะตรงที่สุด)
+          count = dbCount;
+        }
+      }
+    }
+  } catch(e) {}
+  
+  // 3. Update ทุก badge ที่มี id="cart-badge" หรือ class "nav-badge" / "cart-count"
+  document.querySelectorAll('#cart-badge, .nav-badge, #cart-count').forEach(el => {
+    if (el.id === 'cart-badge' || el.classList.contains('nav-badge') || el.id === 'cart-count') {
+      if (el.closest('[onclick*="cart"]') || el.id === 'cart-badge' || el.id === 'cart-count') {
+        el.textContent = count;
+        el.style.display = count > 0 ? '' : 'none';
+      }
+    }
+  });
+  
+  // 4. Update ทุก element มี class .cart-count-badge หรือ id อื่นๆ
+  const cartCountEl = document.getElementById('cart-count');
+  if (cartCountEl) cartCountEl.textContent = count;
+  
+  // 5. Float bubble (เฉพาะ index)
+  const cf = document.getElementById('cart-float');
+  const cfc = document.getElementById('cart-float-count');
+  if (cfc) cfc.textContent = count > 0 ? `(${count} รายการ)` : '';
+  if (cf) cf.classList.toggle('show', count > 0);
+  
+  console.log('[cart] badge updated:', count);
+  
+  return count;
+};
+
+// Auto-update เมื่อโหลดเสร็จ
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(window.tmUpdateCartBadge, 500);
+});
+
+// Update ทุกครั้งที่ window focus (กรณีเพิ่งกลับมาจาก tab อื่น)
+window.addEventListener('focus', () => window.tmUpdateCartBadge());
+
 
 </script>
 </body>
