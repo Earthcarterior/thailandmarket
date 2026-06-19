@@ -7537,49 +7537,53 @@ async function loadSellers(statusFilter = 'pending') {
 
 async function approveSeller(sellerId) {
   if (!confirm('อนุมัติร้านค้านี้? ร้านจะแสดงบนเว็บและสามารถขายสินค้าได้ทันที')) return;
-  const { error } = await sb.from('sellers').update({
-    status: 'active',
-    approved_at: new Date().toISOString(),
-    approved_by: currentUser?.email || 'admin',
-    updated_at: new Date().toISOString(),
-  }).eq('id', sellerId);
-  if (error) { toast('❌ ' + error.message); return; }
-
-  // อัปเดต users.seller_id เพื่อ link
-  const { data: seller } = await sb.from('sellers').select('user_id').eq('id', sellerId).maybeSingle();
-  if (seller?.user_id) {
-    await sb.from('users').update({ seller_id: sellerId, role: 'seller' }).eq('id', seller.user_id);
+  
+  const _sb = window._sb || window.sb || sb;
+  const { data, error } = await _sb.rpc('admin_approve_seller', { p_seller_id: sellerId });
+  
+  if (error) {
+    if (error.message?.includes('function') && error.message?.includes('not exist')) {
+      toast('❌ ยังไม่ได้รัน SQL "fix-approve-seller-rpcs.sql"', 'error');
+    } else {
+      toast('❌ ' + error.message, 'error');
+    }
+    return;
   }
-
-  toast('✅ อนุมัติร้านค้าสำเร็จ! Seller สามารถเข้าใช้งานได้แล้ว');
-  // Remove row with animation
+  
+  toast('✅ ' + (data?.message || 'อนุมัติร้านค้าสำเร็จ'));
   const row = document.getElementById('seller-row-' + sellerId);
   if (row) { row.style.opacity='0'; row.style.transition='opacity .3s'; setTimeout(() => row.remove(), 300); }
-  loadSellers('pending');
+  if (typeof loadSellers === 'function') loadSellers('pending');
 }
 
 async function rejectSeller(sellerId) {
   const reason = prompt('เหตุผลที่ปฏิเสธ (แสดงให้ Seller เห็น):');
   if (reason === null) return;
-  const { error } = await sb.from('sellers').update({
-    status: 'rejected',
-    reject_reason: reason || 'ไม่ผ่านเกณฑ์',
-    updated_at: new Date().toISOString(),
-  }).eq('id', sellerId);
-  if (error) { toast('❌ ' + error.message); return; }
-  toast('✅ ปฏิเสธร้านค้าแล้ว');
+  
+  const _sb = window._sb || window.sb || sb;
+  const { data, error } = await _sb.rpc('admin_reject_seller', { 
+    p_seller_id: sellerId,
+    p_reason: reason || 'ไม่ผ่านเกณฑ์'
+  });
+  
+  if (error) { toast('❌ ' + error.message, 'error'); return; }
+  
+  toast('✅ ' + (data?.message || 'ปฏิเสธร้านค้าแล้ว'));
   const row = document.getElementById('seller-row-' + sellerId);
   if (row) { row.style.opacity='0'; row.style.transition='opacity .3s'; setTimeout(() => row.remove(), 300); }
-  loadSellers('pending');
+  if (typeof loadSellers === 'function') loadSellers('pending');
 }
 
 async function suspendSeller(sellerId) {
   if (!confirm('ระงับร้านค้านี้? สินค้าของร้านจะถูกซ่อนจากเว็บ')) return;
-  const { error } = await sb.from('sellers').update({ status:'inactive', updated_at: new Date().toISOString() }).eq('id', sellerId);
-  if (error) { toast('❌ ' + error.message); return; }
-  await sb.from('products').update({ status:'inactive' }).eq('seller_id', sellerId);
-  toast('✅ ระงับร้านค้าแล้ว สินค้าถูกซ่อนทั้งหมด');
-  loadSellers('active');
+  
+  const _sb = window._sb || window.sb || sb;
+  const { data, error } = await _sb.rpc('admin_suspend_seller', { p_seller_id: sellerId });
+  
+  if (error) { toast('❌ ' + error.message, 'error'); return; }
+  
+  toast('✅ ' + (data?.message || 'ระงับร้านค้าแล้ว'));
+  if (typeof loadSellers === 'function') loadSellers('active');
 }
 
 async function viewSellerDetail(sellerId) {
