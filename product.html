@@ -1768,29 +1768,39 @@ async function checkWishlistState() {
 
 async function toggleWishlist() {
   try {
-    const { data:{ user } } = await sb.auth.getUser();
-    if (!user) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
       toast('กรุณาเข้าสู่ระบบ');
       setTimeout(()=>location.href='login.html?from='+encodeURIComponent(location.pathname+location.search), 1500);
       return;
     }
+    
     const btn = document.getElementById('wl-btn');
-    if (wishlisted) {
-      await sb.from('wishlist').delete().eq('user_id', user.id).eq('product_id', productId);
-      wishlisted = false;
-      btn.textContent = '❤️ บันทึกเป็น Wishlist';
-      btn.style.borderColor = 'var(--g200)';
-      btn.style.color = 'var(--g700)';
-      toast('💔 ลบออกจาก Wishlist');
-    } else {
-      await sb.from('wishlist').upsert({ user_id: user.id, product_id: productId });
+    
+    // ใช้ RPC toggle_wishlist (auto user_id + bypass RLS)
+    const { data, error } = await sb.rpc('toggle_wishlist', { p_product_id: productId });
+    
+    if (error) {
+      console.error('[wishlist] toggle error:', error);
+      toast('❌ ' + error.message);
+      return;
+    }
+    
+    if (data?.action === 'added') {
       wishlisted = true;
       btn.textContent = '❤️ บันทึกแล้ว';
       btn.style.borderColor = 'var(--accent)';
       btn.style.color = 'var(--accent)';
       toast('❤️ เพิ่มใน Wishlist!');
+    } else {
+      wishlisted = false;
+      btn.textContent = '❤️ บันทึกเป็น Wishlist';
+      btn.style.borderColor = 'var(--g200)';
+      btn.style.color = 'var(--g700)';
+      toast('💔 ลบออกจาก Wishlist');
     }
   } catch(e) {
+    console.error('[wishlist] error:', e);
     toast('ไม่สำเร็จ: ' + e.message);
   }
 }

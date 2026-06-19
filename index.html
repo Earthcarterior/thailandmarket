@@ -1582,17 +1582,27 @@ async function toggleWishlist(productId, el) {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { toast('กรุณาเข้าสู่ระบบก่อน'); location.href='login.html'; return; }
-    const { data: existing } = await sb.from('wishlist').select('id').eq('product_id', productId).maybeSingle();
-    if (existing) {
-      await sb.from('wishlist').delete().eq('product_id', productId);
-      if (el) { el.textContent = '♡'; el.style.color = ''; }
-      toast('ลบออกจาก Wishlist แล้ว');
-    } else {
-      await sb.from('wishlist').insert({ product_id: productId });
+    
+    // ใช้ RPC toggle_wishlist (auto user_id + bypass RLS)
+    const { data, error } = await sb.rpc('toggle_wishlist', { p_product_id: productId });
+    
+    if (error) {
+      console.error('[wishlist] toggle error:', error);
+      toast('❌ ' + error.message);
+      return;
+    }
+    
+    if (data?.action === 'added') {
       if (el) { el.textContent = '♥'; el.style.color = 'var(--red)'; }
       toast('❤️ บันทึกใน Wishlist แล้ว', true);
+    } else {
+      if (el) { el.textContent = '♡'; el.style.color = ''; }
+      toast('ลบออกจาก Wishlist แล้ว');
     }
-  } catch(e) { toast('❤️ บันทึกใน Wishlist'); }
+  } catch(e) { 
+    console.error('[wishlist] error:', e);
+    toast('❌ ' + e.message);
+  }
 }
 
 // ── Init ───────────────────────────────────────────────────
