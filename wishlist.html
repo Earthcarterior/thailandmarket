@@ -651,16 +651,16 @@ nav, .nav {
 
   <!-- COLLECTIONS -->
   <div class="collections-bar">
-    <div class="col-chip active">
+    <div class="col-chip active" data-filter="all" onclick="filterByCollection('all',this)">
       <span class="col-chip-ico">❤️</span> ทั้งหมด <span class="col-count" id="col-count-all">0</span>
     </div>
-    <div class="col-chip">
+    <div class="col-chip" data-filter="home" onclick="filterByCollection('home',this)">
       <span class="col-chip-ico">🏠</span> เฟอร์นิเจอร์บ้าน <span class="col-count" style="background:var(--gray100);color:var(--gray600)" id="col-count-home">0</span>
     </div>
-    <div class="col-chip">
+    <div class="col-chip" data-filter="tech" onclick="filterByCollection('tech',this)">
       <span class="col-chip-ico">💻</span> Tech & Gadgets <span class="col-count" style="background:var(--gray100);color:var(--gray600)" id="col-count-tech">0</span>
     </div>
-    <div class="col-chip">
+    <div class="col-chip" data-filter="fashion" onclick="filterByCollection('fashion',this)">
       <span class="col-chip-ico">👗</span> แฟชั่น <span class="col-count" style="background:var(--gray100);color:var(--gray600)" id="col-count-fashion">0</span>
     </div>
     <div class="col-chip" style="border-style:dashed;color:var(--gray400)" onclick="openModal()">
@@ -1056,51 +1056,65 @@ function removeSelected(){
   document.getElementById('bulkBar').classList.remove('show');
 }
 async function addAllToCart(){
-  const checked = document.querySelectorAll('.prod-checkbox:checked');
-  let items = [];
+  // ใช้ wishlist items ที่โหลดมาแล้ว
+  const wlItems = window._wlItems || [];
   
-  if (checked.length > 0) {
-    items = Array.from(checked).map(cb => cb.dataset.productId).filter(Boolean);
-  } else {
-    // ถ้าไม่ได้เลือก — เพิ่มทั้งหมด
-    const grid = document.getElementById('prodGrid');
-    if (!grid) { tmToast('⚠️ ไม่พบสินค้า'); return; }
-    items = Array.from(grid.querySelectorAll('[data-product-id]')).map(el => el.dataset.productId).filter(Boolean);
-  }
-  
-  if (items.length === 0) {
-    tmToast('⚠️ ไม่มีสินค้าที่จะเพิ่ม');
+  if (wlItems.length === 0) {
+    tmToast('⚠️ ยังไม่มีสินค้าใน Wishlist');
     return;
   }
   
-  if (!confirm(`เพิ่ม ${items.length} รายการลงตะกร้า?`)) return;
+  if (!confirm('เพิ่ม ' + wlItems.length + ' รายการลงตะกร้า?')) return;
   
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); location.href='login.html'; return; }
+  if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); setTimeout(()=>location.href='login.html',1000); return; }
   
-  let success = 0, failed = 0;
-  for (const pid of items) {
-    try {
-      await sb.rpc('add_to_cart', { p_product_id: pid, p_quantity: 1 });
-      success++;
-    } catch(e) {
-      try {
-        // Fallback: direct upsert
-        await sb.from('cart_items').upsert({
-          user_id: _userId, product_id: pid, quantity: 1, created_at: new Date().toISOString()
-        }, { onConflict: 'user_id,product_id' });
-        success++;
-      } catch(e2) { failed++; }
+  // ใช้ localStorage cart (เก็บแบบ guest cart + sync DB)
+  // เพราะ cart_items table อาจ RLS block direct insert
+  const cartKey = 'tm_cart_' + session.user.email;
+  let cart = [];
+  try { cart = JSON.parse(localStorage.getItem(cartKey) || '[]'); } catch(e) {}
+  
+  let added = 0;
+  wlItems.forEach(it => {
+    const pid = it.product_id;
+    if (!pid) return;
+    const existing = cart.find(c => c.product_id === pid);
+    if (existing) {
+      existing.quantity = (existing.quantity || 1) + 1;
+    } else {
+      cart.push({
+        product_id: pid,
+        product: it.product,
+        quantity: 1,
+        added_at: new Date().toISOString()
+      });
     }
+    added++;
+  });
+  
+  localStorage.setItem(cartKey, JSON.stringify(cart));
+  
+  // ลอง sync DB (ไม่ block ถ้า fail)
+  for (const it of wlItems) {
+    try {
+      await sb.from('cart_items').upsert({
+        user_id: _userId,
+        product_id: it.product_id,
+        quantity: 1
+      }, { onConflict: 'user_id,product_id' });
+    } catch(e) {}
   }
   
-  if (success > 0) {
-    tmToast(`🛒 เพิ่ม ${success} รายการลงตะกร้าแล้ว` + (failed ? ` (${failed} รายการไม่สำเร็จ)` : ''));
-    // Update cart badge
-    if (typeof tmUpdateCartBadge === 'function') tmUpdateCartBadge();
-  } else {
-    tmToast('❌ ไม่สามารถเพิ่มสินค้าลงตะกร้าได้');
-  }
+  tmToast('🛒 เพิ่ม ' + added + ' รายการลงตะกร้าแล้ว!', true);
+  
+  // Update cart badge
+  if (typeof tmUpdateCartBadge === 'function') tmUpdateCartBadge();
+  
+  // ถามว่าไปดู cart ไหม
+  setTimeout(() => {
+    if (confirm('ไปดูตะกร้าเลยไหม?')) location.href = 'cart.html';
+  }, 800);
 }
 document.querySelectorAll('.emoji-btn').forEach(btn=>{
   btn.addEventListener('click',function(){
@@ -1282,51 +1296,65 @@ function removeSelected(){
   document.getElementById('bulkBar').classList.remove('show');
 }
 async function addAllToCart(){
-  const checked = document.querySelectorAll('.prod-checkbox:checked');
-  let items = [];
+  // ใช้ wishlist items ที่โหลดมาแล้ว
+  const wlItems = window._wlItems || [];
   
-  if (checked.length > 0) {
-    items = Array.from(checked).map(cb => cb.dataset.productId).filter(Boolean);
-  } else {
-    // ถ้าไม่ได้เลือก — เพิ่มทั้งหมด
-    const grid = document.getElementById('prodGrid');
-    if (!grid) { tmToast('⚠️ ไม่พบสินค้า'); return; }
-    items = Array.from(grid.querySelectorAll('[data-product-id]')).map(el => el.dataset.productId).filter(Boolean);
-  }
-  
-  if (items.length === 0) {
-    tmToast('⚠️ ไม่มีสินค้าที่จะเพิ่ม');
+  if (wlItems.length === 0) {
+    tmToast('⚠️ ยังไม่มีสินค้าใน Wishlist');
     return;
   }
   
-  if (!confirm(`เพิ่ม ${items.length} รายการลงตะกร้า?`)) return;
+  if (!confirm('เพิ่ม ' + wlItems.length + ' รายการลงตะกร้า?')) return;
   
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); location.href='login.html'; return; }
+  if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); setTimeout(()=>location.href='login.html',1000); return; }
   
-  let success = 0, failed = 0;
-  for (const pid of items) {
-    try {
-      await sb.rpc('add_to_cart', { p_product_id: pid, p_quantity: 1 });
-      success++;
-    } catch(e) {
-      try {
-        // Fallback: direct upsert
-        await sb.from('cart_items').upsert({
-          user_id: _userId, product_id: pid, quantity: 1, created_at: new Date().toISOString()
-        }, { onConflict: 'user_id,product_id' });
-        success++;
-      } catch(e2) { failed++; }
+  // ใช้ localStorage cart (เก็บแบบ guest cart + sync DB)
+  // เพราะ cart_items table อาจ RLS block direct insert
+  const cartKey = 'tm_cart_' + session.user.email;
+  let cart = [];
+  try { cart = JSON.parse(localStorage.getItem(cartKey) || '[]'); } catch(e) {}
+  
+  let added = 0;
+  wlItems.forEach(it => {
+    const pid = it.product_id;
+    if (!pid) return;
+    const existing = cart.find(c => c.product_id === pid);
+    if (existing) {
+      existing.quantity = (existing.quantity || 1) + 1;
+    } else {
+      cart.push({
+        product_id: pid,
+        product: it.product,
+        quantity: 1,
+        added_at: new Date().toISOString()
+      });
     }
+    added++;
+  });
+  
+  localStorage.setItem(cartKey, JSON.stringify(cart));
+  
+  // ลอง sync DB (ไม่ block ถ้า fail)
+  for (const it of wlItems) {
+    try {
+      await sb.from('cart_items').upsert({
+        user_id: _userId,
+        product_id: it.product_id,
+        quantity: 1
+      }, { onConflict: 'user_id,product_id' });
+    } catch(e) {}
   }
   
-  if (success > 0) {
-    tmToast(`🛒 เพิ่ม ${success} รายการลงตะกร้าแล้ว` + (failed ? ` (${failed} รายการไม่สำเร็จ)` : ''));
-    // Update cart badge
-    if (typeof tmUpdateCartBadge === 'function') tmUpdateCartBadge();
-  } else {
-    tmToast('❌ ไม่สามารถเพิ่มสินค้าลงตะกร้าได้');
-  }
+  tmToast('🛒 เพิ่ม ' + added + ' รายการลงตะกร้าแล้ว!', true);
+  
+  // Update cart badge
+  if (typeof tmUpdateCartBadge === 'function') tmUpdateCartBadge();
+  
+  // ถามว่าไปดู cart ไหม
+  setTimeout(() => {
+    if (confirm('ไปดูตะกร้าเลยไหม?')) location.href = 'cart.html';
+  }, 800);
 }
 document.querySelectorAll('.emoji-btn').forEach(btn=>{
   btn.addEventListener('click',function(){
@@ -2050,22 +2078,13 @@ async function updateCollectionCounts() {
     if (!wlData?.items) return;
     
     const items = wlData.items;
-    
-    // นับตามชื่อ category (home, tech, fashion)
     const counts = { home: 0, tech: 0, fashion: 0 };
+    let catMap = {};
     
-    items.forEach(it => {
-      const catId = it.product?.category_id;
-      // ใช้ category_id แบบง่ายๆ — อาจ map กับ slug จริงได้ภายหลัง
-      // สำหรับตอนนี้นับรวม
-    });
-    
-    // ดึงข้อมูล categories เพื่อเช็ค slug/name
     if (items.length) {
       const catIds = [...new Set(items.map(it => it.product?.category_id).filter(Boolean))];
       if (catIds.length) {
         const { data: cats } = await sb.from('categories').select('id,slug,name_th').in('id', catIds);
-        const catMap = {};
         (cats || []).forEach(c => catMap[c.id] = c);
         
         items.forEach(it => {
@@ -2080,10 +2099,17 @@ async function updateCollectionCounts() {
       }
     }
     
+    // ⭐ เก็บ items + catMap ไว้ใช้ filter
+    window._wlItems = items;
+    window._wlCatMap = catMap;
+    
     const setCnt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setCnt('col-count-all', items.length);  // ⭐ ทั้งหมด!
     setCnt('col-count-home', counts.home);
     setCnt('col-count-tech', counts.tech);
     setCnt('col-count-fashion', counts.fashion);
+    
+    console.log('[wishlist] counts: all=' + items.length + ', home=' + counts.home + ', tech=' + counts.tech + ', fashion=' + counts.fashion);
   } catch(e) { console.warn('updateCollectionCounts:', e); }
 }
 
@@ -2205,6 +2231,65 @@ async function deleteUserCollection(collectionId, name) {
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(loadMyCollections, 1000);
 });
+
+
+// ── Filter wishlist ตาม category ──
+function filterByCollection(filterId, chipEl) {
+  // อัปเดต active state
+  document.querySelectorAll('.col-chip[data-filter]').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+  
+  const items = window._wlItems || [];
+  const catMap = window._wlCatMap || {};
+  
+  console.log('[filter]', filterId, 'items:', items.length, 'catMap:', Object.keys(catMap).length);
+  
+  let filtered = items;
+  
+  if (filterId !== 'all') {
+    filtered = items.filter(it => {
+      const cat = catMap[it.product?.category_id];
+      if (!cat) return false;
+      const slug = (cat.slug || '').toLowerCase();
+      const name = (cat.name_th || '').toLowerCase();
+      
+      if (filterId === 'home') 
+        return slug.includes('home') || slug.includes('furniture') || name.includes('บ้าน') || name.includes('เฟอร์');
+      if (filterId === 'tech') 
+        return slug.includes('tech') || slug.includes('electronic') || name.includes('อิเล็ก') || name.includes('โทร') || name.includes('คอม');
+      if (filterId === 'fashion') 
+        return slug.includes('fashion') || slug.includes('cloth') || name.includes('แฟชั่น') || name.includes('เสื้อ');
+      return false;
+    });
+  }
+  
+  // Render
+  const items4Render = filtered.map(it => ({
+    id: it.id,
+    product_id: it.product_id,
+    created_at: it.created_at,
+    products: it.product
+  }));
+  
+  const grid = document.getElementById('prodGrid');
+  if (!grid) return;
+  
+  if (items4Render.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#737373">
+        <div style="font-size:48px;margin-bottom:12px;opacity:0.4">🔍</div>
+        <h3 style="font-size:14px;color:#404040;margin-bottom:6px">ไม่มีสินค้าในหมวดนี้</h3>
+        <p style="font-size:12px">ลองเลือกหมวดอื่น</p>
+      </div>
+    `;
+  } else if (typeof renderWishlistCards === 'function') {
+    renderWishlistCards(items4Render);
+  }
+  
+  const cntEl = document.getElementById('wish-count-title');
+  if (cntEl) cntEl.textContent = filtered.length;
+}
+
 
 </script>
 </body>
