@@ -608,11 +608,33 @@ async function loadProfile() {
   const createdAt=new Date(session.user.created_at);
   const sinceText='สมาชิกตั้งแต่ '+createdAt.toLocaleDateString('th-TH',{month:'short',year:'numeric'});
 
-  let {data:user} = await sb.from('users').select('*').eq('email',email).maybeSingle();
+  // ── ใช้ RPC get_my_user_info (bypass RLS) ──
+  let user = null;
+  try {
+    const { data: info } = await sb.rpc('get_my_user_info');
+    if (info?.user) {
+      user = info.user;
+      // ดึง loyalty_pts เพิ่ม (RPC ไม่ return)
+      try {
+        const { data: extra } = await sb.from('users').select('loyalty_pts,avatar_url').eq('id', user.id).maybeSingle();
+        if (extra) { user.loyalty_pts = extra.loyalty_pts; user.avatar_url = extra.avatar_url; }
+      } catch(e) {}
+      console.log('[profile] user from RPC:', user.id, user.role);
+    }
+  } catch(e) { console.warn('[profile] RPC failed:', e); }
+
+  // Fallback: direct query
+  if (!user) {
+    const { data: u1 } = await sb.from('users').select('*').eq('email',email).maybeSingle();
+    user = u1;
+  }
+  
   if(!user) {
-    await sb.from('users').upsert({email,display_name:email.split('@')[0],role:'buyer',is_active:true,loyalty_pts:0},{onConflict:'email'});
-    const res = await sb.from('users').select('*').eq('email',email).maybeSingle();
-    user = res.data;
+    try {
+      await sb.from('users').upsert({email,display_name:email.split('@')[0],role:'buyer',is_active:true,loyalty_pts:0},{onConflict:'email'});
+      const res = await sb.from('users').select('*').eq('email',email).maybeSingle();
+      user = res.data;
+    } catch(e) { console.warn('[profile] upsert failed:', e); }
   }
 
   const name  = user?.display_name || email.split('@')[0];
@@ -701,12 +723,26 @@ async function loadProfile() {
 
   // Stats
   let orderCount=0, wishCount=0;
+  
+  // ดึง wishlist count ผ่าน RPC (bypass RLS)
+  try {
+    const { data: wlData } = await sb.rpc('get_my_wishlist');
+    if (wlData?.items) wishCount = wlData.items.length;
+  } catch(e) {}
+  
   if(uid) {
-    const [o,w]=await Promise.all([
-      sb.from('orders').select('id',{count:'exact',head:true}).eq('user_id',uid),
-      sb.from('wishlist').select('id',{count:'exact',head:true}).eq('user_id',uid),
-    ]);
-    orderCount=o.count||0; wishCount=w.count||0;
+    try {
+      const { count: oc } = await sb.from('orders').select('id',{count:'exact',head:true}).eq('user_id',uid);
+      orderCount = oc || 0;
+    } catch(e) {}
+    
+    // Fallback: ถ้า RPC fail
+    if (wishCount === 0) {
+      try {
+        const { count: wc } = await sb.from('wishlist').select('id',{count:'exact',head:true}).eq('user_id',uid);
+        wishCount = wc || 0;
+      } catch(e) {}
+    }
   }
   setEl('stat-orders', orderCount);
   setEl('stat-pts', pts.toLocaleString());
@@ -907,11 +943,33 @@ async function ordReturn(orderId, orderNum, amount) {
 async function loadWishlist(uid) {
   const el=document.getElementById('wish-grid');
   if(!el) return;
-  if(!uid) { el.innerHTML=emptyHtml('❤️','ยังไม่มีรายการโปรด','เลือกสินค้าเลย','category.html'); return; }
-  const {data:wishes}=await sb.from('wishlist').select('id,products(id,name_th,price,thumbnail,images)').eq('user_id',uid).limit(8);
-  const cnt=wishes?.length||0;
+  
+  // ── ใช้ RPC get_my_wishlist (bypass RLS) ──
+  let wishes = [];
+  try {
+    const { data: wlData, error: wlErr } = await sb.rpc('get_my_wishlist');
+    console.log('[profile] wishlist RPC:', wlData);
+    if (!wlErr && wlData?.items) {
+      wishes = wlData.items.slice(0, 8).map(it => ({
+        id: it.id,
+        products: it.product
+      }));
+    }
+  } catch(e) { console.warn('[profile] RPC failed:', e); }
+  
+  // Fallback: direct query
+  if (wishes.length === 0 && uid) {
+    try {
+      const { data } = await sb.from('wishlist').select('id,products(id,name_th,price,thumbnail,images)').eq('user_id',uid).limit(8);
+      wishes = data || [];
+    } catch(e) {}
+  }
+  
+  const cnt = wishes.length;
   setEl('wish-count-title',cnt); setEl('stat-wish',cnt); setEl('sb-wish-count',cnt);
+  
   if(!cnt) { el.innerHTML=emptyHtml('❤️','ยังไม่มีรายการโปรด','เลือกสินค้าเลย','category.html'); return; }
+  
   el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);border:var(--border)">`+wishes.map(w=>{
     const p=w.products; if(!p) return '';
     const thumb=p.thumbnail||p.images?.[0];
@@ -929,9 +987,24 @@ async function loadWishlist(uid) {
 }
 
 async function removeWish(id,btn) {
-  await sb.from('wishlist').delete().eq('id',id);
-  btn.closest('[onclick]')?.remove();
-  toast('💔 ลบออกจาก Wishlist แล้ว');
+  try {
+    // ใช้ RPC remove_from_wishlist
+    const { error } = await sb.rpc('remove_from_wishlist', { p_wishlist_id: id });
+    if (error) {
+      // Fallback: direct delete
+      await sb.from('wishlist').delete().eq('id',id);
+    }
+    btn.closest('[onclick]')?.remove();
+    toast('💔 ลบออกจาก Wishlist แล้ว');
+    // Update count
+    const curr = parseInt(document.getElementById('stat-wish')?.textContent || '0') - 1;
+    setEl('stat-wish', Math.max(0, curr));
+    setEl('sb-wish-count', Math.max(0, curr));
+    setEl('wish-count-title', Math.max(0, curr));
+  } catch(e) { 
+    console.error('removeWish:', e); 
+    toast('❌ ' + e.message); 
+  }
 }
 
 // ── Load Coupons ──────────────────────────────────────────
