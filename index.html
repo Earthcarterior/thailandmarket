@@ -3213,39 +3213,46 @@ init().catch(e => console.error('[TM] init crashed:', e));
   function tmAddToCart(item) {
     if (!item || !item.id) {
       console.warn('tmAddToCart: missing id');
-      return null;
+      return;
     }
-    const cart = tmGetCart();   // ← Always fresh!
-    const id = String(item.id);
-    const qty = Math.max(1, Number(item.qty) || 1);
-    const variants = item.variants || {};
-    const variantsKey = JSON.stringify(variants);
-
-    // Match: same id + same variants
-    const existing = cart.find(c =>
-      String(c.id) === id &&
-      JSON.stringify(c.variants || {}) === variantsKey
-    );
-
+    
+    const qty = Number(item.qty) || 1;
+    
+    // 1. เก็บใน localStorage (สำหรับ guest + cache)
+    const cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
+    const existing = cart.find(c => c.id === item.id);
     if (existing) {
-      existing.qty = (Number(existing.qty) || 1) + qty;
-      // อัปเดต fields กรณีของเก่ามี data ขาด
-      if (!existing.name && item.name) existing.name = item.name;
-      if (!existing.img && item.img)   existing.img = item.img;
-      if (!existing.price && item.price) existing.price = Number(item.price);
+      existing.qty = (existing.qty || 1) + qty;
     } else {
       cart.push({
-        id: id,
-        name: item.name || '',
+        id: item.id,
+        name: item.name,
         price: Number(item.price) || 0,
         img: item.img || '',
         qty: qty,
-        variants: variants
+        variants: {}
       });
     }
-
-    tmSaveCart(cart);
-    return cart;
+    localStorage.setItem('tm_cart', JSON.stringify(cart));
+    
+    // 2. Sync DB (best effort)
+    if (window.sb || window._sb) {
+      const _client = window._sb || window.sb;
+      _client.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          _client.rpc('add_to_cart', { 
+            p_product_id: item.id, 
+            p_quantity: qty 
+          }).then(({ error }) => {
+            if (error) console.warn('[cart] sync error:', error);
+            else console.log('[cart] synced:', item.id);
+          });
+        }
+      });
+    }
+    
+    // 3. Update badge
+    if (typeof tmUpdateCartBadge === 'function') tmUpdateCartBadge();
   }
 
   // ── Update qty / Remove / Clear ──

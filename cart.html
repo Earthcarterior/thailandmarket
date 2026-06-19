@@ -902,10 +902,31 @@ async function loadCartUnified(){
   try {
     const { data:{ user } } = await _sb.auth.getUser();
     if (user){
-      const { data, error } = await _sb.from('cart_items')
-        .select('id, product_id, quantity, variant_text, products(id, name_th, name_en, price, compare_price, thumbnail, images, seller_id, brand_id, category_id, stock_quantity)')
-        .eq('user_id', user.id);
-      if (error) throw error;
+      // ── ใช้ RPC get_my_cart (bypass RLS + correct user_id) ──
+      let data = null;
+      try {
+        const { data: cartData, error: rpcErr } = await _sb.rpc('get_my_cart');
+        if (!rpcErr && cartData?.items) {
+          // Convert RPC format → table format
+          data = cartData.items.map(it => ({
+            id: it.id,
+            product_id: it.product_id,
+            quantity: it.quantity,
+            variant_text: it.variant_text,
+            products: it.product
+          }));
+          console.log('[cart] loaded via RPC:', data.length, 'items');
+        }
+      } catch(e) { console.warn('[cart] RPC error:', e); }
+      
+      // Fallback: direct query
+      if (!data) {
+        const { data: d2, error } = await _sb.from('cart_items')
+          .select('id, product_id, quantity, variant_text, products(id, name_th, name_en, price, compare_price, thumbnail, images, seller_id, brand_id, category_id, stock_quantity)')
+          .eq('user_id', user.id);
+        if (error) throw error;
+        data = d2;
+      }
       if (data && data.length){
         const items = data.map(row=>{
           const p = row.products || {};
@@ -1243,7 +1264,12 @@ async function syncToSupabase(item){
   try {
     const { data:{ user } } = await _sb.auth.getUser();
     if (!user || !item) return;
-    await _sb.from('cart_items').upsert({
+    // ใช้ RPC add_to_cart (auto user_id)
+    try {
+      await _sb.rpc('add_to_cart', { p_product_id: it.id, p_quantity: it.qty });
+    } catch(e) {}
+    // Fallback (มีแล้วจะอัปเดต quantity ผ่าน RPC ข้างบน)
+    if (false) await _sb.from('cart_items').upsert({
       user_id: user.id, product_id: item.id, quantity: item.qty,
       added_at: new Date().toISOString()
     }, { onConflict: 'user_id,product_id' });
@@ -1253,7 +1279,14 @@ async function deleteFromSupabase(pid){
   try {
     const { data:{ user } } = await _sb.auth.getUser();
     if (!user) return;
-    await _sb.from('cart_items').delete().eq('user_id', user.id).eq('product_id', pid);
+    // หา cart_item_id ก่อนแล้วค่อยลบผ่าน RPC
+    try {
+      const { data: cartData } = await _sb.rpc('get_my_cart');
+      const item = cartData?.items?.find(i => i.product_id === pid);
+      if (item) await _sb.rpc('remove_from_cart', { p_cart_item_id: item.id });
+    } catch(e) {
+      await _sb.from('cart_items').delete().eq('user_id', user.id).eq('product_id', pid);
+    }
   } catch(e){}
 }
 
@@ -1267,7 +1300,10 @@ async function clearCart(){
   toast('🗑️ ล้างตะกร้าแล้ว');
   try {
     const { data:{ user } } = await _sb.auth.getUser();
-    if (user) await _sb.from('cart_items').delete().eq('user_id', user.id);
+    if (user) {
+      try { await _sb.rpc('clear_cart'); } 
+      catch(e) { await _sb.from('cart_items').delete().eq('user_id', user.id); }
+    }
   } catch(e){}
 }
 
