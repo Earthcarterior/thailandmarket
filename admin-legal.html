@@ -108,9 +108,31 @@ tr:hover td{background:#FAFAFA}
       location.href = 'login.html?next=' + encodeURIComponent(location.pathname);
       return;
     }
-    const { data: u } = await sb.from('users').select('role').eq('email', session.user.email).maybeSingle();
-    const role = u?.role || 'buyer';
-    const isAdmin = role === 'admin' || role === 'super_admin';
+    // ใช้ is_admin() RPC ก่อน (bypass RLS)
+    let isAdmin = false;
+    let role = 'buyer';
+    
+    try {
+      const { data: isAdminResult } = await sb.rpc('is_admin');
+      if (isAdminResult === true) {
+        isAdmin = true;
+        role = 'super_admin';
+      }
+    } catch(e) { console.warn('[guard] is_admin RPC:', e); }
+    
+    // Fallback: direct query
+    if (!isAdmin) {
+      try {
+        const { data: u } = await sb.from('users').select('role').eq('email', session.user.email).maybeSingle();
+        if (u?.role) {
+          role = u.role;
+          isAdmin = (role === 'admin' || role === 'super_admin');
+        }
+      } catch(e) {}
+    }
+    
+    console.log('[admin-legal guard]', { email: session.user.email, role, isAdmin });
+    
     if (!isAdmin) {
       document.documentElement.innerHTML = '<head><meta charset="UTF-8"><title>Access Denied</title><style>body{font-family:sans-serif;text-align:center;padding:60px}</style></head><body><h1>⛔ เฉพาะ Admin เท่านั้น</h1><a href="profile.html">← กลับ</a></body>';
       throw new Error('ACCESS_DENIED');

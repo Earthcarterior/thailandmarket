@@ -127,9 +127,27 @@ select.field-input{cursor:pointer}
       return;
     }
     
-    const { data: u } = await sb.from('users').select('role').eq('email', session.user.email).maybeSingle();
-    const role = u?.role || 'buyer';
-    const isAdmin = role === 'admin' || role === 'super_admin';
+    // ใช้ is_admin() RPC ก่อน (bypass RLS)
+    let isAdmin = false;
+    let role = 'buyer';
+    
+    try {
+      const { data: isAdminResult } = await sb.rpc('is_admin');
+      if (isAdminResult === true) {
+        isAdmin = true;
+        role = 'super_admin';
+      }
+    } catch(e) {}
+    
+    if (!isAdmin) {
+      try {
+        const { data: u } = await sb.from('users').select('role').eq('email', session.user.email).maybeSingle();
+        if (u?.role) {
+          role = u.role;
+          isAdmin = (role === 'admin' || role === 'super_admin');
+        }
+      } catch(e) {}
+    }
     
     if (!isAdmin) {
       document.documentElement.innerHTML = `
