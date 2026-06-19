@@ -1334,43 +1334,80 @@ function filterCat(catId, el) {
 async function loadWishlistFromDB() {
   const { data:{ session } } = await sb.auth.getSession();
   
-  // ถ้าไม่ได้ login — แสดง UI ปกติ (mock data ที่มีอยู่)
   if (!session) {
     tmToast('💡 เข้าสู่ระบบเพื่อดู Wishlist ของคุณ');
     return;
   }
 
   const email = session.user.email;
+  let user = null;
 
-  // ดึง user id
-  const { data: user } = await sb.from('users')
-    .select('id,display_name,role,avatar_url')
-    .eq('email', email).maybeSingle();
-  if (!user) return;
+  // ── ใช้ RPC ก่อน (bypass RLS) ──
+  try {
+    const { data: info } = await sb.rpc('get_my_user_info');
+    if (info?.user) {
+      user = info.user;
+      console.log('[wishlist] user from RPC:', user.id);
+    }
+  } catch(e) { console.warn('[wishlist] RPC error:', e); }
+
+  // Fallback: direct query
+  if (!user) {
+    try {
+      const { data: u } = await sb.from('users')
+        .select('id,display_name,role,avatar_url')
+        .eq('email', email).maybeSingle();
+      user = u;
+    } catch(e) {}
+  }
+  
+  if (!user) {
+    console.warn('[wishlist] ไม่พบ user record');
+    tmToast('⚠️ ไม่พบข้อมูล user — กรุณาออกจากระบบแล้ว login ใหม่');
+    return;
+  }
+  
   _userId = user.id;
 
   // ดึง wishlist + product details
+  console.log('[wishlist] กำลังดึง wishlist ของ user_id:', _userId);
+  
   const { data: wishes, error } = await sb.from('wishlist')
     .select('id, product_id, created_at, products(id,name_th,price,compare_price,discount_percent,thumbnail,images,rating_avg,rating_count,stock_quantity,is_flash_sale,is_featured,categories(name_th))')
     .eq('user_id', _userId)
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Wishlist load error:', error.message);
+    console.error('[wishlist] load error:', error.message);
+    tmToast('⚠️ โหลด wishlist ไม่สำเร็จ: ' + error.message);
     return;
   }
 
+  console.log('[wishlist] โหลดได้:', wishes?.length || 0, 'รายการ');
+  
   const items = (wishes || []).filter(w => w.products);
   _wishIds = new Set(items.map(w => w.product_id));
 
   // อัปเดต count
-  const countEl = document.querySelector('.wish-count, [class*="count"]');
   updateWishCount(items.length);
 
-  // render cards
-  renderWishlistCards(items);
+  // render cards — ถ้าไม่มีให้แสดง empty state
+  if (items.length === 0) {
+    const grid = document.querySelector('.wl-grid, #wishlist-grid, .product-grid');
+    if (grid) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:80px 20px;color:#737373">
+          <div style="font-size:72px;margin-bottom:16px;opacity:0.4">💝</div>
+          <h2 style="font-size:18px;color:#404040;margin-bottom:8px;font-weight:600">ยังไม่มี Wishlist</h2>
+          <p style="font-size:13px;line-height:1.6;margin-bottom:24px">เพิ่มสินค้าที่ชอบโดยกดปุ่ม 💗 ที่หน้าสินค้า</p>
+          <a href="index.html" style="display:inline-block;padding:12px 28px;background:#0A0A0A;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px">🛍️ ไปช้อปปิ้ง</a>
+        </div>
+      `;
+    }
+  } else {
+    renderWishlistCards(items);
+  }
 
-  // อัปเดต account nav
   setupAccountNavUI(user, email);
 }
 
