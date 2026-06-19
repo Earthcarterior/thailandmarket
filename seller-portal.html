@@ -711,80 +711,70 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
 
     const isSellerRole = role === 'seller';
 
-    // ── 3. เช็ค sellers table ──
-    let hasSellerRecord = false;
-    if (userRow?.id) {
+    // ── 3. ใช้ get_my_seller_status RPC (bypass RLS) ──
+    let sellerStatus = null;
+    let sellerInfo = null;
+    
+    try {
+      const { data: statusData, error: statusErr } = await sb.rpc('get_my_seller_status');
+      console.log('[guard] get_my_seller_status RPC:', statusData);
+      
+      if (!statusErr && statusData?.has_seller && statusData.seller) {
+        sellerInfo = statusData.seller;
+        sellerStatus = statusData.seller.status;
+      }
+    } catch(e) { console.warn('[guard] RPC error:', e); }
+    
+    // ── 4. Fallback: direct query ──
+    if (!sellerStatus) {
+      if (userRow?.id) {
+        try {
+          const { data: s } = await sb.from('sellers')
+            .select('id, shop_name, status, created_at')
+            .eq('user_id', userRow.id)
+            .maybeSingle();
+          if (s) { sellerInfo = s; sellerStatus = s.status; }
+        } catch(e) {}
+      }
+    }
+    
+    // ── 5. Fallback 2: JOIN ──
+    if (!sellerStatus) {
       try {
-        const { data: s } = await sb.from('sellers')
-          .select('id, status')
-          .eq('user_id', userRow.id)
+        const { data: s2 } = await sb.from('sellers')
+          .select('id, shop_name, status, created_at, user_id, users!inner(email)')
+          .eq('users.email', userEmail)
           .maybeSingle();
-        hasSellerRecord = !!s && ['active', 'pending'].includes(s.status);
+        if (s2) { sellerInfo = s2; sellerStatus = s2.status; }
       } catch(e) {}
     }
     
-    // ── 4. Fallback: เช็ค sellers ด้วย auth.uid() ──
-    if (!hasSellerRecord) {
-      try {
-        const { data: s2 } = await sb.from('sellers')
-          .select('id, status, user_id, users!inner(email)')
-          .eq('users.email', userEmail)
-          .maybeSingle();
-        hasSellerRecord = !!s2 && ['active', 'pending'].includes(s2.status);
-      } catch(e) {}
-    }
-
-    const allowAccess = isAdmin || isSellerRole || hasSellerRecord;
-
-    console.log('[guard v3]', {
+    // ── 6. ตัดสินใจ ──
+    const isActiveSeller = sellerStatus === 'active';
+    const isPendingOrOther = sellerStatus && sellerStatus !== 'active';
+    
+    const allowAccess = isAdmin || isSellerRole || isActiveSeller;
+    
+    console.log('[guard v4]', {
       email: userEmail,
       role,
       isAdmin,
       isSellerRole,
-      hasSellerRecord,
+      sellerStatus,
+      isActiveSeller,
+      isPendingOrOther,
       allowed: allowAccess
     });
-
-    if (!allowAccess) {
-      // ── ใช้ RPC get_my_seller_status (bypass RLS) ──
-      let pendingSeller = null;
-      try {
-        const { data: statusData } = await sb.rpc('get_my_seller_status');
-        console.log('[seller-portal] seller status:', statusData);
-        if (statusData?.has_seller && statusData.seller) {
-          pendingSeller = statusData.seller;
-        }
-      } catch(e) { console.warn('[seller-portal] RPC error:', e); }
-      
-      // Fallback: direct query
-      if (!pendingSeller && userRow?.id) {
-        try {
-          const { data: ps } = await sb.from('sellers')
-            .select('id, shop_name, status, created_at')
-            .eq('user_id', userRow.id)
-            .maybeSingle();
-          pendingSeller = ps;
-        } catch(e) {}
-      }
-      
-      // Fallback 2: JOIN
-      if (!pendingSeller) {
-        try {
-          const { data: ps2 } = await sb.from('sellers')
-            .select('id, shop_name, status, created_at, user_id, users!inner(email)')
-            .eq('users.email', userEmail)
-            .maybeSingle();
-          pendingSeller = ps2;
-        } catch(e) {}
-      }
-      
-      if (pendingSeller) {
-        // แสดงสถานะแทน denyAccess
-        console.log('[seller-portal] เจอ seller record:', pendingSeller.status);
-        showSellerStatus(pendingSeller, userEmail);
-        return;
-      }
-      
+    
+    if (allowAccess) {
+      console.log('[guard v4] ✅ Access granted');
+    } else if (isPendingOrOther && sellerInfo) {
+      // มี seller record แต่ไม่ active (pending/rejected/suspended) → แสดงสถานะ
+      console.log('[guard v4] Show status page:', sellerStatus);
+      showSellerStatus(sellerInfo, userEmail);
+      return;
+    } else {
+      // ไม่มี seller record เลย → deny access
       denyAccess('ไม่มีสิทธิ์เข้าหน้า seller', role, userEmail);
       return;
     }
