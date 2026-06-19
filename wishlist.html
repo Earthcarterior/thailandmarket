@@ -1332,10 +1332,28 @@ function filterCat(catId, el) {
 
 // ── Load Wishlist จาก Supabase ────────────────────────────
 async function loadWishlistFromDB() {
+  // 🧹 ล้าง mock data ก่อน
+  const prodGrid = document.getElementById('prodGrid');
+  if (prodGrid) {
+    // แสดง loading
+    prodGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#888"><div style="font-size:48px;margin-bottom:12px">⏳</div>กำลังโหลด Wishlist...</div>';
+  }
+  
   const { data:{ session } } = await sb.auth.getSession();
   
   if (!session) {
-    tmToast('💡 เข้าสู่ระบบเพื่อดู Wishlist ของคุณ');
+    const grid = document.getElementById('prodGrid');
+    if (grid) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:80px 20px;color:#737373">
+          <div style="font-size:72px;margin-bottom:16px;opacity:0.4">🔒</div>
+          <h2 style="font-size:18px;color:#404040;margin-bottom:8px;font-weight:600">กรุณาเข้าสู่ระบบ</h2>
+          <p style="font-size:13px;line-height:1.6;margin-bottom:24px">เข้าสู่ระบบเพื่อดู Wishlist ของคุณ</p>
+          <a href="login.html" style="display:inline-block;padding:12px 28px;background:#0A0A0A;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px">เข้าสู่ระบบ →</a>
+        </div>
+      `;
+    }
+    updateWishCount(0);
     return;
   }
 
@@ -1363,7 +1381,17 @@ async function loadWishlistFromDB() {
   
   if (!user) {
     console.warn('[wishlist] ไม่พบ user record');
-    tmToast('⚠️ ไม่พบข้อมูล user — กรุณาออกจากระบบแล้ว login ใหม่');
+    const grid = document.getElementById('prodGrid');
+    if (grid) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:80px 20px;color:#737373">
+          <div style="font-size:72px;margin-bottom:16px;opacity:0.4">⚠️</div>
+          <h2 style="font-size:18px;color:#404040;margin-bottom:8px;font-weight:600">ไม่พบข้อมูลผู้ใช้</h2>
+          <p style="font-size:13px;line-height:1.6;margin-bottom:24px">กรุณาออกจากระบบแล้ว login ใหม่</p>
+        </div>
+      `;
+    }
+    updateWishCount(0);
     return;
   }
   
@@ -1379,7 +1407,10 @@ async function loadWishlistFromDB() {
 
   if (error) {
     console.error('[wishlist] load error:', error.message);
-    tmToast('⚠️ โหลด wishlist ไม่สำเร็จ: ' + error.message);
+    const grid = document.getElementById('prodGrid');
+    if (grid) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#E63329">⚠️ โหลดไม่สำเร็จ: ${error.message}</div>`;
+    }
     return;
   }
 
@@ -1393,7 +1424,7 @@ async function loadWishlistFromDB() {
 
   // render cards — ถ้าไม่มีให้แสดง empty state
   if (items.length === 0) {
-    const grid = document.querySelector('.wl-grid, #wishlist-grid, .product-grid');
+    const grid = document.getElementById('prodGrid');
     if (grid) {
       grid.innerHTML = `
         <div style="grid-column:1/-1;text-align:center;padding:80px 20px;color:#737373">
