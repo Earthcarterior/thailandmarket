@@ -5416,22 +5416,54 @@ function openInviteModal() { document.getElementById('invite-modal').classList.a
 function closeInviteModal() { document.getElementById('invite-modal').classList.remove('on'); }
 
 async function sendInvite() {
-  const email = document.getElementById('invite-email').value.trim();
+  const email = document.getElementById('invite-email').value.trim().toLowerCase();
   const role = document.getElementById('invite-role').value;
+  
   if (!email) { toast('กรุณากรอก Email', 'error'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Email ไม่ถูกต้อง', 'error'); return; }
 
+  const _sb = window._sb || window.sb || sb;
+  
+  // แสดง loading
+  const btn = document.querySelector('#invite-modal button[onclick="sendInvite()"]');
+  const oldText = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังเชิญ...'; }
+  
   try {
-    // Invite via Supabase Auth
-    const { error } = await sb.auth.admin?.inviteUserByEmail(email, { data: { role } });
-    if (error) throw error;
-    toast(`ส่ง Invite ไปที่ ${email} แล้ว ✅`, 'success');
-    closeInviteModal();
+    const { data, error } = await _sb.rpc('admin_invite_user', { 
+      p_email: email, 
+      p_role: role 
+    });
+    
+    if (error) {
+      if (error.message?.includes('invalid_role')) {
+        toast('Role ไม่ถูกต้อง', 'error');
+      } else if (error.message?.includes('access_denied')) {
+        toast('สิทธิ์ไม่พอ — login ใหม่', 'error');
+      } else {
+        toast('❌ ' + error.message, 'error');
+      }
+      return;
+    }
+    
+    toast('✅ ' + (data?.message || 'เพิ่มผู้ใช้สำเร็จ'), 'success');
+    
+    // ถ้าเป็น user ใหม่ที่ยังไม่ signup → แสดง info เพิ่ม
+    if (data?.action === 'created' && !data?.has_auth) {
+      setTimeout(() => {
+        alert(`📧 เพิ่ม ${email} แล้ว (role: ${role})\n\n⚠️ User ยังต้อง signup ด้วย email นี้ก่อนถึงจะ login ได้\n\nให้ส่งลิงก์ signup ให้: ${location.origin}/signup.html`);
+      }, 300);
+    }
+    
+    closeInviteModal(); 
+    loadUsers();
+    if (typeof loadMembers === 'function') loadMembers();
+    if (typeof loadMemberStats === 'function') loadMemberStats();
+    
   } catch(e) {
-    // Fallback: just create in users table
-    const { error:e2 } = await sb.from('users').upsert({ email, role, display_name: email.split('@')[0], is_active:true }, { onConflict:'email' });
-    if (e2) { toast('Invite ไม่สำเร็จ: ใช้ Supabase Dashboard → Auth → Users แทน', 'warning'); return; }
-    toast(`เพิ่ม ${email} ด้วย role ${role} แล้ว`, 'success');
-    closeInviteModal(); loadUsers();
+    toast('❌ ' + (e.message || 'เกิดข้อผิดพลาด'), 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = oldText; }
   }
 }
 
