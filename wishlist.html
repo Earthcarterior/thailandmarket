@@ -989,29 +989,42 @@ async function createCollection(){
   
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); return; }
+    if (!session) { 
+      tmToast('🔐 กรุณาเข้าสู่ระบบ'); 
+      setTimeout(()=>location.href='login.html',1000);
+      return; 
+    }
     
-    // เก็บใน localStorage (เพราะ DB ยังไม่มี table wishlist_collections)
-    const key = 'wl_collections_' + session.user.email;
-    const collections = JSON.parse(localStorage.getItem(key) || '[]');
-    collections.push({
-      id: 'coll_' + Date.now(),
-      name: name,
-      icon: selectedEmoji,
-      created_at: new Date().toISOString(),
-      product_ids: []
+    // ── เรียก RPC create_collection (บันทึก DB จริง) ──
+    const { data, error } = await sb.rpc('create_collection', {
+      p_name: name,
+      p_icon: selectedEmoji,
+      p_description: null
     });
-    localStorage.setItem(key, JSON.stringify(collections));
     
+    if (error) {
+      if (error.message?.includes('collection_exists')) {
+        tmToast('⚠️ มีคอลเลกชันชื่อนี้อยู่แล้ว');
+      } else if (error.message?.includes('not exist') || error.code === '42883') {
+        tmToast('❌ ต้องรัน SQL "add-wishlist-collections.sql" ก่อน');
+      } else {
+        tmToast('❌ ' + error.message);
+      }
+      console.error('[createCollection]', error);
+      return;
+    }
+    
+    console.log('[createCollection] success:', data);
     tmToast('✅ สร้างคอลเลกชัน "' + name + '" สำเร็จ!');
+    
     document.getElementById('modalOverlay').classList.remove('show');
     if (nameInp) nameInp.value = '';
     
-    // Refresh collection counts
-    if (typeof renderCollections === 'function') renderCollections();
+    // Reload collections
+    if (typeof loadMyCollections === 'function') await loadMyCollections();
   } catch(e) {
     console.error('createCollection:', e);
-    tmToast('❌ สร้างคอลเลกชันไม่สำเร็จ');
+    tmToast('❌ สร้างคอลเลกชันไม่สำเร็จ: ' + e.message);
   }
 }
 function removeCard(id){
@@ -1202,29 +1215,42 @@ async function createCollection(){
   
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); return; }
+    if (!session) { 
+      tmToast('🔐 กรุณาเข้าสู่ระบบ'); 
+      setTimeout(()=>location.href='login.html',1000);
+      return; 
+    }
     
-    // เก็บใน localStorage (เพราะ DB ยังไม่มี table wishlist_collections)
-    const key = 'wl_collections_' + session.user.email;
-    const collections = JSON.parse(localStorage.getItem(key) || '[]');
-    collections.push({
-      id: 'coll_' + Date.now(),
-      name: name,
-      icon: selectedEmoji,
-      created_at: new Date().toISOString(),
-      product_ids: []
+    // ── เรียก RPC create_collection (บันทึก DB จริง) ──
+    const { data, error } = await sb.rpc('create_collection', {
+      p_name: name,
+      p_icon: selectedEmoji,
+      p_description: null
     });
-    localStorage.setItem(key, JSON.stringify(collections));
     
+    if (error) {
+      if (error.message?.includes('collection_exists')) {
+        tmToast('⚠️ มีคอลเลกชันชื่อนี้อยู่แล้ว');
+      } else if (error.message?.includes('not exist') || error.code === '42883') {
+        tmToast('❌ ต้องรัน SQL "add-wishlist-collections.sql" ก่อน');
+      } else {
+        tmToast('❌ ' + error.message);
+      }
+      console.error('[createCollection]', error);
+      return;
+    }
+    
+    console.log('[createCollection] success:', data);
     tmToast('✅ สร้างคอลเลกชัน "' + name + '" สำเร็จ!');
+    
     document.getElementById('modalOverlay').classList.remove('show');
     if (nameInp) nameInp.value = '';
     
-    // Refresh collection counts
-    if (typeof renderCollections === 'function') renderCollections();
+    // Reload collections
+    if (typeof loadMyCollections === 'function') await loadMyCollections();
   } catch(e) {
     console.error('createCollection:', e);
-    tmToast('❌ สร้างคอลเลกชันไม่สำเร็จ');
+    tmToast('❌ สร้างคอลเลกชันไม่สำเร็จ: ' + e.message);
   }
 }
 function removeCard(id){
@@ -2069,6 +2095,116 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 1500);
 });
 
+
+
+// ── โหลด collections ของ user จาก DB ──
+async function loadMyCollections() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    
+    const { data: cData, error } = await sb.rpc('get_my_collections');
+    if (error) {
+      console.warn('[collections] RPC error:', error);
+      return;
+    }
+    
+    console.log('[collections] loaded:', cData);
+    
+    const collections = cData?.items || [];
+    window._myCollections = collections;
+    
+    // Render เพิ่ม chips ใน collections-bar
+    renderCollectionChips(collections);
+  } catch(e) { console.warn('loadMyCollections:', e); }
+}
+
+// ── Render user collections chips ──
+function renderCollectionChips(collections) {
+  const bar = document.querySelector('.collections-bar');
+  if (!bar) return;
+  
+  // ลบ chips ที่เป็น user-collection เก่า
+  bar.querySelectorAll('[data-user-collection]').forEach(el => el.remove());
+  
+  // หาตำแหน่ง insert (ก่อน "เพิ่มคอลเลกชัน")
+  const addChip = Array.from(bar.querySelectorAll('.col-chip')).find(c => c.textContent.includes('เพิ่มคอลเลกชัน'));
+  
+  collections.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'col-chip';
+    chip.dataset.userCollection = c.id;
+    chip.dataset.filter = 'user-' + c.id;
+    chip.onclick = () => filterByUserCollection(c.id, chip);
+    chip.innerHTML = `
+      <span class="col-chip-ico">${c.icon || '📁'}</span> ${c.name} 
+      <span class="col-count" style="background:var(--gray100);color:var(--gray600)">${c.item_count || 0}</span>
+      <button onclick="event.stopPropagation();deleteUserCollection('${c.id}','${c.name.replace(/'/g, "\\'")}')" style="background:transparent;border:none;color:#999;cursor:pointer;font-size:14px;padding:0 4px;margin-left:4px" title="ลบคอลเลกชัน">×</button>
+    `;
+    if (addChip) bar.insertBefore(chip, addChip);
+    else bar.appendChild(chip);
+  });
+}
+
+// ── Filter ตาม user collection ──
+async function filterByUserCollection(collectionId, chipEl) {
+  document.querySelectorAll('.col-chip[data-filter]').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+  
+  try {
+    const { data: items, error } = await sb.rpc('get_collection_products', { p_collection_id: collectionId });
+    if (error) { tmToast('❌ ' + error.message); return; }
+    
+    const grid = document.getElementById('prodGrid');
+    if (!grid) return;
+    
+    if (!items || items.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#737373">
+          <div style="font-size:48px;margin-bottom:12px;opacity:0.4">📂</div>
+          <h3 style="font-size:14px;color:#404040;margin-bottom:6px">ยังไม่มีสินค้าในคอลเลกชั่นนี้</h3>
+          <p style="font-size:12px">เพิ่มสินค้าจากรายการโปรดของคุณ</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // Render
+    const items4Render = items.map(it => ({
+      id: it.collection_item_id,
+      product_id: it.product?.id,
+      created_at: it.added_at,
+      products: it.product
+    }));
+    
+    if (typeof renderWishlistCards === 'function') renderWishlistCards(items4Render);
+    
+    const cntEl = document.getElementById('wish-count-title');
+    if (cntEl) cntEl.textContent = items.length;
+  } catch(e) { console.error('filterByUserCollection:', e); }
+}
+
+// ── ลบ collection ──
+async function deleteUserCollection(collectionId, name) {
+  if (!confirm(`ลบคอลเลกชัน "${name}"?\n\n(สินค้าจะยังอยู่ใน Wishlist หลัก)`)) return;
+  
+  try {
+    const { error } = await sb.rpc('delete_collection', { p_collection_id: collectionId });
+    if (error) { tmToast('❌ ' + error.message); return; }
+    
+    tmToast('✅ ลบคอลเลกชั่นแล้ว');
+    
+    // Reload + กลับไป "ทั้งหมด"
+    await loadMyCollections();
+    const allChip = document.querySelector('[data-filter="all"]');
+    if (allChip && typeof filterByCollection === 'function') filterByCollection('all', allChip);
+  } catch(e) { console.error('deleteCollection:', e); tmToast('❌ ' + e.message); }
+}
+
+// Auto-load collections
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(loadMyCollections, 1000);
+});
 
 </script>
 </body>
