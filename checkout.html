@@ -1539,21 +1539,13 @@ function updateTotal(){
   const countEl = document.getElementById('cart-count-label');
   if (countEl) countEl.textContent = `(${CART.length} รายการ)`;
 
-  // Subtotal (showing old/full price so the discount line makes sense)
+  // Subtotal: แสดง sub (ราคาที่ลดแล้ว) — ตรงกับยอดรวมในการ์ด
   const subEl = document.getElementById('subtotal-val');
-  if (subEl) subEl.textContent = '฿' + oldSub.toLocaleString();
+  if (subEl) subEl.textContent = '฿' + sub.toLocaleString();
 
-  // Product discount row
+  // Product discount row - HIDE since sub already shows discounted price
   const discRow = document.getElementById('discount-row');
-  const discVal = document.getElementById('discount-val');
-  if (discRow && discVal) {
-    if (productDisc > 0) {
-      discRow.style.display = '';
-      discVal.textContent = '-฿' + productDisc.toLocaleString();
-    } else {
-      discRow.style.display = 'none';
-    }
-  }
+  if (discRow) discRow.style.display = 'none';
 
   // Shipping
   const shipEl = document.getElementById('ship-val');
