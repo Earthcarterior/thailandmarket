@@ -371,6 +371,177 @@ img{max-width:100%;height:auto}
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SELLER STATUS CHECK OVERLAY                                   -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div id="seller-status-check" style="position:fixed;inset:0;background:#fafafa;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px">
+  <div style="text-align:center;max-width:480px">
+    <div style="font-size:64px;margin-bottom:20px">⏳</div>
+    <h2 style="font-size:20px;color:#404040;margin-bottom:8px;font-weight:600">กำลังตรวจสอบสถานะ...</h2>
+    <p style="font-size:14px;color:#737373">กรุณารอสักครู่</p>
+  </div>
+</div>
+
+<script>
+// ── เช็คสถานะ seller ของ user ปัจจุบัน ──
+(async function checkSellerStatus() {
+  const overlay = document.getElementById('seller-status-check');
+  if (!overlay) return;
+  
+  try {
+    // รอ Supabase library โหลด
+    let tries = 0;
+    while (!window.supabase && tries < 50) {
+      await new Promise(r => setTimeout(r, 100));
+      tries++;
+    }
+    if (!window.supabase) {
+      // ไม่มี supabase library → แสดงฟอร์มปกติ
+      overlay.style.display = 'none';
+      return;
+    }
+    
+    const sb = window._sb || window.supabase.createClient(
+      'https://qmgyimsptzewwyafvjzk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
+    );
+    window._sb = sb;
+    
+    // เช็ค session
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      // ยังไม่ login → แสดงฟอร์มสมัคร (signup flow)
+      overlay.style.display = 'none';
+      return;
+    }
+    
+    const userEmail = session.user.email;
+    const userId = session.user.id;
+    
+    // เช็คว่ามี seller record หรือยัง
+    // 1. หา user_id ใน public.users
+    let pubUserId = null;
+    try {
+      const { data: u } = await sb.from('users')
+        .select('id, role')
+        .eq('email', userEmail)
+        .maybeSingle();
+      pubUserId = u?.id;
+    } catch(e) {}
+    
+    // 2. เช็ค sellers table
+    let sellerRecord = null;
+    if (pubUserId) {
+      try {
+        const { data: s } = await sb.from('sellers')
+          .select('id, shop_name, status, created_at')
+          .eq('user_id', pubUserId)
+          .maybeSingle();
+        sellerRecord = s;
+      } catch(e) {}
+    }
+    
+    // 3. แสดงผลตามสถานะ
+    if (!sellerRecord) {
+      // ยังไม่เคยสมัครเป็น seller → แสดงฟอร์ม onboarding
+      overlay.style.display = 'none';
+      return;
+    }
+    
+    // มี seller record แล้ว — เช็ค status
+    const status = sellerRecord.status;
+    const shopName = sellerRecord.shop_name || 'ร้านของคุณ';
+    const createdDate = new Date(sellerRecord.created_at).toLocaleDateString('th-TH', {
+      day:'numeric', month:'long', year:'numeric'
+    });
+    
+    let icon, title, desc, color, bgColor, actions;
+    
+    if (status === 'pending') {
+      // รอ admin อนุมัติ
+      icon = '⏳';
+      color = '#D97706';
+      bgColor = '#FEF3C7';
+      title = 'กำลังตรวจสอบเอกสาร';
+      desc = `ร้าน "<strong>${shopName}</strong>" สมัครเมื่อ ${createdDate}<br>ทีมงานจะพิจารณาภายใน 1-2 วันทำการ`;
+      actions = `
+        <a href="profile.html" class="btn-action btn-primary">📋 ดูสถานะที่โปรไฟล์</a>
+        <a href="index.html" class="btn-action btn-secondary">← กลับหน้าหลัก</a>`;
+    } else if (status === 'active') {
+      // อนุมัติแล้ว
+      icon = '✅';
+      color = '#16A34A';
+      bgColor = '#DCFCE7';
+      title = 'ร้านของคุณเปิดใช้งานแล้ว!';
+      desc = `ร้าน "<strong>${shopName}</strong>" ได้รับการอนุมัติแล้ว<br>เข้า Seller Portal เพื่อเริ่มขายได้เลย`;
+      actions = `
+        <a href="seller-portal.html" class="btn-action btn-primary">🏪 ไป Seller Portal</a>
+        <a href="index.html" class="btn-action btn-secondary">← กลับหน้าหลัก</a>`;
+    } else if (status === 'rejected') {
+      // ถูกปฏิเสธ
+      icon = '❌';
+      color = '#DC2626';
+      bgColor = '#FEE2E2';
+      title = 'การสมัครถูกปฏิเสธ';
+      desc = `ร้าน "<strong>${shopName}</strong>" ไม่ผ่านการตรวจสอบ<br>กรุณาติดต่อทีมงานเพื่อทราบเหตุผล`;
+      actions = `
+        <a href="mailto:support@thailandmarket.com" class="btn-action btn-primary">📧 ติดต่อทีมงาน</a>
+        <a href="index.html" class="btn-action btn-secondary">← กลับหน้าหลัก</a>`;
+    } else if (status === 'suspended' || status === 'inactive') {
+      // ระงับ
+      icon = '🚫';
+      color = '#737373';
+      bgColor = '#F2F2F2';
+      title = 'ร้านค้าถูกระงับ';
+      desc = `ร้าน "<strong>${shopName}</strong>" ถูกระงับชั่วคราว<br>กรุณาติดต่อทีมงาน`;
+      actions = `
+        <a href="mailto:support@thailandmarket.com" class="btn-action btn-primary">📧 ติดต่อทีมงาน</a>
+        <a href="index.html" class="btn-action btn-secondary">← กลับหน้าหลัก</a>`;
+    } else {
+      // status อื่นๆ — แสดงทั่วไป
+      icon = 'ℹ️';
+      color = '#0EA5E9';
+      bgColor = '#E0F2FE';
+      title = 'มีบัญชีผู้ขายอยู่แล้ว';
+      desc = `ร้าน "<strong>${shopName}</strong>" — สถานะ: ${status}`;
+      actions = `
+        <a href="seller-portal.html" class="btn-action btn-primary">🏪 ไป Seller Portal</a>
+        <a href="index.html" class="btn-action btn-secondary">← กลับหน้าหลัก</a>`;
+    }
+    
+    overlay.innerHTML = `
+      <style>
+        .btn-action{display:inline-block;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;margin:4px 6px;transition:all .2s}
+        .btn-primary{background:#0A0A0A;color:#fff;border:1px solid #0A0A0A}
+        .btn-primary:hover{background:#262626}
+        .btn-secondary{background:#fff;color:#404040;border:1px solid #E5E5E5}
+        .btn-secondary:hover{background:#F5F5F5}
+      </style>
+      <div style="background:#fff;border-radius:12px;padding:40px 32px;max-width:520px;width:100%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.06);border:1px solid #E5E5E5">
+        <div style="font-size:72px;margin-bottom:16px">${icon}</div>
+        <div style="display:inline-block;background:${bgColor};color:${color};padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600;font-family:monospace;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:16px">${status}</div>
+        <h2 style="font-size:22px;color:#0A0A0A;margin-bottom:12px;font-weight:700">${title}</h2>
+        <p style="font-size:14px;color:#525252;line-height:1.6;margin-bottom:28px">${desc}</p>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">${actions}</div>
+        ${status === 'pending' ? `
+          <div style="margin-top:24px;padding-top:24px;border-top:1px solid #E5E5E5;font-size:12px;color:#737373">
+            💡 ระหว่างรอ คุณยังสามารถใช้งานเป็นลูกค้าได้ตามปกติ
+          </div>
+        ` : ''}
+      </div>
+    `;
+    
+    overlay.style.display = 'flex';
+    
+  } catch(e) {
+    console.warn('[seller-status-check]', e);
+    // ถ้า error → แสดงฟอร์มปกติ (ไม่ block)
+    overlay.style.display = 'none';
+  }
+})();
+</script>
+
 <nav id="tm-nav">
   <div class="tn-top">
     <a href="index.html" class="tn-logo">Thailand<span class="dot">.</span>Market</a>
