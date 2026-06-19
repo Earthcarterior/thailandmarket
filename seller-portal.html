@@ -3520,18 +3520,44 @@ async function loadSellerData() {
     }
     _sellerUserId = user.id || authId;
 
-    // Get seller record — optional
-    let { data: seller } = await _sb.from('sellers')
-      .select('id,shop_name,description,phone,email,status,logo_url,cover_url')
-      .eq('user_id', _sellerUserId)
-      .maybeSingle();
+    // Get seller record — ลอง RPC ก่อน (bypass RLS)
+    let seller = null;
+    try {
+      const { data: statusData } = await _sb.rpc('get_my_seller_status');
+      if (statusData?.has_seller && statusData.seller) {
+        seller = statusData.seller;
+        console.log('[seller-portal] seller from RPC:', seller);
+      }
+    } catch(e) { console.warn('[seller-portal] RPC failed:', e); }
+    
+    // Fallback: direct query
+    if (!seller) {
+      const { data: s1 } = await _sb.from('sellers')
+        .select('id,shop_name,description,phone,email,status,logo_url,cover_url')
+        .eq('user_id', _sellerUserId)
+        .maybeSingle();
+      seller = s1;
+    }
 
     if (!seller && authId !== _sellerUserId) {
       const r2 = await _sb.from('sellers').select('id,shop_name,status').eq('user_id', authId).maybeSingle();
       seller = r2.data;
     }
+    
+    // Fallback 2: JOIN with users
+    if (!seller) {
+      try {
+        const r3 = await _sb.from('sellers')
+          .select('id,shop_name,status,user_id,users!inner(email)')
+          .eq('users.email', email)
+          .maybeSingle();
+        seller = r3.data;
+      } catch(e) {}
+    }
 
     _sellerSellerId = seller?.id || null;
+    
+    console.log('[seller-portal] _sellerSellerId:', _sellerSellerId);
     _sellerData     = seller || null;
 
     // Update sidebar UI
@@ -3554,10 +3580,26 @@ async function loadSellerData() {
 
 async function loadSellerProducts() {
   try {
+    // ถ้าไม่มี seller_id → ไม่ใช่ seller จริงๆ → ไม่ดึงสินค้าใคร
+    if (!_sellerSellerId) {
+      console.warn('[loadSellerProducts] No seller_id — แสดง empty');
+      _sellerProds = [];
+      _sellerStats = {
+        ..._sellerStats,
+        totalProducts: 0,
+        activeProducts: 0,
+        lowStock: 0,
+        outOfStock: 0,
+        totalSold: 0,
+        flashCount: 0,
+      };
+      return;
+    }
+    
     let q = _sb.from('products')
       .select('id,name_th,name_en,slug,price,compare_price,discount_percent,stock_quantity,sold_count,status,rating_avg,rating_count,thumbnail,images,category_id,categories(name_th,icon),seller_id,sku,brand,tags,is_flash_sale,flash_price,is_featured,violation_reason,created_at,updated_at')
+      .eq('seller_id', _sellerSellerId)  // ← Force filter
       .order('created_at',{ ascending:false }).limit(200);
-    if (_sellerSellerId) q = q.eq('seller_id', _sellerSellerId);
     const { data, error } = await q;
     if (error) throw error;
     _sellerProds = data || [];
@@ -3594,9 +3636,19 @@ async function loadSellerProducts() {
 
 async function loadSellerOrders() {
   try {
-    const { data, error } = await _sb.from('orders')
-      .select('id,order_number,total_amount,subtotal,discount_amount,shipping_fee,status,payment_method,payment_status,created_at,updated_at,shipping_name,shipping_phone,shipping_address,shipping_province,tracking_number,shipping_carrier,order_items(id,quantity,unit_price,name_th,product_id,thumbnail)')
+    // ถ้าไม่มี seller_id → ไม่ดึงออเดอร์
+    if (!_sellerSellerId) {
+      console.warn('[loadSellerOrders] No seller_id');
+      _sellerOrds = [];
+      return;
+    }
+    
+    // ดึงออเดอร์ที่มี order_items ของ products ของร้านเรา
+    let q = _sb.from('orders')
+      .select('id,order_number,total_amount,subtotal,discount_amount,shipping_fee,status,payment_method,payment_status,created_at,updated_at,shipping_name,shipping_phone,shipping_address,shipping_province,tracking_number,shipping_carrier,order_items!inner(id,quantity,unit_price,name_th,product_id,thumbnail,products!inner(seller_id))')
+      .eq('order_items.products.seller_id', _sellerSellerId)
       .order('created_at',{ ascending:false }).limit(200);
+    const { data, error } = await q;
     if (error) throw error;
     _sellerOrders = data || [];
     const now=new Date();
