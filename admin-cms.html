@@ -4549,7 +4549,10 @@ function showPanel(name) {
   if (name === 'approve') loadPending();
   if (name === 'orders') orLoad();
   if (name === 'users') loadUsers();
-  if (name === 'members' && typeof loadMembers === 'function') { loadMembers(); if(typeof loadMemberStats === 'function') loadMemberStats(); }
+  if (name === 'members' && typeof loadMembers === 'function') { 
+    loadMembers('', ''); // โหลดทั้งหน้าทันที (ไม่ filter)
+    if(typeof loadMemberStats === 'function') loadMemberStats(); 
+  }
   if (name === 'categories') loadCategories();
   if (name === 'brands' && typeof loadBrands === 'function') loadBrands();
   if (name === 'flash' && typeof loadFlash === 'function') loadFlash();
@@ -6044,7 +6047,7 @@ window.showPanel = function(name) {
     case 'flash':       loadFlash();                   break;
     case 'sellers':     loadSellers('pending');        break;
     case 'approve':     loadPending('pending_review'); break;
-    case 'members':     loadMembers('unconfirmed');    break;
+    case 'members':     loadMembers(''); loadMemberStats();    break;
     case 'users':       loadUsers();                   break;
     // ── panels ที่หายไป — เพิ่มให้ครบ ──
     case 'orders':      if (typeof orLoad === 'function') orLoad();          break;
@@ -7735,10 +7738,24 @@ async function loadMemberStats() {
   const wrap = document.getElementById('member-stats');
   if (!wrap) return;
   const _sb = window._sb || window.sb || sb;
+  
+  let s = { total: 0, active: 0, banned: 0, unconfirmed: 0, admins: 0, sellers: 0 };
+  
   try {
     const { data, error } = await _sb.rpc('admin_member_stats');
-    if (error) return;
-    const s = data;
+    if (error) {
+      console.warn('[stats] RPC error:', error);
+      // Fallback: นับเองจาก direct query
+      try {
+        const { count: total } = await _sb.from('users').select('id', { count: 'exact', head: true });
+        const { count: active } = await _sb.from('users').select('id', { count: 'exact', head: true }).eq('is_active', true);
+        const { count: banned } = await _sb.from('users').select('id', { count: 'exact', head: true }).eq('is_active', false);
+        const { count: admins } = await _sb.from('users').select('id', { count: 'exact', head: true }).in('role', ['admin','super_admin']);
+        s = { total: total||0, active: active||0, banned: banned||0, unconfirmed: 0, admins: admins||0, sellers: 0 };
+      } catch(e2) { console.error('[stats] fallback failed:', e2); }
+    } else {
+      s = data;
+    }
     wrap.innerHTML = `
       <div style="background:#fff;border:1px solid #E5E5E5;padding:14px;border-radius:6px"><div style="font-family:monospace;font-size:22px;font-weight:700">${s.total}</div><div style="font-size:11px;color:#737373;text-transform:uppercase">ทั้งหมด</div></div>
       <div style="background:#fff;border:1px solid #E5E5E5;padding:14px;border-radius:6px"><div style="font-family:monospace;font-size:22px;font-weight:700;color:#16A34A">${s.active}</div><div style="font-size:11px;color:#737373;text-transform:uppercase">Active</div></div>
