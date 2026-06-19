@@ -676,10 +676,11 @@ async function loadUser() {
   let user = null;
   try {
     const { data: info, error: infoErr } = await sb.rpc('get_my_user_info');
-    LOG('get_my_user_info:', info);
+    LOG('get_my_user_info result:', info, 'error:', infoErr);
     if (!infoErr && info?.user) {
       user = info.user;
       _mySellerIds = info.seller_ids || [];
+      LOG('✅ user from RPC:', user.id, user.email, '| seller_ids:', _mySellerIds);
     }
   } catch(e) { LOG('RPC error:', e); }
   
@@ -774,7 +775,9 @@ async function loadThreads() {
   const { data, error } = await query;
   if (error) {
     ERR('loadThreads error:', error);
-    showError('โหลดรายการแชทไม่สำเร็จ', error.message);
+    // ไม่แสดง error page — แสดง empty state แทน
+    _threads = [];
+    renderThreads();
     return;
   }
   LOG('threads loaded:', data.length);
@@ -1245,6 +1248,14 @@ window.toast = toast;
       return;
     }
     ERR('init error:', e);
+    // ถ้าเป็น permission denied → ไม่ block ทั้งหน้า แค่ log
+    if (e.message?.includes('permission denied') || e.message?.includes('RLS')) {
+      LOG('Permission denied, continuing with limited access:', e.message);
+      // ลอง render thread list (empty) แทน error page
+      _threads = []; 
+      try { renderThreads(); } catch(e2) {}
+      return;
+    }
     showError('เกิดข้อผิดพลาด', e.message || String(e));
   }
 })();
