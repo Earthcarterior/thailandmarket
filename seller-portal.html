@@ -4869,24 +4869,47 @@ async function spInit(){
 }
 
 async function spLoadThreads(){
+  const list = document.getElementById('sp-thread-list');
+  if (!list) return;
+  
   try {
     if (!_sellerSellerId) {
-      document.getElementById('sp-thread-list').innerHTML =
-        '<div style="padding:40px 20px;text-align:center;color:#E63329;font-size:11px">⚠️ ไม่พบข้อมูลร้านค้า — กรุณา reload</div>';
+      list.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#E63329;font-size:11px">⚠️ ไม่พบข้อมูลร้านค้า — กรุณา reload</div>';
       return;
     }
+    
     const { data, error } = await _sb.from('chat_threads')
       .select('*').eq('seller_id', _sellerSellerId)
       .order('last_at', { ascending: false }).limit(200);
-    if (error) throw error;
-    _spThreads = data || [];
+    
+    if (error) {
+      console.warn('[chat] threads query error:', error);
+      _spThreads = [];
+    } else {
+      _spThreads = data || [];
+    }
+    
     spLog('threads:', _spThreads.length);
-    await spHydrate();
+    
+    // Hydrate buyer info (กัน throw)
+    try { await spHydrate(); } catch(e) { console.warn('[chat] hydrate failed:', e); }
+    
+    // Render — ถ้าไม่มี thread แสดง empty state
+    if (_spThreads.length === 0) {
+      list.innerHTML = `
+        <div style="padding:60px 20px;text-align:center">
+          <div style="font-size:48px;margin-bottom:12px;opacity:0.5">💬</div>
+          <div style="color:#525252;font-size:13px;font-weight:600;margin-bottom:6px">ยังไม่มีข้อความ</div>
+          <div style="color:#888;font-size:11px;line-height:1.6">เมื่อลูกค้าทักแชทมา<br>จะแสดงรายการที่นี่</div>
+        </div>
+      `;
+      return;
+    }
+    
     spRenderThreads();
   } catch(e){
-    spErr('loadThreads:', e);
-    document.getElementById('sp-thread-list').innerHTML =
-      `<div style="padding:24px;text-align:center;color:#E63329;font-size:11px">โหลดไม่สำเร็จ:<br>${spEsc(e.message||'')}</div>`;
+    console.error('[chat] loadThreads error:', e);
+    list.innerHTML = `<div style="padding:60px 20px;text-align:center"><div style="font-size:48px;margin-bottom:12px;opacity:0.5">💬</div><div style="color:#525252;font-size:13px">ยังไม่มีข้อความ</div></div>`;
   }
 }
 
@@ -4895,9 +4918,14 @@ async function spHydrate(){
   const buyerIds = [...new Set(_spThreads.map(t=>t.buyer_id).filter(Boolean))]
     .filter(id=>!_spUserCache[id]);
   if (buyerIds.length){
-    const { data } = await _sb.from('users')
-      .select('id,email,display_name,avatar_url,phone').in('id', buyerIds);
-    (data||[]).forEach(u=>_spUserCache[u.id]=u);
+    try {
+      const { data } = await _sb.from('users')
+        .select('id,email,display_name,avatar_url,phone').in('id', buyerIds);
+      (data||[]).forEach(u=>_spUserCache[u.id]=u);
+    } catch(e) {
+      console.warn('[chat] hydrate users failed (RLS?):', e);
+      // ไม่มี user info ก็ไม่เป็นไร — แสดงเป็น "ลูกค้า" ตามปกติ
+    }
   }
 }
 
