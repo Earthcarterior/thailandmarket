@@ -419,35 +419,63 @@ img{max-width:100%;height:auto}
     const userEmail = session.user.email;
     const userId = session.user.id;
     
-    // เช็คว่ามี seller record หรือยัง
-    // 1. หา user_id ใน public.users
-    let pubUserId = null;
-    try {
-      const { data: u } = await sb.from('users')
-        .select('id, role')
-        .eq('email', userEmail)
-        .maybeSingle();
-      pubUserId = u?.id;
-    } catch(e) {}
-    
-    // 2. เช็ค sellers table
+    // ── ใช้ RPC get_my_seller_status (bypass RLS) ──
     let sellerRecord = null;
-    if (pubUserId) {
+    try {
+      const { data: statusData, error: statusErr } = await sb.rpc('get_my_seller_status');
+      console.log('[onboarding] seller status:', statusData);
+      
+      if (statusErr) {
+        console.warn('[onboarding] RPC error, fallback to direct query:', statusErr);
+        throw statusErr;
+      }
+      
+      if (statusData?.has_seller && statusData.seller) {
+        sellerRecord = statusData.seller;
+      }
+    } catch(e) {
+      // Fallback: direct query
+      console.log('[onboarding] fallback to direct query');
+      let pubUserId = null;
       try {
-        const { data: s } = await sb.from('sellers')
-          .select('id, shop_name, status, created_at')
-          .eq('user_id', pubUserId)
+        const { data: u } = await sb.from('users')
+          .select('id, role')
+          .eq('email', userEmail)
           .maybeSingle();
-        sellerRecord = s;
-      } catch(e) {}
+        pubUserId = u?.id;
+      } catch(e2) {}
+      
+      if (pubUserId) {
+        try {
+          const { data: s } = await sb.from('sellers')
+            .select('id, shop_name, status, created_at')
+            .eq('user_id', pubUserId)
+            .maybeSingle();
+          sellerRecord = s;
+        } catch(e2) {}
+      }
+      
+      // Fallback 2: ใช้ JOIN กับ users
+      if (!sellerRecord) {
+        try {
+          const { data: s2 } = await sb.from('sellers')
+            .select('id, shop_name, status, created_at, user_id, users!inner(email)')
+            .eq('users.email', userEmail)
+            .maybeSingle();
+          sellerRecord = s2;
+        } catch(e2) {}
+      }
     }
     
     // 3. แสดงผลตามสถานะ
     if (!sellerRecord) {
       // ยังไม่เคยสมัครเป็น seller → แสดงฟอร์ม onboarding
+      console.log('[onboarding] no seller record → show form');
       overlay.style.display = 'none';
       return;
     }
+    
+    console.log('[onboarding] เจอ seller record:', sellerRecord.status, '→ block re-apply');
     
     // มี seller record แล้ว — เช็ค status
     const status = sellerRecord.status;

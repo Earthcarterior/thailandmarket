@@ -746,9 +746,18 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
     });
 
     if (!allowAccess) {
-      // ── เช็คก่อนว่ามี seller record ที่ pending/rejected/suspended หรือไม่ ──
+      // ── ใช้ RPC get_my_seller_status (bypass RLS) ──
       let pendingSeller = null;
-      if (userRow?.id) {
+      try {
+        const { data: statusData } = await sb.rpc('get_my_seller_status');
+        console.log('[seller-portal] seller status:', statusData);
+        if (statusData?.has_seller && statusData.seller) {
+          pendingSeller = statusData.seller;
+        }
+      } catch(e) { console.warn('[seller-portal] RPC error:', e); }
+      
+      // Fallback: direct query
+      if (!pendingSeller && userRow?.id) {
         try {
           const { data: ps } = await sb.from('sellers')
             .select('id, shop_name, status, created_at')
@@ -758,7 +767,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
         } catch(e) {}
       }
       
-      // ลอง query ด้วย email JOIN (fallback)
+      // Fallback 2: JOIN
       if (!pendingSeller) {
         try {
           const { data: ps2 } = await sb.from('sellers')
@@ -771,6 +780,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
       
       if (pendingSeller) {
         // แสดงสถานะแทน denyAccess
+        console.log('[seller-portal] เจอ seller record:', pendingSeller.status);
         showSellerStatus(pendingSeller, userEmail);
         return;
       }
