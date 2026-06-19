@@ -545,6 +545,96 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
   );
   window._sb = sb;
 
+
+  // ── แสดงสถานะ Seller (Pending/Rejected/Suspended) ──
+  function showSellerStatus(seller, email) {
+    const status = seller.status;
+    const shopName = seller.shop_name || 'ร้านของคุณ';
+    const createdDate = new Date(seller.created_at).toLocaleDateString('th-TH', {
+      day:'numeric', month:'long', year:'numeric'
+    });
+    
+    let icon, title, desc, color, bgColor, actions;
+    
+    if (status === 'pending') {
+      icon = '⏳';
+      color = '#D97706';
+      bgColor = '#FEF3C7';
+      title = 'กำลังตรวจสอบเอกสาร';
+      desc = `ร้าน "<strong>${shopName}</strong>" สมัครเมื่อ ${createdDate}<br>ทีมงานกำลังพิจารณาเอกสาร ภายใน 1-2 วันทำการ`;
+      actions = `
+        <a href="profile.html" class="btn">📋 ดูสถานะที่โปรไฟล์</a>
+        <a href="index.html" class="btn btn-out">← กลับหน้าหลัก</a>`;
+    } else if (status === 'rejected') {
+      icon = '❌';
+      color = '#DC2626';
+      bgColor = '#FEE2E2';
+      title = 'การสมัครถูกปฏิเสธ';
+      desc = `ร้าน "<strong>${shopName}</strong>" ไม่ผ่านการตรวจสอบ<br>กรุณาติดต่อทีมงานเพื่อทราบเหตุผล`;
+      actions = `
+        <a href="mailto:support@thailandmarket.com" class="btn">📧 ติดต่อทีมงาน</a>
+        <a href="index.html" class="btn btn-out">← กลับหน้าหลัก</a>`;
+    } else if (status === 'suspended' || status === 'inactive') {
+      icon = '🚫';
+      color = '#737373';
+      bgColor = '#F2F2F2';
+      title = 'ร้านค้าถูกระงับ';
+      desc = `ร้าน "<strong>${shopName}</strong>" ถูกระงับชั่วคราว<br>กรุณาติดต่อทีมงานเพื่อปลดล็อก`;
+      actions = `
+        <a href="mailto:support@thailandmarket.com" class="btn">📧 ติดต่อทีมงาน</a>
+        <a href="index.html" class="btn btn-out">← กลับหน้าหลัก</a>`;
+    } else {
+      icon = 'ℹ️';
+      color = '#0EA5E9';
+      bgColor = '#E0F2FE';
+      title = 'สถานะร้านค้า: ' + status;
+      desc = `ร้าน "<strong>${shopName}</strong>" — โปรดติดต่อทีมงาน`;
+      actions = `
+        <a href="mailto:support@thailandmarket.com" class="btn">📧 ติดต่อทีมงาน</a>
+        <a href="index.html" class="btn btn-out">← กลับหน้าหลัก</a>`;
+    }
+    
+    document.documentElement.innerHTML = `
+      <head><meta charset="UTF-8"><title>สถานะร้านค้า — ${shopName}</title>
+      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+      <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'IBM Plex Sans Thai',sans-serif;background:#FAFAFA;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+        .card{background:#fff;border:1px solid #E5E5E5;border-radius:12px;padding:50px 40px;max-width:540px;width:100%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.06)}
+        .icon{font-size:72px;margin-bottom:18px}
+        .badge{display:inline-block;background:${bgColor};color:${color};padding:5px 16px;border-radius:20px;font-size:11px;font-weight:700;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:18px}
+        h1{font-size:24px;font-weight:700;color:#0A0A0A;margin-bottom:14px}
+        p{font-size:14px;color:#525252;line-height:1.7;margin-bottom:28px}
+        .btn{display:inline-block;padding:13px 28px;background:#0A0A0A;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;margin:4px;font-size:14px;transition:all .2s}
+        .btn:hover{background:#262626}
+        .btn-out{background:#fff;color:#404040;border:1px solid #E5E5E5}
+        .btn-out:hover{background:#F5F5F5}
+        .note{margin-top:28px;padding-top:22px;border-top:1px solid #E5E5E5;font-size:12px;color:#737373;line-height:1.6}
+        .debug{margin-top:18px;padding:10px;background:#FFF7ED;border:1px solid #FDBA74;border-radius:6px;font-family:monospace;font-size:10px;color:#9A3412;text-align:left;line-height:1.5}
+      </style></head>
+      <body>
+      <div class="card">
+        <div class="icon">${icon}</div>
+        <div class="badge">${status}</div>
+        <h1>${title}</h1>
+        <p>${desc}</p>
+        <div>${actions}</div>
+        ${status === 'pending' ? `
+          <div class="note">
+            💡 ระหว่างรอการอนุมัติ คุณยังสามารถใช้งานเป็นลูกค้าได้ตามปกติ
+          </div>` : ''}
+        <div class="debug">
+          📧 Email: ${email}<br>
+          🏪 Shop: ${shopName}<br>
+          📅 Applied: ${createdDate}<br>
+          🏷️ Status: ${status}
+        </div>
+      </div>
+      </body>
+    `;
+    throw new Error('SELLER_STATUS_DISPLAYED');
+  }
+
   function denyAccess(reason, role, email) {
     document.documentElement.innerHTML = `
       <head><meta charset="UTF-8"><title>Access Denied</title>
@@ -656,13 +746,42 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
     });
 
     if (!allowAccess) {
+      // ── เช็คก่อนว่ามี seller record ที่ pending/rejected/suspended หรือไม่ ──
+      let pendingSeller = null;
+      if (userRow?.id) {
+        try {
+          const { data: ps } = await sb.from('sellers')
+            .select('id, shop_name, status, created_at')
+            .eq('user_id', userRow.id)
+            .maybeSingle();
+          pendingSeller = ps;
+        } catch(e) {}
+      }
+      
+      // ลอง query ด้วย email JOIN (fallback)
+      if (!pendingSeller) {
+        try {
+          const { data: ps2 } = await sb.from('sellers')
+            .select('id, shop_name, status, created_at, user_id, users!inner(email)')
+            .eq('users.email', userEmail)
+            .maybeSingle();
+          pendingSeller = ps2;
+        } catch(e) {}
+      }
+      
+      if (pendingSeller) {
+        // แสดงสถานะแทน denyAccess
+        showSellerStatus(pendingSeller, userEmail);
+        return;
+      }
+      
       denyAccess('ไม่มีสิทธิ์เข้าหน้า seller', role, userEmail);
       return;
     }
 
     console.log('[guard v3] ✅ Access granted (role: ' + role + ')');
   } catch(e) {
-    if (e.message === 'ACCESS_DENIED') throw e;
+    if (e.message === 'ACCESS_DENIED' || e.message === 'SELLER_STATUS_DISPLAYED') throw e;
     console.error('[guard v2]', e);
   }
 })();
