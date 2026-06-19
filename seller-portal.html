@@ -4855,14 +4855,14 @@ function renderMessagesLive(){
   // Lazy init
   if (!_spLoaded) {
     _spLoaded = true;
-    spInit();
+    spInitChat();  // ← renamed to avoid conflict with orders' window.spInit
   } else {
     spRenderThreads();
   }
 }
 
-async function spInit(){
-  spLog('init');
+async function spInitChat(){
+  spLog('init chat');
   await spLoadThreads();
   spSubscribeToList();
   await spLoadStats();
