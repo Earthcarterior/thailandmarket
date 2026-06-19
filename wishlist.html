@@ -650,20 +650,12 @@ nav, .nav {
   </div>
 
   <!-- COLLECTIONS -->
-  <div class="collections-bar">
+  <div class="collections-bar" id="collectionsBar">
     <div class="col-chip active" data-filter="all" onclick="filterByCollection('all',this)">
       <span class="col-chip-ico">❤️</span> ทั้งหมด <span class="col-count" id="col-count-all">0</span>
     </div>
-    <div class="col-chip" data-filter="home" onclick="filterByCollection('home',this)">
-      <span class="col-chip-ico">🏠</span> เฟอร์นิเจอร์บ้าน <span class="col-count" style="background:var(--gray100);color:var(--gray600)" id="col-count-home">0</span>
-    </div>
-    <div class="col-chip" data-filter="tech" onclick="filterByCollection('tech',this)">
-      <span class="col-chip-ico">💻</span> Tech & Gadgets <span class="col-count" style="background:var(--gray100);color:var(--gray600)" id="col-count-tech">0</span>
-    </div>
-    <div class="col-chip" data-filter="fashion" onclick="filterByCollection('fashion',this)">
-      <span class="col-chip-ico">👗</span> แฟชั่น <span class="col-count" style="background:var(--gray100);color:var(--gray600)" id="col-count-fashion">0</span>
-    </div>
-    <div class="col-chip" style="border-style:dashed;color:var(--gray400)" onclick="openModal()">
+    <!-- Dynamic category chips จะถูก insert ที่นี่ -->
+    <div class="col-chip" style="border-style:dashed;color:var(--gray400)" id="addCollectionChip" onclick="openModal()">
       ➕ เพิ่มคอลเลกชัน
     </div>
   </div>
@@ -2133,39 +2125,108 @@ async function updateCollectionCounts() {
     if (!wlData?.items) return;
     
     const items = wlData.items;
-    const counts = { home: 0, tech: 0, fashion: 0 };
-    let catMap = {};
     
-    if (items.length) {
-      const catIds = [...new Set(items.map(it => it.product?.category_id).filter(Boolean))];
-      if (catIds.length) {
-        const { data: cats } = await sb.from('categories').select('id,slug,name_th').in('id', catIds);
+    // ── ดึง categories ของสินค้าใน wishlist ──
+    const catIds = [...new Set(items.map(it => it.product?.category_id).filter(Boolean))];
+    let catMap = {};
+    let categories = [];
+    
+    if (catIds.length) {
+      try {
+        const { data: cats } = await sb.from('categories').select('id,slug,name_th,icon').in('id', catIds);
         (cats || []).forEach(c => catMap[c.id] = c);
         
+        // นับสินค้าต่อหมวด
+        const catCount = {};
         items.forEach(it => {
-          const cat = catMap[it.product?.category_id];
-          if (!cat) return;
-          const slug = (cat.slug || '').toLowerCase();
-          const name = (cat.name_th || '').toLowerCase();
-          if (slug.includes('home') || slug.includes('furniture') || name.includes('บ้าน') || name.includes('เฟอร์')) counts.home++;
-          else if (slug.includes('tech') || slug.includes('electronic') || name.includes('อิเล็ก') || name.includes('โทร') || name.includes('คอม')) counts.tech++;
-          else if (slug.includes('fashion') || slug.includes('cloth') || name.includes('แฟชั่น') || name.includes('เสื้อ')) counts.fashion++;
+          const cid = it.product?.category_id;
+          if (cid && catMap[cid]) {
+            catCount[cid] = (catCount[cid] || 0) + 1;
+          }
         });
-      }
+        
+        // เรียงตามจำนวน (เยอะสุดก่อน)
+        categories = (cats || []).map(c => ({
+          ...c,
+          count: catCount[c.id] || 0
+        })).filter(c => c.count > 0)
+          .sort((a, b) => b.count - a.count);
+      } catch(e) { console.warn('load categories:', e); }
     }
     
-    // ⭐ เก็บ items + catMap ไว้ใช้ filter
+    // ── เก็บข้อมูล ──
     window._wlItems = items;
     window._wlCatMap = catMap;
+    window._wlCategories = categories;
     
+    // ── Update "ทั้งหมด" count ──
     const setCnt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    setCnt('col-count-all', items.length);  // ⭐ ทั้งหมด!
-    setCnt('col-count-home', counts.home);
-    setCnt('col-count-tech', counts.tech);
-    setCnt('col-count-fashion', counts.fashion);
+    setCnt('col-count-all', items.length);
     
-    console.log('[wishlist] counts: all=' + items.length + ', home=' + counts.home + ', tech=' + counts.tech + ', fashion=' + counts.fashion);
+    // ── Render dynamic category chips ──
+    renderCategoryChips(categories);
+    
+    console.log('[wishlist] counts: all=' + items.length + ', categories=' + categories.length);
   } catch(e) { console.warn('updateCollectionCounts:', e); }
+}
+
+// ── Render dynamic category chips ──
+function renderCategoryChips(categories) {
+  const bar = document.getElementById('collectionsBar');
+  if (!bar) return;
+  
+  // ลบ chip เก่า (data-category)
+  bar.querySelectorAll('[data-category]').forEach(c => c.remove());
+  
+  const addChip = document.getElementById('addCollectionChip');
+  
+  categories.forEach(cat => {
+    const chip = document.createElement('div');
+    chip.className = 'col-chip';
+    chip.dataset.filter = 'cat-' + cat.id;
+    chip.dataset.category = cat.id;
+    chip.onclick = () => filterByCategory(cat.id, chip);
+    chip.innerHTML = `
+      <span class="col-chip-ico">${cat.icon || '📦'}</span> ${cat.name_th}
+      <span class="col-count" style="background:var(--gray100);color:var(--gray600)">${cat.count}</span>
+    `;
+    if (addChip) bar.insertBefore(chip, addChip);
+    else bar.appendChild(chip);
+  });
+}
+
+// ── Filter ตาม category จริง ──
+function filterByCategory(categoryId, chipEl) {
+  document.querySelectorAll('.col-chip[data-filter]').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+  
+  const items = window._wlItems || [];
+  const filtered = items.filter(it => it.product?.category_id === categoryId);
+  
+  const items4Render = filtered.map(it => ({
+    id: it.id,
+    product_id: it.product_id,
+    created_at: it.created_at,
+    products: it.product
+  }));
+  
+  const grid = document.getElementById('prodGrid');
+  if (!grid) return;
+  
+  if (items4Render.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#737373">
+        <div style="font-size:48px;margin-bottom:12px;opacity:0.4">🔍</div>
+        <h3 style="font-size:14px;color:#404040;margin-bottom:6px">ไม่มีสินค้าในหมวดนี้</h3>
+        <p style="font-size:12px">ลองเลือกหมวดอื่น</p>
+      </div>
+    `;
+  } else if (typeof renderWishlistCards === 'function') {
+    renderWishlistCards(items4Render);
+  }
+  
+  const cntEl = document.getElementById('wish-count-title');
+  if (cntEl) cntEl.textContent = filtered.length;
 }
 
 // เรียกหลัง loadWishlistFromDB เสร็จ
@@ -2290,59 +2351,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Filter wishlist ตาม category ──
 function filterByCollection(filterId, chipEl) {
-  // อัปเดต active state
   document.querySelectorAll('.col-chip[data-filter]').forEach(c => c.classList.remove('active'));
   if (chipEl) chipEl.classList.add('active');
   
-  const items = window._wlItems || [];
-  const catMap = window._wlCatMap || {};
-  
-  console.log('[filter]', filterId, 'items:', items.length, 'catMap:', Object.keys(catMap).length);
-  
-  let filtered = items;
-  
-  if (filterId !== 'all') {
-    filtered = items.filter(it => {
-      const cat = catMap[it.product?.category_id];
-      if (!cat) return false;
-      const slug = (cat.slug || '').toLowerCase();
-      const name = (cat.name_th || '').toLowerCase();
-      
-      if (filterId === 'home') 
-        return slug.includes('home') || slug.includes('furniture') || name.includes('บ้าน') || name.includes('เฟอร์');
-      if (filterId === 'tech') 
-        return slug.includes('tech') || slug.includes('electronic') || name.includes('อิเล็ก') || name.includes('โทร') || name.includes('คอม');
-      if (filterId === 'fashion') 
-        return slug.includes('fashion') || slug.includes('cloth') || name.includes('แฟชั่น') || name.includes('เสื้อ');
-      return false;
-    });
+  if (filterId === 'all') {
+    const items = window._wlItems || [];
+    const items4Render = items.map(it => ({
+      id: it.id, product_id: it.product_id, created_at: it.created_at, products: it.product
+    }));
+    
+    if (typeof renderWishlistCards === 'function') {
+      if (items4Render.length === 0) {
+        const grid = document.getElementById('prodGrid');
+        if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#888">💝 ยังไม่มี Wishlist</div>';
+      } else {
+        renderWishlistCards(items4Render);
+      }
+    }
+    
+    const cntEl = document.getElementById('wish-count-title');
+    if (cntEl) cntEl.textContent = items.length;
   }
-  
-  // Render
-  const items4Render = filtered.map(it => ({
-    id: it.id,
-    product_id: it.product_id,
-    created_at: it.created_at,
-    products: it.product
-  }));
-  
-  const grid = document.getElementById('prodGrid');
-  if (!grid) return;
-  
-  if (items4Render.length === 0) {
-    grid.innerHTML = `
-      <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#737373">
-        <div style="font-size:48px;margin-bottom:12px;opacity:0.4">🔍</div>
-        <h3 style="font-size:14px;color:#404040;margin-bottom:6px">ไม่มีสินค้าในหมวดนี้</h3>
-        <p style="font-size:12px">ลองเลือกหมวดอื่น</p>
-      </div>
-    `;
-  } else if (typeof renderWishlistCards === 'function') {
-    renderWishlistCards(items4Render);
-  }
-  
-  const cntEl = document.getElementById('wish-count-title');
-  if (cntEl) cntEl.textContent = filtered.length;
 }
 
 
