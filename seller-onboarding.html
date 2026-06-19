@@ -1003,8 +1003,6 @@ async function submit(){
   const phone = document.getElementById('phone')?.value?.trim() || '';
   const password = document.getElementById('pass')?.value || '';
   const shopDesc = document.getElementById('shop-desc')?.value?.trim() || '';
-  const bankName = document.getElementById('bank-name')?.value?.trim() || '';
-  const bankAcc = document.getElementById('bank-acc')?.value?.trim() || '';
   
   // ปุ่ม loading
   const btn = document.querySelector('[onclick="submit()"]');
@@ -1024,14 +1022,14 @@ async function submit(){
       'https://qmgyimsptzewwyafvjzk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0'
     );
+    window._sb = sb;
     
-    // ── 1. ตรวจ session ──
+    // ── 1. ตรวจ session — ถ้ายังไม่ login → signUp ──
     let { data: { session } } = await sb.auth.getSession();
-    let authUserId = session?.user?.id;
+    console.log('[submit] session:', !!session, session?.user?.email);
     
-    // ── 2. ถ้ายังไม่ login → signUp ──
     if (!session) {
-      console.log('[submit] ยังไม่ login → signUp');
+      console.log('[submit] signUp:', email);
       const { data: signUpData, error: signUpErr } = await sb.auth.signUp({
         email,
         password,
@@ -1045,152 +1043,87 @@ async function submit(){
       });
       
       if (signUpErr) {
-        // ถ้า email ซ้ำ → ลอง signIn แทน
-        if (signUpErr.message?.includes('already') || signUpErr.message?.includes('exists')) {
+        // ถ้า email ซ้ำ → ลอง signIn
+        if (signUpErr.message?.toLowerCase().includes('already') || 
+            signUpErr.message?.toLowerCase().includes('exists') || 
+            signUpErr.message?.toLowerCase().includes('registered')) {
+          console.log('[submit] email ซ้ำ — ลอง signIn');
           const { data: signInData, error: signInErr } = await sb.auth.signInWithPassword({ email, password });
-          if (signInErr) throw new Error('Email นี้มีอยู่แล้ว — รหัสผ่านไม่ถูกต้อง');
+          if (signInErr) {
+            throw new Error('Email "' + email + '" มีอยู่แล้ว แต่รหัสผ่านไม่ถูกต้อง — ใช้ login แทนการสมัครใหม่');
+          }
           session = signInData.session;
-          authUserId = session?.user?.id;
         } else {
-          throw signUpErr;
+          throw new Error('สมัครไม่สำเร็จ: ' + signUpErr.message);
         }
       } else {
         session = signUpData.session;
-        authUserId = signUpData.user?.id;
-      }
-    }
-    
-    if (!authUserId) throw new Error('ไม่สามารถยืนยันตัวตนได้');
-    
-    console.log('[submit] auth ok:', email, authUserId);
-    
-    // ── 3. สร้าง / อัปเดต user record ใน public.users ──
-    let pubUserId;
-    try {
-      // เช็คก่อนว่ามีอยู่หรือไม่
-      const { data: existingUser } = await sb.from('users')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
-      
-      if (existingUser) {
-        pubUserId = existingUser.id;
-        // อัปเดต display_name + phone
-        await sb.from('users')
-          .update({ 
-            display_name: fname + ' ' + lname,
-            phone: phone,
-            auth_user_id: authUserId,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', pubUserId);
-      } else {
-        // สร้างใหม่
-        const { data: newUser, error: userErr } = await sb.from('users')
-          .insert({
-            auth_user_id: authUserId,
-            email,
-            display_name: fname + ' ' + lname,
-            phone,
-            role: 'buyer',  // เริ่มเป็น buyer ก่อน — admin จะ approve เป็น seller
-            is_active: true,
-            email_verified: !!session
-          })
-          .select('id')
-          .single();
         
-        if (userErr && !userErr.message?.includes('duplicate')) {
-          console.warn('[submit] user insert warn:', userErr);
+        // ถ้า Supabase ต้องการ email confirm → ยังไม่มี session
+        if (!session && signUpData.user) {
+          console.log('[submit] รอ email confirm — ลอง signIn ทันที');
+          const { data: signInData } = await sb.auth.signInWithPassword({ email, password });
+          session = signInData?.session;
         }
-        pubUserId = newUser?.id;
       }
-    } catch(e) { 
-      console.warn('[submit] user upsert error:', e); 
     }
     
-    if (!pubUserId) {
-      // ลองหาด้วย email อีกครั้ง
-      const { data: u2 } = await sb.from('users').select('id').eq('email', email).maybeSingle();
-      pubUserId = u2?.id;
-    }
+    if (!session) throw new Error('ไม่สามารถยืนยันตัวตนได้ — กรุณาตรวจสอบอีเมลหรือลอง login');
     
-    if (!pubUserId) throw new Error('ไม่สามารถสร้าง user record ได้');
+    console.log('[submit] ✅ auth ok:', session.user.email);
     
-    console.log('[submit] user ok:', pubUserId);
-    
-    // ── 4. สร้าง seller record ผ่าน RPC (bypass RLS) ──
+    // ── 2. เรียก RPC submit_seller_application (RPC จะสร้าง users + sellers ให้เอง) ──
     console.log('[submit] เรียก submit_seller_application RPC...');
     
     const { data: rpcResult, error: rpcErr } = await sb.rpc('submit_seller_application', {
       p_shop_name: shopName,
       p_description: shopDesc || null,
-      p_phone: phone,
-      p_display_name: fname + ' ' + lname
+      p_phone: phone || null,
+      p_display_name: (fname + ' ' + lname).trim() || null
     });
     
+    console.log('[submit] RPC result:', rpcResult, 'error:', rpcErr);
+    
     if (rpcErr) {
-      console.error('[submit] RPC error:', rpcErr);
-      
-      // Fallback: ลอง direct insert
-      console.log('[submit] Fallback: direct insert...');
-      const sellerPayload = {
-        user_id: pubUserId,
-        shop_name: shopName,
-        description: shopDesc || null,
-        phone: phone,
-        status: 'pending',
-        created_at: new Date().toISOString()
-      };
-      
-      const { data: existingSeller } = await sb.from('sellers')
-        .select('id, status')
-        .eq('user_id', pubUserId)
-        .maybeSingle();
-      
-      if (existingSeller) {
-        console.log('[submit] Seller exists:', existingSeller.status);
-      } else {
-        const { error: insErr } = await sb.from('sellers').insert(sellerPayload);
-        if (insErr) {
-          throw new Error('บันทึกร้านค้าไม่สำเร็จ: ' + insErr.message + ' (RPC: ' + rpcErr.message + ')');
-        }
-        console.log('[submit] Direct insert success');
+      // RPC ไม่มี — แสดง error ที่เป็นประโยชน์
+      if (rpcErr.message?.includes('not_authenticated')) {
+        throw new Error('Session หมดอายุ — กรุณา login ใหม่');
       }
-    } else {
-      console.log('[submit] RPC result:', rpcResult);
+      if (rpcErr.message?.includes('function') && rpcErr.message?.includes('not exist')) {
+        throw new Error('ยังไม่ได้รัน SQL "fix-seller-signup-rls.sql" ใน Supabase — admin ต้องรันก่อน');
+      }
+      throw new Error('บันทึกร้านค้าไม่สำเร็จ: ' + rpcErr.message);
     }
     
-    const sellerId = rpcResult?.seller_id;
-    
-    // ── 5. บันทึก bank info (optional) ──
-    if (bankName && bankAcc) {
-      try {
-        await sb.from('seller_bank_accounts').insert({
-          seller_id: sellerId,
-          bank_name: document.querySelector('.bank-opts .selected')?.textContent?.trim() || 'unknown',
-          account_name: bankName,
-          account_number: bankAcc
-        });
-      } catch(e) { console.warn('[submit] bank info save failed:', e); }
+    if (!rpcResult?.success) {
+      throw new Error('บันทึกร้านค้าไม่สำเร็จ: ' + (rpcResult?.message || 'unknown error'));
     }
     
-    // ── 6. แสดงหน้า success ──
+    console.log('[submit] ✅ Seller created:', rpcResult);
+    
+    // ── 3. แสดงหน้า success ──
     document.querySelectorAll('.form-page').forEach(p => p.classList.remove('active'));
     document.getElementById('success-page').style.display = 'block';
     document.getElementById('shop-display').textContent = shopName;
     document.querySelectorAll('.step-item').forEach(el => { el.className = 'step-item done'; });
     document.querySelectorAll('.step-circle').forEach(sc => { sc.textContent = '✓'; });
     document.getElementById('progress').style.width = '100%';
-    toast('🎉 สมัครร้านค้าสำเร็จ! รอ admin อนุมัติ');
+    
+    if (rpcResult.action === 'existing') {
+      toast('ℹ️ คุณมีร้านค้าอยู่แล้ว — ดูสถานะที่ Profile');
+    } else {
+      toast('🎉 สมัครร้านค้าสำเร็จ! รอ admin อนุมัติ');
+    }
     
     console.log('[submit] ✅ Success!');
     
   } catch(e) {
-    console.error('[submit] ERROR:', e);
-    toast('❌ ' + (e.message || 'เกิดข้อผิดพลาด — กรุณาลองใหม่'), 'error');
+    console.error('[submit] ❌ ERROR:', e);
+    toast('❌ ' + (e.message || 'เกิดข้อผิดพลาด'), 'error');
     if (btn) { btn.disabled = false; btn.textContent = oldText || '🚀 เปิดร้านค้าเลย!'; }
   }
 }
+
 
 function previewSlug(val){
   const slug=val.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-ก-ฮ]/g,'');
