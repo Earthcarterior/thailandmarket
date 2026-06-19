@@ -749,13 +749,31 @@ function next(step){
     const email=document.getElementById('email').value.trim();
     const pass=document.getElementById('pass').value;
     const pass2=document.getElementById('pass2').value;
-    const a1=document.getElementById('agree1').checked;
-    const a2=document.getElementById('agree2').checked;
     if(!fname){toast('⚠️ กรุณากรอกชื่อ');return;}
     if(!email||!/\S+@\S+\.\S+/.test(email)){toast('⚠️ กรุณากรอกอีเมลให้ถูกต้อง');return;}
     if(pass.length<8){toast('⚠️ รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');return;}
     if(pass!==pass2){toast('⚠️ รหัสผ่านไม่ตรงกัน');return;}
-    if(!a1||!a2){toast('⚠️ กรุณายอมรับข้อกำหนดก่อน');return;}
+    
+    // ตรวจ policies — รองรับทั้ง dynamic (agree-{slug}) และ hardcoded (agree1, agree2)
+    if (window._allPoliciesRequired && window._allPoliciesRequired.length) {
+      // Dynamic policies (โหลดมาจาก DB)
+      const unchecked = window._allPoliciesRequired.filter(id => {
+        const el = document.getElementById(id);
+        return !el || !el.checked;
+      });
+      if (unchecked.length > 0) {
+        toast('⚠️ กรุณายอมรับข้อกำหนดทุกข้อก่อน');
+        return;
+      }
+    } else {
+      // Fallback: hardcoded agree1, agree2
+      const a1Box = document.getElementById('agree1');
+      const a2Box = document.getElementById('agree2');
+      if (a1Box && a2Box && (!a1Box.checked || !a2Box.checked)) {
+        toast('⚠️ กรุณายอมรับข้อกำหนดก่อน');
+        return;
+      }
+    }
   }
   if(step===2){
     const sn=document.getElementById('shopname').value.trim();
