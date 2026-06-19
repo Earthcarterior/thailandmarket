@@ -1118,53 +1118,49 @@ async function submit(){
     
     console.log('[submit] user ok:', pubUserId);
     
-    // ── 4. สร้าง seller record ──
-    const slug = shopName.toLowerCase()
-      .replace(/\s+/g,'-')
-      .replace(/[^a-z0-9\-ก-ฮ]/g,'')
-      .substring(0, 50);
+    // ── 4. สร้าง seller record ผ่าน RPC (bypass RLS) ──
+    console.log('[submit] เรียก submit_seller_application RPC...');
     
-    const sellerPayload = {
-      user_id: pubUserId,
-      shop_name: shopName,
-      description: shopDesc || null,
-      phone: phone,
-      status: 'pending',  // ⭐ pending — รอ admin อนุมัติ
-      created_at: new Date().toISOString()
-    };
+    const { data: rpcResult, error: rpcErr } = await sb.rpc('submit_seller_application', {
+      p_shop_name: shopName,
+      p_description: shopDesc || null,
+      p_phone: phone,
+      p_display_name: fname + ' ' + lname
+    });
     
-    // เช็คก่อนว่ามี seller record อยู่แล้วหรือไม่
-    const { data: existingSeller } = await sb.from('sellers')
-      .select('id, status')
-      .eq('user_id', pubUserId)
-      .maybeSingle();
-    
-    let sellerId;
-    if (existingSeller) {
-      // มีอยู่แล้ว — ถ้า rejected/inactive → reset เป็น pending
-      sellerId = existingSeller.id;
-      if (['rejected', 'inactive', 'suspended'].includes(existingSeller.status)) {
-        await sb.from('sellers')
-          .update({ ...sellerPayload, updated_at: new Date().toISOString() })
-          .eq('id', sellerId);
-        console.log('[submit] seller resubmitted:', sellerId);
+    if (rpcErr) {
+      console.error('[submit] RPC error:', rpcErr);
+      
+      // Fallback: ลอง direct insert
+      console.log('[submit] Fallback: direct insert...');
+      const sellerPayload = {
+        user_id: pubUserId,
+        shop_name: shopName,
+        description: shopDesc || null,
+        phone: phone,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+      
+      const { data: existingSeller } = await sb.from('sellers')
+        .select('id, status')
+        .eq('user_id', pubUserId)
+        .maybeSingle();
+      
+      if (existingSeller) {
+        console.log('[submit] Seller exists:', existingSeller.status);
       } else {
-        console.log('[submit] seller already exists with status:', existingSeller.status);
+        const { error: insErr } = await sb.from('sellers').insert(sellerPayload);
+        if (insErr) {
+          throw new Error('บันทึกร้านค้าไม่สำเร็จ: ' + insErr.message + ' (RPC: ' + rpcErr.message + ')');
+        }
+        console.log('[submit] Direct insert success');
       }
     } else {
-      // สร้างใหม่
-      const { data: newSeller, error: sellerErr } = await sb.from('sellers')
-        .insert(sellerPayload)
-        .select('id')
-        .single();
-      
-      if (sellerErr) {
-        console.error('[submit] seller insert error:', sellerErr);
-        throw new Error('บันทึกข้อมูลร้านค้าไม่สำเร็จ: ' + sellerErr.message);
-      }
-      sellerId = newSeller.id;
-      console.log('[submit] seller created:', sellerId);
+      console.log('[submit] RPC result:', rpcResult);
     }
+    
+    const sellerId = rpcResult?.seller_id;
     
     // ── 5. บันทึก bank info (optional) ──
     if (bankName && bankAcc) {
