@@ -933,36 +933,17 @@ nav, .nav {
   </div><!-- /prod-grid -->
 
   <!-- SUGGESTIONS -->
-  <div style="margin-top:40px">
+  <div style="margin-top:40px" id="suggestions-section">
     <h2 style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:700;color:var(--primary);margin-bottom:16px">
       💡 อาจถูกใจคุณ (จากสินค้าที่บันทึก)
     </h2>
-    <div class="prod-grid" style="grid-template-columns:repeat(5,1fr)">
+    <div class="prod-grid" id="suggestions-grid" style="grid-template-columns:repeat(5,1fr)">
       <div class="prod-card" style="border:2px dashed var(--gray200);box-shadow:none;display:flex;align-items:center;justify-content:center;min-height:280px;flex-direction:column;gap:8px;color:var(--gray400)">
         <div style="font-size:32px">🔍</div>
         <div style="font-size:12px;text-align:center">ดูสินค้าแนะนำ<br>เพิ่มเติม</div>
       </div>
-      <div class="prod-card">
-        <div class="prod-img">🎮</div>
-        <div class="prod-body">
-          <div class="prod-shop"><span class="prod-shop-dot"></span>PlayStation TH</div>
-          <div class="prod-name">PlayStation 5 Slim Console + Controller</div>
-          <div class="prod-rating"><span class="stars">★★★★★</span><span class="rating-num">5.0 (8.9k)</span></div>
-          <div class="prod-price-row"><span class="prod-price">฿17,990</span></div>
-          <div class="prod-actions"><button class="btn-cart">❤️ บันทึก</button><button class="btn-buy">ซื้อ</button></div>
-        </div>
-      </div>
-      <div class="prod-card">
-        <div class="prod-img">🖥️<div class="prod-badge badge-sale">Sale</div></div>
-        <div class="prod-body">
-          <div class="prod-shop"><span class="prod-shop-dot"></span>LG Electronics</div>
-          <div class="prod-name">LG UltraGear 27" 4K Gaming Monitor 144Hz</div>
-          <div class="prod-rating"><span class="stars">★★★★★</span><span class="rating-num">4.8 (1.2k)</span></div>
-          <div class="prod-price-row"><span class="prod-price">฿18,500</span><span class="prod-orig">฿24,900</span></div>
-          <div class="prod-actions"><button class="btn-cart">❤️ บันทึก</button><button class="btn-buy">ซื้อ</button></div>
-        </div>
-      </div>
     </div>
+  </div>
   </div>
 </div>
 
@@ -994,9 +975,44 @@ nav, .nav {
 <script>
 function openModal(){document.getElementById('modalOverlay').classList.add('show')}
 function closeModal(e){if(e.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show')}
-function createCollection(){
-  alert('✅ สร้างคอลเลกชันสำเร็จ!');
-  document.getElementById('modalOverlay').classList.remove('show');
+async function createCollection(){
+  const nameInp = document.querySelector('#modalOverlay input[type="text"]') || document.querySelector('.modal input');
+  const name = nameInp?.value?.trim();
+  
+  if (!name) {
+    tmToast('⚠️ กรุณาตั้งชื่อคอลเลกชัน');
+    nameInp?.focus();
+    return;
+  }
+  
+  const selectedEmoji = document.querySelector('.emoji-btn.selected')?.textContent?.trim() || '📁';
+  
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); return; }
+    
+    // เก็บใน localStorage (เพราะ DB ยังไม่มี table wishlist_collections)
+    const key = 'wl_collections_' + session.user.email;
+    const collections = JSON.parse(localStorage.getItem(key) || '[]');
+    collections.push({
+      id: 'coll_' + Date.now(),
+      name: name,
+      icon: selectedEmoji,
+      created_at: new Date().toISOString(),
+      product_ids: []
+    });
+    localStorage.setItem(key, JSON.stringify(collections));
+    
+    tmToast('✅ สร้างคอลเลกชัน "' + name + '" สำเร็จ!');
+    document.getElementById('modalOverlay').classList.remove('show');
+    if (nameInp) nameInp.value = '';
+    
+    // Refresh collection counts
+    if (typeof renderCollections === 'function') renderCollections();
+  } catch(e) {
+    console.error('createCollection:', e);
+    tmToast('❌ สร้างคอลเลกชันไม่สำเร็จ');
+  }
 }
 function removeCard(id){
   const el=document.getElementById(id);
@@ -1026,7 +1042,53 @@ function removeSelected(){
   });
   document.getElementById('bulkBar').classList.remove('show');
 }
-function addAllToCart(){alert('🛒 เพิ่มสินค้าทั้งหมดลงตะกร้าแล้ว!')}
+async function addAllToCart(){
+  const checked = document.querySelectorAll('.prod-checkbox:checked');
+  let items = [];
+  
+  if (checked.length > 0) {
+    items = Array.from(checked).map(cb => cb.dataset.productId).filter(Boolean);
+  } else {
+    // ถ้าไม่ได้เลือก — เพิ่มทั้งหมด
+    const grid = document.getElementById('prodGrid');
+    if (!grid) { tmToast('⚠️ ไม่พบสินค้า'); return; }
+    items = Array.from(grid.querySelectorAll('[data-product-id]')).map(el => el.dataset.productId).filter(Boolean);
+  }
+  
+  if (items.length === 0) {
+    tmToast('⚠️ ไม่มีสินค้าที่จะเพิ่ม');
+    return;
+  }
+  
+  if (!confirm(`เพิ่ม ${items.length} รายการลงตะกร้า?`)) return;
+  
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); location.href='login.html'; return; }
+  
+  let success = 0, failed = 0;
+  for (const pid of items) {
+    try {
+      await sb.rpc('add_to_cart', { p_product_id: pid, p_quantity: 1 });
+      success++;
+    } catch(e) {
+      try {
+        // Fallback: direct upsert
+        await sb.from('cart_items').upsert({
+          user_id: _userId, product_id: pid, quantity: 1, created_at: new Date().toISOString()
+        }, { onConflict: 'user_id,product_id' });
+        success++;
+      } catch(e2) { failed++; }
+    }
+  }
+  
+  if (success > 0) {
+    tmToast(`🛒 เพิ่ม ${success} รายการลงตะกร้าแล้ว` + (failed ? ` (${failed} รายการไม่สำเร็จ)` : ''));
+    // Update cart badge
+    if (typeof tmUpdateCartBadge === 'function') tmUpdateCartBadge();
+  } else {
+    tmToast('❌ ไม่สามารถเพิ่มสินค้าลงตะกร้าได้');
+  }
+}
 document.querySelectorAll('.emoji-btn').forEach(btn=>{
   btn.addEventListener('click',function(){
     document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected'));
@@ -1126,9 +1188,44 @@ function tmToast(msg, type) {
 
 function openModal(){document.getElementById('modalOverlay').classList.add('show')}
 function closeModal(e){if(e.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show')}
-function createCollection(){
-  alert('✅ สร้างคอลเลกชันสำเร็จ!');
-  document.getElementById('modalOverlay').classList.remove('show');
+async function createCollection(){
+  const nameInp = document.querySelector('#modalOverlay input[type="text"]') || document.querySelector('.modal input');
+  const name = nameInp?.value?.trim();
+  
+  if (!name) {
+    tmToast('⚠️ กรุณาตั้งชื่อคอลเลกชัน');
+    nameInp?.focus();
+    return;
+  }
+  
+  const selectedEmoji = document.querySelector('.emoji-btn.selected')?.textContent?.trim() || '📁';
+  
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); return; }
+    
+    // เก็บใน localStorage (เพราะ DB ยังไม่มี table wishlist_collections)
+    const key = 'wl_collections_' + session.user.email;
+    const collections = JSON.parse(localStorage.getItem(key) || '[]');
+    collections.push({
+      id: 'coll_' + Date.now(),
+      name: name,
+      icon: selectedEmoji,
+      created_at: new Date().toISOString(),
+      product_ids: []
+    });
+    localStorage.setItem(key, JSON.stringify(collections));
+    
+    tmToast('✅ สร้างคอลเลกชัน "' + name + '" สำเร็จ!');
+    document.getElementById('modalOverlay').classList.remove('show');
+    if (nameInp) nameInp.value = '';
+    
+    // Refresh collection counts
+    if (typeof renderCollections === 'function') renderCollections();
+  } catch(e) {
+    console.error('createCollection:', e);
+    tmToast('❌ สร้างคอลเลกชันไม่สำเร็จ');
+  }
 }
 function removeCard(id){
   const el=document.getElementById(id);
@@ -1158,7 +1255,53 @@ function removeSelected(){
   });
   document.getElementById('bulkBar').classList.remove('show');
 }
-function addAllToCart(){alert('🛒 เพิ่มสินค้าทั้งหมดลงตะกร้าแล้ว!')}
+async function addAllToCart(){
+  const checked = document.querySelectorAll('.prod-checkbox:checked');
+  let items = [];
+  
+  if (checked.length > 0) {
+    items = Array.from(checked).map(cb => cb.dataset.productId).filter(Boolean);
+  } else {
+    // ถ้าไม่ได้เลือก — เพิ่มทั้งหมด
+    const grid = document.getElementById('prodGrid');
+    if (!grid) { tmToast('⚠️ ไม่พบสินค้า'); return; }
+    items = Array.from(grid.querySelectorAll('[data-product-id]')).map(el => el.dataset.productId).filter(Boolean);
+  }
+  
+  if (items.length === 0) {
+    tmToast('⚠️ ไม่มีสินค้าที่จะเพิ่ม');
+    return;
+  }
+  
+  if (!confirm(`เพิ่ม ${items.length} รายการลงตะกร้า?`)) return;
+  
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { tmToast('🔐 กรุณาเข้าสู่ระบบ'); location.href='login.html'; return; }
+  
+  let success = 0, failed = 0;
+  for (const pid of items) {
+    try {
+      await sb.rpc('add_to_cart', { p_product_id: pid, p_quantity: 1 });
+      success++;
+    } catch(e) {
+      try {
+        // Fallback: direct upsert
+        await sb.from('cart_items').upsert({
+          user_id: _userId, product_id: pid, quantity: 1, created_at: new Date().toISOString()
+        }, { onConflict: 'user_id,product_id' });
+        success++;
+      } catch(e2) { failed++; }
+    }
+  }
+  
+  if (success > 0) {
+    tmToast(`🛒 เพิ่ม ${success} รายการลงตะกร้าแล้ว` + (failed ? ` (${failed} รายการไม่สำเร็จ)` : ''));
+    // Update cart badge
+    if (typeof tmUpdateCartBadge === 'function') tmUpdateCartBadge();
+  } else {
+    tmToast('❌ ไม่สามารถเพิ่มสินค้าลงตะกร้าได้');
+  }
+}
 document.querySelectorAll('.emoji-btn').forEach(btn=>{
   btn.addEventListener('click',function(){
     document.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected'));
@@ -1813,6 +1956,120 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Expose ให้เรียกได้จาก inline scripts
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
+
+
+// ── โหลด suggestions จาก wishlist categories ──
+async function loadSuggestions() {
+  const grid = document.getElementById('suggestions-grid');
+  if (!grid) return;
+  
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    
+    // ดึง wishlist เพื่อหา category_ids
+    const { data: wlData } = await sb.rpc('get_my_wishlist');
+    if (!wlData?.items?.length) return;
+    
+    const categoryIds = [...new Set(wlData.items.map(it => it.product?.category_id).filter(Boolean))];
+    if (!categoryIds.length) return;
+    
+    const wishedIds = wlData.items.map(it => it.product_id);
+    
+    // ดึงสินค้า 4 ตัวจาก category เดียวกัน
+    const { data: similar } = await sb.from('products')
+      .select('id,name_th,price,compare_price,thumbnail,images,rating_avg,rating_count,sellers(shop_name)')
+      .in('category_id', categoryIds)
+      .not('id', 'in', '(' + wishedIds.join(',') + ')')
+      .eq('status', 'active')
+      .order('sold_count', { ascending: false })
+      .limit(4);
+    
+    if (!similar?.length) return;
+    
+    // Render
+    const cards = similar.map(p => {
+      const thumb = p.thumbnail || p.images?.[0];
+      const shop = p.sellers?.shop_name || 'Shop';
+      return `<div class="prod-card" onclick="location.href='product.html?id=${p.id}'" style="cursor:pointer">
+        <div class="prod-img">${thumb ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover">` : '📦'}</div>
+        <div class="prod-body">
+          <div class="prod-shop"><span class="prod-shop-dot"></span>${shop}</div>
+          <div class="prod-name">${p.name_th}</div>
+          <div class="prod-rating"><span class="stars">${'★'.repeat(Math.round(p.rating_avg||0))}</span><span class="rating-num">${(p.rating_avg||0).toFixed(1)} (${p.rating_count||0})</span></div>
+          <div class="prod-price-row">
+            <span class="prod-price">฿${Number(p.price).toLocaleString()}</span>
+            ${p.compare_price ? `<span class="prod-orig">฿${Number(p.compare_price).toLocaleString()}</span>` : ''}
+          </div>
+          <div class="prod-actions">
+            <button class="btn-fav" onclick="event.stopPropagation();sb.rpc('toggle_wishlist',{p_product_id:'${p.id}'}).then(()=>tmToast('❤️ บันทึกแล้ว'))">❤️ บันทึก</button>
+            <button class="btn-buy" onclick="event.stopPropagation();location.href='product.html?id=${p.id}'">ซื้อ</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    
+    // เก็บ placeholder card แรก + เพิ่ม cards ใหม่
+    const placeholder = grid.querySelector('.prod-card');
+    grid.innerHTML = (placeholder ? placeholder.outerHTML : '') + cards;
+  } catch(e) {
+    console.warn('loadSuggestions:', e);
+  }
+}
+
+// ── นับจำนวนสินค้าแต่ละ category ใน wishlist ──
+async function updateCollectionCounts() {
+  try {
+    const { data: wlData } = await sb.rpc('get_my_wishlist');
+    if (!wlData?.items) return;
+    
+    const items = wlData.items;
+    
+    // นับตามชื่อ category (home, tech, fashion)
+    const counts = { home: 0, tech: 0, fashion: 0 };
+    
+    items.forEach(it => {
+      const catId = it.product?.category_id;
+      // ใช้ category_id แบบง่ายๆ — อาจ map กับ slug จริงได้ภายหลัง
+      // สำหรับตอนนี้นับรวม
+    });
+    
+    // ดึงข้อมูล categories เพื่อเช็ค slug/name
+    if (items.length) {
+      const catIds = [...new Set(items.map(it => it.product?.category_id).filter(Boolean))];
+      if (catIds.length) {
+        const { data: cats } = await sb.from('categories').select('id,slug,name_th').in('id', catIds);
+        const catMap = {};
+        (cats || []).forEach(c => catMap[c.id] = c);
+        
+        items.forEach(it => {
+          const cat = catMap[it.product?.category_id];
+          if (!cat) return;
+          const slug = (cat.slug || '').toLowerCase();
+          const name = (cat.name_th || '').toLowerCase();
+          if (slug.includes('home') || slug.includes('furniture') || name.includes('บ้าน') || name.includes('เฟอร์')) counts.home++;
+          else if (slug.includes('tech') || slug.includes('electronic') || name.includes('อิเล็ก') || name.includes('โทร') || name.includes('คอม')) counts.tech++;
+          else if (slug.includes('fashion') || slug.includes('cloth') || name.includes('แฟชั่น') || name.includes('เสื้อ')) counts.fashion++;
+        });
+      }
+    }
+    
+    const setCnt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setCnt('col-count-home', counts.home);
+    setCnt('col-count-tech', counts.tech);
+    setCnt('col-count-fashion', counts.fashion);
+  } catch(e) { console.warn('updateCollectionCounts:', e); }
+}
+
+// เรียกหลัง loadWishlistFromDB เสร็จ
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    loadSuggestions();
+    updateCollectionCounts();
+  }, 1500);
+});
+
+
 </script>
 </body>
 </html>
