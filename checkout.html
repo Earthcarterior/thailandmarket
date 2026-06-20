@@ -602,7 +602,7 @@ img{max-width:100%;height:auto}
     <div class="card" id="addr-section">
       <div class="sec-title">📍 ที่อยู่จัดส่ง</div>
       <div id="addr-list"></div>
-      <button class="add-addr-btn" onclick="openAddrModal()">+ เพิ่มที่อยู่ใหม่</button>
+      <button class="add-addr-btn" onclick="window._editingAddrId=null;openAddrModal()">+ เพิ่มที่อยู่ใหม่</button>
     </div>
 
     <!-- ADDRESS MODAL -->
@@ -1064,12 +1064,66 @@ function buildAddrs(){
       <div class="addr-detail">${a.detail}</div>
       <div class="addr-tag">${a.tag}</div>
     </div>
-    <button style="background:none;border:none;font-size:11px;color:var(--accent);cursor:pointer;white-space:nowrap;margin-left:auto" onclick="event.stopPropagation();toast('✏️ แก้ไขที่อยู่')">แก้ไข</button>
+    <button style="background:none;border:none;font-size:11px;color:var(--accent);cursor:pointer;white-space:nowrap;margin-left:auto" onclick="event.stopPropagation();editAddr('${a.id}')">แก้ไข</button>
   </div>`).join('');
 }
 function selAddr(i){ADDRS.forEach((a,j)=>a.sel=j===i);buildAddrs();toast('📍 เลือกที่อยู่แล้ว');}
 
 // ── Address Modal (เพิ่มที่อยู่ใหม่ในหน้า checkout) ──
+// ── แก้ไขที่อยู่: pre-fill modal + เปิด ──
+window._editingAddrId = null;
+async function editAddr(addrId) {
+  try {
+    // ดึงข้อมูล address จาก list ที่ load ไว้ (ใน _addresses array หรือ DOM)
+    let addr = null;
+    
+    // ลองหา global _addresses array
+    if (Array.isArray(window._addresses)) {
+      addr = window._addresses.find(a => a.id === addrId);
+    }
+    
+    // Fallback: query Supabase
+    if (!addr && (window._sbCO || window._sb || window.sb)) {
+      const _client = window._sbCO || window._sb || window.sb;
+      try {
+        const { data } = await _client.from('addresses').select('*').eq('id', addrId).maybeSingle();
+        if (data) addr = data;
+      } catch(e) { console.warn('editAddr fetch:', e); }
+    }
+    
+    if (!addr) {
+      toast('❌ ไม่พบข้อมูลที่อยู่');
+      return;
+    }
+    
+    // Pre-fill modal
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+    setVal('cm-addr-name', addr.name || addr.recipient_name);
+    setVal('cm-addr-phone', addr.phone);
+    setVal('cm-addr-line1', addr.line1 || addr.address_line1 || addr.address);
+    setVal('cm-addr-subdistrict', addr.subdistrict || addr.tambon);
+    setVal('cm-addr-district', addr.district || addr.amphoe);
+    setVal('cm-addr-province', addr.province);
+    setVal('cm-addr-postcode', addr.postcode || addr.zip_code);
+    
+    // เก็บ id ที่กำลังแก้ไข
+    window._editingAddrId = addrId;
+    
+    // เปิด modal
+    openAddrModal();
+    
+    // เปลี่ยนปุ่ม title (ถ้ามี)
+    const modal = document.getElementById('addr-modal');
+    if (modal) {
+      const title = modal.querySelector('h2, h3, .modal-title');
+      if (title) title.textContent = '✏️ แก้ไขที่อยู่';
+    }
+  } catch(e) {
+    console.error('editAddr:', e);
+    toast('❌ ' + e.message);
+  }
+}
+
 function openAddrModal(){
   ['cm-addr-name','cm-addr-phone','cm-addr-line1','cm-addr-subdistrict','cm-addr-district','cm-addr-province','cm-addr-postcode'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
@@ -1114,7 +1168,32 @@ async function saveCheckoutAddr(){
     if(isDefault){
       await _sbCO.from('addresses').update({is_default:false}).eq('user_id',authId);
     }
-    const { error } = await _sbCO.from('addresses').insert({...addrData,created_at:new Date().toISOString()});
+    // ── Edit mode: update แทน insert ──
+  if (window._editingAddrId) {
+    const { error: updErr } = await _sbCO.from('addresses').update({
+      name, phone, address_line1: line1, line1,
+      subdistrict: g('cm-addr-subdistrict'),
+      district: g('cm-addr-district'),
+      province: g('cm-addr-province'),
+      postcode: g('cm-addr-postcode'),
+      zip_code: g('cm-addr-postcode')
+    }).eq('id', window._editingAddrId);
+    
+    if (updErr) {
+      toast('❌ แก้ไขไม่สำเร็จ: ' + updErr.message);
+      return;
+    }
+    
+    toast('✅ แก้ไขที่อยู่สำเร็จ');
+    window._editingAddrId = null;
+    closeAddrModal();
+    if (typeof loadCheckoutAddresses === 'function') loadCheckoutAddresses();
+    else location.reload();
+    return;
+  }
+  
+  // ── New mode: insert ──
+  const { error } = await _sbCO.from('addresses').insert({...addrData,created_at:new Date().toISOString()});
     if(error) throw error;
 
     toast('✅ เพิ่มที่อยู่สำเร็จ');
