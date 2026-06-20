@@ -6758,7 +6758,18 @@ function rtRender() {
         <div style="font-size:12px;color:#666;margin-bottom:3px">👤 ${sfEsc(u.display_name || u.email || 'ลูกค้า')}</div>
         <div style="font-size:12px;margin-bottom:3px"><strong>เหตุผล:</strong> ${sfEsc(reasonLabels[r.reason_category] || r.reason_category || '')} - ${sfEsc(r.reason || '')}</div>
         ${r.description?`<div style="font-size:12px;color:#666;margin-bottom:3px"><strong>รายละเอียด:</strong> ${sfEsc(r.description)}</div>`:''}
-        <div style="font-size:11px;color:#888">📅 ${sfDate(r.created_at)} · 💰 ขอคืน ${sfMoney(r.requested_amount || order.total || 0)}</div>
+        <div style="font-size:11px;color:#888">📅 ${sfDate(r.created_at)} · 💰 ขอคืน ${sfMoney(r.amount || r.requested_amount || order.total || 0)}</div>
+        ${(() => {
+          const its = Array.isArray(r.items) ? r.items : [];
+          if (!its.length) return '';
+          const lines = its.map(it => {
+            const nm = it.name || it.name_th || it.product_name || 'สินค้า';
+            const qty = it.qty || it.quantity || 1;
+            const pr = Number(it.price) || 0;
+            return `<div style="font-size:11px;color:#555">• ${sfEsc(nm)} ×${qty}${pr?` — ${sfMoney(pr*qty)}`:''}</div>`;
+          }).join('');
+          return `<div style="margin-top:5px;padding:6px;background:#FAFAFA;border-radius:4px"><strong style="font-size:11px">รายการที่ขอคืน:</strong>${lines}</div>`;
+        })()}
         ${r.evidence_images && r.evidence_images.length > 1?`<div style="margin-top:6px;display:flex;gap:4px">${r.evidence_images.slice(1,4).map(img => `<img src="${sfEsc(img)}" onclick="window.open('${sfEsc(img)}','_blank')" style="width:40px;height:40px;object-fit:cover;border-radius:3px;cursor:pointer">`).join('')}</div>`:''}
         ${r.decision_note?`<div style="font-size:11px;color:#666;margin-top:5px;padding:6px;background:#FAFAFA;border-radius:3px"><strong>หมายเหตุของคุณ:</strong> ${sfEsc(r.decision_note)}</div>`:''}
       </div>
@@ -6768,7 +6779,7 @@ function rtRender() {
           <button class="rt-btn danger" onclick="rtDecide('${r.id}','rejected')">❌ ปฏิเสธ</button>
         `:''}
         ${r.status === 'approved'?`
-          <button class="rt-btn primary" onclick="rtMarkRefunded('${r.id}', ${r.requested_amount || order.total || 0})">💰 บันทึกการคืนเงิน</button>
+          <button class="rt-btn primary" onclick="rtMarkRefunded('${r.id}', ${r.amount || r.requested_amount || order.total || 0})">💰 บันทึกการคืนเงิน</button>
         `:''}
       </div>
     </div>`;

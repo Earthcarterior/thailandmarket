@@ -906,61 +906,88 @@ function renderProfileOrders() {
 
 // ขอคืนสินค้า — แจ้งให้ติดต่อ support (modal เต็มอยู่ใน order-history เดิม)
 async function ordReturn(orderId, orderNum, amount) {
-  const reason = prompt(`ขอคืนสินค้า — ออเดอร์ ${orderNum}\nยอด ฿${amount.toLocaleString()}\n\nกรุณาระบุเหตุผล:`);
-  if (!reason) return;
-  if (reason.trim().length < 5) { alert('⚠️ กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร'); return; }
-  
   try {
-    // ดึง user_id จาก public.users (mapped from auth.email)
     const { data:{ session } } = await sb.auth.getSession();
-    if (!session) { alert('⚠️ กรุณาเข้าสู่ระบบ'); return; }
-    
+    if (!session) { alert('\u26a0\ufe0f กรุณาเข้าสู่ระบบ'); return; }
+
+    // Bug 1 fix: กันสร้างคำขอคืนซ้ำ
+    const { data: existing } = await sb.from('return_requests')
+      .select('id, status')
+      .eq('order_id', orderId);
+    const active = (existing || []).filter(r => ['pending','approved','processing'].includes(r.status));
+    if (active.length) {
+      alert('\u26a0\ufe0f ออเดอร์นี้มีคำขอคืนสินค้าอยู่แล้ว (สถานะ: ' + active[0].status + ')\nไม่สามารถส่งคำขอซ้ำได้ กรุณารอผลการพิจารณา');
+      return;
+    }
+
+    const reason = prompt('ขอคืนสินค้า — ออเดอร์ ' + orderNum + '\nยอด \u0e3f' + Number(amount).toLocaleString() + '\n\nกรุณาระบุเหตุผล:');
+    if (!reason) return;
+    if (reason.trim().length < 5) { alert('\u26a0\ufe0f กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร'); return; }
+
     const { data: u } = await sb.from('users').select('id').eq('email', session.user.email).maybeSingle();
     const userId = u?.id || null;
 
-    // ── หา seller(s) ของออเดอร์นี้ — แตกคำขอคืนแยกตามร้าน ──
-    // ดึง product ในออเดอร์ → ดูว่ามาจากร้านไหนบ้าง
+    // ดึง order จาก cache เพื่อเอา items (Bug 3) + amount สำรอง (Bug 2)
+    const order = (_profileOrders || []).find(o => o.id === orderId) || {};
+    const allItems = Array.isArray(order.items) ? order.items : [];
+
     const { data: oItems } = await sb.from('order_items')
       .select('product_id, products(seller_id)')
       .eq('order_id', orderId);
 
-    // รวม seller_id ที่ไม่ซ้ำ (ออเดอร์อาจมีหลายร้าน)
     const sellerIds = [...new Set(
-      (oItems || [])
-        .map(oi => oi.products?.seller_id)
-        .filter(Boolean)
+      (oItems || []).map(oi => oi.products?.seller_id).filter(Boolean)
     )];
 
     if (!sellerIds.length) {
-      alert('❌ ไม่พบข้อมูลร้านค้าของออเดอร์นี้');
+      alert('\u274c ไม่พบข้อมูลร้านค้าของออเดอร์นี้');
       return;
     }
 
-    // สร้างคำขอคืน 1 แถวต่อร้าน (multi-vendor → แตกตามร้าน)
-    const rows = sellerIds.map(sid => ({
-      order_id: orderId,
-      user_id: userId,
-      seller_id: sid,
-      reason: reason.trim(),
-      amount: amount,
-      status: 'pending',
-      return_type: 'refund'
-    }));
+    // Bug 2 fix: amount สำรอง
+    let baseAmount = Number(amount) || 0;
+    if (!baseAmount && allItems.length) {
+      baseAmount = allItems.reduce((s,i) => s + (Number(i.price)||0) * (Number(i.qty)||1), 0);
+    }
+
+    // สร้างคำขอคืน 1 แถวต่อร้าน พร้อม items (Bug 3)
+    const rows = sellerIds.map(sid => {
+      const sidProductIds = (oItems || [])
+        .filter(oi => oi.products?.seller_id === sid)
+        .map(oi => oi.product_id);
+      const sidItems = allItems.filter(it =>
+        !it.product_id || sidProductIds.includes(it.product_id)
+      );
+      const sidAmount = sidItems.length
+        ? sidItems.reduce((s,i) => s + (Number(i.price)||0) * (Number(i.qty)||1), 0)
+        : baseAmount;
+      return {
+        order_id: orderId,
+        user_id: userId,
+        seller_id: sid,
+        reason: reason.trim(),
+        amount: sidAmount || baseAmount,
+        items: sidItems.length ? sidItems : allItems,
+        status: 'pending',
+        return_type: 'refund'
+      };
+    });
 
     const { error } = await sb.from('return_requests').insert(rows);
 
     if (error) {
       console.error('[ordReturn]', error);
-      alert('❌ ส่งคำขอไม่สำเร็จ: ' + error.message);
+      alert('\u274c ส่งคำขอไม่สำเร็จ: ' + error.message);
     } else {
       const msg = sellerIds.length > 1
-        ? `✅ ส่งคำขอคืนสินค้าแล้ว (${sellerIds.length} ร้าน) — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ`
-        : '✅ ส่งคำขอคืนสินค้าแล้ว — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ';
+        ? '\u2705 ส่งคำขอคืนสินค้าแล้ว (' + sellerIds.length + ' ร้าน) — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ'
+        : '\u2705 ส่งคำขอคืนสินค้าแล้ว — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ';
       alert(msg);
+      if (typeof loadOrders === 'function') loadOrders(currentAuthId);
     }
   } catch(e) {
     console.error('[ordReturn]', e);
-    alert('❌ เกิดข้อผิดพลาด: ' + e.message);
+    alert('\u274c เกิดข้อผิดพลาด: ' + e.message);
   }
 }
 
