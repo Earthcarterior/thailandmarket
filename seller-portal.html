@@ -6688,32 +6688,19 @@ async function renderReturnsLive() {
   const wrap = document.getElementById('rt-list-wrap');
   if (!wrap || !_sellerSellerId) return;
   try {
-    // ดึง orders ที่มีสินค้าของร้านนี้ก่อน — แล้ว filter return_requests
-    const { data: products } = await _sb.from('products').select('id').eq('seller_id', _sellerSellerId);
-    const productIds = (products || []).map(p => p.id);
-    if (!productIds.length) {
-      wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#888">ยังไม่มีสินค้า</div>';
-      return;
-    }
-
-    // ดึง orders ที่มีสินค้าของร้าน
-    const { data: orderItems } = await _sb.from('order_items')
-      .select('order_id').in('product_id', productIds);
-    const orderIds = [...new Set((orderItems || []).map(oi => oi.order_id))];
-    
-    if (!orderIds.length) {
-      wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#888">ยังไม่มีคำขอคืนสินค้า</div>';
-      _rtRequests = [];
-      rtUpdateStats();
-      return;
-    }
-
+    // ── กรองด้วย seller_id ตรงๆ — เห็นเฉพาะคำขอคืนของร้านตัวเอง ──
     const { data, error } = await _sb.from('return_requests')
       .select('*, orders(id,order_number,total)')
-      .in('order_id', orderIds)
+      .eq('seller_id', _sellerSellerId)
       .order('created_at', {ascending:false});
     if (error) throw error;
     _rtRequests = data || [];
+
+    if (!_rtRequests.length) {
+      wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#888">ยังไม่มีคำขอคืนสินค้า</div>';
+      rtUpdateStats();
+      return;
+    }
 
     // Hydrate users
     const userIds = [...new Set(_rtRequests.map(r => r.user_id).filter(Boolean))]
@@ -6726,7 +6713,7 @@ async function renderReturnsLive() {
     rtUpdateStats();
     rtRender();
   } catch(e) {
-    wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#E63329">❌ ${sfEsc(e.message)}<br><small>กรุณารัน seller-features-master-2026-05-08.sql</small></div>`;
+    wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#E63329">❌ ${sfEsc(e.message)}<br><small>กรุณารัน migrate_returns.sql ใน Supabase</small></div>`;
   }
 }
 
@@ -7135,15 +7122,9 @@ window.bkBulkStatus = async function(status) {
 async function updateReturnsBadge() {
   if (!_sellerSellerId) return;
   try {
-    const { data: products } = await _sb.from('products').select('id').eq('seller_id', _sellerSellerId);
-    const productIds = (products || []).map(p => p.id);
-    if (!productIds.length) return;
-    const { data: orderItems } = await _sb.from('order_items').select('order_id').in('product_id', productIds);
-    const orderIds = [...new Set((orderItems || []).map(oi => oi.order_id))];
-    if (!orderIds.length) return;
     const { count } = await _sb.from('return_requests')
       .select('*', {count:'exact', head:true})
-      .in('order_id', orderIds).eq('status', 'pending');
+      .eq('seller_id', _sellerSellerId).eq('status', 'pending');
     const badge = document.getElementById('returns-badge');
     if (badge) {
       if (count > 0) { badge.textContent = count; badge.style.display = 'inline-flex'; }
@@ -7571,7 +7552,7 @@ async function renderTasksToday() {
           (await _sb.from('products').select('id').eq('seller_id', _sellerSellerId)).data?.map(p=>p.id) || []
         )).data?.map(o=>o.order_id) || ['00000000-0000-0000-0000-000000000000']),
       _sb.from('chat_threads').select('*', {count:'exact', head:true}).eq('seller_id', _sellerSellerId).gt('unread_seller', 0),
-      _sb.from('return_requests').select('*', {count:'exact', head:true}).eq('status', 'pending'),
+      _sb.from('return_requests').select('*', {count:'exact', head:true}).eq('seller_id', _sellerSellerId).eq('status', 'pending'),
       _sb.from('reviews').select('*', {count:'exact', head:true}).is('reply', null).in('product_id',
         (await _sb.from('products').select('id').eq('seller_id', _sellerSellerId)).data?.map(p=>p.id) || ['00000000-0000-0000-0000-000000000000']),
       _sb.from('products').select('*', {count:'exact', head:true}).eq('seller_id', _sellerSellerId).lt('stock_quantity', 10)
@@ -9721,31 +9702,9 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // ถ้าเป็น seller → กรองเฉพาะของร้าน
+      // ถ้าเป็น seller → กรองเฉพาะของร้าน (ใช้ seller_id ตรงๆ)
       if (sellerId) {
-        // หา orders ที่มีสินค้าของร้านนี้
-        const { data: products } = await sb().from('products').select('id').eq('seller_id', sellerId);
-        const productIds = (products || []).map(p => p.id);
-
-        if (productIds.length) {
-          const { data: orderItems } = await sb().from('order_items').select('order_id').in('product_id', productIds);
-          const orderIds = [...new Set((orderItems || []).map(oi => oi.order_id))];
-          if (orderIds.length) {
-            query = query.in('order_id', orderIds);
-          } else {
-            // ไม่มีออเดอร์ที่ขายให้ลูกค้าเลย
-            window._rtRequests = [];
-            wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#888"><div style="font-size:36px;margin-bottom:8px">📦</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">ยังไม่มีคำขอคืนสินค้า</div><div style="font-size:12px;color:#aaa">เมื่อมีลูกค้าขอคืนสินค้า รายการจะมาแสดงที่นี่</div></div>';
-            updateStats();
-            return;
-          }
-        } else {
-          // ไม่มีสินค้าในร้าน
-          window._rtRequests = [];
-          wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#888"><div style="font-size:36px;margin-bottom:8px">📦</div><div style="font-size:14px;font-weight:600;margin-bottom:4px">ยังไม่มีสินค้าในร้าน</div><div style="font-size:12px;color:#aaa">กรุณาเพิ่มสินค้าก่อน — กดเมนู "สินค้าของฉัน"</div></div>';
-          updateStats();
-          return;
-        }
+        query = query.eq('seller_id', sellerId);
       }
       // ถ้าไม่มี sellerId (admin) → ดูทั้งหมด
 

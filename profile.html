@@ -917,21 +917,46 @@ async function ordReturn(orderId, orderNum, amount) {
     
     const { data: u } = await sb.from('users').select('id').eq('email', session.user.email).maybeSingle();
     const userId = u?.id || null;
-    
-    const { error } = await sb.from('return_requests').insert({
+
+    // ── หา seller(s) ของออเดอร์นี้ — แตกคำขอคืนแยกตามร้าน ──
+    // ดึง product ในออเดอร์ → ดูว่ามาจากร้านไหนบ้าง
+    const { data: oItems } = await sb.from('order_items')
+      .select('product_id, products(seller_id)')
+      .eq('order_id', orderId);
+
+    // รวม seller_id ที่ไม่ซ้ำ (ออเดอร์อาจมีหลายร้าน)
+    const sellerIds = [...new Set(
+      (oItems || [])
+        .map(oi => oi.products?.seller_id)
+        .filter(Boolean)
+    )];
+
+    if (!sellerIds.length) {
+      alert('❌ ไม่พบข้อมูลร้านค้าของออเดอร์นี้');
+      return;
+    }
+
+    // สร้างคำขอคืน 1 แถวต่อร้าน (multi-vendor → แตกตามร้าน)
+    const rows = sellerIds.map(sid => ({
       order_id: orderId,
       user_id: userId,
+      seller_id: sid,
       reason: reason.trim(),
       amount: amount,
       status: 'pending',
       return_type: 'refund'
-    });
-    
+    }));
+
+    const { error } = await sb.from('return_requests').insert(rows);
+
     if (error) {
       console.error('[ordReturn]', error);
       alert('❌ ส่งคำขอไม่สำเร็จ: ' + error.message);
     } else {
-      alert('✅ ส่งคำขอคืนสินค้าแล้ว — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ');
+      const msg = sellerIds.length > 1
+        ? `✅ ส่งคำขอคืนสินค้าแล้ว (${sellerIds.length} ร้าน) — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ`
+        : '✅ ส่งคำขอคืนสินค้าแล้ว — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ';
+      alert(msg);
     }
   } catch(e) {
     console.error('[ordReturn]', e);
