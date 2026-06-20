@@ -1184,33 +1184,50 @@ async function saveCheckoutAddr(){
     if(isDefault){
       await _sbCO.from('addresses').update({is_default:false}).eq('user_id',authId);
     }
-    // ── Edit mode: update แทน insert ──
+    // ── Edit mode: ใช้ RPC update_my_address (bypass RLS) ──
   if (window._editingAddrId) {
-    const updateData = {
-      name, 
-      phone, 
-      line1,
-      subdistrict: g('cm-addr-subdistrict'),
-      district: g('cm-addr-district'),
-      province: g('cm-addr-province'),
-      postcode: g('cm-addr-postcode')
+    const params = {
+      p_address_id: window._editingAddrId,
+      p_name: name,
+      p_phone: phone,
+      p_line1: line1,
+      p_subdistrict: g('cm-addr-subdistrict') || null,
+      p_district: g('cm-addr-district') || null,
+      p_province: g('cm-addr-province') || null,
+      p_postcode: g('cm-addr-postcode') || null
     };
     
-    console.log('[saveCheckoutAddr] UPDATE:', window._editingAddrId, updateData);
+    console.log('[saveCheckoutAddr] RPC update_my_address:', params);
     
-    const { error: updErr } = await _sbCO.from('addresses').update(updateData).eq('id', window._editingAddrId);
-    
-    if (updErr) {
-      console.error('[saveCheckoutAddr] update error:', updErr);
-      toast('❌ แก้ไขไม่สำเร็จ: ' + updErr.message);
-      return;
+    try {
+      const { data, error: updErr } = await _sbCO.rpc('update_my_address', params);
+      
+      if (updErr) {
+        console.error('[saveCheckoutAddr] RPC error:', updErr);
+        // Fallback: direct update
+        const { error: dirErr } = await _sbCO.from('addresses').update({
+          name, phone, line1,
+          subdistrict: params.p_subdistrict,
+          district: params.p_district,
+          province: params.p_province,
+          postcode: params.p_postcode
+        }).eq('id', window._editingAddrId);
+        
+        if (dirErr) {
+          toast('❌ แก้ไขไม่สำเร็จ: ' + dirErr.message);
+          return;
+        }
+      }
+      
+      console.log('[saveCheckoutAddr] success:', data);
+      toast('✅ แก้ไขที่อยู่สำเร็จ');
+      window._editingAddrId = null;
+      closeAddrModal();
+      setTimeout(() => location.reload(), 600);
+    } catch(e) {
+      console.error('[saveCheckoutAddr] exception:', e);
+      toast('❌ ' + e.message);
     }
-    
-    toast('✅ แก้ไขที่อยู่สำเร็จ');
-    window._editingAddrId = null;
-    closeAddrModal();
-    // Reload page เพื่อ refresh ที่อยู่
-    setTimeout(() => location.reload(), 600);
     return;
   }
   
