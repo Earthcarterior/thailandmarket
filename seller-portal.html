@@ -6706,8 +6706,10 @@ async function renderReturnsLive() {
     const userIds = [...new Set(_rtRequests.map(r => r.user_id).filter(Boolean))]
       .filter(id => !_rtUserCache[id]);
     if (userIds.length) {
-      const { data: users } = await _sb.from('users').select('id,email,display_name,phone').in('id', userIds);
-      (users || []).forEach(u => _rtUserCache[u.id] = u);
+      try {
+        const { data: users, error: uErr } = await _sb.from('users').select('id,email,display_name,phone').in('id', userIds);
+        if (!uErr) (users || []).forEach(u => _rtUserCache[u.id] = u);
+      } catch(ue) { /* ดึงชื่อลูกค้าไม่ได้ก็ไม่เป็นไร */ }
     }
 
     rtUpdateStats();
@@ -9719,8 +9721,10 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       window._rtUserCache = window._rtUserCache || {};
       const needFetch = userIds.filter(id => !window._rtUserCache[id]);
       if (needFetch.length) {
-        const { data: users } = await sb().from('users').select('id, email, name, display_name, phone').in('id', needFetch);
-        (users || []).forEach(u => window._rtUserCache[u.id] = u);
+        try {
+          const { data: users, error: uErr } = await sb().from('users').select('id, email, name, display_name, phone').in('id', needFetch);
+          if (!uErr) (users || []).forEach(u => window._rtUserCache[u.id] = u);
+        } catch(ue) { /* ดึงชื่อลูกค้าไม่ได้ก็ไม่เป็นไร แสดงเป็น "ลูกค้า" แทน */ }
       }
 
       updateStats();
