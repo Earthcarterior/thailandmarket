@@ -900,6 +900,7 @@ function renderProfileOrders() {
       ${(o.status==='shipped'||o.status==='shipping')?`<button class="btn btn-sm btn-ghost" onclick="location.href='tracking.html?order=${o.order_number}'">📍 ติดตาม</button>`:''}
       ${(o.status==='delivered'||o.status==='completed')?`<button class="btn btn-sm btn-ghost" onclick="location.href='review-write.html?order=${o.id}'">⭐ รีวิว</button>`:''}
       ${(o.status==='delivered'||o.status==='paid'||o.status==='shipped')?`<button class="btn btn-sm btn-ghost" onclick="ordReturn('${o.id}','${o.order_number}',${orderTotal})">↩️ ขอคืนสินค้า</button>`:''}
+      ${(o.status==='return_requested')?`<span class="btn btn-sm" style="background:#FEF3C7;color:#92400E;cursor:default">↩️ ขอคืนแล้ว · รอดำเนินการ</span>`:''}
     </div></div>
   </div>`}).join('');
 }
@@ -979,6 +980,10 @@ async function ordReturn(orderId, orderNum, amount) {
       console.error('[ordReturn]', error);
       alert('\u274c ส่งคำขอไม่สำเร็จ: ' + error.message);
     } else {
+      // เปลี่ยนสถานะออเดอร์เป็น "ขอคืนสินค้า" (ค้างในรายการ ไม่หาย)
+      try {
+        await sb.from('orders').update({ status: 'return_requested' }).eq('id', orderId);
+      } catch(ue) { console.warn('update order status failed', ue); }
       const msg = sellerIds.length > 1
         ? '\u2705 ส่งคำขอคืนสินค้าแล้ว (' + sellerIds.length + ' ร้าน) — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ'
         : '\u2705 ส่งคำขอคืนสินค้าแล้ว — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ';
