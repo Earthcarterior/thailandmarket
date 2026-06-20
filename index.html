@@ -3678,51 +3678,56 @@ init().catch(e => console.error('[TM] init crashed:', e));
 // CART BADGE UPDATER — Update ทุก badge ที่มี id="cart-badge"
 // ════════════════════════════════════════════════════════════
 window.tmUpdateCartBadge = async function() {
+  // ── 1. นับจาก localStorage (ทันที — แสดงก่อน) ──
   let count = 0;
-  
-  // 1. นับจาก localStorage
   try {
     const cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
     count = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
   } catch(e) {}
   
-  // 2. ถ้า login → ใช้ DB cart (จริงที่สุด)
+  // ── 2. Update เฉพาะ #cart-badge / #cart-count / #cart-float (เจาะจง) ──
+  const updateBadges = (n) => {
+    // เจาะจง: cart badge เท่านั้น (ไม่แตะ chat-badge, notif-badge)
+    const cartBadgeEl = document.getElementById('cart-badge');
+    if (cartBadgeEl) {
+      cartBadgeEl.textContent = n;
+      cartBadgeEl.style.display = n > 0 ? '' : 'none';
+    }
+    
+    const cartCountEl = document.getElementById('cart-count');
+    if (cartCountEl) cartCountEl.textContent = n;
+    
+    const cartFloatCount = document.getElementById('cart-float-count');
+    if (cartFloatCount) cartFloatCount.textContent = n > 0 ? `(${n} รายการ)` : '';
+    
+    const cartFloat = document.getElementById('cart-float');
+    if (cartFloat) cartFloat.classList.toggle('show', n > 0);
+  };
+  
+  updateBadges(count);
+  console.log('[cart] badge updated (localStorage):', count);
+  
+  // ── 3. Sync DB ใน background (ถ้า login) ──
   try {
     if (window._sb || window.sb) {
       const _client = window._sb || window.sb;
       const { data: { session } } = await _client.auth.getSession();
       if (session) {
-        const { data: cartData } = await _client.rpc('get_my_cart');
-        if (cartData?.items) {
+        const { data: cartData, error } = await _client.rpc('get_my_cart');
+        if (!error && cartData?.items) {
           const dbCount = cartData.items.reduce((s, i) => s + (Number(i.quantity) || 1), 0);
-          // ใช้ DB count (เพราะตรงที่สุด)
-          count = dbCount;
+          
+          // ⭐ ใช้ MAX (localStorage, DB) — กันกรณี DB ยัง sync ไม่ทัน
+          const finalCount = Math.max(count, dbCount);
+          
+          if (finalCount !== count) {
+            updateBadges(finalCount);
+            console.log('[cart] badge updated (DB sync):', finalCount, '(ls:', count, 'db:', dbCount, ')');
+          }
         }
       }
     }
-  } catch(e) {}
-  
-  // 3. Update ทุก badge ที่มี id="cart-badge" หรือ class "nav-badge" / "cart-count"
-  document.querySelectorAll('#cart-badge, .nav-badge, #cart-count').forEach(el => {
-    if (el.id === 'cart-badge' || el.classList.contains('nav-badge') || el.id === 'cart-count') {
-      if (el.closest('[onclick*="cart"]') || el.id === 'cart-badge' || el.id === 'cart-count') {
-        el.textContent = count;
-        el.style.display = count > 0 ? '' : 'none';
-      }
-    }
-  });
-  
-  // 4. Update ทุก element มี class .cart-count-badge หรือ id อื่นๆ
-  const cartCountEl = document.getElementById('cart-count');
-  if (cartCountEl) cartCountEl.textContent = count;
-  
-  // 5. Float bubble (เฉพาะ index)
-  const cf = document.getElementById('cart-float');
-  const cfc = document.getElementById('cart-float-count');
-  if (cfc) cfc.textContent = count > 0 ? `(${count} รายการ)` : '';
-  if (cf) cf.classList.toggle('show', count > 0);
-  
-  console.log('[cart] badge updated:', count);
+  } catch(e) { console.warn('[cart] DB sync failed:', e); }
   
   return count;
 };
