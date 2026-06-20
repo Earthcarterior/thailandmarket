@@ -8771,13 +8771,23 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
 
   async function getCurrentSeller(){
     if (_spSeller) return _spSeller;
+    // ใช้ผลที่ resolve สำเร็จแล้วจาก init หลัก (เชื่อถือได้สุด)
+    if (typeof _sellerSellerId !== 'undefined' && _sellerSellerId) {
+      _spSeller = { id: _sellerSellerId };
+      return _spSeller;
+    }
     var s = sb();
     var u = await s.auth.getUser();
     if (!u.data || !u.data.user) return null;
-    var pu = await s.from('users').select('id').eq('email', u.data.user.email).maybeSingle();
-    if (!pu.data) return null;
-    var sel = await s.from('sellers').select('id,shop_name,user_id').eq('user_id', pu.data.id).maybeSingle();
-    _spSeller = sel.data;
+    var authId = u.data.user.id;
+    var email = u.data.user.email;
+    // หา user ids ที่เป็นไปได้ (เผื่อ email ซ้ำ / id = auth.uid)
+    var ids = [authId];
+    var pu = await s.from('users').select('id').eq('email', email);
+    (pu.data || []).forEach(function(r){ if (ids.indexOf(r.id) < 0) ids.push(r.id); });
+    // หา seller จาก user_id ใดก็ได้ที่ตรง (limit 1 กัน maybeSingle พัง)
+    var sel = await s.from('sellers').select('id,shop_name,user_id').in('user_id', ids).limit(1);
+    _spSeller = (sel.data && sel.data[0]) || null;
     return _spSeller;
   }
 
@@ -9066,13 +9076,21 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
 
   async function getCurrentSeller(){
     if (_seller) return _seller;
+    if (typeof _sellerSellerId !== 'undefined' && _sellerSellerId) {
+      var sFull = await sb().from('sellers').select('id,shop_name,rating_avg,rating_count,total_sales,user_id').eq('id', _sellerSellerId).maybeSingle();
+      _seller = sFull.data || { id: _sellerSellerId };
+      return _seller;
+    }
     var s = sb();
     var u = await s.auth.getUser();
     if (!u.data || !u.data.user) return null;
-    var pu = await s.from('users').select('id').eq('email', u.data.user.email).maybeSingle();
-    if (!pu.data) return null;
-    var sel = await s.from('sellers').select('id,shop_name,rating_avg,rating_count,total_sales,user_id').eq('user_id', pu.data.id).maybeSingle();
-    _seller = sel.data;
+    var authId = u.data.user.id;
+    var email = u.data.user.email;
+    var ids = [authId];
+    var pu = await s.from('users').select('id').eq('email', email);
+    (pu.data || []).forEach(function(r){ if (ids.indexOf(r.id) < 0) ids.push(r.id); });
+    var sel = await s.from('sellers').select('id,shop_name,rating_avg,rating_count,total_sales,user_id').in('user_id', ids).limit(1);
+    _seller = (sel.data && sel.data[0]) || null;
     return _seller;
   }
 
