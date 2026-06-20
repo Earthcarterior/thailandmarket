@@ -1186,16 +1186,22 @@ async function saveCheckoutAddr(){
     }
     // ── Edit mode: update แทน insert ──
   if (window._editingAddrId) {
-    const { error: updErr } = await _sbCO.from('addresses').update({
-      name, phone, address_line1: line1, line1,
+    const updateData = {
+      name, 
+      phone, 
+      line1,
       subdistrict: g('cm-addr-subdistrict'),
       district: g('cm-addr-district'),
       province: g('cm-addr-province'),
-      postcode: g('cm-addr-postcode'),
-      zip_code: g('cm-addr-postcode')
-    }).eq('id', window._editingAddrId);
+      postcode: g('cm-addr-postcode')
+    };
+    
+    console.log('[saveCheckoutAddr] UPDATE:', window._editingAddrId, updateData);
+    
+    const { error: updErr } = await _sbCO.from('addresses').update(updateData).eq('id', window._editingAddrId);
     
     if (updErr) {
+      console.error('[saveCheckoutAddr] update error:', updErr);
       toast('❌ แก้ไขไม่สำเร็จ: ' + updErr.message);
       return;
     }
@@ -1203,8 +1209,8 @@ async function saveCheckoutAddr(){
     toast('✅ แก้ไขที่อยู่สำเร็จ');
     window._editingAddrId = null;
     closeAddrModal();
-    if (typeof loadCheckoutAddresses === 'function') loadCheckoutAddresses();
-    else location.reload();
+    // Reload page เพื่อ refresh ที่อยู่
+    setTimeout(() => location.reload(), 600);
     return;
   }
   
