@@ -745,6 +745,9 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="sni" id="nav-couriers" onclick="showPanel('couriers')">
         <span class="sni-ico">🚚</span> ขนส่ง
       </div>
+      <div class="sni" id="nav-dropoff" onclick="showPanel('dropoff')">
+        <span class="sni-ico">📍</span> จุด Drop-off
+      </div>
       <div class="sni" id="nav-audit" onclick="showPanel('audit')">
         <span class="sni-ico">📋</span> Audit Logs
       </div>
@@ -3656,6 +3659,191 @@ window.crDelete = async function(id){
 </script>
 
 
+<div id="panel-dropoff" class="panel admin-only" style="padding:0;display:none">
+  <style>
+    #panel-dropoff .do-wrap{padding:24px;background:#FAFAFA;min-height:calc(100vh - 80px)}
+    #panel-dropoff .do-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:14px;flex-wrap:wrap}
+    #panel-dropoff .do-head h2{font-size:20px;font-weight:600;margin:0 0 4px}
+    #panel-dropoff .do-head p{font-size:12px;color:#666;margin:0}
+    #panel-dropoff .do-btn-add{padding:10px 18px;background:#0A0A0A;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+    #panel-dropoff .do-btn-add:hover{background:#262626}
+    #panel-dropoff .do-card{background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:16px 18px;margin-bottom:10px;position:relative}
+    #panel-dropoff .do-card.off{opacity:.55}
+    #panel-dropoff .do-name{font-size:15px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+    #panel-dropoff .do-carrier{display:inline-block;padding:2px 9px;border-radius:9px;font-size:10px;font-family:'DM Mono',monospace;background:#EEF2FF;color:#3730A3}
+    #panel-dropoff .do-addr{font-size:12px;color:#555;line-height:1.6;margin-bottom:6px}
+    #panel-dropoff .do-meta{font-size:11px;color:#888;font-family:'DM Mono',monospace;display:flex;gap:14px;flex-wrap:wrap}
+    #panel-dropoff .do-actions{position:absolute;top:14px;right:16px;display:flex;gap:6px;align-items:center}
+    #panel-dropoff .do-btn{padding:6px 12px;border:1px solid #E5E5E5;background:#fff;border-radius:4px;cursor:pointer;font-size:11px;font-family:inherit}
+    #panel-dropoff .do-btn:hover{background:#F5F5F5}
+    #panel-dropoff .do-btn.del{color:#DC2626;border-color:#FCA5A5}
+    #panel-dropoff .do-toggle{position:relative;width:42px;height:24px;display:inline-block;cursor:pointer}
+    #panel-dropoff .do-toggle input{opacity:0;width:0;height:0}
+    #panel-dropoff .do-slider{position:absolute;inset:0;background:#ccc;border-radius:12px;transition:.3s}
+    #panel-dropoff .do-slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+    #panel-dropoff .do-toggle input:checked + .do-slider{background:#10B981}
+    #panel-dropoff .do-toggle input:checked + .do-slider:before{transform:translateX(18px)}
+    #panel-dropoff .do-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
+    #panel-dropoff .do-modal.on{display:flex}
+    #panel-dropoff .do-modal-box{background:#fff;border-radius:10px;padding:24px;max-width:520px;width:100%;max-height:90vh;overflow:auto}
+    #panel-dropoff .do-modal-box h3{margin:0 0 16px;font-size:17px}
+    #panel-dropoff .do-fld{margin-bottom:12px}
+    #panel-dropoff .do-fld label{display:block;font-size:12px;color:#555;margin-bottom:4px;font-weight:500}
+    #panel-dropoff .do-fld input,#panel-dropoff .do-fld textarea{width:100%;padding:9px 11px;border:1px solid #D4D4D4;border-radius:5px;font-size:13px;font-family:inherit;box-sizing:border-box}
+    #panel-dropoff .do-fld textarea{resize:vertical;min-height:54px}
+    #panel-dropoff .do-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    #panel-dropoff .do-modal-acts{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+    #panel-dropoff .do-modal-acts button{padding:10px 20px;border-radius:5px;font-size:13px;font-family:inherit;cursor:pointer;border:none}
+    #panel-dropoff .do-save{background:#0A0A0A;color:#fff}
+    #panel-dropoff .do-cancel{background:#F0F0F0;color:#333}
+    #panel-dropoff .do-empty{text-align:center;padding:48px;color:#999}
+  </style>
+  <div class="do-wrap">
+    <div class="do-head">
+      <div>
+        <h2>📍 จุด Drop-off (ส่งพัสดุ)</h2>
+        <p>จุดส่งพัสดุกลางที่ใช้ร่วมกันทุกร้าน — ร้านค้าจะเห็นจุดที่เปิดใช้งานในหน้า "สินค้าที่ต้องจัดส่ง"</p>
+      </div>
+      <button class="do-btn-add" onclick="doOpenModal()">+ เพิ่มจุด Drop-off</button>
+    </div>
+    <div id="do-list"><div class="do-empty">⏳ กำลังโหลด...</div></div>
+  </div>
+
+  <!-- Modal เพิ่ม/แก้ -->
+  <div class="do-modal" id="do-modal">
+    <div class="do-modal-box">
+      <h3 id="do-modal-title">เพิ่มจุด Drop-off</h3>
+      <input type="hidden" id="do-id">
+      <div class="do-fld"><label>ชื่อจุด *</label><input id="do-name" placeholder="เช่น SPX Express – Shipsmile สาขาตลิ่งชัน"></div>
+      <div class="do-row2">
+        <div class="do-fld"><label>รหัสขนส่ง</label><input id="do-carrier" placeholder="spx / flash / kerry"></div>
+        <div class="do-fld"><label>ชื่อขนส่ง (แสดงผล)</label><input id="do-carrier-label" placeholder="SPX Express"></div>
+      </div>
+      <div class="do-fld"><label>ที่อยู่ *</label><textarea id="do-address" placeholder="บ้านเลขที่ ถนน ซอย แขวง"></textarea></div>
+      <div class="do-row2">
+        <div class="do-fld"><label>เขต/อำเภอ</label><input id="do-district" placeholder="ตลิ่งชัน"></div>
+        <div class="do-fld"><label>จังหวัด</label><input id="do-province" placeholder="กรุงเทพมหานคร"></div>
+      </div>
+      <div class="do-row2">
+        <div class="do-fld"><label>รหัสไปรษณีย์</label><input id="do-postal" placeholder="10170"></div>
+        <div class="do-fld"><label>เบอร์โทร</label><input id="do-phone" placeholder="02-000-0000"></div>
+      </div>
+      <div class="do-row2">
+        <div class="do-fld"><label>เวลาทำการ</label><input id="do-hours" placeholder="08:00-20:00 ทุกวัน"></div>
+        <div class="do-fld"><label>ระยะทาง (km)</label><input id="do-distance" type="number" step="0.1" placeholder="1.2"></div>
+      </div>
+      <div class="do-modal-acts">
+        <button class="do-cancel" onclick="doCloseModal()">ยกเลิก</button>
+        <button class="do-save" onclick="doSave()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    function sb(){ return window._sb || window.sb; }
+    let _doList = [];
+
+    window.renderDropoff = async function(){
+      const box = document.getElementById('do-list');
+      if (!box) return;
+      box.innerHTML = '<div class="do-empty">⏳ กำลังโหลด...</div>';
+      try {
+        const { data, error } = await sb().from('dropoff_points').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true});
+        if (error) throw error;
+        _doList = data || [];
+        if (!_doList.length){ box.innerHTML = '<div class="do-empty">ยังไม่มีจุด Drop-off — กดปุ่ม "เพิ่มจุด Drop-off" เพื่อเริ่ม</div>'; return; }
+        box.innerHTML = _doList.map(function(d){
+          const meta = [];
+          if (d.phone) meta.push('📞 '+esc(d.phone));
+          if (d.hours) meta.push('🕐 '+esc(d.hours));
+          if (d.distance_km) meta.push('📏 '+d.distance_km+' km');
+          return '<div class="do-card'+(d.is_active?'':' off')+'">'
+            + '<div class="do-name">'+esc(d.name)+(d.carrier_label?' <span class="do-carrier">'+esc(d.carrier_label)+'</span>':'')+'</div>'
+            + '<div class="do-addr">'+esc(d.address||'')+(d.district?' '+esc(d.district):'')+(d.province?' '+esc(d.province):'')+(d.postal_code?' '+esc(d.postal_code):'')+'</div>'
+            + (meta.length?'<div class="do-meta">'+meta.join('')+'</div>':'')
+            + '<div class="do-actions">'
+            + '<label class="do-toggle"><input type="checkbox" '+(d.is_active?'checked':'')+' onchange="doToggle(\''+d.id+'\',this.checked)"><span class="do-slider"></span></label>'
+            + '<button class="do-btn" onclick="doOpenModal(\''+d.id+'\')">แก้ไข</button>'
+            + '<button class="do-btn del" onclick="doDelete(\''+d.id+'\')">ลบ</button>'
+            + '</div></div>';
+        }).join('');
+      } catch(e){
+        box.innerHTML = '<div class="do-empty" style="color:#DC2626">❌ '+esc(e.message)+'</div>';
+      }
+    };
+
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+    window.doOpenModal = function(id){
+      const m = document.getElementById('do-modal');
+      const d = id ? _doList.find(x=>x.id===id) : null;
+      document.getElementById('do-modal-title').textContent = d ? 'แก้ไขจุด Drop-off' : 'เพิ่มจุด Drop-off';
+      document.getElementById('do-id').value = d ? d.id : '';
+      document.getElementById('do-name').value = d ? (d.name||'') : '';
+      document.getElementById('do-carrier').value = d ? (d.carrier||'') : '';
+      document.getElementById('do-carrier-label').value = d ? (d.carrier_label||'') : '';
+      document.getElementById('do-address').value = d ? (d.address||'') : '';
+      document.getElementById('do-district').value = d ? (d.district||'') : '';
+      document.getElementById('do-province').value = d ? (d.province||'') : '';
+      document.getElementById('do-postal').value = d ? (d.postal_code||'') : '';
+      document.getElementById('do-phone').value = d ? (d.phone||'') : '';
+      document.getElementById('do-hours').value = d ? (d.hours||'') : '';
+      document.getElementById('do-distance').value = d ? (d.distance_km||'') : '';
+      m.classList.add('on');
+    };
+    window.doCloseModal = function(){ document.getElementById('do-modal').classList.remove('on'); };
+
+    window.doSave = async function(){
+      const id = document.getElementById('do-id').value;
+      const name = document.getElementById('do-name').value.trim();
+      const address = document.getElementById('do-address').value.trim();
+      if (!name || !address){ alert('⚠️ กรุณากรอกชื่อจุด และที่อยู่'); return; }
+      const payload = {
+        name: name,
+        carrier: document.getElementById('do-carrier').value.trim() || null,
+        carrier_label: document.getElementById('do-carrier-label').value.trim() || null,
+        address: address,
+        district: document.getElementById('do-district').value.trim() || null,
+        province: document.getElementById('do-province').value.trim() || null,
+        postal_code: document.getElementById('do-postal').value.trim() || null,
+        phone: document.getElementById('do-phone').value.trim() || null,
+        hours: document.getElementById('do-hours').value.trim() || null,
+        distance_km: parseFloat(document.getElementById('do-distance').value) || null,
+        updated_at: new Date().toISOString()
+      };
+      try {
+        let res;
+        if (id) res = await sb().from('dropoff_points').update(payload).eq('id', id);
+        else { payload.is_active = true; res = await sb().from('dropoff_points').insert(payload); }
+        if (res.error) throw res.error;
+        doCloseModal();
+        renderDropoff();
+      } catch(e){ alert('❌ บันทึกไม่สำเร็จ: '+e.message); }
+    };
+
+    window.doToggle = async function(id, on){
+      try {
+        const { error } = await sb().from('dropoff_points').update({is_active:on, updated_at:new Date().toISOString()}).eq('id', id);
+        if (error) throw error;
+        const d = _doList.find(x=>x.id===id); if (d) d.is_active = on;
+        renderDropoff();
+      } catch(e){ alert('❌ '+e.message); }
+    };
+
+    window.doDelete = async function(id){
+      if (!confirm('ลบจุด Drop-off นี้? (ลบถาวร กู้คืนไม่ได้)')) return;
+      try {
+        const { error } = await sb().from('dropoff_points').delete().eq('id', id);
+        if (error) throw error;
+        renderDropoff();
+      } catch(e){ alert('❌ '+e.message); }
+    };
+  })();
+  </script>
+</div>
+
+
 <div id="panel-audit" class="panel admin-only" style="padding:0;display:none">
   <style>
     #panel-audit .au-wrap{padding:24px;background:#FAFAFA;min-height:calc(100vh - 80px)}
@@ -6092,7 +6280,7 @@ window.showPanel = function(name) {
     orders:'ออเดอร์', reviews:'รีวิว', coupons:'คูปอง',
     payment:'ระบบการชำระเงิน', payouts:'Payout Requests',
     kyc:'KYC Review', audit:'Audit Logs', support:'Customer Support',
-    banners:'Banners', articles:'บทความ',
+    banners:'Banners', articles:'บทความ', dropoff:'จุด Drop-off',
   };
   if (titleEl && titles[name]) titleEl.textContent = titles[name];
 
@@ -6118,6 +6306,7 @@ window.showPanel = function(name) {
     case 'kyc':         if (typeof krLoad === 'function') krLoad();          break;
     case 'audit':       if (typeof auLoad === 'function') auLoad();          break;
     case 'support':     if (typeof csInit === 'function') csInit();          break;
+    case 'dropoff':     if (typeof renderDropoff === 'function') renderDropoff(); break;
   }
 };
 

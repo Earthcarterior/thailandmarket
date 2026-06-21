@@ -3110,7 +3110,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
           <div class="sp-drop-box">
             <div style="font-size:14px;font-weight:600;margin-bottom:10px">Drop off</div>
             <div style="font-size:11px;color:#666;margin-bottom:6px">สาขาใกล้เคียง</div>
-            <div class="sp-addr-body" id="sp-dropoff-addr">SPX Express – Shipsmile คลังอุปกรณ์ทำเล็บฟันล้าน (1.2km)<br>133 พุทธมณฑลสาย1 ปากซอย31 แขวง บางระมาด เขต ตลิ่งชัน กทม. 10170</div>
+            <div class="sp-addr-body" id="sp-dropoff-addr">⏳ กำลังโหลดจุด Drop-off...</div>
             <a class="sp-link" onclick="alert('แสดงสาขาทั้งหมดในแผนที่ — coming soon')" style="display:block;margin-top:6px">ดูสาขาทั้งหมดในแผนที่</a>
             <button class="sp-btn primary" onclick="spDropOff('all')">ทำการจัดส่งสินค้าทั้งหมดนี้ที่สาขา</button>
           </div>
@@ -8132,6 +8132,7 @@ async function renderShipPendingLive() {
   console.log('[ship-pending] _spOrders =', _spOrders.length, 'orders, tbl=', !!document.getElementById('sp-list'));
   // ตัวเสริม (ถ้า error ไม่กระทบการแสดงออเดอร์)
   try { await spLoadPickupAddr(); } catch(e){ console.warn('pickup:', e); }
+  try { await shipLoadDropoff(); } catch(e){ console.warn('dropoff:', e); }
   try { await spLoadCouriers(); } catch(e){ console.warn('couriers:', e); }
   try { await spLoadPickupDates(); } catch(e){ console.warn('dates:', e); }
   try { spRenderUrgCounts(); } catch(e){ console.warn('urg:', e); }
@@ -8139,6 +8140,43 @@ async function renderShipPendingLive() {
   shipRenderTable();
   try { spUpdateSidebarBadge(); } catch(e){}
 }
+
+async function shipLoadDropoff() {
+  const el = document.getElementById('sp-dropoff-addr');
+  if (!el) return;
+  try {
+    const { data, error } = await _sb.from('dropoff_points')
+      .select('*').eq('is_active', true)
+      .order('sort_order', {ascending:true}).order('created_at',{ascending:true});
+    if (error) throw error;
+    if (!data || !data.length) {
+      el.innerHTML = '<span style="color:#999">ยังไม่มีจุด Drop-off (admin ตั้งค่าได้ในระบบหลังบ้าน)</span>';
+      return;
+    }
+    // แสดงจุดแรก (ใกล้สุด) + ถ้ามีหลายจุดบอกจำนวน
+    const d = data[0];
+    const dist = d.distance_km ? ' ('+d.distance_km+'km)' : '';
+    const addr = [d.address, d.district, d.province, d.postal_code].filter(Boolean).join(' ');
+    let html = '<b>'+sfEsc(d.name)+'</b>'+dist+'<br>'+sfEsc(addr);
+    if (d.phone) html += '<br>📞 '+sfEsc(d.phone);
+    if (d.hours) html += ' · 🕐 '+sfEsc(d.hours);
+    if (data.length > 1) html += '<br><span style="color:#E63329;font-size:11px;cursor:pointer" onclick="shipShowAllDropoff()">ดูจุดทั้งหมด ('+data.length+' จุด)</span>';
+    el.innerHTML = html;
+    window._dropoffPoints = data;
+  } catch(e) {
+    el.innerHTML = '<span style="color:#999">โหลดจุด Drop-off ไม่สำเร็จ</span>';
+  }
+}
+
+window.shipShowAllDropoff = function(){
+  const pts = window._dropoffPoints || [];
+  if (!pts.length) return;
+  const list = pts.map(function(d){
+    const addr = [d.address, d.district, d.province, d.postal_code].filter(Boolean).join(' ');
+    return '• '+d.name+(d.distance_km?' ('+d.distance_km+'km)':'')+'\n  '+addr+(d.phone?'\n  📞 '+d.phone:'')+(d.hours?' 🕐 '+d.hours:'');
+  }).join('\n\n');
+  alert('จุด Drop-off ทั้งหมด ('+pts.length+' จุด):\n\n'+list);
+};
 
 async function shipLoadOrders() {
   try {
