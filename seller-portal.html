@@ -3454,7 +3454,7 @@ window.goto = function(view, el) {
     case 'add-product':  clearProductForm(); loadCategoriesForProduct(); loadBrandsForSeller(); break;
     case 'categories':   loadSellerCategories(); break;
     case 'orders':       loadSellerOrders().then(renderOrdersLive); break;
-    case 'ship-pending':  renderShipPendingLive(); break;
+    case 'ship-pending':  if (!window._lastShipRender || Date.now()-window._lastShipRender>500){ window._lastShipRender=Date.now(); renderShipPendingLive(); } break;
     case 'flash':        renderFlashLive(); break;
     case 'finance':      renderFinanceLive(); break;
     case 'reviews':      loadSellerReviews().then(renderReviewsLive); break;
@@ -10093,8 +10093,13 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       setTimeout(() => window.renderReturnsLive(), 100);
     }
     // เรียก renderer ตรงๆ กัน chain ขาด (goto หลายชั้น override กัน)
+    // ใช้ guard กัน render ซ้ำ (case เดิมใน goto แรกอาจเรียกด้วย)
     if (name === 'ship-pending') {
-      setTimeout(() => { if (typeof renderShipPendingLive === 'function') renderShipPendingLive(); }, 100);
+      setTimeout(() => {
+        if (window._lastShipRender && Date.now() - window._lastShipRender < 500) return;
+        window._lastShipRender = Date.now();
+        if (typeof renderShipPendingLive === 'function') renderShipPendingLive();
+      }, 120);
     }
     if (name === 'orders') {
       setTimeout(() => { if (typeof window.spLoadOrders === 'function') window.spLoadOrders(); }, 100);
