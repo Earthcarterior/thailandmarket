@@ -9345,7 +9345,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       if (!user) return null;
       const { data: u } = await sb().from('users').select('id').eq('email', user.email).maybeSingle();
       if (!u) return null;
-      const { data: s } = await sb().from('sellers').select('id').eq('owner_user_id', u.id).maybeSingle();
+      const { data: s } = await sb().from('sellers').select('id').eq('user_id', u.id).maybeSingle();
       if (s) {
         window._sellerSellerId = s.id;
         return s.id;
