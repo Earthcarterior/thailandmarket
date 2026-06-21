@@ -8127,14 +8127,14 @@ async function renderShipPendingLive() {
     } catch(e) { console.warn('ship resolve:', e); }
   }
   if (!_sellerSellerId) return;
-  await Promise.all([spLoadOrders(), spLoadPickupAddr(), spLoadCouriers(), spLoadPickupDates()]);
+  await Promise.all([shipLoadOrders(), spLoadPickupAddr(), spLoadCouriers(), spLoadPickupDates()]);
   spRenderUrgCounts();
   spRenderCourierPills();
   spRenderTable();
   spUpdateSidebarBadge();
 }
 
-async function spLoadOrders() {
+async function shipLoadOrders() {
   try {
     // ดึง order_items ของร้านโดยตรงจาก seller_id (ไม่พึ่ง products — กันหลุด)
     const { data: items } = await _sb.from('order_items')
