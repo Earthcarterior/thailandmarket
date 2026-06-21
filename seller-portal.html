@@ -8227,10 +8227,12 @@ async function spLoadPickupAddr() {
 
 async function spLoadCouriers() {
   try {
-    const { data } = await _sb.from('seller_couriers')
-      .select('courier_id,is_enabled,couriers(id,name_th,code)')
-      .eq('seller_id', _sellerSellerId).eq('is_enabled', true);
-    window._spCouriers = (data || []).map(d => d.couriers).filter(Boolean);
+    // ดึงจากตาราง couriers ที่ admin จัดการใน CMS (เฉพาะที่ active)
+    const { data } = await _sb.from('couriers')
+      .select('id,name_th,name_en,code,logo_url,is_active,sort_order')
+      .eq('is_active', true)
+      .order('sort_order', {ascending:true});
+    window._spCouriers = (data || []).filter(Boolean);
   } catch(e) { window._spCouriers = []; }
 }
 
@@ -8371,16 +8373,7 @@ window.shipConfirmOne = function(orderId){
       <p id="scm-order" style="margin:0 0 16px;font-size:12px;color:#888"></p>
       <input type="hidden" id="scm-oid">
       <div style="margin-bottom:12px"><label style="display:block;font-size:12px;color:#555;margin-bottom:4px">ขนส่ง *</label>
-        <select id="scm-carrier" style="width:100%;padding:9px;border:1px solid #D4D4D4;border-radius:5px;font-size:13px;font-family:inherit;box-sizing:border-box">
-          <option value="ไปรษณีย์ไทย">ไปรษณีย์ไทย</option>
-          <option value="Kerry Express">Kerry Express</option>
-          <option value="Flash Express">Flash Express</option>
-          <option value="J&T Express">J&T Express</option>
-          <option value="Ninja Van">Ninja Van</option>
-          <option value="SCG Express">SCG Express</option>
-          <option value="Lalamove">Lalamove</option>
-          <option value="Grab Express">Grab Express</option>
-        </select></div>
+        <select id="scm-carrier" style="width:100%;padding:9px;border:1px solid #D4D4D4;border-radius:5px;font-size:13px;font-family:inherit;box-sizing:border-box"></select></div>
       <div style="margin-bottom:16px"><label style="display:block;font-size:12px;color:#555;margin-bottom:4px">เลขพัสดุ (Tracking Number) *</label>
         <input id="scm-tracking" placeholder="เช่น TH1234567890" style="width:100%;padding:9px;border:1px solid #D4D4D4;border-radius:5px;font-size:13px;font-family:inherit;box-sizing:border-box"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
@@ -8392,7 +8385,15 @@ window.shipConfirmOne = function(orderId){
   m.style.display = 'flex';
   document.getElementById('scm-oid').value = orderId;
   document.getElementById('scm-order').textContent = 'ออเดอร์ ' + (o.order_number||orderId.slice(0,8));
-  document.getElementById('scm-carrier').value = o.shipping_method_name || 'ไปรษณีย์ไทย';
+  // เติมตัวเลือกขนส่งจาก couriers (admin จัดการใน CMS)
+  const sel = document.getElementById('scm-carrier');
+  const couriers = (window._spCouriers||[]);
+  if (couriers.length) {
+    sel.innerHTML = couriers.map(c=>`<option value="${c.name_th}">${c.name_th}</option>`).join('');
+  } else {
+    sel.innerHTML = '<option value="ไปรษณีย์ไทย">ไปรษณีย์ไทย</option><option value="Kerry Express">Kerry Express</option><option value="Flash Express">Flash Express</option><option value="J&T Express">J&T Express</option>';
+  }
+  sel.value = o.shipping_method_name || (couriers[0] && couriers[0].name_th) || 'ไปรษณีย์ไทย';
   document.getElementById('scm-tracking').value = o.tracking_number || '';
 };
 
