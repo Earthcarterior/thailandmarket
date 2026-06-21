@@ -3909,12 +3909,31 @@ window.crDelete = async function(id){
       if (!box) return;
       box.innerHTML = '<div class="fu-empty">⏳ กำลังโหลด...</div>';
       try {
-        // ดึง fulfillments + join orders + sellers
-        const { data, error } = await sb().from('fulfillments')
-          .select('*, orders(order_number,total,total_amount,status,shipping_address), sellers(shop_name)')
+        // ดึง fulfillments อย่างเดียว (ไม่ join FK เพราะ schema cache ไม่มี relationship)
+        const { data: ful, error } = await sb().from('fulfillments')
+          .select('*')
           .order('created_at', {ascending:false}).limit(200);
         if (error) throw error;
-        _fuList = data || [];
+        const fuls = ful || [];
+        // ดึง orders + sellers ที่เกี่ยวข้อง แล้ว map เอง
+        const orderIds = [...new Set(fuls.map(f=>f.order_id).filter(Boolean))];
+        const sellerIds = [...new Set(fuls.map(f=>f.seller_id).filter(Boolean))];
+        let ordersMap = {}, sellersMap = {};
+        if (orderIds.length){
+          const { data: ords } = await sb().from('orders')
+            .select('id,order_number,total,total_amount,status,shipping_address').in('id', orderIds);
+          (ords||[]).forEach(o=>{ ordersMap[o.id] = o; });
+        }
+        if (sellerIds.length){
+          const { data: sells } = await sb().from('sellers')
+            .select('id,shop_name').in('id', sellerIds);
+          (sells||[]).forEach(s=>{ sellersMap[s.id] = s; });
+        }
+        _fuList = fuls.map(f=>({
+          ...f,
+          orders: ordersMap[f.order_id] || null,
+          sellers: sellersMap[f.seller_id] || null
+        }));
         fuRenderStats();
         fuRenderList();
       } catch(e){
