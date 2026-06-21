@@ -3636,10 +3636,27 @@ async function loadSellerProducts() {
 
 async function loadSellerOrders() {
   try {
-    // ถ้าไม่มี seller_id → ไม่ดึงออเดอร์
+    // ถ้าไม่มี seller_id → ลอง resolve ก่อน (กัน timing — เผื่อยังโหลดไม่เสร็จ)
+    if (!_sellerSellerId) {
+      try {
+        const { data: { user } } = await _sb.auth.getUser();
+        if (user) {
+          // หา seller จาก user_id (auth.uid) หรือผ่าน users.email
+          let r = await _sb.from('sellers').select('id').eq('user_id', user.id).limit(1);
+          if ((!r.data || !r.data.length)) {
+            const { data: pu } = await _sb.from('users').select('id').eq('email', user.email);
+            const ids = (pu || []).map(x => x.id);
+            if (ids.length) {
+              r = await _sb.from('sellers').select('id').in('user_id', ids).limit(1);
+            }
+          }
+          if (r.data && r.data.length) _sellerSellerId = r.data[0].id;
+        }
+      } catch(re) { console.warn('[loadSellerOrders] resolve retry failed', re); }
+    }
     if (!_sellerSellerId) {
       console.warn('[loadSellerOrders] No seller_id');
-      _sellerOrds = [];
+      _sellerOrders = [];
       return;
     }
     
