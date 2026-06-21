@@ -3114,6 +3114,13 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
             <a class="sp-link" onclick="alert('แสดงสาขาทั้งหมดในแผนที่ — coming soon')" style="display:block;margin-top:6px">ดูสาขาทั้งหมดในแผนที่</a>
             <button class="sp-btn primary" onclick="spDropOff('all')">ทำการจัดส่งสินค้าทั้งหมดนี้ที่สาขา</button>
           </div>
+
+          <!-- รับสินค้าหน้าร้าน box -->
+          <div class="sp-drop-box" style="margin-top:12px;border:1px solid #FED7AA;background:#FFF7ED">
+            <div style="font-size:14px;font-weight:600;margin-bottom:6px">🏪 รับสินค้าหน้าร้าน</div>
+            <div style="font-size:11px;color:#9A3412;margin-bottom:10px;line-height:1.6">สำหรับออเดอร์ที่ลูกค้าเลือก "มารับเองที่ร้าน" — เมื่อลูกค้ามารับแล้ว กดยืนยันเพื่อปิดออเดอร์</div>
+            <button class="sp-btn primary" style="background:#EA580C" onclick="spStorePickup()">✓ ลูกค้ามารับสินค้าแล้ว (ปิดออเดอร์)</button>
+          </div>
         </div>
       </div>
     </div>
@@ -8430,6 +8437,49 @@ window.shipConfirmSave = async function(){
     toast('✅ ยืนยันส่งสำเร็จ · '+carrier+' '+tracking,'ok');
     await renderShipPendingLive();
   } catch(e){ alert('❌ '+e.message); }
+};
+
+// ===== รับสินค้าหน้าร้าน (Self Pickup) =====
+window.spStorePickup = async function(){
+  const checkedCbs = [...document.querySelectorAll('#sp-list .sp-cb-item:checked')];
+  let ids;
+  if (checkedCbs.length) {
+    ids = checkedCbs.map(cb => cb.value);
+  } else {
+    // เฉพาะออเดอร์ที่ช่องทาง = รับหน้าร้าน (pickup)
+    ids = _spOrders.filter(o => {
+      const m = (o.shipping_method||'').toLowerCase();
+      return m === 'pickup' || m.includes('รับ');
+    }).map(o => o.id);
+  }
+  if (!ids.length) { toast('⚠️ กรุณาเลือกออเดอร์ที่ลูกค้ามารับ (ติ๊กช่องหน้ารายการ)','error'); return; }
+  if (!confirm(`ยืนยันลูกค้ามารับสินค้า ${ids.length} ออเดอร์แล้ว?\n(ออเดอร์จะเปลี่ยนเป็น "ส่งถึงแล้ว/รับแล้ว")`)) return;
+
+  let sid = _sellerSellerId;
+  if (!sid) { try { const {data:{user}}=await _sb.auth.getUser(); const r=await _sb.from('sellers').select('id').eq('user_id',user.id).limit(1); if(r.data&&r.data.length) sid=r.data[0].id; } catch(e){} }
+
+  try {
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      const { error } = await _sb.from('orders').update({
+        status: 'delivered',
+        fulfillment_method: 'store_pickup',
+        fulfillment_status: 'delivered',
+        delivered_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+      if (error) { fail++; console.error('store pickup fail:', id, error.message); continue; }
+      const fres = await _sb.from('fulfillments').insert({
+        order_id: id, seller_id: sid, method: 'store_pickup',
+        status: 'delivered', note: 'ลูกค้ามารับที่ร้าน', created_by: sid
+      });
+      if (fres.error) console.error('fulfillment:', fres.error.message);
+      ok++;
+    }
+    if (fail) toast(`⚠️ สำเร็จ ${ok}, ไม่สำเร็จ ${fail} ออเดอร์`,'error');
+    else toast(`✅ ปิดออเดอร์รับหน้าร้าน ${ok} รายการ`,'ok');
+    await renderShipPendingLive();
+  } catch(e){ toast('❌ '+e.message,'error'); }
 };
 
 function spUpdateSelCount() {

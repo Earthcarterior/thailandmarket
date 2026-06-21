@@ -3867,6 +3867,7 @@ window.crDelete = async function(id){
     #panel-fulfillment .fu-method.pickup{background:#EEF2FF;color:#3730A3}
     #panel-fulfillment .fu-method.dropoff{background:#FEF3C7;color:#92400E}
     #panel-fulfillment .fu-method.manual{background:#DCFCE7;color:#166534}
+    #panel-fulfillment .fu-method.store_pickup{background:#FFEDD5;color:#9A3412}
     #panel-fulfillment .fu-meta{font-size:12px;color:#666;margin-top:6px;line-height:1.7}
     #panel-fulfillment .fu-track{font-family:'DM Mono',monospace;background:#F3F4F6;padding:1px 7px;border-radius:3px;font-size:11px}
     #panel-fulfillment .fu-status-sel{padding:7px 10px;border:1px solid #D4D4D4;border-radius:5px;font-size:12px;font-family:inherit;cursor:pointer}
@@ -3985,11 +3986,13 @@ window.crDelete = async function(id){
           ? ('📅 นัดรับ: '+(f.pickup_date||'-'))
           : f.method==='manual'
           ? ('✓ ยืนยันส่งเอง')
+          : f.method==='store_pickup'
+          ? ('🏪 ลูกค้ามารับที่ร้าน')
           : ('📍 จุด: '+esc(f.dropoff_point_name||'-'));
         return '<div class="fu-card"><div class="fu-row">'
           + '<div style="flex:1;min-width:240px">'
           +   '<div class="fu-onum">'+esc(o.order_number||f.order_id.slice(0,8))
-          +     '<span class="fu-method '+f.method+'">'+(f.method==='pickup'?'📦 นัดรับ':f.method==='manual'?'✓ ยืนยันส่ง':'📍 Drop-off')+'</span></div>'
+          +     '<span class="fu-method '+f.method+'">'+(f.method==='pickup'?'📦 นัดรับ':f.method==='manual'?'✓ ยืนยันส่ง':f.method==='store_pickup'?'🏪 รับหน้าร้าน':'📍 Drop-off')+'</span></div>'
           +   '<div class="fu-meta">'
           +     '🏪 '+esc(shop)+(buyer?' · 👤 '+esc(buyer):'')+'<br>'
           +     detail+(f.carrier_label?' · 🚚 '+esc(f.carrier_label):'')+'<br>'
