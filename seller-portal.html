@@ -9698,7 +9698,13 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
   async function initOrdersPage(){
     if (_initialized) return;
     _initialized = true;
-    await refresh();
+    // ใช้ระบบหลัก (loadSellerOrders → _sellerOrders) ที่ดึงผ่าน products.seller_id ถูกต้อง
+    if (typeof loadSellerOrders === 'function') {
+      await loadSellerOrders();
+      if (typeof renderOrdersLive === 'function') renderOrdersLive();
+    } else {
+      await refresh();
+    }
     bindDropdown();
   }
 
