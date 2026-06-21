@@ -3993,17 +3993,44 @@ function filterProdCat(catName) {
 // ════════════════════════════════════════════════════════════════════════════
 //  ORDERS PAGE
 // ════════════════════════════════════════════════════════════════════════════
+var _ordTabFilter = null;
+var ORD_TAB_GROUPS = {
+  pending:   ['pending','paid','confirmed','preparing','processing'],
+  shipped:   ['shipped','shipping'],
+  completed: ['completed','delivered'],
+  cancelled: ['cancelled','rejected','returned','refunded','return_requested']
+};
+function ordUpdateTabs() {
+  var c = { all: _sellerOrders.length, pending:0, shipped:0, completed:0, cancelled:0 };
+  _sellerOrders.forEach(function(o){
+    Object.keys(ORD_TAB_GROUPS).forEach(function(g){
+      if (ORD_TAB_GROUPS[g].includes(o.status)) c[g] = (c[g]||0)+1;
+    });
+  });
+  document.querySelectorAll('#page-orders .itab').forEach(function(tab){
+    var txt = tab.textContent.replace(/\s*\(\d+\)\s*$/,'').trim();
+    if (txt.startsWith('ทั้งหมด')) tab.textContent='ทั้งหมด ('+c.all+')';
+    else if (txt.startsWith('รอดำเนินการ')) tab.textContent='รอดำเนินการ ('+c.pending+')';
+    else if (txt.startsWith('จัดส่งแล้ว')) tab.textContent='จัดส่งแล้ว ('+c.shipped+')';
+    else if (txt.startsWith('สำเร็จ')) tab.textContent='สำเร็จ ('+c.completed+')';
+    else if (txt.startsWith('ยกเลิก')) tab.textContent='ยกเลิก ('+c.cancelled+')';
+  });
+}
 function renderOrdersLive() {
   const page=$('page-orders'); if(!page) return;
   const tbl=page.querySelector('tbody'); if(!tbl) return;
-  const stC={pending:'#D97706',confirmed:'#2563EB',processing:'#7C3AED',shipped:'#0891B2',delivered:'#16A34A',cancelled:'#737373'};
-  const stB={pending:'#FEF3C7',confirmed:'#DBEAFE',processing:'#EDE9FE',shipped:'#CFFAFE',delivered:'#DCFCE7',cancelled:'#F2F2F2'};
-  const stL={pending:'รอยืนยัน',confirmed:'ยืนยันแล้ว',processing:'กำลังเตรียม',shipped:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก'};
-  if (!_sellerOrders.length) {
-    tbl.innerHTML='<tr><td colspan="8" style="text-align:center;padding:48px;color:#888"><div style="font-size:36px;margin-bottom:8px">🛒</div><div>ยังไม่มีคำสั่งซื้อ</div></td></tr>';
+  ordUpdateTabs();
+  const stC={pending:'#D97706',confirmed:'#2563EB',processing:'#7C3AED',shipped:'#0891B2',delivered:'#16A34A',cancelled:'#737373',return_requested:'#D97706'};
+  const stB={pending:'#FEF3C7',confirmed:'#DBEAFE',processing:'#EDE9FE',shipped:'#CFFAFE',delivered:'#DCFCE7',cancelled:'#F2F2F2',return_requested:'#FEF3C7'};
+  const stL={pending:'รอยืนยัน',confirmed:'ยืนยันแล้ว',processing:'กำลังเตรียม',shipped:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก',return_requested:'ขอคืนสินค้า'};
+  var _list = _ordTabFilter
+    ? _sellerOrders.filter(function(o){ return (ORD_TAB_GROUPS[_ordTabFilter]||[]).includes(o.status); })
+    : _sellerOrders;
+  if (!_list.length) {
+    tbl.innerHTML='<tr><td colspan="8" style="text-align:center;padding:48px;color:#888"><div style="font-size:36px;margin-bottom:8px">🛒</div><div>ยังไม่มีคำสั่งซื้อในสถานะนี้</div></td></tr>';
     return;
   }
-  tbl.innerHTML=_sellerOrders.map(o=>{
+  tbl.innerHTML=_list.map(o=>{
     const items=o.order_items||[];
     const first=items[0];
     return `<tr style="border-bottom:1px solid #F2F2F2">
@@ -9577,12 +9604,12 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     document.querySelectorAll('#page-orders .itab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
     const txt = el.textContent.trim();
-    if (txt.startsWith('ทั้งหมด')) _curFilter = null;
-    else if (txt.startsWith('รอดำเนินการ')) _curFilter = 'pending'; // จะรวม pending+processing ในการ filter
-    else if (txt.startsWith('จัดส่งแล้ว')) _curFilter = 'shipped';
-    else if (txt.startsWith('สำเร็จ')) _curFilter = 'completed';
-    else if (txt.startsWith('ยกเลิก')) _curFilter = 'cancelled';
-    render();
+    if (txt.startsWith('ทั้งหมด')) _ordTabFilter = null;
+    else if (txt.startsWith('รอดำเนินการ')) _ordTabFilter = 'pending';
+    else if (txt.startsWith('จัดส่งแล้ว')) _ordTabFilter = 'shipped';
+    else if (txt.startsWith('สำเร็จ')) _ordTabFilter = 'completed';
+    else if (txt.startsWith('ยกเลิก')) _ordTabFilter = 'cancelled';
+    if (typeof renderOrdersLive === 'function') renderOrdersLive();
   };
 
   // ── Override filter ใน selITab — "รอดำเนินการ" ต้องรวม pending + processing
