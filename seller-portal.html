@@ -8349,10 +8349,87 @@ function shipRenderTable() {
         <span style="font-size:10px;color:#888">Standard Delivery - ส่งธรรมดาในประเทศ</span>
       </div></td>
       <td style="font-family:'DM Mono',monospace;font-size:11px">${cfStr}</td>
-      <td style="font-size:11px;color:#888;line-height:1.5">เพื่อหลีกเลี่ยงการส่งสินค้าซ้ำคุณต้อง / นัดรับสินค้าก่อน <span style="color:#E63329">${cfDate ? new Date(cfDate.getTime() + 2*86400000).toLocaleDateString('th-TH') : ''}</span></td>
+      <td style="font-size:11px;color:#888;line-height:1.5">
+        <div style="margin-bottom:6px">เพื่อหลีกเลี่ยงการส่งสินค้าซ้ำคุณต้องนัดรับสินค้าก่อน <span style="color:#E63329">${cfDate ? new Date(cfDate.getTime() + 2*86400000).toLocaleDateString('th-TH') : ''}</span></div>
+        <button onclick="shipConfirmOne('${o.id}')" style="padding:5px 12px;background:#16A34A;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit">✓ ยืนยันส่ง + กรอก Tracking</button>
+      </td>
     </tr>`;
   }).join('');
 }
+
+// ===== ยืนยันส่ง + กรอก Tracking =====
+window.shipConfirmOne = function(orderId){
+  const o = (_spOrders||[]).find(x=>x.id===orderId);
+  if (!o) return;
+  let m = document.getElementById('ship-confirm-modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'ship-confirm-modal';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px';
+    m.innerHTML = `<div style="background:#fff;border-radius:10px;padding:24px;max-width:440px;width:100%">
+      <h3 style="margin:0 0 4px;font-size:17px">✓ ยืนยันการจัดส่ง</h3>
+      <p id="scm-order" style="margin:0 0 16px;font-size:12px;color:#888"></p>
+      <input type="hidden" id="scm-oid">
+      <div style="margin-bottom:12px"><label style="display:block;font-size:12px;color:#555;margin-bottom:4px">ขนส่ง *</label>
+        <select id="scm-carrier" style="width:100%;padding:9px;border:1px solid #D4D4D4;border-radius:5px;font-size:13px;font-family:inherit;box-sizing:border-box">
+          <option value="ไปรษณีย์ไทย">ไปรษณีย์ไทย</option>
+          <option value="Kerry Express">Kerry Express</option>
+          <option value="Flash Express">Flash Express</option>
+          <option value="J&T Express">J&T Express</option>
+          <option value="Ninja Van">Ninja Van</option>
+          <option value="SCG Express">SCG Express</option>
+          <option value="Lalamove">Lalamove</option>
+          <option value="Grab Express">Grab Express</option>
+        </select></div>
+      <div style="margin-bottom:16px"><label style="display:block;font-size:12px;color:#555;margin-bottom:4px">เลขพัสดุ (Tracking Number) *</label>
+        <input id="scm-tracking" placeholder="เช่น TH1234567890" style="width:100%;padding:9px;border:1px solid #D4D4D4;border-radius:5px;font-size:13px;font-family:inherit;box-sizing:border-box"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="document.getElementById('ship-confirm-modal').style.display='none'" style="padding:10px 18px;background:#F0F0F0;border:none;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">ยกเลิก</button>
+        <button onclick="shipConfirmSave()" style="padding:10px 18px;background:#16A34A;color:#fff;border:none;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit">ยืนยันส่ง</button>
+      </div></div>`;
+    document.body.appendChild(m);
+  }
+  m.style.display = 'flex';
+  document.getElementById('scm-oid').value = orderId;
+  document.getElementById('scm-order').textContent = 'ออเดอร์ ' + (o.order_number||orderId.slice(0,8));
+  document.getElementById('scm-carrier').value = o.shipping_method_name || 'ไปรษณีย์ไทย';
+  document.getElementById('scm-tracking').value = o.tracking_number || '';
+};
+
+window.shipConfirmSave = async function(){
+  const orderId = document.getElementById('scm-oid').value;
+  const carrier = document.getElementById('scm-carrier').value;
+  const tracking = document.getElementById('scm-tracking').value.trim();
+  if (!tracking) { alert('⚠️ กรุณากรอกเลขพัสดุ'); return; }
+
+  let sid = _sellerSellerId;
+  if (!sid) { try { const {data:{user}}=await _sb.auth.getUser(); const r=await _sb.from('sellers').select('id').eq('user_id',user.id).limit(1); if(r.data&&r.data.length) sid=r.data[0].id; } catch(e){} }
+  const o = (_spOrders||[]).find(x=>x.id===orderId) || {};
+
+  try {
+    const { error } = await _sb.from('orders').update({
+      status: 'shipped',
+      tracking_number: tracking,
+      tracking_no: tracking,
+      shipping_method_name: carrier,
+      tracking_carrier: carrier,
+      shipped_at: new Date().toISOString(),
+      fulfillment_status: 'in_transit',
+      updated_at: new Date().toISOString()
+    }).eq('id', orderId);
+    if (error) throw error;
+    // บันทึก/อัปเดต fulfillment
+    const fres = await _sb.from('fulfillments').insert({
+      order_id: orderId, seller_id: sid, method: 'manual',
+      carrier_label: carrier, tracking_number: tracking,
+      status: 'in_transit', created_by: sid
+    });
+    if (fres.error) console.error('fulfillment:', fres.error.message);
+    document.getElementById('ship-confirm-modal').style.display='none';
+    toast('✅ ยืนยันส่งสำเร็จ · '+carrier+' '+tracking,'ok');
+    await renderShipPendingLive();
+  } catch(e){ alert('❌ '+e.message); }
+};
 
 function spUpdateSelCount() {
   const checked = [...document.querySelectorAll('#sp-list .sp-cb-item:checked')];
