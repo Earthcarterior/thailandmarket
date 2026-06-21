@@ -9117,6 +9117,28 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
   window.spInit = function(){ hookTabs(); spLoadOrders(); };
   setTimeout(window.spInit, 200);
 
+  // อัปเดต badge "ออเดอร์ทั้งหมด" ตอนโหลดหน้า (ไม่ต้องรอกดเมนู)
+  async function spInitBadge(){
+    try {
+      var seller = await getCurrentSeller();
+      if (!seller) { setTimeout(spInitBadge, 600); return; }  // retry ถ้า seller ยังไม่ resolve
+      var s = sb();
+      var prods = await s.from('products').select('id').eq('seller_id', seller.id);
+      var pIds = (prods.data||[]).map(function(p){return p.id;});
+      var items;
+      if (pIds.length) items = await s.from('order_items').select('order_id').in('product_id', pIds);
+      else items = await s.from('order_items').select('order_id').eq('seller_id', seller.id);
+      var orderIds = [...new Set((items.data||[]).map(function(i){return i.order_id;}))];
+      document.querySelectorAll('.sni').forEach(function(sni){
+        if (sni.textContent.indexOf('ออเดอร์ทั้งหมด') > -1) {
+          var b = sni.querySelector('.sni-badge');
+          if (b) b.textContent = orderIds.length;
+        }
+      });
+    } catch(e){ console.warn('spInitBadge:', e); setTimeout(spInitBadge, 800); }
+  }
+  setTimeout(spInitBadge, 500);
+
   // Re-init เมื่อ user คลิก sidebar ออเดอร์
   document.querySelectorAll('[onclick]').forEach(function(el){
     if (el.textContent.indexOf('ออเดอร์ทั้งหมด')>-1){
