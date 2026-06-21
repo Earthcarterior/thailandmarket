@@ -748,6 +748,9 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="sni" id="nav-dropoff" onclick="showPanel('dropoff')">
         <span class="sni-ico">📍</span> จุด Drop-off
       </div>
+      <div class="sni" id="nav-fulfillment" onclick="showPanel('fulfillment')">
+        <span class="sni-ico">🚛</span> การจัดส่ง/นัดรับ
+      </div>
       <div class="sni" id="nav-audit" onclick="showPanel('audit')">
         <span class="sni-ico">📋</span> Audit Logs
       </div>
@@ -3844,6 +3847,167 @@ window.crDelete = async function(id){
 </div>
 
 
+<div id="panel-fulfillment" class="panel admin-only" style="padding:0;display:none">
+  <style>
+    #panel-fulfillment .fu-wrap{padding:24px;background:#FAFAFA;min-height:calc(100vh - 80px)}
+    #panel-fulfillment .fu-head{margin-bottom:18px}
+    #panel-fulfillment .fu-head h2{font-size:20px;font-weight:600;margin:0 0 4px}
+    #panel-fulfillment .fu-head p{font-size:12px;color:#666;margin:0}
+    #panel-fulfillment .fu-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+    #panel-fulfillment .fu-stat{padding:14px;background:#fff;border:1px solid #E5E5E5;border-radius:6px}
+    #panel-fulfillment .fu-stat-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+    #panel-fulfillment .fu-stat-val{font-size:22px;font-weight:600;font-family:'DM Mono',monospace}
+    #panel-fulfillment .fu-tabs{display:flex;gap:2px;border-bottom:1px solid #E5E5E5;margin-bottom:16px;overflow-x:auto}
+    #panel-fulfillment .fu-tab{padding:10px 16px;background:transparent;border:none;cursor:pointer;font-size:13px;color:#666;font-family:inherit;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
+    #panel-fulfillment .fu-tab.on{color:#E63329;font-weight:600;border-bottom-color:#E63329}
+    #panel-fulfillment .fu-card{background:#fff;border:1px solid #E5E5E5;border-radius:8px;padding:16px 18px;margin-bottom:10px}
+    #panel-fulfillment .fu-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+    #panel-fulfillment .fu-onum{font-size:14px;font-weight:600;font-family:'DM Mono',monospace}
+    #panel-fulfillment .fu-method{display:inline-block;padding:2px 9px;border-radius:9px;font-size:10px;font-family:'DM Mono',monospace;margin-left:6px}
+    #panel-fulfillment .fu-method.pickup{background:#EEF2FF;color:#3730A3}
+    #panel-fulfillment .fu-method.dropoff{background:#FEF3C7;color:#92400E}
+    #panel-fulfillment .fu-meta{font-size:12px;color:#666;margin-top:6px;line-height:1.7}
+    #panel-fulfillment .fu-track{font-family:'DM Mono',monospace;background:#F3F4F6;padding:1px 7px;border-radius:3px;font-size:11px}
+    #panel-fulfillment .fu-status-sel{padding:7px 10px;border:1px solid #D4D4D4;border-radius:5px;font-size:12px;font-family:inherit;cursor:pointer}
+    #panel-fulfillment .fu-badge{display:inline-block;padding:3px 10px;border-radius:9px;font-size:11px;font-family:'DM Mono',monospace}
+    #panel-fulfillment .fu-badge.requested{background:#FEF9C3;color:#854D0E}
+    #panel-fulfillment .fu-badge.confirmed{background:#DBEAFE;color:#1E40AF}
+    #panel-fulfillment .fu-badge.picked_up{background:#E0E7FF;color:#3730A3}
+    #panel-fulfillment .fu-badge.in_transit{background:#CFFAFE;color:#155E75}
+    #panel-fulfillment .fu-badge.delivered{background:#D1FAE5;color:#065F46}
+    #panel-fulfillment .fu-badge.cancelled{background:#FEE2E2;color:#991B1B}
+    #panel-fulfillment .fu-empty{text-align:center;padding:48px;color:#999}
+  </style>
+  <div class="fu-wrap">
+    <div class="fu-head">
+      <h2>🚛 การจัดส่ง / นัดรับพัสดุ</h2>
+      <p>ติดตามและจัดการการนัดรับ (Pickup) และ Drop-off ของทุกร้านค้า — อัปเดตสถานะได้จริง</p>
+    </div>
+    <div class="fu-stats" id="fu-stats"></div>
+    <div class="fu-tabs">
+      <button class="fu-tab on" data-fu="all" onclick="fuSetTab('all',this)">ทั้งหมด</button>
+      <button class="fu-tab" data-fu="pickup" onclick="fuSetTab('pickup',this)">📦 นัดรับ</button>
+      <button class="fu-tab" data-fu="dropoff" onclick="fuSetTab('dropoff',this)">📍 Drop-off</button>
+      <button class="fu-tab" data-fu="active" onclick="fuSetTab('active',this)">⏳ กำลังดำเนินการ</button>
+      <button class="fu-tab" data-fu="delivered" onclick="fuSetTab('delivered',this)">✅ ส่งถึงแล้ว</button>
+    </div>
+    <div id="fu-list"><div class="fu-empty">⏳ กำลังโหลด...</div></div>
+  </div>
+
+  <script>
+  (function(){
+    function sb(){ return window._sb || window.sb; }
+    let _fuList = [];
+    let _fuTab = 'all';
+    const STATUS_LABEL = {requested:'รอดำเนินการ', confirmed:'ยืนยันแล้ว', picked_up:'รับพัสดุแล้ว', in_transit:'กำลังจัดส่ง', delivered:'ส่งถึงแล้ว', cancelled:'ยกเลิก'};
+    const STATUS_FLOW = ['requested','confirmed','picked_up','in_transit','delivered','cancelled'];
+
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+    window.renderFulfillment = async function(){
+      const box = document.getElementById('fu-list');
+      if (!box) return;
+      box.innerHTML = '<div class="fu-empty">⏳ กำลังโหลด...</div>';
+      try {
+        // ดึง fulfillments + join orders + sellers
+        const { data, error } = await sb().from('fulfillments')
+          .select('*, orders(order_number,total,total_amount,status,shipping_address), sellers(shop_name)')
+          .order('created_at', {ascending:false}).limit(200);
+        if (error) throw error;
+        _fuList = data || [];
+        fuRenderStats();
+        fuRenderList();
+      } catch(e){
+        box.innerHTML = '<div class="fu-empty" style="color:#DC2626">❌ '+esc(e.message)+'</div>';
+      }
+    };
+
+    function fuRenderStats(){
+      const el = document.getElementById('fu-stats');
+      if (!el) return;
+      const pickup = _fuList.filter(f=>f.method==='pickup').length;
+      const dropoff = _fuList.filter(f=>f.method==='dropoff').length;
+      const active = _fuList.filter(f=>['requested','confirmed','picked_up','in_transit'].includes(f.status)).length;
+      const done = _fuList.filter(f=>f.status==='delivered').length;
+      el.innerHTML =
+        '<div class="fu-stat"><div class="fu-stat-lbl">ทั้งหมด</div><div class="fu-stat-val">'+_fuList.length+'</div></div>'
+        +'<div class="fu-stat"><div class="fu-stat-lbl">นัดรับ</div><div class="fu-stat-val">'+pickup+'</div></div>'
+        +'<div class="fu-stat"><div class="fu-stat-lbl">Drop-off</div><div class="fu-stat-val">'+dropoff+'</div></div>'
+        +'<div class="fu-stat"><div class="fu-stat-lbl">กำลังดำเนินการ</div><div class="fu-stat-val">'+active+'</div></div>'
+        +'<div class="fu-stat"><div class="fu-stat-lbl">ส่งถึงแล้ว</div><div class="fu-stat-val">'+done+'</div></div>';
+    }
+
+    window.fuSetTab = function(tab, btn){
+      _fuTab = tab;
+      document.querySelectorAll('#panel-fulfillment .fu-tab').forEach(b=>b.classList.remove('on'));
+      if (btn) btn.classList.add('on');
+      fuRenderList();
+    };
+
+    function fuRenderList(){
+      const box = document.getElementById('fu-list');
+      if (!box) return;
+      let list = _fuList.slice();
+      if (_fuTab==='pickup') list = list.filter(f=>f.method==='pickup');
+      else if (_fuTab==='dropoff') list = list.filter(f=>f.method==='dropoff');
+      else if (_fuTab==='active') list = list.filter(f=>['requested','confirmed','picked_up','in_transit'].includes(f.status));
+      else if (_fuTab==='delivered') list = list.filter(f=>f.status==='delivered');
+
+      if (!list.length){ box.innerHTML = '<div class="fu-empty">ไม่มีรายการในหมวดนี้</div>'; return; }
+
+      box.innerHTML = list.map(function(f){
+        const o = f.orders || {};
+        const shop = (f.sellers && f.sellers.shop_name) || '';
+        const buyer = (o.shipping_address && o.shipping_address.name) || '';
+        const total = o.total || o.total_amount || 0;
+        const opts = STATUS_FLOW.map(s=>'<option value="'+s+'"'+(f.status===s?' selected':'')+'>'+STATUS_LABEL[s]+'</option>').join('');
+        const detail = f.method==='pickup'
+          ? ('📅 นัดรับ: '+(f.pickup_date||'-'))
+          : ('📍 จุด: '+esc(f.dropoff_point_name||'-'));
+        return '<div class="fu-card"><div class="fu-row">'
+          + '<div style="flex:1;min-width:240px">'
+          +   '<div class="fu-onum">'+esc(o.order_number||f.order_id.slice(0,8))
+          +     '<span class="fu-method '+f.method+'">'+(f.method==='pickup'?'📦 นัดรับ':'📍 Drop-off')+'</span></div>'
+          +   '<div class="fu-meta">'
+          +     '🏪 '+esc(shop)+(buyer?' · 👤 '+esc(buyer):'')+'<br>'
+          +     detail+(f.carrier_label?' · 🚚 '+esc(f.carrier_label):'')+'<br>'
+          +     (f.tracking_number?'🔖 <span class="fu-track">'+esc(f.tracking_number)+'</span>':'')
+          +     ' · 💰 ฿'+Number(total).toLocaleString()
+          +   '</div>'
+          + '</div>'
+          + '<div style="text-align:right">'
+          +   '<span class="fu-badge '+f.status+'">'+(STATUS_LABEL[f.status]||f.status)+'</span><br><br>'
+          +   '<select class="fu-status-sel" onchange="fuUpdateStatus(\''+f.id+'\',\''+f.order_id+'\',this.value)">'+opts+'</select>'
+          + '</div>'
+          + '</div></div>';
+      }).join('');
+    }
+
+    // อัปเดตสถานะ fulfillment + sync order status
+    window.fuUpdateStatus = async function(fid, orderId, status){
+      try {
+        const { error } = await sb().from('fulfillments').update({status:status, updated_at:new Date().toISOString()}).eq('id', fid);
+        if (error) throw error;
+        // sync order status ตาม fulfillment
+        let orderStatus = null;
+        if (status==='delivered') orderStatus = 'delivered';
+        else if (status==='in_transit' || status==='picked_up') orderStatus = 'shipped';
+        else if (status==='cancelled') orderStatus = 'cancelled';
+        else if (status==='confirmed' || status==='requested') orderStatus = 'processing';
+        if (orderStatus){
+          await sb().from('orders').update({status:orderStatus, fulfillment_status:status, updated_at:new Date().toISOString()}).eq('id', orderId);
+        }
+        const f = _fuList.find(x=>x.id===fid); if (f) f.status = status;
+        fuRenderStats();
+        fuRenderList();
+        if (window.toast) toast('✅ อัปเดตสถานะแล้ว'); else console.log('updated');
+      } catch(e){ alert('❌ '+e.message); }
+    };
+  })();
+  </script>
+</div>
+
+
 <div id="panel-audit" class="panel admin-only" style="padding:0;display:none">
   <style>
     #panel-audit .au-wrap{padding:24px;background:#FAFAFA;min-height:calc(100vh - 80px)}
@@ -6280,7 +6444,7 @@ window.showPanel = function(name) {
     orders:'ออเดอร์', reviews:'รีวิว', coupons:'คูปอง',
     payment:'ระบบการชำระเงิน', payouts:'Payout Requests',
     kyc:'KYC Review', audit:'Audit Logs', support:'Customer Support',
-    banners:'Banners', articles:'บทความ', dropoff:'จุด Drop-off',
+    banners:'Banners', articles:'บทความ', dropoff:'จุด Drop-off', fulfillment:'การจัดส่ง/นัดรับ',
   };
   if (titleEl && titles[name]) titleEl.textContent = titles[name];
 
@@ -6307,6 +6471,7 @@ window.showPanel = function(name) {
     case 'audit':       if (typeof auLoad === 'function') auLoad();          break;
     case 'support':     if (typeof csInit === 'function') csInit();          break;
     case 'dropoff':     if (typeof renderDropoff === 'function') renderDropoff(); break;
+    case 'fulfillment': if (typeof renderFulfillment === 'function') renderFulfillment(); break;
   }
 };
 

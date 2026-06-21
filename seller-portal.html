@@ -8430,13 +8430,30 @@ window.spArrangePickup = async function(scope) {
   try {
     let ok = 0, fail = 0;
     for (const id of ids) {
+      const o = _spOrders.find(x => x.id === id) || {};
+      const trk = 'TH' + Math.random().toString().slice(2,11) + 'TH';
       const { error } = await _sb.from('orders').update({
         status: 'processing',
-        tracking_number: 'TH' + Math.random().toString().slice(2,11) + 'TH',
+        fulfillment_method: 'pickup',
+        pickup_date: pickupDate,
+        fulfillment_status: 'requested',
+        tracking_number: trk,
         updated_at: new Date().toISOString()
       }).eq('id', id);
-      if (error) { fail++; console.error('นัดรับ fail:', id, error.message); }
-      else ok++;
+      if (error) { fail++; console.error('นัดรับ fail:', id, error.message); continue; }
+      // บันทึก fulfillment log
+      await _sb.from('fulfillments').insert({
+        order_id: id,
+        seller_id: _sellerSellerId,
+        method: 'pickup',
+        carrier: o.shipping_method || null,
+        carrier_label: o.shipping_method_name || null,
+        tracking_number: trk,
+        pickup_date: pickupDate,
+        status: 'requested',
+        created_by: _sellerSellerId
+      });
+      ok++;
     }
     if (fail) toast(`⚠️ นัดรับสำเร็จ ${ok} พัสดุ, ไม่สำเร็จ ${fail} พัสดุ`,'error');
     else toast(`✅ นัดรับ ${ok} พัสดุสำเร็จ`,'ok');
@@ -8466,15 +8483,33 @@ window.spDropOff = async function(scope) {
 
   try {
     let ok = 0, fail = 0;
+    const dp = (window._dropoffPoints && window._dropoffPoints[0]) || {};
     for (const id of ids) {
+      const o = _spOrders.find(x => x.id === id) || {};
+      const trk = 'TH' + Math.random().toString().slice(2,11) + 'DO';
       const { error } = await _sb.from('orders').update({
         status: 'shipped',
+        fulfillment_method: 'dropoff',
+        dropoff_point_id: dp.id || null,
+        fulfillment_status: 'in_transit',
         shipped_at: new Date().toISOString(),
-        tracking_number: 'TH' + Math.random().toString().slice(2,11) + 'DO',
+        tracking_number: trk,
         updated_at: new Date().toISOString()
       }).eq('id', id);
-      if (error) { fail++; console.error('dropoff fail:', id, error.message); }
-      else ok++;
+      if (error) { fail++; console.error('dropoff fail:', id, error.message); continue; }
+      await _sb.from('fulfillments').insert({
+        order_id: id,
+        seller_id: _sellerSellerId,
+        method: 'dropoff',
+        carrier: o.shipping_method || null,
+        carrier_label: o.shipping_method_name || null,
+        tracking_number: trk,
+        dropoff_point_id: dp.id || null,
+        dropoff_point_name: dp.name || null,
+        status: 'in_transit',
+        created_by: _sellerSellerId
+      });
+      ok++;
     }
     if (fail) toast(`⚠️ ส่งสำเร็จ ${ok}, ไม่สำเร็จ ${fail} พัสดุ`,'error');
     else toast(`✅ นำส่งที่สาขาสำเร็จ ${ok} พัสดุ`,'ok');
