@@ -8111,6 +8111,21 @@ let _spDocUrg = 'all';
 let _spPickupAddr = null;
 
 async function renderShipPendingLive() {
+  // resolve seller ก่อนถ้ายังไม่มี (กัน timing — เปิดหน้านี้ก่อน init เสร็จ)
+  if (!_sellerSellerId) {
+    try {
+      const { data: { user } } = await _sb.auth.getUser();
+      if (user) {
+        let r = await _sb.from('sellers').select('id').eq('user_id', user.id).limit(1);
+        if (!r.data || !r.data.length) {
+          const { data: pu } = await _sb.from('users').select('id').eq('email', user.email);
+          const ids = (pu || []).map(x => x.id);
+          if (ids.length) r = await _sb.from('sellers').select('id').in('user_id', ids).limit(1);
+        }
+        if (r.data && r.data.length) _sellerSellerId = r.data[0].id;
+      }
+    } catch(e) { console.warn('ship resolve:', e); }
+  }
   if (!_sellerSellerId) return;
   await Promise.all([spLoadOrders(), spLoadPickupAddr(), spLoadCouriers(), spLoadPickupDates()]);
   spRenderUrgCounts();
@@ -8927,6 +8942,13 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       else if (st==='shipping'||st==='shipped') c.shipped++;
       else if (st==='delivered'||st==='completed') c.completed++;
       else if (st==='cancelled'||st==='returned') c.cancelled++;
+    });
+    // อัปเดต sidebar badge "ออเดอร์ทั้งหมด" ให้ตรงจำนวนจริง
+    document.querySelectorAll('.sni').forEach(function(sni){
+      if (sni.textContent.indexOf('ออเดอร์ทั้งหมด') > -1) {
+        var b = sni.querySelector('.sni-badge');
+        if (b) b.textContent = c.all;
+      }
     });
     document.querySelectorAll('#page-orders .itab, .tab, .sp-tab, [data-tab]').forEach(function(btn){
       var txt = btn.textContent.replace(/\s*\(\d+\)\s*$/, '');
