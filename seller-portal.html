@@ -8136,7 +8136,7 @@ async function renderShipPendingLive() {
   try { await spLoadPickupDates(); } catch(e){ console.warn('dates:', e); }
   try { spRenderUrgCounts(); } catch(e){ console.warn('urg:', e); }
   try { spRenderCourierPills(); } catch(e){ console.warn('pills:', e); }
-  spRenderTable();
+  shipRenderTable();
   try { spUpdateSidebarBadge(); } catch(e){}
 }
 
@@ -8264,7 +8264,7 @@ function spRenderCourierPills() {
   });
 }
 
-function spRenderTable() {
+function shipRenderTable() {
   const tbl = $('sp-list');
   if (!tbl) return;
   
@@ -8353,13 +8353,13 @@ window.spTab = function(tab) {
 window.spSetUrg = function(u) {
   _spUrgFilter = u;
   document.querySelectorAll('#sp-panel-pending [data-urg]').forEach(b => b.classList.toggle('on', b.dataset.urg === u));
-  spRenderTable();
+  shipRenderTable();
 };
 
 window.spSetCourier = function(c) {
   _spCourierFilter = c;
   document.querySelectorAll('#sp-courier-pills [data-courier]').forEach(b => b.classList.toggle('on', b.dataset.courier === c));
-  spRenderTable();
+  shipRenderTable();
 };
 
 window.spToggleAll = function(checked) {
