@@ -879,8 +879,8 @@ function renderProfileOrders() {
     return;
   }
 
-  const stMap={pending:'รอชำระเงิน',paid:'ชำระแล้ว',confirmed:'ยืนยัน',preparing:'กำลังเตรียม',processing:'กำลังเตรียม',shipping:'กำลังส่ง',shipped:'กำลังส่ง',delivered:'สำเร็จ',completed:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า',return_requested:'ขอคืนสินค้า',refunded:'คืนเงินแล้ว'};
-  const scMap={pending:'pill-warn',paid:'pill-info',confirmed:'pill-info',preparing:'pill-info',processing:'pill-info',shipping:'pill-info',shipped:'pill-info',delivered:'pill-ok',completed:'pill-ok',cancelled:'pill-gray',returned:'pill-gray',return_requested:'pill-warn',refunded:'pill-gray'};
+  const stMap={pending:'รอชำระเงิน',paid:'ชำระแล้ว',confirmed:'ยืนยัน',preparing:'กำลังเตรียม',processing:'กำลังเตรียม',shipping:'กำลังส่ง',shipped:'กำลังส่ง',delivered:'สำเร็จ',completed:'สำเร็จ',cancelled:'ยกเลิก',returned:'คืนสินค้า',return_requested:'ขอคืนสินค้า',return_approved:'อนุมัติคืนแล้ว',refunded:'คืนเงินแล้ว'};
+  const scMap={pending:'pill-warn',paid:'pill-info',confirmed:'pill-info',preparing:'pill-info',processing:'pill-info',shipping:'pill-info',shipped:'pill-info',delivered:'pill-ok',completed:'pill-ok',cancelled:'pill-gray',returned:'pill-gray',return_requested:'pill-warn',return_approved:'pill-info',refunded:'pill-ok'};
 
   el.innerHTML = list.map(o=>{
     const orderTotal = Number(o.total) || Number(o.total_amount) || Number(o.grand_total) || Number(o.subtotal) || 0;
@@ -901,6 +901,8 @@ function renderProfileOrders() {
       ${(o.status==='delivered'||o.status==='completed')?`<button class="btn btn-sm btn-ghost" onclick="location.href='review-write.html?order=${o.id}'">⭐ รีวิว</button>`:''}
       ${(o.status==='delivered'||o.status==='paid'||o.status==='shipped')?`<button class="btn btn-sm btn-ghost" onclick="ordReturn('${o.id}','${o.order_number}',${orderTotal})">↩️ ขอคืนสินค้า</button>`:''}
       ${(o.status==='return_requested')?`<span class="btn btn-sm" style="background:#FEF3C7;color:#92400E;cursor:default">↩️ ขอคืนแล้ว · รอดำเนินการ</span>`:''}
+      ${(o.status==='return_approved')?`<span class="btn btn-sm" style="background:#DBEAFE;color:#1E40AF;cursor:default">✅ อนุมัติคืนแล้ว · รอเงินคืน</span>`:''}
+      ${(o.status==='refunded')?`<span class="btn btn-sm" style="background:#D1FAE5;color:#065F46;cursor:default">💰 คืนเงินเรียบร้อยแล้ว</span>`:''}
     </div></div>
   </div>`}).join('');
 }
