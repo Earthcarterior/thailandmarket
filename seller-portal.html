@@ -8121,30 +8121,37 @@ async function renderShipPendingLive() {
 
 async function spLoadOrders() {
   try {
-    // ดึง orders ของ seller ที่ยังต้องส่ง (paid / processing / pending)
-    // ใช้ approach: ดึง products ของ seller → ดึง order_items ที่ใช้ products เหล่านี้ → ดึง orders
-    const { data: prods } = await _sb.from('products').select('id').eq('seller_id', _sellerSellerId);
-    const pIds = (prods || []).map(p => p.id);
-    if (!pIds.length) { _spOrders = []; return; }
-    
-    const { data: items } = await _sb.from('order_items').select('order_id,product_id,quantity,subtotal,name,thumbnail,products(thumbnail,name_th)').in('product_id', pIds);
-    const orderIdsSet = new Set((items || []).map(i => i.order_id));
-    const orderIds = [...orderIdsSet];
+    // ดึง order_items ของร้านโดยตรงจาก seller_id (ไม่พึ่ง products — กันหลุด)
+    const { data: items } = await _sb.from('order_items')
+      .select('order_id,product_id,qty,subtotal,name_th,thumbnail')
+      .eq('seller_id', _sellerSellerId);
+    let itemRows = items || [];
+    // fallback: ถ้า seller_id ในorder_items ว่าง ลองผ่าน products
+    if (!itemRows.length) {
+      const { data: prods } = await _sb.from('products').select('id').eq('seller_id', _sellerSellerId);
+      const pIds = (prods || []).map(p => p.id);
+      if (pIds.length) {
+        const { data: items2 } = await _sb.from('order_items')
+          .select('order_id,product_id,qty,subtotal,name_th,thumbnail')
+          .in('product_id', pIds);
+        itemRows = items2 || [];
+      }
+    }
+    const orderIds = [...new Set(itemRows.map(i => i.order_id))];
     if (!orderIds.length) { _spOrders = []; return; }
-    
+
     const { data: orders } = await _sb.from('orders')
       .select('id,order_number,status,total,shipping_method,shipping_method_name,shipping_address,tracking_number,created_at,paid_at')
       .in('id', orderIds)
-      .in('status', ['paid', 'processing'])
+      .in('status', ['paid', 'confirmed', 'preparing', 'processing'])
       .order('created_at', {ascending: true});
-    
-    // Map items to orders
+
     const itemsByOrder = {};
-    (items || []).forEach(it => {
+    itemRows.forEach(it => {
       if (!itemsByOrder[it.order_id]) itemsByOrder[it.order_id] = [];
       itemsByOrder[it.order_id].push(it);
     });
-    
+
     _spOrders = (orders || []).map(o => ({...o, items: itemsByOrder[o.id] || []}));
   } catch(e) {
     console.warn('spLoadOrders:', e);
@@ -8264,7 +8271,7 @@ function spRenderTable() {
     const itemsHtml = items.slice(0, 1).map(it => `
       <div style="display:flex;gap:8px;align-items:center">
         <div class="sp-thumb">${(it.thumbnail || it.products?.thumbnail) ? `<img src="${sfEsc(it.thumbnail || it.products?.thumbnail)}">` : '📦'}</div>
-        <div style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sfEsc(it.name || it.products?.name_th || '—')}${items.length > 1 ? ' <span style="color:#888">+ '+(items.length-1)+'</span>' : ''}</div>
+        <div style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sfEsc(it.name_th || it.name || it.products?.name_th || '—')}${items.length > 1 ? ' <span style="color:#888">+ '+(items.length-1)+'</span>' : ''}</div>
       </div>`).join('');
     
     const addr = o.shipping_address || {};
