@@ -9062,14 +9062,18 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
   };
 
   function hookTabs(){
-    document.querySelectorAll('.tab,.sp-tab,[data-tab]').forEach(function(btn){
+    document.querySelectorAll('#page-orders .itab, .tab, .sp-tab, [data-tab]').forEach(function(btn){
       var txt = btn.textContent.replace(/\s*\(\d+\)\s*$/, '');
       var tab = 'all';
       if (/รอ.*ดำเนิน/.test(txt)) tab = 'pending';
       else if (/จัดส่ง/.test(txt)) tab = 'shipped';
       else if (/สำเร็จ/.test(txt)) tab = 'completed';
       else if (/ยกเลิก/.test(txt)) tab = 'cancelled';
-      btn.onclick = function(){ window.spSetTab(tab, btn); };
+      btn.onclick = function(){
+        document.querySelectorAll('#page-orders .itab').forEach(function(t){ t.classList.remove('active'); });
+        btn.classList.add('active');
+        window.spSetTab(tab, btn);
+      };
     });
   }
 
