@@ -894,6 +894,20 @@ function renderProfileOrders() {
     <div style="margin-left:auto"><span class="pill ${scMap[o.status]||'pill-gray'}">${stMap[o.status]||o.status}</span></div></div>
     <div style="font-size:13px;color:#404040;margin:8px 0 2px;line-height:1.5">${itemSummary}</div>
     <div style="font-size:11px;color:#737373;margin-bottom:8px">${totalQty} ชิ้น</div>
+    ${(() => {
+      const trk = o.tracking_number || o.tracking_no || '';
+      const carrier = o.shipping_method_name || o.tracking_carrier || o.shipping_method || '';
+      if (!trk || !['shipped','shipping','delivered','completed'].includes(o.status)) return '';
+      return `<div style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:6px;padding:8px 10px;margin-bottom:8px;font-size:12px">
+        <div style="display:flex;align-items:center;gap:6px;color:#0C4A6E">
+          <span>🚚</span>
+          <span style="font-weight:600">${carrier||'ขนส่ง'}</span>
+          <span style="color:#0369A1">·</span>
+          <span style="font-family:monospace;background:#E0F2FE;padding:1px 6px;border-radius:3px;color:#075985">${trk}</span>
+          <button onclick="navigator.clipboard.writeText('${trk}');this.textContent='✓ คัดลอกแล้ว'" style="margin-left:auto;background:none;border:1px solid #7DD3FC;color:#0369A1;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer">คัดลอก</button>
+        </div>
+      </div>`;
+    })()}
     <div class="oi-bot"><div class="oi-total">฿${orderTotal.toLocaleString()}</div>
     <div class="oi-btns">
       ${o.status==='pending'?`<button class="btn btn-sm" style="background:#FCD34D;color:#7C2D12;font-weight:700" onclick="location.href='checkout.html?direct=${o.id}'">⏳ ชำระเงิน</button>`:''}
