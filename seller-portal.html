@@ -8919,7 +8919,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       else if (st==='delivered'||st==='completed') c.completed++;
       else if (st==='cancelled'||st==='returned') c.cancelled++;
     });
-    document.querySelectorAll('.tab,.sp-tab,[data-tab]').forEach(function(btn){
+    document.querySelectorAll('#page-orders .itab, .tab, .sp-tab, [data-tab]').forEach(function(btn){
       var txt = btn.textContent.replace(/\s*\(\d+\)\s*$/, '');
       if (/ทั้งหมด/.test(txt)) btn.textContent = 'ทั้งหมด ('+c.all+')';
       else if (/รอ.*ดำเนิน/.test(txt)) btn.textContent = 'รอดำเนินการ ('+c.pending+')';
@@ -9621,11 +9621,14 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     document.querySelectorAll('#page-orders .itab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
     const txt = el.textContent.trim();
-    if (txt.startsWith('ทั้งหมด')) _ordTabFilter = null;
-    else if (txt.startsWith('รอดำเนินการ')) _ordTabFilter = 'pending';
-    else if (txt.startsWith('จัดส่งแล้ว')) _ordTabFilter = 'shipped';
-    else if (txt.startsWith('สำเร็จ')) _ordTabFilter = 'completed';
-    else if (txt.startsWith('ยกเลิก')) _ordTabFilter = 'cancelled';
+    var spTabVal = 'all';
+    if (txt.startsWith('ทั้งหมด')) { _ordTabFilter = null; spTabVal = 'all'; }
+    else if (txt.startsWith('รอดำเนินการ')) { _ordTabFilter = 'pending'; spTabVal = 'pending'; }
+    else if (txt.startsWith('จัดส่งแล้ว')) { _ordTabFilter = 'shipped'; spTabVal = 'shipped'; }
+    else if (txt.startsWith('สำเร็จ')) { _ordTabFilter = 'completed'; spTabVal = 'completed'; }
+    else if (txt.startsWith('ยกเลิก')) { _ordTabFilter = 'cancelled'; spTabVal = 'cancelled'; }
+    // เชื่อมกับระบบ _spOrders (ตัวที่ render ตารางจริง)
+    if (typeof window.spSetTab === 'function') window.spSetTab(spTabVal, el);
     if (typeof renderOrdersLive === 'function') renderOrdersLive();
   };
 
