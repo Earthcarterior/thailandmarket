@@ -10004,6 +10004,13 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     if (name === 'returns') {
       setTimeout(() => window.renderReturnsLive(), 100);
     }
+    // เรียก renderer ตรงๆ กัน chain ขาด (goto หลายชั้น override กัน)
+    if (name === 'ship-pending') {
+      setTimeout(() => { if (typeof renderShipPendingLive === 'function') renderShipPendingLive(); }, 100);
+    }
+    if (name === 'orders') {
+      setTimeout(() => { if (typeof window.spLoadOrders === 'function') window.spLoadOrders(); }, 100);
+    }
   };
 })();
 
