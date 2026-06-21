@@ -8425,6 +8425,16 @@ window.spArrangePickup = async function(scope) {
   const pickupDate = $('sp-pickup-date')?.value;
   if (!pickupDate) { toast('⚠️ กรุณาเลือกวันเข้ารับ','error'); return; }
 
+  // resolve seller ให้แน่ใจก่อน insert (กัน _sellerSellerId null)
+  let sid = _sellerSellerId;
+  if (!sid) {
+    try {
+      const { data:{ user } } = await _sb.auth.getUser();
+      const r = await _sb.from('sellers').select('id').eq('user_id', user.id).limit(1);
+      if (r.data && r.data.length) sid = r.data[0].id;
+    } catch(e){}
+  }
+
   if (!confirm(`นัดรับ ${ids.length} พัสดุ ในวันที่ ${pickupDate}?`)) return;
 
   try {
@@ -8441,18 +8451,19 @@ window.spArrangePickup = async function(scope) {
         updated_at: new Date().toISOString()
       }).eq('id', id);
       if (error) { fail++; console.error('นัดรับ fail:', id, error.message); continue; }
-      // บันทึก fulfillment log
-      await _sb.from('fulfillments').insert({
+      // บันทึก fulfillment log (เช็ค error จริง)
+      const fres = await _sb.from('fulfillments').insert({
         order_id: id,
-        seller_id: _sellerSellerId,
+        seller_id: sid,
         method: 'pickup',
         carrier: o.shipping_method || null,
         carrier_label: o.shipping_method_name || null,
         tracking_number: trk,
         pickup_date: pickupDate,
         status: 'requested',
-        created_by: _sellerSellerId
+        created_by: sid
       });
+      if (fres.error) console.error('fulfillment insert fail:', id, fres.error.message);
       ok++;
     }
     if (fail) toast(`⚠️ นัดรับสำเร็จ ${ok} พัสดุ, ไม่สำเร็จ ${fail} พัสดุ`,'error');
@@ -8481,6 +8492,16 @@ window.spDropOff = async function(scope) {
   const word = checkedCbs.length ? `${ids.length} พัสดุที่เลือก` : `ทั้งหมด ${ids.length} พัสดุ`;
   if (!confirm(`ยืนยันนำ ${word} ไปส่งที่สาขา Drop-off?\n(ออเดอร์จะเปลี่ยนเป็น "จัดส่งแล้ว")`)) return;
 
+  // resolve seller ให้แน่ใจ
+  let sid = _sellerSellerId;
+  if (!sid) {
+    try {
+      const { data:{ user } } = await _sb.auth.getUser();
+      const r = await _sb.from('sellers').select('id').eq('user_id', user.id).limit(1);
+      if (r.data && r.data.length) sid = r.data[0].id;
+    } catch(e){}
+  }
+
   try {
     let ok = 0, fail = 0;
     const dp = (window._dropoffPoints && window._dropoffPoints[0]) || {};
@@ -8497,9 +8518,9 @@ window.spDropOff = async function(scope) {
         updated_at: new Date().toISOString()
       }).eq('id', id);
       if (error) { fail++; console.error('dropoff fail:', id, error.message); continue; }
-      await _sb.from('fulfillments').insert({
+      const fres = await _sb.from('fulfillments').insert({
         order_id: id,
-        seller_id: _sellerSellerId,
+        seller_id: sid,
         method: 'dropoff',
         carrier: o.shipping_method || null,
         carrier_label: o.shipping_method_name || null,
@@ -8507,8 +8528,9 @@ window.spDropOff = async function(scope) {
         dropoff_point_id: dp.id || null,
         dropoff_point_name: dp.name || null,
         status: 'in_transit',
-        created_by: _sellerSellerId
+        created_by: sid
       });
+      if (fres.error) console.error('fulfillment insert fail:', id, fres.error.message);
       ok++;
     }
     if (fail) toast(`⚠️ ส่งสำเร็จ ${ok}, ไม่สำเร็จ ${fail} พัสดุ`,'error');
