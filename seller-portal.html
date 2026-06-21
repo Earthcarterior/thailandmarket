@@ -8866,8 +8866,14 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       }
       var s = sb();
       var products = await s.from('products').select('id,name_th,thumbnail,images').eq('seller_id', seller.id);
-      // ดึง order_items ของร้านนี้โดยตรงจาก order_items.seller_id (ไม่พึ่ง products — กันออเดอร์หายถ้าสินค้าถูกลบ)
-      var items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id').eq('seller_id', seller.id);
+      var pIds = (products.data||[]).map(function(p){return p.id;});
+      // ดึง order_items ของร้าน: ผ่าน product_id (หลัก) — RLS policy เปิดให้อ่านแล้ว
+      var items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id');
+      if (pIds.length) {
+        items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id').in('product_id', pIds);
+      } else {
+        items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id').eq('seller_id', seller.id);
+      }
       if (items.error){
         tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#c00">items error: '+esc(items.error.message)+'</td></tr>';
         return;
