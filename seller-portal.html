@@ -8406,30 +8406,40 @@ window.spToggleAll = function(checked) {
 };
 
 window.spArrangePickup = async function(scope) {
-  const ids = scope === 'all' 
-    ? _spOrders.filter(o => {
-        if (_spUrgFilter !== 'all' && _spUrgencyOf(o) !== _spUrgFilter) return false;
-        if (_spCourierFilter !== 'all' && o.shipping_method !== _spCourierFilter) return false;
-        return true;
-      }).map(o => o.id)
-    : [...document.querySelectorAll('#sp-list .sp-cb-item:checked')].map(cb => cb.value);
-  
-  if (!ids.length) { toast('⚠️ ไม่มีพัสดุที่จะนัดรับ','error'); return; }
+  // ถ้ามี checkbox ติ๊กไว้ → นัดเฉพาะที่เลือก (ไม่ว่า scope จะเป็นอะไร)
+  const checkedCbs = [...document.querySelectorAll('#sp-list .sp-cb-item:checked')];
+  let ids;
+  if (checkedCbs.length) {
+    ids = checkedCbs.map(cb => cb.value);
+  } else if (scope === 'all') {
+    ids = _spOrders.filter(o => {
+      if (_spUrgFilter !== 'all' && _spUrgencyOf(o) !== _spUrgFilter) return false;
+      if (_spCourierFilter !== 'all' && o.shipping_method !== _spCourierFilter) return false;
+      return true;
+    }).map(o => o.id);
+  } else {
+    ids = [];
+  }
+
+  if (!ids.length) { toast('⚠️ กรุณาเลือกพัสดุที่จะนัดรับ (ติ๊กช่องหน้ารายการ)','error'); return; }
   const pickupDate = $('sp-pickup-date')?.value;
   if (!pickupDate) { toast('⚠️ กรุณาเลือกวันเข้ารับ','error'); return; }
-  
+
   if (!confirm(`นัดรับ ${ids.length} พัสดุ ในวันที่ ${pickupDate}?`)) return;
-  
+
   try {
-    // Update orders → status = processing + add tracking
+    let ok = 0, fail = 0;
     for (const id of ids) {
-      await _sb.from('orders').update({
+      const { error } = await _sb.from('orders').update({
         status: 'processing',
         tracking_number: 'TH' + Math.random().toString().slice(2,11) + 'TH',
         updated_at: new Date().toISOString()
       }).eq('id', id);
+      if (error) { fail++; console.error('นัดรับ fail:', id, error.message); }
+      else ok++;
     }
-    toast(`✅ นัดรับ ${ids.length} พัสดุสำเร็จ`,'ok');
+    if (fail) toast(`⚠️ นัดรับสำเร็จ ${ok} พัสดุ, ไม่สำเร็จ ${fail} พัสดุ`,'error');
+    else toast(`✅ นัดรับ ${ok} พัสดุสำเร็จ`,'ok');
     await renderShipPendingLive();
   } catch(e) { toast('❌ ' + e.message,'error'); }
 };
