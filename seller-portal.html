@@ -8127,11 +8127,17 @@ async function renderShipPendingLive() {
     } catch(e) { console.warn('ship resolve:', e); }
   }
   if (!_sellerSellerId) return;
-  await Promise.all([shipLoadOrders(), spLoadPickupAddr(), spLoadCouriers(), spLoadPickupDates()]);
-  spRenderUrgCounts();
-  spRenderCourierPills();
+  // โหลดออเดอร์ก่อน (สำคัญสุด) — แยกจากตัวอื่นกัน error บล็อก
+  try { await shipLoadOrders(); } catch(e){ console.error('shipLoadOrders:', e); }
+  console.log('[ship-pending] _spOrders =', _spOrders.length, 'orders, tbl=', !!document.getElementById('sp-list'));
+  // ตัวเสริม (ถ้า error ไม่กระทบการแสดงออเดอร์)
+  try { await spLoadPickupAddr(); } catch(e){ console.warn('pickup:', e); }
+  try { await spLoadCouriers(); } catch(e){ console.warn('couriers:', e); }
+  try { await spLoadPickupDates(); } catch(e){ console.warn('dates:', e); }
+  try { spRenderUrgCounts(); } catch(e){ console.warn('urg:', e); }
+  try { spRenderCourierPills(); } catch(e){ console.warn('pills:', e); }
   spRenderTable();
-  spUpdateSidebarBadge();
+  try { spUpdateSidebarBadge(); } catch(e){}
 }
 
 async function shipLoadOrders() {
