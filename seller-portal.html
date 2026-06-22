@@ -8510,9 +8510,12 @@ function spUpdateSidebarBadge() {
 }
 
 window.spTab = function(tab) {
+  console.log('[spTab] คลิกแท็บ:', tab);
   _spActiveTab = tab;
   document.querySelectorAll('#page-ship-pending .sp-tab').forEach(b => b.classList.toggle('on', b.dataset.sptab === tab));
-  document.querySelectorAll('#page-ship-pending .sp-panel').forEach(p => p.classList.toggle('on', p.id === 'sp-panel-' + tab));
+  const panels = document.querySelectorAll('#page-ship-pending .sp-panel');
+  console.log('[spTab] เจอ panel:', panels.length, '| หา:', 'sp-panel-' + tab);
+  panels.forEach(p => p.classList.toggle('on', p.id === 'sp-panel-' + tab));
   if (tab === 'docs') { spRenderDocsTable(); spRenderDocTypes(); }
 };
 
