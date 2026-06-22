@@ -8866,19 +8866,41 @@ function spBuildDocBlock(o, typeId, sender, idx) {
     </tr>`).join('');
   
   // ── ใบจ่าหน้า (ผู้รับ) ──
+  const _itrk = (o.order_number || ('TM' + o.id.slice(0,8))).toUpperCase();
+  const _rtrk = o.tracking_number || o.tracking_no || '';
+  const _qr = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(_itrk + (_rtrk?('|'+_rtrk):''))}`;
   const coverTo = `
     <div class="lbl-box">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <span class="lbl-num">${num}</span>
-        <span class="muted">ติดต่อ ${sfEsc(buyerPhone || '-')}</span>
+        <div>
+          <span class="lbl-num">${num}</span>
+          <div style="font-size:9px;color:#555;margin-top:4px">Internal: <b style="font-family:monospace">${_itrk}</b></div>
+          ${_rtrk ? `<div style="font-size:9px;color:#555">${sfEsc(courier)}: <b style="font-family:monospace">${sfEsc(_rtrk)}</b></div>` : ''}
+        </div>
+        <img src="${_qr}" width="64" height="64" style="border:1px solid #ddd" alt="QR">
       </div>
       <div style="font-size:15px;font-weight:600;margin:8px 0 4px">${sfEsc(buyerName)}</div>
       <div style="font-size:12px;line-height:1.5">${sfEsc(buyerDetail)}</div>
-      <div style="text-align:right;margin-top:10px" class="muted">(${sfEsc(courier)})</div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px">
+        <span class="muted">ติดต่อ ${sfEsc(buyerPhone || '-')}</span>
+        <span class="muted">(${sfEsc(courier)})</span>
+      </div>
     </div>`;
   
   // ── ใบจ่าหน้า (ผู้รับ-ผู้ส่ง) ──
+  const internalTrk = (o.order_number || ('TM' + o.id.slice(0,8))).toUpperCase();
+  const realTrk = o.tracking_number || o.tracking_no || '';
+  const qrData = encodeURIComponent(JSON.stringify({o:internalTrk, t:realTrk, c:courier}).slice(0,180));
+  const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${qrData}`;
   const coverToFrom = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:6px">
+      <div>
+        <div style="font-size:9px;color:#555">Tracking ภายใน (Internal)</div>
+        <div style="font-size:16px;font-weight:bold;font-family:monospace;letter-spacing:1px">${internalTrk}</div>
+        ${realTrk ? `<div style="font-size:9px;color:#555;margin-top:3px">Tracking ขนส่ง (${sfEsc(courier)})</div><div style="font-size:13px;font-weight:600;font-family:monospace">${sfEsc(realTrk)}</div>` : `<div style="font-size:10px;color:#999;margin-top:3px">⬚ ${sfEsc(courier)} — รอเลข tracking</div>`}
+      </div>
+      <img src="${qrImg}" width="80" height="80" style="border:1px solid #ddd" alt="QR">
+    </div>
     <div class="muted" style="font-size:9px;margin-bottom:4px">*กรณีจัดส่งสินค้าไม่สำเร็จ กรุณาส่งคืนตามที่อยู่ผู้ส่ง</div>
     <div style="font-size:11px"><b>ผู้ส่ง</b> &nbsp;${sfEsc(sender.name)} (${sfEsc(sender.phone)})</div>
     <div class="muted" style="font-size:10px;margin:2px 0 8px">${sfEsc(sender.detail)}</div>
