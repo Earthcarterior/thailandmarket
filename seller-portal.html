@@ -8510,13 +8510,24 @@ function spUpdateSidebarBadge() {
 }
 
 window.spTab = function(tab) {
-  console.log('[spTab] คลิกแท็บ:', tab);
-  _spActiveTab = tab;
-  document.querySelectorAll('#page-ship-pending .sp-tab').forEach(b => b.classList.toggle('on', b.dataset.sptab === tab));
-  const panels = document.querySelectorAll('#page-ship-pending .sp-panel');
-  console.log('[spTab] เจอ panel:', panels.length, '| หา:', 'sp-panel-' + tab);
-  panels.forEach(p => p.classList.toggle('on', p.id === 'sp-panel-' + tab));
-  if (tab === 'docs') { spRenderDocsTable(); spRenderDocTypes(); }
+  try {
+    console.log('[spTab] เริ่ม tab=', tab);
+    _spActiveTab = tab;
+    document.querySelectorAll('#page-ship-pending .sp-tab').forEach(b => b.classList.toggle('on', b.dataset.sptab === tab));
+    const panels = document.querySelectorAll('#page-ship-pending .sp-panel');
+    panels.forEach(p => p.classList.toggle('on', p.id === 'sp-panel-' + tab));
+    console.log('[spTab] สลับ panel แล้ว, tab=docs?', tab==='docs');
+    if (tab === 'docs') {
+      console.log('[spTab] เรียก spRenderDocsTable...');
+      spRenderDocsTable();
+      console.log('[spTab] เรียก spRenderDocTypes...');
+      spRenderDocTypes();
+      console.log('[spTab] เสร็จ');
+    }
+  } catch(e) {
+    console.error('[spTab] ERROR:', e.message, e.stack);
+    alert('แท็บ error: ' + e.message);
+  }
 };
 
 window.spSetUrg = function(u) {
