@@ -8510,10 +8510,24 @@ function spUpdateSidebarBadge() {
 }
 
 window.spTab = function(tab) {
-  _spActiveTab = tab;
-  document.querySelectorAll('#page-ship-pending .sp-tab').forEach(b => b.classList.toggle('on', b.dataset.sptab === tab));
-  document.querySelectorAll('#page-ship-pending .sp-panel').forEach(p => p.classList.toggle('on', p.id === 'sp-panel-' + tab));
-  if (tab === 'docs') { try { spRenderDocsTable(); spRenderDocTypes(); } catch(e){ console.warn('docs render:', e); } }
+  try {
+    console.log('[spTab] เริ่ม tab=', tab);
+    _spActiveTab = tab;
+    document.querySelectorAll('#page-ship-pending .sp-tab').forEach(b => b.classList.toggle('on', b.dataset.sptab === tab));
+    const panels = document.querySelectorAll('#page-ship-pending .sp-panel');
+    panels.forEach(p => p.classList.toggle('on', p.id === 'sp-panel-' + tab));
+    console.log('[spTab] สลับ panel แล้ว, tab=docs?', tab==='docs');
+    if (tab === 'docs') {
+      console.log('[spTab] เรียก spRenderDocsTable...');
+      spRenderDocsTable();
+      console.log('[spTab] เรียก spRenderDocTypes...');
+      spRenderDocTypes();
+      console.log('[spTab] เสร็จ');
+    }
+  } catch(e) {
+    console.error('[spTab] ERROR:', e.message, e.stack);
+    alert('แท็บ error: ' + e.message);
+  }
 };
 
 window.spSetUrg = function(u) {
@@ -9223,7 +9237,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
         if (b) b.textContent = c.all;
       }
     });
-    document.querySelectorAll('#page-orders .itab, .tab, .sp-tab, [data-tab]').forEach(function(btn){
+    document.querySelectorAll('#page-orders .itab').forEach(function(btn){
       var txt = btn.textContent.replace(/\s*\(\d+\)\s*$/, '');
       if (/ทั้งหมด/.test(txt)) btn.textContent = 'ทั้งหมด ('+c.all+')';
       else if (/รอ.*ดำเนิน/.test(txt)) btn.textContent = 'รอดำเนินการ ('+c.pending+')';
