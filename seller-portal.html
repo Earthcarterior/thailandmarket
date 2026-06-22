@@ -8686,8 +8686,10 @@ function spRenderDocsTable() {
   const tbl = $('sp-doc-list');
   if (!tbl) return;
   
-  // For docs tab — show orders ที่ status = processing (นัดรับแล้ว) หรือ paid (ยังไม่นัด)
   let list = _spOrders.slice();
+  
+  // อัปเดตจำนวนความเร่งด่วนใน docs tab
+  spUpdateDocUrgCounts();
   
   $('sp-doc-count') && ($('sp-doc-count').textContent = list.length);
   
@@ -8702,7 +8704,7 @@ function spRenderDocsTable() {
     const itemsHtml = item ? `
       <div style="display:flex;gap:8px;align-items:center">
         <div class="sp-thumb">${(item.thumbnail || item.products?.thumbnail) ? `<img src="${sfEsc(item.thumbnail || item.products?.thumbnail)}">` : '📦'}</div>
-        <div style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sfEsc(item.name || item.products?.name_th || '—')}</div>
+        <div style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sfEsc(item.name_th || item.name || item.products?.name_th || '—')}${items.length > 1 ? ' <span style="color:#888">+ '+(items.length-1)+'</span>' : ''}</div>
       </div>` : '—';
     const addr = o.shipping_address || {};
     const buyer = addr.name || '—';
@@ -8720,7 +8722,7 @@ function spRenderDocsTable() {
       </div></td>
       <td>${o.tracking_number ? `<span class="sp-tracking" onclick="toast('📦 Tracking: ${sfEsc(o.tracking_number)}','info')">${sfEsc(o.tracking_number)}</span>` : '<span style="color:#888;font-size:11px">—</span>'}</td>
       <td style="font-family:'DM Mono',monospace;font-size:11px">${cfStr}</td>
-      <td style="font-size:11px;color:#888">—</td>
+      <td style="font-size:11px;color:#888">${o.pickup_date ? new Date(o.pickup_date).toLocaleDateString('th-TH') : '—'}</td>
       <td style="font-size:11px;line-height:1.6">
         <div><span class="sp-status-dot"></span>ใบปะหน้าพัสดุ</div>
         <div><span class="sp-status-dot"></span>Packing List</div>
@@ -8728,6 +8730,25 @@ function spRenderDocsTable() {
       </td>
     </tr>`;
   }).join('');
+}
+
+// นับความเร่งด่วนในแท็บสร้างเอกสาร
+function spUpdateDocUrgCounts() {
+  let late = 0, today = 0, tmrw = 0;
+  (_spOrders || []).forEach(o => {
+    const u = (typeof _spUrgencyOf === 'function') ? _spUrgencyOf(o) : null;
+    if (u === 'late') late++;
+    else if (u === 'today') today++;
+    else if (u === 'tmrw') tmrw++;
+  });
+  document.querySelectorAll('#sp-panel-docs [data-durg]').forEach(btn => {
+    const u = btn.dataset.durg;
+    const ct = btn.querySelector('.ct');
+    if (!ct) return;
+    if (u === 'late') ct.textContent = `(${late})`;
+    else if (u === 'today') ct.textContent = `(${today})`;
+    else if (u === 'tmrw') ct.textContent = `(${tmrw})`;
+  });
 }
 
 window.spDocStat = function(s) {
