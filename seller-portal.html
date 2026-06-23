@@ -4059,9 +4059,9 @@ function renderOrdersLive() {
     const first=items[0];
     return `<tr style="border-bottom:1px solid #F2F2F2">
       <td style="padding:10px 12px;font-family:monospace;font-size:11px">${o.order_number||o.id?.slice(0,8)}</td>
-      <td style="padding:10px 12px"><div style="display:flex;align-items:center;gap:6px">
-        ${first?.thumbnail?`<img src="${first.thumbnail}" style="width:32px;height:32px;object-fit:cover">`:'<span>📦</span>'}
-        <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px">${first?.name_th||'—'}${items.length>1?`<span style="color:#888"> +${items.length-1}</span>`:''}</span></div></td>
+      <td style="padding:10px 12px"><div style="display:flex;align-items:flex-start;gap:6px">
+        ${first?.thumbnail?`<img src="${first.thumbnail}" style="width:32px;height:32px;object-fit:cover;flex-shrink:0">`:'<span style="flex-shrink:0">📦</span>'}
+        <div style="font-size:12px;line-height:1.5;max-width:240px">${items.length?items.map(it=>`<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name_th||'—'}${it.quantity>1?` <span style="color:#888">x${it.quantity}</span>`:''}</div>`).join(''):'—'}</div></div></td>
       <td style="padding:10px 12px;font-size:12px">${o.shipping_name||'—'}</td>
       <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(o.total_amount)}</td>
       <td style="padding:10px 12px;font-size:11px;color:#888">${o.payment_method||'—'}</td>
@@ -9727,50 +9727,28 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       return [];
     }
     try {
-      // ใช้ RPC ถ้ามี (ก่อน fallback ไปใช้ select ตรง)
-      let data, error;
-      try {
-        const r = await sb().rpc('seller_recent_orders', {
-          p_seller_id: sid, p_status: null, p_limit: 200, p_offset: 0
-        });
-        if (!r.error) {
-          // map RPC fields เป็น format ที่ใช้กับตาราง
-          data = (r.data || []).map(o => ({
-            id: o.order_id,
-            order_code: o.order_code,
-            order_number: o.order_code,
-            status: o.status,
-            shipping_name: o.customer_name || o.customer_email,
-            total_amount: o.total_amount,
-            payment_method: '-',
-            created_at: o.created_at,
-            order_items: [{
-              name_th: o.first_product_name,
-              thumbnail: o.first_product_image,
-              quantity: o.items_count
-            }]
-          }));
-        } else error = r.error;
-      } catch(e) { error = e; }
-
-      // Fallback ถ้า RPC ใช้ไม่ได้
-      if (!data) {
-        const r = await sb()
-          .from('orders')
-          .select('id, order_code, order_number, status, total_amount, payment_method, shipping_name, tracking_number, created_at, order_items!inner(seller_id, name_th, product_name, thumbnail, product_image, quantity)')
-          .eq('order_items.seller_id', sid)
-          .order('created_at', { ascending: false })
-          .limit(200);
-        if (r.error) throw r.error;
-        data = (r.data || []).map(o => ({
+      // query ตรง — ดึง order_items ครบทุกรายการ + ชื่อลูกค้าจาก shipping_address
+      const r = await sb()
+        .from('orders')
+        .select('id, order_code, order_number, status, total_amount, payment_method, shipping_name, shipping_address, tracking_number, created_at, order_items!inner(seller_id, name_th, thumbnail, qty, price, variant_name)')
+        .eq('order_items.seller_id', sid)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (r.error) throw r.error;
+      const data = (r.data || []).map(o => {
+        const addr = o.shipping_address || {};
+        const custName = o.shipping_name || addr.name || addr.fullname || addr.full_name || '—';
+        return {
           ...o,
+          shipping_name: custName,
           order_items: (o.order_items || []).map(i => ({
-            name_th: i.name_th || i.product_name,
-            thumbnail: i.thumbnail || i.product_image,
-            quantity: i.quantity
+            name_th: i.name_th || '—',
+            thumbnail: i.thumbnail,
+            quantity: i.qty || 1,
+            variant_name: i.variant_name
           }))
-        }));
-      }
+        };
+      });
 
       _allOrders = data || [];
       return _allOrders;
