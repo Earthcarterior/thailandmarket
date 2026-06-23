@@ -1180,6 +1180,8 @@ async function loadProduct() {
     }
 
     _product = data;
+    window._currentProduct = data;
+    window._product = data;
     renderProduct();
 
     // Load secondary in parallel (don't block main render)
@@ -2290,8 +2292,10 @@ loadProduct();
   let _currentSellerId = null;
 
   function getSellerId() {
-    // Look for sellerId from URL/dataset/etc
-    return _currentSellerId || (window.PRODUCT_DATA && window.PRODUCT_DATA.seller_id);
+    return _currentSellerId
+      || (window._currentProduct && window._currentProduct.seller_id)
+      || (window._product && window._product.seller_id)
+      || (window.PRODUCT_DATA && window.PRODUCT_DATA.seller_id);
   }
 
   async function getPublicUserId() {
@@ -2415,8 +2419,9 @@ loadProduct();
   function init() {
     // Try to extract seller_id จาก global
     const tries = [
-      () => window.PRODUCT_DATA && window.PRODUCT_DATA.seller_id,
       () => window._currentProduct && window._currentProduct.seller_id,
+      () => window._product && window._product.seller_id,
+      () => window.PRODUCT_DATA && window.PRODUCT_DATA.seller_id,
       () => document.querySelector('[data-seller-id]')?.dataset.sellerId
     ];
     for (const fn of tries) {
