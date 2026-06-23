@@ -2309,12 +2309,12 @@ loadProduct();
   async function checkFollowStatus() {
     const sellerId = getSellerId();
     if (!sellerId) return;
-    const userId = await getPublicUserId();
-    if (!userId) return;
-    const { data } = await sb.from('shop_followers')
-      .select('id').eq('seller_id', sellerId).eq('user_id', userId).maybeSingle();
-    _isFollowing = !!data;
-    updateFollowBtn();
+    try {
+      const { data, error } = await sb.rpc('is_following_shop', { p_seller_id: sellerId });
+      if (error) { console.warn('is_following_shop:', error); return; }
+      _isFollowing = !!(data && data.following);
+      updateFollowBtn();
+    } catch(e) { console.warn('checkFollowStatus:', e); }
   }
 
   function updateFollowBtn() {
@@ -2339,7 +2339,7 @@ loadProduct();
     if (!session) { alert('กรุณาเข้าสู่ระบบก่อน'); location.href = 'login.html?from=' + encodeURIComponent(location.pathname + location.search); return; }
     const { data, error } = await sb.rpc('toggle_follow_shop', { p_seller_id: sellerId });
     if (error || (data && data.error)) {
-      alert('❌ ' + (error?.message || data.error));
+      alert('❌ ' + (data?.message || error?.message || data?.error || 'เกิดข้อผิดพลาด'));
       return;
     }
     _isFollowing = data.following;
