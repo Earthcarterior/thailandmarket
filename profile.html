@@ -379,6 +379,7 @@ nav, .nav {
       <div class="sb-item on" onclick="show('loyalty',this)"><span class="sb-ico">⭐</span>Loyalty & แต้มสะสม</div>
       <div class="sb-item" onclick="show('orders',this)"><span class="sb-ico">📦</span>ออเดอร์ของฉัน<span class="sb-badge" id="sb-orders-count">—</span></div>
       <div class="sb-item" onclick="show('wishlist',this)"><span class="sb-ico">❤️</span>Wishlist<span class="sb-badge" id="sb-wish-count">—</span></div>
+      <div class="sb-item" onclick="show('shops',this)"><span class="sb-ico">🏪</span>ร้านค้าที่ติดตาม<span class="sb-badge" id="sb-shops-count">—</span></div>
       <div class="sb-item" onclick="show('coupons',this)"><span class="sb-ico">🎟️</span>คูปองของฉัน<span class="sb-badge" id="sb-coupon-count">—</span></div>
       <div class="sb-div"></div>
       <div class="sb-item" onclick="show('addresses',this)"><span class="sb-ico">📍</span>ที่อยู่จัดส่ง</div>
@@ -458,6 +459,12 @@ nav, .nav {
     <div class="pv" id="pv-wishlist">
       <div class="sec-head"><div class="sec-title">Wishlist (<span id="wish-count-title">0</span> รายการ)</div></div>
       <div id="wish-grid"></div>
+    </div>
+
+    <!-- FOLLOWED SHOPS -->
+    <div class="pv" id="pv-shops">
+      <div class="sec-head"><div class="sec-title">ร้านค้าที่ติดตาม (<span id="shops-count-title">0</span> ร้าน)</div></div>
+      <div id="shops-grid" style="padding:20px"></div>
     </div>
 
     <!-- COUPONS -->
@@ -751,7 +758,7 @@ async function loadProfile() {
   setEl('sb-wish-count', wishCount);
 
   // Load sections
-  await Promise.all([loadOrders(uid), loadWishlist(uid), loadCoupons(), loadAddresses(currentAuthId), loadCats()]);
+  await Promise.all([loadOrders(uid), loadWishlist(uid), loadFollowedShops(), loadCoupons(), loadAddresses(currentAuthId), loadCats()]);
 
   // Form prefill
   const parts=name.split(' ');
@@ -1077,6 +1084,71 @@ async function removeWish(id,btn) {
   } catch(e) { 
     console.error('removeWish:', e); 
     toast('❌ ' + e.message); 
+  }
+}
+
+// ── Load Followed Shops ───────────────────────────────────
+async function loadFollowedShops() {
+  const el = document.getElementById('shops-grid');
+  if(!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--g400)">กำลังโหลด...</div>';
+
+  let shops = [];
+  try {
+    const { data, error } = await sb.rpc('get_my_followed_shops');
+    console.log('[profile] followed shops RPC:', data);
+    if(!error && data?.items) shops = data.items;
+  } catch(e) { console.warn('[profile] followed shops RPC failed:', e); }
+
+  const cnt = shops.length;
+  setEl('shops-count-title', cnt);
+  setEl('sb-shops-count', cnt);
+
+  if(!cnt) {
+    el.innerHTML = emptyHtml('🏪','ยังไม่ได้ติดตามร้านค้า','ค้นหาร้านค้า','category.html');
+    return;
+  }
+
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">` + shops.map(s => {
+    const logo = s.logo;
+    const verified = s.is_verified ? '<span style="color:#2563EB;font-size:12px" title="ร้านยืนยันแล้ว">✔</span>' : '';
+    const target = s.slug ? `shop.html?slug=${encodeURIComponent(s.slug)}` : `shop.html?id=${s.seller_id}`;
+    return `<div style="border:var(--border);border-radius:8px;overflow:hidden;background:#fff">
+      <div style="display:flex;gap:12px;padding:14px;cursor:pointer" onclick="location.href='${target}'">
+        <div style="width:54px;height:54px;border-radius:8px;background:var(--g100);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
+          ${logo?`<img src="${logo}" style="width:100%;height:100%;object-fit:cover">`:'<span style="font-size:24px">🏪</span>'}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.shop_name||'ร้านค้า')} ${verified}</div>
+          <div style="display:flex;gap:12px;font-size:11px;color:var(--g500)">
+            <span>📦 ${Number(s.product_count||0).toLocaleString()} สินค้า</span>
+            <span>👥 ${Number(s.follower_count||0).toLocaleString()} ผู้ติดตาม</span>
+          </div>
+          ${Number(s.rating_count||0)>0?`<div style="font-size:11px;color:var(--g500);margin-top:3px">⭐ ${Number(s.rating_avg||0).toFixed(1)} (${Number(s.rating_count).toLocaleString()})</div>`:''}
+        </div>
+      </div>
+      <div style="border-top:var(--border);display:flex">
+        <button style="flex:1;padding:9px;background:#fff;border:none;border-right:var(--border);cursor:pointer;font-size:12px;color:var(--g600)" onclick="location.href='${target}'">เยี่ยมร้าน</button>
+        <button style="flex:1;padding:9px;background:#fff;border:none;cursor:pointer;font-size:12px;color:var(--red)" onclick="unfollowShop('${s.seller_id}',this)">เลิกติดตาม</button>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+async function unfollowShop(sellerId, btn) {
+  if(!confirm('เลิกติดตามร้านนี้?')) return;
+  try {
+    const { data, error } = await sb.rpc('toggle_follow_shop', { p_seller_id: sellerId });
+    if(error) throw error;
+    btn.closest('div[style*="border"]')?.parentElement?.closest('div[style*="border-radius"]')?.remove();
+    toast('เลิกติดตามร้านแล้ว');
+    const curr = Math.max(0, parseInt(document.getElementById('shops-count-title')?.textContent||'0') - 1);
+    setEl('shops-count-title', curr);
+    setEl('sb-shops-count', curr);
+    if(curr === 0) loadFollowedShops();
+  } catch(e) {
+    console.error('unfollowShop:', e);
+    toast('❌ ' + (e.message||'เกิดข้อผิดพลาด'));
   }
 }
 
