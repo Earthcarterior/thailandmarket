@@ -8334,7 +8334,7 @@ function shipRenderTable() {
   }
   
   tbl.innerHTML = list.map(o => {
-    const items = o.items || [];
+    const items = o._items || o.items || [];
     const item = items[0];
     const itemsHtml = items.slice(0, 1).map(it => `
       <div style="display:flex;gap:8px;align-items:center">
@@ -8890,14 +8890,14 @@ function spBuildDocBlock(o, typeId, sender, idx) {
   const buyerName = addr.name || '—';
   const buyerDetail = addr.detail || addr.address || '—';
   const buyerPhone = addr.phone || addr.tel || '';
-  const totalQty = items.reduce((s,it) => s + (it.quantity || 1), 0);
+  const totalQty = items.reduce((s,it) => s + (it.qty || it.quantity || 1), 0);
   
   const itemRows = items.map((it, i) => `
     <tr>
       <td style="text-align:center;width:30px">${i+1}</td>
-      <td>${sfEsc(it.name || it.products?.name_th || '(สินค้าไม่มีชื่อ)')}</td>
-      <td style="width:90px">${sfEsc(it.sku || '-')}</td>
-      <td style="text-align:center;width:50px">${it.quantity || 1} ชิ้น</td>
+      <td>${sfEsc(it.name_th || it.name || it.products?.name_th || '(สินค้าไม่มีชื่อ)')}</td>
+      <td style="width:90px">${sfEsc(it.sku || it.variant_name || '-')}</td>
+      <td style="text-align:center;width:50px">${it.qty || it.quantity || 1} ชิ้น</td>
     </tr>`).join('');
   
   // ── ใบจ่าหน้า (ผู้รับ) ──
@@ -8973,7 +8973,7 @@ function spBuildDocBlock(o, typeId, sender, idx) {
         </div>
         <table style="font-size:10px">
           <thead><tr><th>รายการ</th><th style="width:55px">SKU</th><th style="width:40px">จำนวน</th></tr></thead>
-          <tbody>${items.map(it=>`<tr><td>${sfEsc(it.name||it.products?.name_th||'-')}</td><td>${sfEsc(it.sku||'-')}</td><td style="text-align:center">${it.quantity||1}</td></tr>`).join('')}</tbody>
+          <tbody>${items.map(it=>`<tr><td>${sfEsc(it.name_th||it.name||it.products?.name_th||'-')}</td><td>${sfEsc(it.sku||it.variant_name||'-')}</td><td style="text-align:center">${it.qty||it.quantity||1}</td></tr>`).join('')}</tbody>
         </table>
       </div>
     </div>`;
@@ -8995,7 +8995,7 @@ function spBuildDocBlock(o, typeId, sender, idx) {
         <div>${sfEsc(buyerDetail)}</div>
       </div>
       <div class="muted">(${sfEsc(courier)})</div>
-      <div style="margin-top:4px"><b>สินค้า:</b> ${items.map(it=>sfEsc(it.name||'-')+' ×'+(it.quantity||1)).join(', ')}</div>
+      <div style="margin-top:4px"><b>สินค้า:</b> ${items.map(it=>sfEsc(it.name_th||it.name||'-')+' ×'+(it.qty||it.quantity||1)).join(', ')}</div>
     </div>`;
   
   const content = {
@@ -9019,10 +9019,10 @@ window.spGenerateSummary = function() {
   // รวมสินค้าทุกพัสดุ — group by SKU/name
   const agg = {};
   orders.forEach(o => {
-    (o.items || []).forEach(it => {
-      const key = it.sku || it.name || it.product_id || 'unknown';
-      if (!agg[key]) agg[key] = {name: it.name || it.products?.name_th || '(สินค้าไม่มีชื่อ)', sku: it.sku || '-', qty: 0};
-      agg[key].qty += (it.quantity || 1);
+    (o._items || o.items || []).forEach(it => {
+      const key = it.sku || it.name_th || it.name || it.product_id || 'unknown';
+      if (!agg[key]) agg[key] = {name: it.name_th || it.name || it.products?.name_th || '(สินค้าไม่มีชื่อ)', sku: it.sku || it.variant_name || '-', qty: 0};
+      agg[key].qty += (it.qty || it.quantity || 1);
     });
   });
   const rows = Object.values(agg);
