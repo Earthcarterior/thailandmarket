@@ -9288,7 +9288,10 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       var st = (o.status||'pending').toLowerCase();
       var info = STATUS_INFO[st] || STATUS_INFO.pending;
       var firstItem = o._items[0] || {};
-      var itemsLabel = o._items.length ? esc(firstItem.name).slice(0,40) + (o._items.length>1?' +'+ (o._items.length-1)+' รายการ':'') : '—';
+      var itemsLabel = o._items.length ? o._items.map(function(it){ return esc(it.name||'—') + (it.qty>1?' <span style="color:#999">x'+it.qty+'</span>':''); }).join('<br>') : '—';
+      var _addr = o.shipping_address || {};
+      var custName = o.shipping_name || _addr.name || _addr.fullname || _addr.full_name || '—';
+      var custPhone = o.shipping_phone || _addr.phone || _addr.tel || '';
       var thumb = firstItem.image ? '<img src="'+esc(firstItem.image)+'" style="width:36px;height:36px;object-fit:cover;border-radius:4px" alt="">' : '<div style="width:36px;height:36px;background:#f2f2f2;border-radius:4px;display:inline-flex;align-items:center;justify-content:center">📦</div>';
 
       var actions = '';
@@ -9313,7 +9316,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       return '<tr style="border-bottom:1px solid #eee">' +
         '<td style="padding:10px;font-family:monospace;font-size:12px;font-weight:600">'+esc(o.order_number||o.id.slice(0,8))+'<div style="font-size:10px;color:#999;font-weight:400">'+fmtDT(o.created_at)+'</div></td>' +
         '<td style="padding:10px"><div style="display:flex;align-items:center;gap:8px">'+thumb+'<div style="font-size:12px">'+itemsLabel+'</div></div></td>' +
-        '<td style="padding:10px;font-size:12px">'+esc(o.shipping_name||'—')+'<div style="font-size:11px;color:#999">'+esc(o.shipping_phone||'')+'</div></td>' +
+        '<td style="padding:10px;font-size:12px">'+esc(custName)+'<div style="font-size:11px;color:#999">'+esc(custPhone)+'</div></td>' +
         '<td style="padding:10px;font-family:monospace;font-weight:700;color:#E63329;text-align:right">'+fmtMoney(orderTotal(o))+'</td>' +
         '<td style="padding:10px;font-size:11px;color:#666">'+esc(o.payment_method||'—')+'</td>' +
         '<td style="padding:10px"><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:'+info.bg+';color:'+info.color+'">'+info.label+'</span></td>' +
