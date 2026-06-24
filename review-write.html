@@ -535,12 +535,12 @@ img{max-width:100%;height:auto}
   <div class="card">
     <div class="ct">📦 สินค้าที่รีวิว</div>
     <div class="prod-preview">
-      <div class="pp-img">📺</div>
+      <div class="pp-img" id="pp-img">📦</div>
       <div class="pp-info">
-        <div class="pp-name">Samsung QLED 4K 55" QA55Q70C</div>
-        <div class="pp-shop">🛒 TechHub Official</div>
-        <div class="pp-order">ออเดอร์ #ZM-48271 · ซื้อเมื่อ 15 เม.ย. 69</div>
-        <span class="pp-variant">สี: Crystal Black · ขนาด: 55 นิ้ว</span>
+        <div class="pp-name" id="pp-name">กำลังโหลด...</div>
+        <div class="pp-shop" id="pp-shop"></div>
+        <div class="pp-order" id="pp-order"></div>
+        <span class="pp-variant" id="pp-variant" style="display:none"></span>
       </div>
     </div>
   </div>
@@ -739,7 +739,8 @@ async function submitReview(){
       p_rating: rating,
       p_title: title,
       p_body: body || null,
-      p_images: []
+      p_images: [],
+      p_product_id: window._reviewProductId || null
     });
     if(error) throw error;
     if(data && data.ok===false) throw new Error(data.message || data.error || 'ส่งรีวิวไม่สำเร็จ');
@@ -758,6 +759,37 @@ async function submitReview(){
 
 function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.style.cssText='background:#0A0A0A;color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-family:DM Sans,sans-serif;animation:tIn 0.3s ease';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
 updateProgress();
+
+// ── โหลดข้อมูลสินค้าจริงจาก order ──
+async function loadOrderInfo(){
+  const orderId = new URLSearchParams(location.search).get('order');
+  if(!orderId) return;
+  let sbc = window._sb || (typeof sb!=='undefined'?sb:null);
+  if(!sbc && window.supabase){
+    sbc = window.supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
+    window._sb = sbc;
+  }
+  if(!sbc) return;
+  try{
+    const { data, error } = await sbc.rpc('get_order_review_info', { p_order_id: orderId });
+    if(error || !data || data.ok===false){
+      const nm=document.getElementById('pp-name');
+      if(nm) nm.textContent = (data && data.error==='ORDER_NOT_FOUND') ? 'ไม่พบออเดอร์นี้' : 'ไม่สามารถโหลดข้อมูลออเดอร์';
+      return;
+    }
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    const img=document.getElementById('pp-img');
+    if(img && data.thumbnail){ img.innerHTML=`<img src="${data.thumbnail}" style="width:100%;height:100%;object-fit:cover;border-radius:2px">`; }
+    set('pp-name', data.product_name || 'สินค้า');
+    set('pp-shop', data.shop_name ? '🛒 '+data.shop_name : '');
+    const d = data.created_at ? new Date(data.created_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '';
+    set('pp-order', 'ออเดอร์ '+(data.order_number||'')+(d?' · ซื้อเมื่อ '+d:''));
+    const vEl=document.getElementById('pp-variant');
+    if(vEl){ if(data.variant_text){ vEl.textContent=data.variant_text; vEl.style.display=''; } else { vEl.style.display='none'; } }
+    window._reviewProductId = data.product_id || null;
+  }catch(e){ console.warn('[review] loadOrderInfo failed:', e); }
+}
+loadOrderInfo();
 </script>
 
 
