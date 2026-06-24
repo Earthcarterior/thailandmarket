@@ -3693,10 +3693,10 @@ async function loadSellerOrders() {
 async function loadSellerReviews() {
   try {
     const { data, error } = await _sb.from('reviews')
-      .select('id,rating,comment,created_at,reply,replied_at,product_id,products(name_th,thumbnail),user_id,users(display_name)')
+      .select('id,rating,body,created_at,seller_reply,seller_reply_at,product_id,products(name_th,thumbnail),user_id,users(display_name)')
       .order('created_at',{ ascending:false }).limit(50);
     if (error) throw error;
-    _sellerReviews = data || [];
+    _sellerReviews = (data || []).map(r => ({ ...r, comment: r.body, reply: r.seller_reply, replied_at: r.seller_reply_at }));
     const rats=_sellerReviews.map(r=>r.rating).filter(Boolean);
     _sellerStats = {
       ..._sellerStats,
@@ -4584,7 +4584,7 @@ function renderReviewsLive(){
 
 async function replyReview(id){
   const reply=prompt('พิมพ์คำตอบ:'); if(!reply?.trim()) return;
-  const{error}=await _sb.from('reviews').update({reply:reply.trim(),replied_at:new Date().toISOString()}).eq('id',id);
+  const{error}=await _sb.from('reviews').update({seller_reply:reply.trim(),seller_reply_at:new Date().toISOString()}).eq('id',id);
   if(error){toast('❌ '+error.message,'error');return;}
   toast('✅ ตอบรีวิวแล้ว','ok');
   await loadSellerReviews(); renderReviewsLive();
@@ -7617,7 +7617,7 @@ async function renderTasksToday() {
         )).data?.map(o=>o.order_id) || ['00000000-0000-0000-0000-000000000000']),
       _sb.from('chat_threads').select('*', {count:'exact', head:true}).eq('seller_id', _sellerSellerId).gt('unread_seller', 0),
       _sb.from('return_requests').select('*', {count:'exact', head:true}).eq('seller_id', _sellerSellerId).eq('status', 'pending'),
-      _sb.from('reviews').select('*', {count:'exact', head:true}).is('reply', null).in('product_id',
+      _sb.from('reviews').select('*', {count:'exact', head:true}).is('seller_reply', null).in('product_id',
         (await _sb.from('products').select('id').eq('seller_id', _sellerSellerId)).data?.map(p=>p.id) || ['00000000-0000-0000-0000-000000000000']),
       _sb.from('products').select('*', {count:'exact', head:true}).eq('seller_id', _sellerSellerId).lt('stock_quantity', 10)
     ]);
