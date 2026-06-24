@@ -3256,6 +3256,7 @@ async function krLoad() {
   try {
     // ใช้ RPC (bypass RLS) แทน from() ตรงๆ — join ชื่อร้านมาในตัวแล้ว
     const { data, error } = await sb.rpc('admin_list_kyc', { p_status: 'all' });
+    console.log('[KYC] admin_list_kyc →', { count: data?.length, error });
     if (error) throw error;
     _krList = data || [];
 
