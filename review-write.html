@@ -703,17 +703,57 @@ function updateProgress(){
   document.getElementById('rp-fill').style.width=Math.min(score,100)+'%';
 }
 
-function submitReview(){
+async function submitReview(){
   if(rating===0){toast('⭐ กรุณาให้คะแนนก่อนส่งรีวิว');return;}
+
+  const orderId = new URLSearchParams(location.search).get('order');
+  if(!orderId){toast('❌ ไม่พบรหัสออเดอร์ (order) ใน URL');return;}
+
   const btn=document.getElementById('submit-btn');
   btn.disabled=true;
   btn.textContent='⏳ กำลังส่ง...';
-  setTimeout(()=>{
+
+  let sbc = window._sb || (typeof sb!=='undefined' ? sb : null);
+  if(!sbc && window.supabase){
+    sbc = window.supabase.createClient('https://qmgyimsptzewwyafvjzk.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0');
+    window._sb = sbc;
+  }
+  if(!sbc){ btn.disabled=false; btn.textContent='⭐ ส่งรีวิว'; toast('❌ เชื่อมต่อระบบไม่ได้'); return; }
+
+  // ต้อง login
+  const { data:{ session } } = await sbc.auth.getSession();
+  if(!session){
+    btn.disabled=false; btn.textContent='⭐ ส่งรีวิว';
+    if(confirm('ต้องเข้าสู่ระบบก่อนส่งรีวิว\nไปหน้าเข้าสู่ระบบ?')){
+      location.href='login.html?redirect='+encodeURIComponent(location.pathname+location.search);
+    }
+    return;
+  }
+
+  const body = document.getElementById('review-text').value.trim();
+  const title = tags.length ? tags.slice(0,3).join(' · ') : (body.slice(0,60) || null);
+
+  try{
+    const { data, error } = await sbc.rpc('submit_product_review', {
+      p_order_id: orderId,
+      p_rating: rating,
+      p_title: title,
+      p_body: body || null,
+      p_images: []
+    });
+    if(error) throw error;
+    if(data && data.ok===false) throw new Error(data.message || data.error || 'ส่งรีวิวไม่สำเร็จ');
+
     btn.textContent='✅ ส่งรีวิวสำเร็จ!';
     btn.style.background='var(--gn)';
-    toast('🎉 ขอบคุณสำหรับรีวิว! คุณได้รับ +120 ThaiPoints');
-    setTimeout(()=>window.location.href='profile.html',2000);
-  },1500);
+    toast('🎉 ขอบคุณสำหรับรีวิว!');
+    setTimeout(()=>window.location.href='profile.html',1800);
+  }catch(e){
+    console.error('[review] submit failed:', e);
+    btn.disabled=false;
+    btn.textContent='⭐ ส่งรีวิว';
+    toast('❌ ' + (e.message || 'ส่งรีวิวไม่สำเร็จ ลองใหม่อีกครั้ง'));
+  }
 }
 
 function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.style.cssText='background:#0A0A0A;color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-family:DM Sans,sans-serif;animation:tIn 0.3s ease';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
