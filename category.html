@@ -1207,8 +1207,9 @@ async function loadProds() {
       .eq('status','active')
       .range((currentPage-1)*PAGE, currentPage*PAGE-1);
 
-    // Category filter (รวมหมวดย่อย)
-    if (currentCat) {
+    // Category filter (รวมหมวดย่อย) — เฉพาะเมื่อ currentCat เป็น uuid ที่ถูกต้อง
+    const catIsUuid = currentCat && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentCat);
+    if (catIsUuid) {
       const childIds = allCats.filter(c=>c.parent_id===currentCat).map(c=>c.id);
       q = q.in('category_id', [currentCat,...childIds]);
     }
@@ -1456,8 +1457,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn('[category] slug not found:', slug);
     }
   } else if (catParam) {
-    // backward-compat: ?cat=<uuid>
-    currentCat = catParam;
+    // ?cat= อาจเป็น uuid (backward-compat) หรือ slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(catParam);
+    if (isUuid) {
+      currentCat = catParam;
+    } else {
+      // เป็น slug → resolve เป็น uuid
+      const matchedCat = allCats.find(c => c.slug === catParam);
+      if (matchedCat) {
+        currentCat = matchedCat.id;
+        document.querySelectorAll('.cat-item').forEach(b => {
+          b.classList.toggle('on', b.getAttribute('onclick')?.includes(`'${matchedCat.id}'`) || (matchedCat.parent_id && b.getAttribute('onclick')?.includes(`'${matchedCat.parent_id}'`)));
+        });
+        if (!document.querySelector('.cat-item.on')) {
+          document.querySelector('.cat-item')?.classList.remove('on');
+        }
+      } else {
+        console.warn('[category] cat slug not found:', catParam);
+      }
+    }
   }
 
   // 3. ตั้งค่า search
