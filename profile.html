@@ -1088,6 +1088,7 @@ async function removeWish(id,btn) {
 }
 
 // ── Load Followed Shops ───────────────────────────────────
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function loadFollowedShops() {
   const el = document.getElementById('shops-grid');
   if(!el) return;
@@ -1119,7 +1120,7 @@ async function loadFollowedShops() {
           ${logo?`<img src="${logo}" style="width:100%;height:100%;object-fit:cover">`:'<span style="font-size:24px">🏪</span>'}
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:14px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.shop_name||'ร้านค้า')} ${verified}</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.shop_name||'ร้านค้า')} ${verified}</div>
           <div style="display:flex;gap:12px;font-size:11px;color:var(--g500)">
             <span>📦 ${Number(s.product_count||0).toLocaleString()} สินค้า</span>
             <span>👥 ${Number(s.follower_count||0).toLocaleString()} ผู้ติดตาม</span>
