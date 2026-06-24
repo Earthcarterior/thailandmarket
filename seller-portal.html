@@ -3049,7 +3049,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
             <!-- Dynamic couriers appended here -->
           </div>
           
-          <a class="sp-link" onclick="alert('ตัวกรองเพิ่ม — coming soon')">ดูตัวกรองเพิ่ม ⌄</a>
+          <a class="sp-link" onclick="document.getElementById('sp-courier-pills').classList.toggle('expanded');this.textContent=this.textContent.includes('เพิ่ม')?'ย่อตัวกรอง ⌃':'ดูตัวกรองเพิ่ม ⌄'" style="cursor:pointer">ดูตัวกรองเพิ่ม ⌄</a>
           
           <!-- Sort & count bar -->
           <div class="sp-sort-bar">
@@ -3111,7 +3111,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
             <div style="font-size:14px;font-weight:600;margin-bottom:10px">Drop off</div>
             <div style="font-size:11px;color:#666;margin-bottom:6px">สาขาใกล้เคียง</div>
             <div class="sp-addr-body" id="sp-dropoff-addr">⏳ กำลังโหลดจุด Drop-off...</div>
-            <a class="sp-link" onclick="alert('แสดงสาขาทั้งหมดในแผนที่ — coming soon')" style="display:block;margin-top:6px">ดูสาขาทั้งหมดในแผนที่</a>
+            <a class="sp-link" onclick="window.open('https://www.google.com/maps/search/จุดรับพัสดุ+ใกล้ฉัน','_blank')" style="display:block;margin-top:6px;cursor:pointer">ดูสาขาทั้งหมดในแผนที่ 🗺️</a>
             <button class="sp-btn primary" onclick="spDropOff('all')">ทำการจัดส่งสินค้าทั้งหมดนี้ที่สาขา</button>
           </div>
 
@@ -9362,9 +9362,17 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
   window.markDelivered = async function(orderId){
     if (!confirm('ยืนยันว่าพัสดุถึงมือลูกค้าแล้ว?\n\nเงินจะถูกปล่อยเข้า "ยอดพร้อมถอน"')) return;
     var s = sb();
-    var r = await s.from('orders').update({status:'delivered', delivered_at: new Date().toISOString(), updated_at: new Date().toISOString()}).eq('id', orderId);
+    var r = await s.rpc('mark_order_delivered', { p_order_id: orderId });
     if (r.error){ alert('❌ '+r.error.message); return; }
-    alert('✅ จัดส่งสำเร็จ! เงินเข้า balance ของร้านแล้ว');
+    var d = r.data;
+    if (d && d.ok === false){ alert('⚠️ '+(d.message||d.error)); return; }
+    if (d && d.ok){
+      alert('✅ จัดส่งสำเร็จ!\nยอดขาย ฿'+(d.gross||0).toLocaleString()+
+            '\nหักค่าธรรมเนียม ฿'+(d.commission||0).toLocaleString()+
+            '\nเข้ายอดพร้อมถอน ฿'+(d.net_to_seller||0).toLocaleString());
+    } else {
+      alert('✅ เปลี่ยนเป็นจัดส่งสำเร็จแล้ว');
+    }
     await spLoadOrders();
   };
 
