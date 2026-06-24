@@ -3254,21 +3254,21 @@ async function krLoad() {
   const sb = window._sb || window.sb;
   if (!sb) return;
   try {
-    const { data, error } = await sb.from('shop_verifications').select('*').order('submitted_at', {ascending:false}).limit(500);
+    // ใช้ RPC (bypass RLS) แทน from() ตรงๆ — join ชื่อร้านมาในตัวแล้ว
+    const { data, error } = await sb.rpc('admin_list_kyc', { p_status: 'all' });
     if (error) throw error;
     _krList = data || [];
-    
-    const sellerIds = [...new Set(_krList.map(k => k.seller_id))];
-    if (sellerIds.length) {
-      const { data: sellers } = await sb.from('sellers').select('id,shop_name,user_id').in('id', sellerIds);
-      _krSellers = {};
-      (sellers || []).forEach(s => _krSellers[s.id] = s);
-    }
-    
+
+    // join ชื่อร้าน (RPC คืน shop_name มาแล้ว ใส่เข้า _krSellers)
+    _krSellers = {};
+    _krList.forEach(k => {
+      if (k.seller_id) _krSellers[k.seller_id] = { id: k.seller_id, shop_name: k.shop_name, user_id: k.shop_user_id };
+    });
+
     krUpdateBadge();
     krRender();
   } catch(e) {
-    wrap.innerHTML = `<div style="padding:30px;text-align:center;color:#E63329">❌ ${krEsc(e.message)}<br><small>กรุณารัน pack-BC-2026-05-08.sql</small></div>`;
+    wrap.innerHTML = `<div style="padding:30px;text-align:center;color:#E63329">❌ ${krEsc(e.message)}<br><small>รัน fix_kyc_rpc.sql ใน Supabase ก่อน</small></div>`;
   }
 }
 
