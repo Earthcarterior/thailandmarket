@@ -148,6 +148,8 @@ async function load(){
   render();
   refreshFollowState();
 }
+
+function render(){
   const s = _seller;
   const totalProducts = _products.length;
   const verified = s.is_verified !== false;
