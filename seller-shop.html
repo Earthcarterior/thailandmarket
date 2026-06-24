@@ -146,9 +146,8 @@ async function load(){
   _products = prods || [];
 
   render();
+  refreshFollowState();
 }
-
-function render(){
   const s = _seller;
   const totalProducts = _products.length;
   const verified = s.is_verified !== false;
@@ -176,7 +175,7 @@ function render(){
           </div>
         </div>
         <div class="shop-actions">
-          <button class="shop-btn shop-btn-primary" onclick="followShop()">+ ติดตาม</button>
+          <button id="follow-btn" class="shop-btn shop-btn-primary" onclick="followShop()">+ ติดตาม</button>
           <button class="shop-btn shop-btn-secondary" onclick="chatShop()">💬 แชท</button>
         </div>
       </div>
@@ -308,7 +307,67 @@ function renderProductCard(p){
   </div>`;
 }
 
-function followShop(){ alert('💜 ติดตามร้าน "' + (_seller.shop_name||'-') + '" แล้ว!'); }
+let _isFollowing = false;
+let _followBusy = false;
+
+function paintFollowBtn(){
+  const b = document.getElementById('follow-btn');
+  if(!b) return;
+  if(_isFollowing){
+    b.textContent = '✓ ติดตามแล้ว';
+    b.classList.remove('shop-btn-primary');
+    b.classList.add('shop-btn-secondary');
+  } else {
+    b.textContent = '+ ติดตาม';
+    b.classList.add('shop-btn-primary');
+    b.classList.remove('shop-btn-secondary');
+  }
+}
+
+async function refreshFollowState(){
+  if(!_seller) return;
+  try{
+    const { data, error } = await sb.rpc('is_following_shop', { p_seller_id: _seller.id });
+    if(!error && data) _isFollowing = (data.following === true || data === true);
+  }catch(e){ console.warn('[shop] is_following check failed:', e); }
+  paintFollowBtn();
+}
+
+async function followShop(){
+  if(_followBusy || !_seller) return;
+  // ต้อง login ก่อน
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){
+    if(confirm('ต้องเข้าสู่ระบบก่อนติดตามร้าน\nไปหน้าเข้าสู่ระบบ?')){
+      location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname + location.search);
+    }
+    return;
+  }
+  _followBusy = true;
+  const b = document.getElementById('follow-btn');
+  const prev = _isFollowing;
+  // optimistic
+  _isFollowing = !_isFollowing;
+  paintFollowBtn();
+  if(b) b.disabled = true;
+  try{
+    const { data, error } = await sb.rpc('toggle_follow_shop', { p_seller_id: _seller.id });
+    if(error) throw error;
+    if(data && data.error) throw new Error(data.message || data.error);
+    // RPC คืน {following: true/false} หรือ boolean
+    if(data && typeof data.following === 'boolean') _isFollowing = data.following;
+    else if(typeof data === 'boolean') _isFollowing = data;
+    paintFollowBtn();
+  }catch(e){
+    console.error('[shop] toggle follow failed:', e);
+    _isFollowing = prev; // rollback
+    paintFollowBtn();
+    alert('❌ ' + (e.message || 'ติดตามไม่สำเร็จ ลองใหม่อีกครั้ง'));
+  }finally{
+    _followBusy = false;
+    if(b) b.disabled = false;
+  }
+}
 function chatShop(){ alert('💬 เปิดแชทกับร้าน — ฟีเจอร์นี้กำลังพัฒนา'); }
 
 load();

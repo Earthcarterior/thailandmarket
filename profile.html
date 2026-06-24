@@ -1113,7 +1113,7 @@ async function loadFollowedShops() {
   el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">` + shops.map(s => {
     const logo = s.logo;
     const verified = s.is_verified ? '<span style="color:#2563EB;font-size:12px" title="ร้านยืนยันแล้ว">✔</span>' : '';
-    const target = s.slug ? `shop.html?slug=${encodeURIComponent(s.slug)}` : `shop.html?id=${s.seller_id}`;
+    const target = `seller-shop.html?id=${s.seller_id}`;
     return `<div style="border:var(--border);border-radius:8px;overflow:hidden;background:#fff">
       <div style="display:flex;gap:12px;padding:14px;cursor:pointer" onclick="location.href='${target}'">
         <div style="width:54px;height:54px;border-radius:8px;background:var(--g100);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
