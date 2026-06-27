@@ -1497,20 +1497,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
     <div class="sg sg2">
       <div>
         <div class="card" style="margin-bottom:12px">
-          <div class="ct" style="margin-bottom:12px">ข้อมูลร้าน</div>
-          <div class="fg"><label class="fl">ชื่อร้านค้า</label><input class="fi" value="ร้านสมชาย Shop"></div>
-          <div class="fg"><label class="fl">คำอธิบายร้าน</label><textarea class="fi" rows="3">ร้านค้าออนไลน์สินค้าคุณภาพ ราคาเป็นมิตร</textarea></div>
-          <div class="fg-row">
-            <div class="fg"><label class="fl">หมวดหมู่หลัก</label><select class="fi"><option>Home & Furniture</option><option>แฟชั่น</option><option>Tech & Gadgets</option></select></div>
-            <div class="fg"><label class="fl">เบอร์โทร</label><input class="fi" value="081-234-5678"></div>
-          </div>
-          <div class="fg"><label class="fl">อีเมล</label><input class="fi" value="shop@example.com"></div>
-          <button class="btn-p" onclick="toast('✅ บันทึกข้อมูลร้านแล้ว!')">💾 บันทึก</button>
-        </div>
-      </div>
-      <div>
-        <div class="card" style="margin-bottom:12px">
-          <div class="ct" style="margin-bottom:10px">รูปร้านค้า</div>
+          <div class="ct" style="margin-bottom:12px">รูปร้านค้า</div>
           
           <input type="file" id="shop-logo-input" accept="image/*" style="display:none" onchange="uploadShopImage(this,'logo')">
           <div class="upload-zone" id="shop-logo-zone" style="padding:16px;margin-bottom:8px;cursor:pointer;position:relative;overflow:hidden" onclick="document.getElementById('shop-logo-input').click()">
