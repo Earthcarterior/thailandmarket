@@ -163,7 +163,7 @@ function render(){
 
   document.getElementById('shop-content').innerHTML = `
     <!-- HERO -->
-    <section class="shop-hero">
+    <section class="shop-hero"${s.cover_url ? ` style="background:linear-gradient(135deg,rgba(10,10,10,0.82),rgba(38,38,38,0.82)),url('${s.cover_url}') center/cover no-repeat"` : ''}>
       <div class="shop-hero-inner">
         <div class="shop-avatar">${s.logo_url ? `<img src="${s.logo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : initial}</div>
         <div class="shop-info">
