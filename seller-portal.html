@@ -3565,6 +3565,8 @@ async function loadSellerData() {
     await Promise.all([ loadSellerProducts(), loadSellerOrders(), loadSellerReviews() ]);
 
     renderDashboardLive();
+    // re-render ฟอร์มร้านด้วยข้อมูลจริง (เผื่อเปิดหน้า shop ค้างไว้ก่อน data โหลดเสร็จ)
+    try { renderShopLive(); } catch(_) {}
     toast('✅ โหลดข้อมูลสำเร็จ' + (_sellerSellerId ? '' : ' (Admin mode)'), 'ok');
 
   } catch(e) {
@@ -10424,6 +10426,10 @@ async function uploadShopImage(input, kind) {
     statusEl.style.color = '#10B981';
     statusEl.textContent = '✅ อัปโหลดสำเร็จ';
     
+    // sync _sellerData ให้ตรง (กัน render เก่าทับ)
+    try { if (window._sellerData) window._sellerData[col] = publicUrl;
+          if (typeof _sellerData !== 'undefined' && _sellerData) _sellerData[col] = publicUrl; } catch(_){}
+
     toast('✅ บันทึก' + (kind === 'logo' ? 'โลโก้' : 'หน้าปก') + 'สำเร็จ');
     
     setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
