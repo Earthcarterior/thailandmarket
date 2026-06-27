@@ -1464,20 +1464,25 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
   <div class="page" id="page-finance">
     <div class="ph">💰 รายได้ & การโอนเงิน</div>
     <div class="sg sg3" style="margin-bottom:12px">
-      <div class="sc"><div class="sc-lbl">💵 รอโอนเข้าบัญชี</div><div class="sc-val">฿84,200</div><div class="sc-chg up">โอนวันที่ 30 เม.ย.</div></div>
-      <div class="sc"><div class="sc-lbl">🏦 โอนแล้วเดือนนี้</div><div class="sc-val">฿200,320</div><div class="sc-chg up">▲ +18%</div></div>
-      <div class="sc"><div class="sc-lbl">📊 ค่า GP Platform</div><div class="sc-val">฿14,228</div><div class="sc-chg" style="color:var(--g500)">5% ของยอดขาย</div></div>
+      <div class="sc"><div class="sc-lbl">💵 ยอดพร้อมถอน</div><div class="sc-val" id="fin-available">฿0</div><div class="sc-chg">พร้อมโอนเข้าบัญชี</div></div>
+      <div class="sc"><div class="sc-lbl">🔒 รอเคลียร์ (Escrow)</div><div class="sc-val" id="fin-escrow">฿0</div><div class="sc-chg">รอจัดส่งสำเร็จ</div></div>
+      <div class="sc"><div class="sc-lbl">📊 รายได้รวมทั้งหมด</div><div class="sc-val" id="fin-total-earned">฿0</div><div class="sc-chg" style="color:var(--g500)">หลังหักค่าธรรมเนียม</div></div>
+    </div>
+    <div class="sg sg3" style="margin-bottom:12px">
+      <div class="sc"><div class="sc-lbl">⏳ กำลังขอถอน</div><div class="sc-val" id="fin-pending">฿0</div></div>
+      <div class="sc"><div class="sc-lbl">✅ โอนแล้วสะสม</div><div class="sc-val" id="fin-total-paid">฿0</div></div>
+      <div class="sc"><div class="sc-lbl">↩️ คืนเงินสะสม</div><div class="sc-val" id="fin-total-refund">฿0</div></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="ch"><div class="ct">ประวัติธุรกรรม</div></div>
+      <div id="fin-txn-list"><div style="padding:30px;text-align:center;color:#888">กำลังโหลด...</div></div>
     </div>
     <div class="card">
-      <div class="ch"><div class="ct">ประวัติการโอนเงิน</div><button class="btn-o btn-sm">📥 ดาวน์โหลด</button></div>
-      <table><thead><tr><th>วันที่</th><th>รายการ</th><th>ออเดอร์</th><th>ยอดโอน</th><th>บัญชี</th><th>สถานะ</th></tr></thead>
-      <tbody>
-        <tr><td>30 มี.ค. 69</td><td>รอบที่ 6/2569</td><td>47 ออเดอร์</td><td style="font-weight:600">฿200,320</td><td>KBank •••4521</td><td><span class="pill b-gn">โอนแล้ว</span></td></tr>
-        <tr><td>28 ก.พ. 69</td><td>รอบที่ 5/2569</td><td>38 ออเดอร์</td><td style="font-weight:600">฿169,800</td><td>KBank •••4521</td><td><span class="pill b-gn">โอนแล้ว</span></td></tr>
-        <tr><td>31 ม.ค. 69</td><td>รอบที่ 4/2569</td><td>52 ออเดอร์</td><td style="font-weight:600">฿220,100</td><td>KBank •••4521</td><td><span class="pill b-gn">โอนแล้ว</span></td></tr>
-      </tbody></table>
+      <div class="ch"><div class="ct">ประวัติการขอถอนเงิน</div></div>
+      <div id="fin-payouts-list"><div style="padding:30px;text-align:center;color:#888">กำลังโหลด...</div></div>
     </div>
   </div>
+
 
   <!-- REVIEWS -->
   <div class="page" id="page-reviews">
@@ -4580,16 +4585,9 @@ async function replyReview(id){
   await loadSellerReviews(); renderReviewsLive();
 }
 
-function renderFinanceLive(){
+function renderFinanceLegacy_DISABLED(){
   const page=$('page-finance'); if(!page) return;
   const s=_sellerStats;
-  page.querySelectorAll('.sc').forEach(card=>{
-    const lbl=card.querySelector('.sc-lbl')?.textContent||'';
-    const val=card.querySelector('.sc-val'); if(!val) return;
-    if(lbl.includes('รอโอน'))  val.textContent=fmtB(Math.round((s.monthRevenue||0)*.7));
-    else if(lbl.includes('โอนแล้ว')) val.textContent=fmtB(s.totalRevenue||0);
-    else if(lbl.includes('GP')||lbl.includes('Platform')) val.textContent=fmtB(Math.round((s.monthRevenue||0)*.05));
-  });
 }
 
 function renderFlashLive(){
