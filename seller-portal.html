@@ -1496,6 +1496,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
     <div class="ph">🏪 โปรไฟล์ร้านค้า</div>
     <div class="sg sg2">
       <div>
+        <div id="shop-form-slot"></div>
         <div class="card" style="margin-bottom:12px">
           <div class="ct" style="margin-bottom:12px">รูปร้านค้า</div>
           
@@ -4679,7 +4680,8 @@ function renderNotificationsLive(){
 
 function renderShopLive(){
   const page=$('page-shop'); if(!page) return;
-  let cont=page.querySelector('.shop-content'); if(!cont){cont=document.createElement('div');cont.className='shop-content';page.appendChild(cont);}
+  let cont=document.getElementById('shop-form-slot');
+  if(!cont){ cont=page.querySelector('.shop-content'); if(!cont){cont=document.createElement('div');cont.className='shop-content';page.appendChild(cont);} }
   const s=_sellerData||{};
   cont.innerHTML=`<div style="padding:24px;max-width:600px">
     <div style="font-size:14px;font-weight:600;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #0A0A0A">🏪 ข้อมูลร้านค้า</div>
@@ -10395,14 +10397,20 @@ async function uploadShopImage(input, kind) {
     const { data: urlData } = sb.storage.from('shop-assets').getPublicUrl(filePath);
     const publicUrl = urlData.publicUrl;
     
-    // update sellers table
+    // update sellers table — ใช้ _sellerSellerId (ตรงตัวร้าน) ก่อน
     const col = kind === 'logo' ? 'logo_url' : 'cover_url';
-    const { error: updErr } = await sb.from('sellers')
-      .update({ [col]: publicUrl, updated_at: new Date().toISOString() })
-      .eq('user_id', user.id);
-    
+    let updErr = null;
+    const sid = window._sellerSellerId || (typeof _sellerSellerId !== 'undefined' ? _sellerSellerId : null);
+    if (sid) {
+      const r = await sb.from('sellers').update({ [col]: publicUrl, updated_at: new Date().toISOString() }).eq('id', sid);
+      updErr = r.error;
+    } else {
+      const r = await sb.from('sellers').update({ [col]: publicUrl, updated_at: new Date().toISOString() }).eq('user_id', user.id);
+      updErr = r.error;
+    }
+
     if (updErr) {
-      // ลอง update ด้วย email
+      // fallback: update ด้วย email → users.id
       const { data: u } = await sb.from('users').select('id').eq('email', user.email).maybeSingle();
       if (u) {
         await sb.from('sellers').update({ [col]: publicUrl }).eq('user_id', u.id);
