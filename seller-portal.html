@@ -7225,20 +7225,18 @@ async function renderFinanceLive() {
     document.getElementById('fin-total-paid').textContent = sfMoney(_finBalance.total_paid_out || 0);
     document.getElementById('fin-total-refund').textContent = sfMoney(_finBalance.total_refunded || 0);
 
-    // คำนวณ GP รวมที่หักไป (จาก transactions ประเภท commission/gp/fee)
-    let gpTotal = 0, grossTotal = 0;
-    _finTxns.forEach(t => {
-      const amt = Math.abs(parseFloat(t.amount) || 0);
-      const ty = (t.type||'').toLowerCase();
-      if (ty.includes('commission') || ty.includes('gp') || ty.includes('fee')) gpTotal += amt;
-      if (ty.includes('sale')) grossTotal += amt;
-    });
-    const gpEl = document.getElementById('fin-gp-total');
-    if (gpEl) {
-      gpEl.textContent = sfMoney(gpTotal);
-      const rateEl = document.getElementById('fin-gp-rate');
-      if (rateEl) rateEl.textContent = grossTotal > 0 ? `เฉลี่ย ${(gpTotal/grossTotal*100).toFixed(1)}% ของยอดขาย` : 'ตามหมวดสินค้า';
-    }
+    // คำนวณ GP รวมจากออเดอร์ delivered จริง (ตามหมวดสินค้า)
+    try {
+      const { data: gpSum } = await _sb.rpc('get_seller_gp_summary', { p_seller_id: _sellerSellerId });
+      const gpEl = document.getElementById('fin-gp-total');
+      if (gpEl && gpSum) {
+        gpEl.textContent = sfMoney(gpSum.gp_total || 0);
+        const rateEl = document.getElementById('fin-gp-rate');
+        if (rateEl) rateEl.textContent = (gpSum.gp_rate_avg > 0)
+          ? `เฉลี่ย ${gpSum.gp_rate_avg}% ของยอดขาย`
+          : 'ตามหมวดสินค้า';
+      }
+    } catch(e) { console.warn('gp summary:', e); }
 
     finRenderTxns();
     finRenderPayouts();
