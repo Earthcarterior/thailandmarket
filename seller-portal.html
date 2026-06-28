@@ -1471,7 +1471,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
     <div class="sg sg3" style="margin-bottom:12px">
       <div class="sc"><div class="sc-lbl">⏳ กำลังขอถอน</div><div class="sc-val" id="fin-pending">฿0</div></div>
       <div class="sc"><div class="sc-lbl">✅ โอนแล้วสะสม</div><div class="sc-val" id="fin-total-paid">฿0</div></div>
-      <div class="sc"><div class="sc-lbl">↩️ คืนเงินสะสม</div><div class="sc-val" id="fin-total-refund">฿0</div></div>
+      <div class="sc"><div class="sc-lbl">📊 ค่า GP Platform</div><div class="sc-val" id="fin-gp-total">฿0</div><div class="sc-chg" id="fin-gp-rate" style="color:var(--g500)">ตามหมวดสินค้า</div></div>
     </div>
     <div class="card" style="margin-bottom:12px">
       <div class="ch"><div class="ct">ประวัติธุรกรรม</div></div>
@@ -1480,6 +1480,10 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
     <div class="card">
       <div class="ch"><div class="ct">ประวัติการขอถอนเงิน</div></div>
       <div id="fin-payouts-list"><div style="padding:30px;text-align:center;color:#888">กำลังโหลด...</div></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="ch"><div class="ct">📊 อัตราค่าธรรมเนียม (GP) ตามหมวดสินค้า</div></div>
+      <div id="fin-gp-rates"><div style="padding:20px;text-align:center;color:#888">กำลังโหลด...</div></div>
     </div>
   </div>
 
@@ -7221,8 +7225,24 @@ async function renderFinanceLive() {
     document.getElementById('fin-total-paid').textContent = sfMoney(_finBalance.total_paid_out || 0);
     document.getElementById('fin-total-refund').textContent = sfMoney(_finBalance.total_refunded || 0);
 
+    // คำนวณ GP รวมที่หักไป (จาก transactions ประเภท commission/gp/fee)
+    let gpTotal = 0, grossTotal = 0;
+    _finTxns.forEach(t => {
+      const amt = Math.abs(parseFloat(t.amount) || 0);
+      const ty = (t.type||'').toLowerCase();
+      if (ty.includes('commission') || ty.includes('gp') || ty.includes('fee')) gpTotal += amt;
+      if (ty.includes('sale')) grossTotal += amt;
+    });
+    const gpEl = document.getElementById('fin-gp-total');
+    if (gpEl) {
+      gpEl.textContent = sfMoney(gpTotal);
+      const rateEl = document.getElementById('fin-gp-rate');
+      if (rateEl) rateEl.textContent = grossTotal > 0 ? `เฉลี่ย ${(gpTotal/grossTotal*100).toFixed(1)}% ของยอดขาย` : 'ตามหมวดสินค้า';
+    }
+
     finRenderTxns();
     finRenderPayouts();
+    finRenderGpRates();
   } catch(e) {
     console.warn('finance:', e);
     const list = document.getElementById('fin-txn-list');
@@ -7278,6 +7298,26 @@ function finRenderPayouts() {
         <span style="color:${statusColors[p.status]||'#666'}">${statusLabels[p.status]||p.status}</span>
       </div>`;
     }).join('');
+}
+
+async function finRenderGpRates() {
+  const wrap = document.getElementById('fin-gp-rates');
+  if (!wrap) return;
+  try {
+    const { data } = await _sb.from('categories')
+      .select('name_th,icon,gp_percent')
+      .is('parent_id', null)
+      .order('sort_order');
+    if (!data || !data.length) { wrap.innerHTML = '<div style="padding:14px;color:#888;font-size:12px">ยังไม่ได้ตั้งค่าอัตรา GP</div>'; return; }
+    wrap.innerHTML = '<div style="font-size:11px;color:#888;margin-bottom:10px">ค่าธรรมเนียมหักจากยอดขายตามหมวดของสินค้าแต่ละชิ้น เมื่อจัดส่งสำเร็จ</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">' +
+      data.map(c => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#FAFAFA;border:1px solid #F0F0F0;border-radius:6px">
+        <span style="font-size:12px">${c.icon||'📦'} ${sfEsc(c.name_th)}</span>
+        <span style="font-weight:700;font-family:'DM Mono',monospace;font-size:13px;color:#0A0A0A">${c.gp_percent!=null?c.gp_percent+'%':'—'}</span>
+      </div>`).join('') + '</div>';
+  } catch(e) {
+    wrap.innerHTML = '<div style="padding:14px;color:#E63329;font-size:12px">โหลดอัตรา GP ไม่สำเร็จ</div>';
+  }
 }
 
 window.finFilter = function(filter, btn) {
