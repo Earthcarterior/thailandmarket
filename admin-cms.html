@@ -1077,6 +1077,18 @@ window.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <div id="panel-categories" class="panel admin-only" style="padding:24px;display:none">
+      <!-- GP SETTINGS -->
+      <div class="card" style="margin-bottom:20px;padding:18px;border:1px solid #E5E5E5;border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:15px;font-weight:700">💰 ตั้งค่า GP / ค่าธรรมเนียมแพลตฟอร์ม</div>
+          <button class="btn btn-k btn-sm" onclick="saveAllGp()">💾 บันทึก GP ทั้งหมด</button>
+        </div>
+        <div style="font-size:12px;color:#888;margin-bottom:14px">กำหนด % ที่หักจากยอดขายแต่ละหมวดหลัก (สินค้าในหมวดย่อยใช้เรตของหมวดหลัก) — หักตอนจัดส่งสำเร็จ</div>
+        <div id="gp-rates-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+          <div style="color:#888;font-size:12px;padding:10px">⏳ กำลังโหลด...</div>
+        </div>
+      </div>
+
       <div class="table-header">
         <span style="font-size:13px;color:var(--g500)">หมวดหมู่สินค้า — จัดการจากที่นี่</span>
         <button class="btn btn-k btn-sm" onclick="openCatModal()">➕ เพิ่มหมวดหมู่</button>
@@ -5618,10 +5630,43 @@ async function submitReject() {
 }
 
 // ── Categories ────────────────────────────────────────────
+function renderGpRates() {
+  const grid = document.getElementById('gp-rates-grid');
+  if (!grid) return;
+  const parents = (allCategories||[]).filter(c => !c.parent_id);
+  if (!parents.length) { grid.innerHTML = '<div style="color:#888;font-size:12px;padding:10px">ยังไม่มีหมวดหลัก</div>'; return; }
+  grid.innerHTML = parents.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#FAFAFA;border:1px solid #EEE;border-radius:6px">
+      <span style="font-size:13px">${c.icon||'📦'} ${escapeHtml(c.name_th)}</span>
+      <div style="display:flex;align-items:center;gap:4px">
+        <input type="number" min="0" max="100" step="0.5" value="${c.gp_percent!=null?c.gp_percent:''}"
+               data-gp-id="${c.id}" placeholder="—"
+               style="width:64px;padding:5px 8px;border:1px solid #DDD;border-radius:4px;font-size:13px;text-align:right;font-family:monospace">
+        <span style="font-size:13px;color:#666">%</span>
+      </div>
+    </div>`).join('');
+}
+
+async function saveAllGp() {
+  const inputs = document.querySelectorAll('[data-gp-id]');
+  let ok = 0, fail = 0;
+  for (const inp of inputs) {
+    const id = inp.getAttribute('data-gp-id');
+    const raw = inp.value;
+    const val = (raw === '' || raw == null) ? null : parseFloat(raw);
+    const { error } = await sb.from('categories').update({ gp_percent: val }).eq('id', id);
+    if (error) { fail++; console.warn('gp save fail', id, error.message); }
+    else { ok++; const c = allCategories.find(x=>x.id===id); if (c) c.gp_percent = val; }
+  }
+  if (fail) toast(`บันทึก GP สำเร็จ ${ok} หมวด, ล้มเหลว ${fail}`, 'error');
+  else toast(`บันทึก GP ทั้งหมดสำเร็จ ✅ (${ok} หมวด)`, 'success');
+}
+
 async function loadCategories() {
   try {
     const { data } = await sb.from('categories').select('*').eq('is_active', true).order('sort_order');
     allCategories = data || [];
+    try { renderGpRates(); } catch(_) {}
 
     // แยกหมวดหลักและหมวดย่อย
     const parents = allCategories.filter(c => !c.parent_id);
