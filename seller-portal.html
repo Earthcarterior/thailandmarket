@@ -7205,7 +7205,7 @@ async function renderFinanceLive() {
   if (!_sellerSellerId) return;
   try {
     // Ensure balance exists
-    await _sb.rpc('ensure_seller_balance', {p_seller_id: _sellerSellerId}).catch(()=>{});
+    try { await _sb.rpc('ensure_seller_balance', {p_seller_id: _sellerSellerId}); } catch(_) {}
 
     const [{data: bal}, {data: txns}, {data: payouts}] = await Promise.all([
       _sb.from('seller_balances').select('*').eq('seller_id', _sellerSellerId).maybeSingle(),
@@ -7362,7 +7362,7 @@ async function renderMissionsLive() {
   if (!_sellerSellerId) return;
   try {
     // Auto-recompute first
-    await _sb.rpc('recompute_seller_missions', {p_seller_id: _sellerSellerId}).catch(()=>{});
+    try { await _sb.rpc('recompute_seller_missions', {p_seller_id: _sellerSellerId}); } catch(_) {}
 
     const [{data: missions}, {data: progress}] = await Promise.all([
       _sb.from('missions').select('*').eq('is_active', true).order('sort_order'),
@@ -9597,9 +9597,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
         val.textContent = fmtMoney(bal.data?.total_earned || 0);
         if (chg) chg.textContent = '▲ รายได้สะสม';
       } else if (/GP Platform/.test(lbl)){
-        var fee = Math.round((bal.data?.total_earned || 0) * 0.05);
-        val.textContent = fmtMoney(fee);
-        if (chg) chg.textContent = '5% ของยอดขาย';
+        // GP จัดการโดย renderFinanceLive (ตามหมวดสินค้า) — ไม่ override ที่นี่
       }
     });
   }
@@ -9631,8 +9629,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
         val.textContent = fmtMoney(b.total_earned);
         if (chg) chg.textContent = 'รายได้รวม';
       } else if (/GP/.test(lbl)){
-        val.textContent = fmtMoney((b.total_earned || 0) * 0.05);
-        if (chg) chg.textContent = '5% ของยอดขาย';
+        // GP จัดการโดย renderFinanceLive (ตามหมวดสินค้า) — ไม่ override ที่นี่
       }
     });
 
