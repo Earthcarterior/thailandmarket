@@ -7217,6 +7217,34 @@ async function renderFinanceLive() {
     _finTxns = txns || [];
     _finPayouts = payouts || [];
 
+    // ถ้าไม่มี transactions → สร้างประวัติจากออเดอร์ delivered + payout (ข้อมูลจริง)
+    if (!_finTxns.length) {
+      try {
+        const { data: dOrders } = await _sb.rpc('get_seller_delivered_orders', { p_seller_id: _sellerSellerId });
+        const synth = [];
+        (dOrders || []).forEach(o => {
+          synth.push({
+            type: 'sale',
+            amount: o.net_amount || 0,
+            created_at: o.delivered_at || o.created_at,
+            description: `ขายสำเร็จ ออเดอร์ #${(o.order_number||o.order_id||'').toString().slice(0,8)} (หัก GP ฿${Math.round(o.gp_amount||0).toLocaleString()})`,
+            balance_after_available: null, balance_after_escrow: null
+          });
+        });
+        (_finPayouts || []).forEach(p => {
+          synth.push({
+            type: p.status === 'paid' ? 'payout_paid' : 'payout_request',
+            amount: -(p.amount || 0),
+            created_at: p.created_at,
+            description: p.status === 'paid' ? 'ถอนเงินสำเร็จ' : 'คำขอถอนเงิน (รออนุมัติ)',
+            balance_after_available: null, balance_after_escrow: null
+          });
+        });
+        synth.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+        _finTxns = synth;
+      } catch(e) { console.warn('synth txns:', e); }
+    }
+
     // Update balance display
     document.getElementById('fin-available').textContent = sfMoney(_finBalance.available || 0);
     document.getElementById('fin-escrow').textContent = sfMoney(_finBalance.escrow || 0);
