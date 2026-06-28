@@ -1401,9 +1401,15 @@ async function loadProducts() {
     const { data, error } = await sb.from('products')
       .select('id,name_th,name_en,price,compare_price,discount_percent,thumbnail,images,stock_quantity,sold_count,rating_avg,rating_count,category_id,seller_id,is_flash_sale,flash_price,is_featured,status,created_at,categories(name_th,icon),sellers(shop_name,logo_url)')
       .eq('status','active')
-      .order('created_at', { ascending:false }).limit(40);
+      .limit(300);
     if (error) throw error;
-    allProducts = data || [];
+    // สุ่มสลับลำดับ (Fisher-Yates) แล้วเอา 60 ชิ้น — สลับทุกครั้งที่โหลด
+    const arr = data || [];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    allProducts = arr.slice(0, 60);
   } catch(e) {
     console.error('loadProducts error:', e.message);
     allProducts = [];
@@ -1820,7 +1826,7 @@ let _isPersonalized  = false;
 // ════════════════════════════════════════════════════════════════════════
 let _showingMixed   = false;
 let _mixedPage      = 0;  // pagination
-const REC_PAGE_SIZE = 15;  // 3 แถว × 5 ชิ้น = 15 (3 เท่าของที่แสดง)
+const REC_PAGE_SIZE = 60;  // แสดง 60 สินค้าสุ่มต่อหน้า
 
 async function loadMixedProducts(page) {
   page = page || 0;
@@ -1853,7 +1859,8 @@ async function loadMixedProducts(page) {
     }
 
     // ดึงสินค้าจากทุกหมวดพร้อมกัน → เอาหมวดละ 1-2 ชิ้น
-    const perCat = Math.max(1, Math.ceil(REC_PAGE_SIZE / parents.length));
+    // ดึงเผื่อ 2 เท่า เพื่อชดเชยหมวดที่สินค้าน้อย แล้วค่อย slice 60
+    const perCat = Math.max(3, Math.ceil(REC_PAGE_SIZE / parents.length) * 2);
     const offset  = page * perCat;
 
     const promises = parents.slice(0, REC_PAGE_SIZE).map(cat => {
@@ -1885,6 +1892,12 @@ async function loadMixedProducts(page) {
       if (seen.has(p.id)) return false;
       seen.add(p.id); return true;
     }).slice(0, REC_PAGE_SIZE);
+
+    // สุ่มสลับลำดับ (Fisher-Yates) — สลับทุกครั้งที่โหลดหน้า
+    for (let i = mixed.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [mixed[i], mixed[j]] = [mixed[j], mixed[i]];
+    }
 
     if (page === 0) {
       allProducts = mixed;
