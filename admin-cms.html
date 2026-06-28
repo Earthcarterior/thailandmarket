@@ -4780,9 +4780,14 @@ window.auCloseModal = function() { document.getElementById('au-modal-overlay').c
       <div><label class="lbl">ชื่อ (English)</label><input class="inp" type="text" id="cat-name-en" placeholder="e.g. Mobiles"></div>
     </div>
     <!-- Slug + Icon -->
-    <div class="form-grid" style="margin-bottom:0">
+    <div class="form-grid" style="margin-bottom:16px">
       <div><label class="lbl">Slug *</label><input class="inp" type="text" id="cat-slug" placeholder="mobiles"></div>
       <div><label class="lbl">ไอคอน (Emoji)</label><input class="inp" type="text" id="cat-icon" placeholder="📱" maxlength="4"></div>
+    </div>
+    <!-- GP / ค่าธรรมเนียม -->
+    <div style="margin-bottom:0">
+      <label class="lbl">GP / ค่าธรรมเนียมแพลตฟอร์ม (%) <span style="color:var(--g400);font-size:9px">(เฉพาะหมวดหลัก — หมวดย่อยใช้เรตของหมวดหลัก)</span></label>
+      <input class="inp" type="number" id="cat-gp" placeholder="เช่น 5" min="0" max="100" step="0.5" style="max-width:200px">
     </div>
   </div>
   <div class="modal-foot">
@@ -5716,6 +5721,7 @@ function openCatModal(data) {
   document.getElementById('cat-name-en').value = data?.name_en || '';
   document.getElementById('cat-slug').value = data?.slug || '';
   document.getElementById('cat-icon').value = data?.icon || '';
+  const gpEl = document.getElementById('cat-gp'); if (gpEl) gpEl.value = (data?.gp_percent ?? '');
 
   // เติม dropdown หมวดหลัก (เฉพาะ parent categories)
   const parentSel = document.getElementById('cat-parent-id');
@@ -5751,12 +5757,15 @@ async function saveCategory() {
   if (!nameTh || !slug) { toast('กรุณากรอกชื่อและ Slug', 'error'); return; }
 
   const parentId = document.getElementById('cat-parent-id').value || null;
+  const gpRaw = document.getElementById('cat-gp')?.value;
+  const gpVal = (gpRaw === '' || gpRaw == null) ? null : parseFloat(gpRaw);
   const payload = {
     name_th: nameTh,
     name_en: document.getElementById('cat-name-en').value.trim() || null,
     slug,
     icon: document.getElementById('cat-icon').value.trim() || null,
     parent_id: parentId,
+    gp_percent: gpVal,
     is_active: true
   };
   let err;
