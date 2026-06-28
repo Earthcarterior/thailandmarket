@@ -796,6 +796,29 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="stat-card" onclick="showPanel('approve')"><div class="stat-accent" style="background:var(--amber)"></div><div class="stat-label">รออนุมัติ</div><div class="stat-value" id="dash-pending" style="color:var(--amber)">—</div><div class="stat-sub">ต้องตรวจสอบ</div></div>
         <div class="stat-card"><div class="stat-accent" style="background:var(--red)"></div><div class="stat-label">หมวดหมู่</div><div class="stat-value" id="dash-cats" style="color:var(--red)">—</div><div class="stat-sub">หมวด</div></div>
       </div>
+
+      <!-- ── ภาพรวมการเงินแพลตฟอร์ม ── -->
+      <div style="margin-top:28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:16px;font-weight:700">💰 ภาพรวมการเงินแพลตฟอร์ม</div>
+          <button class="btn btn-sm" style="background:var(--g100)" onclick="loadPlatformFinance()">🔄 รีเฟรช</button>
+        </div>
+        <!-- การ์ดยอดรวม -->
+        <div class="stats-grid" id="pf-totals" style="margin-bottom:18px">
+          <div class="stat-card"><div class="stat-accent" style="background:var(--green)"></div><div class="stat-label">GP รวมที่เก็บได้</div><div class="stat-value" id="pf-total-gp" style="color:var(--green)">—</div><div class="stat-sub">รายได้แพลตฟอร์ม</div></div>
+          <div class="stat-card"><div class="stat-accent" style="background:var(--black)"></div><div class="stat-label">ยอดขายรวม (Gross)</div><div class="stat-value" id="pf-total-gross">—</div><div class="stat-sub">ทุกร้าน</div></div>
+          <div class="stat-card"><div class="stat-accent" style="background:var(--amber)"></div><div class="stat-label">รอเคลียร์ (Escrow)</div><div class="stat-value" id="pf-total-escrow" style="color:var(--amber)">—</div><div class="stat-sub">ทุกร้าน</div></div>
+          <div class="stat-card"><div class="stat-accent" style="background:var(--red)"></div><div class="stat-label">ยอดสุทธิร้านค้า</div><div class="stat-value" id="pf-total-net" style="color:var(--red)">—</div><div class="stat-sub">หลังหัก GP</div></div>
+        </div>
+        <!-- ตารางแต่ละร้าน -->
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>ร้านค้า</th><th>ออเดอร์สำเร็จ</th><th>ยอดขาย</th><th>GP เก็บ</th><th>สุทธิร้าน</th><th>พร้อมถอน</th><th>Escrow</th></tr></thead>
+            <tbody id="pf-shops-tbody"><tr><td colspan="7" style="text-align:center;padding:30px;color:#888">⏳ กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <div style="background:var(--black);color:var(--white);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div><div style="font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px">เริ่มใช้งาน</div><div style="font-size:15px;font-weight:500">เพิ่มสินค้าแรก แล้วดูบนหน้าเว็บได้เลย</div></div>
         <div style="display:flex;gap:10px">
@@ -5034,8 +5057,54 @@ function showPanel(name) {
 }
 
 // ── Dashboard ─────────────────────────────────────────────
+async function loadPlatformFinance() {
+  const tbody = document.getElementById('pf-shops-tbody');
+  try {
+    const { data, error } = await sb.rpc('admin_platform_finance_summary');
+    if (error) throw error;
+    if (!data || data.ok === false) throw new Error(data?.error || 'access_denied');
+
+    const fmt = n => '฿' + Math.round(n||0).toLocaleString();
+    const shops = data.shops || [];
+    const t = data.totals || {};
+
+    // ยอดรวม GP จากทุกร้าน
+    let totalGp = 0, totalGross = 0;
+    shops.forEach(s => {
+      const gp = s.gp_summary || {};
+      totalGp += (gp.gp_total || 0);
+      totalGross += (gp.gross || 0);
+    });
+
+    document.getElementById('pf-total-gp').textContent = fmt(totalGp);
+    document.getElementById('pf-total-gross').textContent = fmt(totalGross);
+    document.getElementById('pf-total-escrow').textContent = fmt(t.total_escrow);
+    document.getElementById('pf-total-net').textContent = fmt(t.total_earned_net);
+
+    if (!shops.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#888">ยังไม่มีร้านค้า</td></tr>';
+      return;
+    }
+    tbody.innerHTML = shops.map(s => {
+      const gp = s.gp_summary || {};
+      return `<tr>
+        <td style="font-weight:600">${escapeHtml(s.shop_name||'—')}</td>
+        <td>${s.delivered_orders||0}</td>
+        <td style="font-family:var(--mono)">${fmt(gp.gross)}</td>
+        <td style="font-family:var(--mono);color:var(--green);font-weight:600">${fmt(gp.gp_total)}</td>
+        <td style="font-family:var(--mono)">${fmt(gp.net)}</td>
+        <td style="font-family:var(--mono)">${fmt(s.available)}</td>
+        <td style="font-family:var(--mono);color:var(--amber)">${fmt(s.escrow)}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#E63329">❌ ${escapeHtml(e.message)}<br><small>รัน admin_finance_rpc.sql + gp_summary_rpc.sql ก่อน</small></td></tr>`;
+  }
+}
+
 async function loadDashboard() {
   try {
+    loadPlatformFinance();
     // โหลดข้อมูลพร้อมกัน
     const [total, active, pending, cats, orders, sellers] = await Promise.all([
       sb.from('products').select('id', {count:'exact', head:true}),
