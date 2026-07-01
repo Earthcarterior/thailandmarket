@@ -1302,15 +1302,43 @@ async function loadProds(append) {
       return;
     }
 
-    // Render — append ต่อท้าย หรือแทนที่
+    // Render — จัดลำดับ: โฆษณาขึ้นบน + สุ่มคละที่เหลือ (เฉพาะ sort เริ่มต้น)
     _totalCount = count || 0;
-    if (currentView==='grid') renderGrid(data, append);
-    else renderList(data, append);
+    let displayData = data;
 
-    // Render 72 ชิ้น (แทนที่ทั้งหมด ไม่ append)
-    _totalCount = count || 0;
-    if (currentView==='grid') renderGrid(data, false);
-    else renderList(data, false);
+    // ถ้าเป็นการเรียงเริ่มต้น (ไม่ได้เลือก sort เฉพาะ) → สุ่มคละ + ดันโฆษณา
+    if (currentSort === 'created_at-desc') {
+      // สุ่มสลับลำดับสินค้าทั่วไป (Fisher-Yates)
+      const arr = [...data];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      // ดึงสินค้าโฆษณา active มาดันขึ้นบน
+      try {
+        const adCat = (currentCat && /^[0-9a-f-]{36}$/i.test(currentCat)) ? currentCat : null;
+        const { data: ads } = await _sb.rpc('get_active_ads', { p_category_id: adCat, p_limit: 6 });
+        if (ads && ads.length) {
+          const adIds = new Set(ads.map(a => a.product_id));
+          // แยกสินค้าโฆษณา (ที่อยู่ในหน้านี้) ออกมาไว้บน
+          const adProds = [];
+          const adMeta = {};
+          ads.forEach(a => { adMeta[a.product_id] = a.ad_id; });
+          const normalProds = arr.filter(p => {
+            if (adIds.has(p.id)) { p._adId = adMeta[p.id]; p._sponsored = true; adProds.push(p); return false; }
+            return true;
+          });
+          displayData = [...adProds, ...normalProds];
+          // นับ impression ของโฆษณาที่แสดง
+          ads.forEach(a => { try { _sb.rpc('track_ad_impression', { p_ad_id: a.ad_id }); } catch(_){} });
+        } else {
+          displayData = arr;
+        }
+      } catch(_) { displayData = arr; }
+    }
+
+    if (currentView==='grid') renderGrid(displayData, false);
+    else renderList(displayData, false);
 
     // Pagination (หน้าละ 72)
     _loadingMore = false;
@@ -1350,11 +1378,15 @@ function renderGrid(data, append) {
     const thumb = p.thumbnail||p.images?.[0];
     const disc = p.discount_percent || (p.compare_price&&p.compare_price>p.price ? Math.round((1-p.price/p.compare_price)*100):0);
     const badges = [];
-    if (p.is_flash_sale) badges.push('<div class="prod-badge" style="background:#E63329">⚡ FLASH</div>');
+    if (p._sponsored) badges.push('<div class="prod-badge" style="background:#525252">โฆษณา</div>');
+    else if (p.is_flash_sale) badges.push('<div class="prod-badge" style="background:#E63329">⚡ FLASH</div>');
     else if (disc>=30) badges.push('<div class="prod-badge" style="background:#E63329">SALE</div>');
     else if (p.is_featured) badges.push('<div class="prod-badge" style="background:#0A0A0A">HOT</div>');
     else if (new Date()-new Date(p.created_at)<7*86400000) badges.push('<div class="prod-badge" style="background:#0A0A0A">NEW</div>');
-    return `<div class="prod-card" onclick="openProduct('${p.id}')">
+    const clickHandler = p._sponsored && p._adId
+      ? `trackAdClick('${p._adId}');openProduct('${p.id}')`
+      : `openProduct('${p.id}')`;
+    return `<div class="prod-card" onclick="${clickHandler}">
       <div class="prod-img">
         ${thumb?`<img src="${thumb}" alt="" loading="lazy" onerror="this.style.display='none'">`:`<span style="font-size:60px">📦</span>`}
         ${badges.join('')}
@@ -1462,6 +1494,10 @@ function setView(v) {
 }
 
 // ── Product Modal ──────────────────────────────────────────
+function trackAdClick(adId) {
+  try { _sb.rpc('track_ad_click', { p_ad_id: adId }); } catch(_) {}
+}
+
 async function openProduct(id) {
   try {
     const { data } = await sb.from('products').select('*,categories(name_th,icon)').eq('id',id).single();
