@@ -947,6 +947,27 @@ async function loadCats() {
     const { data, error } = await sb.from('categories').select('*').eq('is_active',true).order('sort_order');
     if (error) throw error;
     allCats = data || [];
+
+    // นับจำนวนสินค้าจริงต่อหมวด (จาก products)
+    try {
+      const { data: prods } = await sb.from('products')
+        .select('category_id').eq('status','active');
+      const countMap = {};
+      (prods || []).forEach(p => {
+        if (p.category_id) countMap[p.category_id] = (countMap[p.category_id]||0) + 1;
+      });
+      // ใส่ count ให้แต่ละหมวด + รวมหมวดย่อยเข้าหมวดหลัก
+      allCats.forEach(c => { c.product_count = countMap[c.id] || 0; });
+      allCats.forEach(c => {
+        if (!c.parent_id) {
+          // หมวดหลัก = สินค้าตรง + สินค้าในหมวดย่อยทั้งหมด
+          const childSum = allCats
+            .filter(x => x.parent_id === c.id)
+            .reduce((s,x) => s + (x.product_count||0), 0);
+          c.product_count = (c.product_count||0) + childSum;
+        }
+      });
+    } catch(_) {}
   } catch(e) {
     console.error('loadCats:', e.message);
     allCats = [];
