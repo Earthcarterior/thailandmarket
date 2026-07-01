@@ -1836,96 +1836,50 @@ async function loadMixedProducts(page) {
   const grid = document.getElementById('products-grid');
   if (grid && page === 0) {
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:40px;text-align:center">
-      <div style="font-size:40px;margin-bottom:8px">🛍️</div>
+      <div style="font-size:40px;margin-bottom:8px">\u{1F6CD}\uFE0F</div>
       <div style="color:var(--g400)">กำลังโหลดสินค้า...</div>
     </div>`;
   }
 
   try {
-    // ดึงหมวดหลักทั้งหมด
-    const parents = allCats.filter(c => !c.parent_id);
+    // ดึงสินค้า active ตรงๆ (เรียบง่าย ไม่ค้าง)
+    const { data, error } = await sb.from('products')
+      .select('id,name_th,name_en,price,compare_price,discount_percent,thumbnail,images,sold_count,stock_quantity,rating_avg,rating_count,category_id,seller_id,is_flash_sale,flash_price,is_featured,is_recommended,created_at,categories(name_th,icon),sellers(shop_name,logo_url)')
+      .eq('status', 'active')
+      .limit(300);
+    if (error) throw error;
 
-    if (!parents.length) {
-      // ไม่มีหมวดหมู่ → ดึงสินค้าตรงๆ
-      const { data } = await sb.from('products')
-        .select('id,name_th,price,compare_price,discount_percent,thumbnail,sold_count,rating_avg,category_id,is_flash_sale,flash_price,categories(name_th,icon),sellers(shop_name)')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .range(page * REC_PAGE_SIZE, page * REC_PAGE_SIZE + REC_PAGE_SIZE - 1);
-      allProducts = data || [];
-      renderProducts();
-      renderLoadMoreBtn(data?.length === REC_PAGE_SIZE, page);
-      return;
-    }
-
-    // ดึงสินค้าจากทุกหมวดพร้อมกัน → เอาหมวดละ 1-2 ชิ้น
-    // ดึงเผื่อ 2 เท่า เพื่อชดเชยหมวดที่สินค้าน้อย แล้วค่อย slice 60
-    const perCat = Math.max(3, Math.ceil(REC_PAGE_SIZE / parents.length) * 2);
-    const offset  = page * perCat;
-
-    const promises = parents.slice(0, REC_PAGE_SIZE).map(cat => {
-      // รวม sub-categories ด้วย
-      const subIds = allCats.filter(c => c.parent_id === cat.id).map(c => c.id);
-      const catIds = [cat.id, ...subIds];
-      return sb.from('products')
-        .select('id,name_th,name_en,price,compare_price,discount_percent,thumbnail,images,sold_count,stock_quantity,rating_avg,rating_count,category_id,seller_id,is_flash_sale,flash_price,is_featured,created_at,categories(name_th,icon),sellers(shop_name,logo_url)')
-        .eq('status', 'active')
-        .in('category_id', catIds)
-        .order('sold_count', { ascending: false })
-        .range(offset, offset + perCat - 1);
-    });
-
-    const results = await Promise.all(promises);
-
-    // รวมและสลับผลลัพธ์ (interleave) ให้คละหมวด
-    const interleaved = [];
-    const maxLen = Math.max(...results.map(r => (r.data || []).length));
-    for (let i = 0; i < maxLen; i++) {
-      results.forEach(r => {
-        if (r.data?.[i]) interleaved.push(r.data[i]);
-      });
-    }
-
-    // กันซ้ำ
-    const seen = new Set();
-    const mixed = interleaved.filter(p => {
-      if (seen.has(p.id)) return false;
-      seen.add(p.id); return true;
-    }).slice(0, REC_PAGE_SIZE);
-
-    // สุ่มสลับลำดับ (Fisher-Yates) — สลับทุกครั้งที่โหลดหน้า
-    for (let i = mixed.length - 1; i > 0; i--) {
+    let arr = data || [];
+    // สุ่มสลับลำดับ (Fisher-Yates) — สลับทุกครั้งที่โหลด
+    for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [mixed[i], mixed[j]] = [mixed[j], mixed[i]];
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+    // เอา 60 ชิ้น
+    const picked = arr.slice(0, REC_PAGE_SIZE);
 
     if (page === 0) {
-      allProducts = mixed;
+      allProducts = picked;
     } else {
-      // append mode
       const existingIds = new Set(allProducts.map(p => p.id));
-      allProducts = [...allProducts, ...mixed.filter(p => !existingIds.has(p.id))];
+      allProducts = [...allProducts, ...picked.filter(p => !existingIds.has(p.id))];
     }
 
-    // แสดงสินค้าก่อน (สำคัญสุด) แล้วค่อย track
     renderProducts();
-    renderLoadMoreBtn(mixed.length >= REC_PAGE_SIZE, page);
+    renderLoadMoreBtn(false, page);
 
-    // บันทึกสถิติ (ไม่ให้ error มาขวางการแสดงสินค้า)
-    try { trackCategoryExposure(mixed.map(p => p.category_id)); } catch(_) {}
-
+    try { trackCategoryExposure(picked.map(p => p.category_id)); } catch(_) {}
   } catch(e) {
     console.error('loadMixedProducts:', e);
-    // fallback: ดึงสินค้าทั้งหมดเลย
-    const { data } = await sb.from('products')
-      .select('id,name_th,price,compare_price,discount_percent,thumbnail,sold_count,rating_avg,category_id,is_flash_sale,flash_price,categories(name_th,icon),sellers(shop_name)')
-      .eq('status', 'active')
-      .order('sold_count', { ascending: false })
-      .range(page * REC_PAGE_SIZE, page * REC_PAGE_SIZE + REC_PAGE_SIZE - 1);
-    if (page === 0) allProducts = data || [];
-    else allProducts = [...allProducts, ...(data || [])];
+    // hard fallback ที่ต้องทำงานแน่ๆ
+    try {
+      const { data } = await sb.from('products')
+        .select('id,name_th,price,compare_price,discount_percent,thumbnail,images,sold_count,rating_avg,rating_count,stock_quantity,category_id,is_flash_sale,flash_price,categories(name_th,icon)')
+        .eq('status', 'active').limit(60);
+      allProducts = data || [];
+    } catch(_) { allProducts = []; }
     renderProducts();
-    renderLoadMoreBtn((data?.length || 0) >= REC_PAGE_SIZE, page);
+    renderLoadMoreBtn(false, page);
   }
 }
 
