@@ -1546,7 +1546,6 @@ async function loadBrands() {
     return;
   }
   el.innerHTML = brands.map(b => `
-  el.innerHTML = brands.map(b => `
     <div class="brand-card" onclick="location.href='category.html?brand=${b.id}'">
       <div class="brand-ico">${b.icon || '🏷️'}</div>
       <div class="brand-name">${b.name}</div>
