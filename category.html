@@ -1335,17 +1335,25 @@ function renderScrollStatus() {
 // โหลดหน้าถัดไปต่อท้าย (infinite scroll)
 async function loadMoreProds() {
   if (_loadingMore || !_hasMore) return;
+  _loadingMore = true;          // ล็อกทันที กัน scroll ยิงซ้ำ
   currentPage++;
-  renderScrollStatus();
+  const el = document.getElementById('scroll-status');
+  if (el) el.textContent = '⏳ กำลังโหลด...';
+  _loadingMore = false;          // ปลดล็อกให้ loadProds จัดการเอง
   await loadProds(true);
 }
 
-// scroll listener — โหลดเพิ่มเมื่อใกล้สุด
+// scroll listener — โหลดเพิ่มเมื่อใกล้สุด (throttle)
+let _scrollTimer = null;
 window.addEventListener('scroll', () => {
-  if (_loadingMore || !_hasMore) return;
-  const scrollBottom = window.innerHeight + window.scrollY;
-  const docHeight = document.documentElement.scrollHeight;
-  if (scrollBottom >= docHeight - 800) loadMoreProds();
+  if (_scrollTimer) return;
+  _scrollTimer = setTimeout(() => {
+    _scrollTimer = null;
+    if (_loadingMore || !_hasMore) return;
+    const scrollBottom = window.innerHeight + window.scrollY;
+    const docHeight = document.documentElement.scrollHeight;
+    if (scrollBottom >= docHeight - 800) loadMoreProds();
+  }, 150);
 }, { passive: true });
 
 function renderGrid(data, append) {
