@@ -1208,19 +1208,30 @@ function updateActiveTags() {
 }
 
 // ── Load Products ──────────────────────────────────────────
-async function loadProds() {
+let _loadingMore = false;
+let _hasMore = true;
+let _totalCount = 0;
+async function loadProds(append) {
   const grid = document.getElementById('prod-grid');
   const search = document.getElementById('search-inp')?.value?.trim() || '';
   const minP = parseFloat(document.getElementById('min-price')?.value) || null;
   const maxP = parseFloat(document.getElementById('max-price')?.value) || null;
 
-  // Skeleton
-  grid.className = currentView==='grid' ? 'prod-grid' : 'prod-list';
-  grid.innerHTML = Array(8).fill(0).map(()=>
-    `<div class="prod-card"><div class="prod-img skeleton" style="aspect-ratio:1"></div>
-     <div class="prod-info"><div class="skeleton" style="height:14px;margin-bottom:8px"></div>
-     <div class="skeleton" style="height:12px;width:60%"></div></div></div>`
-  ).join('');
+  if (_loadingMore) return;
+  _loadingMore = true;
+
+  // เริ่มโหลดใหม่ (ไม่ append) → reset infinite scroll state
+  if (!append) { _hasMore = true; }
+
+  // Skeleton เฉพาะโหลดหน้าแรก (ไม่ append)
+  if (!append) {
+    grid.className = currentView==='grid' ? 'prod-grid' : 'prod-list';
+    grid.innerHTML = Array(8).fill(0).map(()=>
+      `<div class="prod-card"><div class="prod-img skeleton" style="aspect-ratio:1"></div>
+       <div class="prod-info"><div class="skeleton" style="height:14px;margin-bottom:8px"></div>
+       <div class="skeleton" style="height:12px;width:60%"></div></div></div>`
+    ).join('');
+  }
 
   try {
     let q = sb.from('products')
@@ -1274,7 +1285,7 @@ async function loadProds() {
       `พบ ${(count||0).toLocaleString()} รายการ ใน ${catName}${filterDesc?' · '+filterDesc:''}`;
     document.getElementById('hero-count').textContent = `${(count||0).toLocaleString()} รายการ`;
 
-    if (!data?.length) {
+    if (!data?.length && !append) {
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--g400)">
         <div style="font-size:48px;margin-bottom:14px">🔍</div>
         <div style="font-size:15px;font-weight:500;color:var(--g600);margin-bottom:8px">ไม่พบสินค้า</div>
@@ -1282,25 +1293,65 @@ async function loadProds() {
         <button onclick="resetAllFilters()" style="padding:10px 22px;background:var(--black);color:var(--white);border:none;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer">ล้าง Filter</button>
       </div>`;
       document.getElementById('pagination').style.display='none';
+      _hasMore = false; _loadingMore = false;
       return;
     }
 
-    // Render
-    if (currentView==='grid') renderGrid(data);
-    else renderList(data);
+    // Render — append ต่อท้าย หรือแทนที่
+    _totalCount = count || 0;
+    if (currentView==='grid') renderGrid(data, append);
+    else renderList(data, append);
 
-    // Pagination
-    renderPagination(count||0);
+    // เช็คว่ายังมีสินค้าให้โหลดอีกไหม
+    const loadedSoFar = currentPage * PAGE;
+    _hasMore = loadedSoFar < _totalCount;
+
+    // ซ่อน pagination เดิม — ใช้ infinite scroll แทน
+    document.getElementById('pagination').style.display='none';
+    renderScrollStatus();
 
   } catch(e) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--red)">❌ ${e.message}</div>`;
+    if (!append) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--red)">❌ ${e.message}</div>`;
+  } finally {
+    _loadingMore = false;
   }
 }
 
-function renderGrid(data) {
+// สถานะท้าย grid (กำลังโหลด / สุดแล้ว)
+function renderScrollStatus() {
+  let el = document.getElementById('scroll-status');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'scroll-status';
+    el.style.cssText = 'grid-column:1/-1;text-align:center;padding:24px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--g400)';
+    const grid = document.getElementById('prod-grid');
+    grid.parentNode.insertBefore(el, grid.nextSibling);
+  }
+  if (_loadingMore) el.textContent = '⏳ กำลังโหลด...';
+  else if (!_hasMore && _totalCount>0) el.textContent = `— แสดงครบ ${_totalCount.toLocaleString()} รายการ —`;
+  else el.textContent = '';
+}
+
+// โหลดหน้าถัดไปต่อท้าย (infinite scroll)
+async function loadMoreProds() {
+  if (_loadingMore || !_hasMore) return;
+  currentPage++;
+  renderScrollStatus();
+  await loadProds(true);
+}
+
+// scroll listener — โหลดเพิ่มเมื่อใกล้สุด
+window.addEventListener('scroll', () => {
+  if (_loadingMore || !_hasMore) return;
+  const scrollBottom = window.innerHeight + window.scrollY;
+  const docHeight = document.documentElement.scrollHeight;
+  if (scrollBottom >= docHeight - 800) loadMoreProds();
+}, { passive: true });
+
+function renderGrid(data, append) {
   const grid = document.getElementById('prod-grid');
   grid.className = 'prod-grid';
-  grid.innerHTML = data.map(p => {
+  const html = data.map(p => {
     const thumb = p.thumbnail||p.images?.[0];
     const disc = p.discount_percent || (p.compare_price&&p.compare_price>p.price ? Math.round((1-p.price/p.compare_price)*100):0);
     const badges = [];
@@ -1338,6 +1389,9 @@ function renderGrid(data) {
       </div>
     </div>`;
   }).join('');
+  if (append) grid.insertAdjacentHTML('beforeend', html);
+  else grid.innerHTML = html;
+  onAfterRender();
 }
 
 // เรียก refreshWishButtons หลัง render เสร็จ
@@ -1350,10 +1404,10 @@ function onAfterRender() {
   }
 }
 
-function renderList(data) {
+function renderList(data, append) {
   const grid = document.getElementById('prod-grid');
   grid.className = 'prod-list';
-  grid.innerHTML = data.map(p => {
+  const html = data.map(p => {
     const thumb = p.thumbnail||p.images?.[0];
     const disc = p.discount_percent||(p.compare_price&&p.compare_price>p.price?Math.round((1-p.price/p.compare_price)*100):0);
     return `<div class="prod-list-item" onclick="openProduct('${p.id}')">
@@ -1378,6 +1432,9 @@ function renderList(data) {
       </div>
     </div>`;
   }).join('');
+  if (append) grid.insertAdjacentHTML('beforeend', html);
+  else grid.innerHTML = html;
+  onAfterRender();
 }
 
 function renderPagination(total) {
@@ -1405,6 +1462,7 @@ function setView(v) {
   currentView=v;
   document.getElementById('vt-grid').classList.toggle('on',v==='grid');
   document.getElementById('vt-list').classList.toggle('on',v==='list');
+  currentPage=1; _hasMore=true;
   loadProds();
 }
 
