@@ -1907,11 +1907,12 @@ async function loadMixedProducts(page) {
       allProducts = [...allProducts, ...mixed.filter(p => !existingIds.has(p.id))];
     }
 
-    // บันทึกสถิติ (แม้ไม่ login) — track category exposure
-    trackCategoryExposure(mixed.map(p => p.category_id));
-
+    // แสดงสินค้าก่อน (สำคัญสุด) แล้วค่อย track
     renderProducts();
     renderLoadMoreBtn(mixed.length >= REC_PAGE_SIZE, page);
+
+    // บันทึกสถิติ (ไม่ให้ error มาขวางการแสดงสินค้า)
+    try { trackCategoryExposure(mixed.map(p => p.category_id)); } catch(_) {}
 
   } catch(e) {
     console.error('loadMixedProducts:', e);
