@@ -1304,16 +1304,20 @@ async function loadProds(append) {
 
     // เช็คว่ายังมีสินค้าให้โหลดอีกไหม
     const loadedSoFar = currentPage * PAGE;
-    _hasMore = loadedSoFar < _totalCount;
+    // ถ้า batch นี้ได้น้อยกว่า PAGE = หน้าสุดท้าย หรือ โหลดครบ total แล้ว
+    _hasMore = (data.length >= PAGE) && (loadedSoFar < _totalCount);
 
     // ซ่อน pagination เดิม — ใช้ infinite scroll แทน
     document.getElementById('pagination').style.display='none';
+    _loadingMore = false;        // ปลดล็อกก่อน render status ให้แสดงถูกต้อง
     renderScrollStatus();
 
   } catch(e) {
     if (!append) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--red)">❌ ${e.message}</div>`;
+    _loadingMore = false;
   } finally {
     _loadingMore = false;
+    renderScrollStatus();
   }
 }
 
