@@ -7244,7 +7244,11 @@ async function renderAdsLive() {
     // เติม dropdown สินค้า
     const sel = document.getElementById('ad-product-select');
     if (sel && sel.options.length <= 1) {
-      const prods = _sellerProducts || [];
+      // โหลดสินค้าถ้ายังไม่มี
+      if (!_sellerProds || !_sellerProds.length) {
+        try { await loadSellerProducts(); } catch(_) {}
+      }
+      const prods = _sellerProds || [];
       sel.innerHTML = '<option value="">-- เลือกสินค้า --</option>' +
         prods.map(p => `<option value="${p.id}">${sfEsc(p.name_th)}</option>`).join('');
     }
