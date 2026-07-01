@@ -1236,10 +1236,9 @@ async function loadProds(append) {
   }
 
   try {
-    // range: หน้าใหญ่ (PAGE_MAX) + chunk ย่อย (PAGE)
-    const pageStart = (currentPage - 1) * PAGE_MAX;   // จุดเริ่มของหน้านี้
-    const rangeFrom = pageStart + _chunk * PAGE;
-    const rangeTo   = rangeFrom + PAGE - 1;
+    // โหลด 72 ชิ้นรวดเดียวต่อหน้า (ไม่ต้องเลื่อน)
+    const rangeFrom = (currentPage - 1) * PAGE_MAX;
+    const rangeTo   = rangeFrom + PAGE_MAX - 1;
     let q = sb.from('products')
       .select('id,name_th,price,compare_price,discount_percent,stock_quantity,images,thumbnail,is_flash_sale,is_featured,rating_avg,rating_count,sold_count,tags,category_id,categories(name_th,icon)', { count:'exact' })
       .eq('status','active')
@@ -1308,22 +1307,18 @@ async function loadProds(append) {
     if (currentView==='grid') renderGrid(data, append);
     else renderList(data, append);
 
-    // เลื่อน chunk ถัดไป
-    _chunk++;
-    const loadedInPage = _chunk * PAGE;                    // โหลดในหน้านี้กี่ชิ้นแล้ว
-    const loadedTotal  = (currentPage-1)*PAGE_MAX + loadedInPage;
-    // ยังมี chunk ต่อไหม: ยังไม่ครบ 72 AND batch เต็ม AND ยังมีสินค้าเหลือ
-    _hasMore = (loadedInPage < PAGE_MAX) && (data.length >= PAGE) && (loadedTotal < _totalCount);
+    // Render 72 ชิ้น (แทนที่ทั้งหมด ไม่ append)
+    _totalCount = count || 0;
+    if (currentView==='grid') renderGrid(data, false);
+    else renderList(data, false);
 
-    // ซ่อน pagination ระหว่างยังโหลด chunk ในหน้า
+    // Pagination (หน้าละ 72)
     _loadingMore = false;
-    renderScrollStatus();
-    // แสดง pagination เมื่อโหลดครบหน้า (72 หรือหมดสินค้าในหน้า)
-    if (!_hasMore) renderPagination(_totalCount);
-    else document.getElementById('pagination').style.display='none';
+    renderPagination(_totalCount);
+    const st = document.getElementById('scroll-status'); if (st) st.textContent = '';
 
   } catch(e) {
-    if (!append) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--red)">❌ ${e.message}</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--red)">❌ ${e.message}</div>`;
     _loadingMore = false;
   } finally {
     _loadingMore = false;
@@ -1346,28 +1341,7 @@ function renderScrollStatus() {
 }
 
 // โหลดหน้าถัดไปต่อท้าย (infinite scroll)
-async function loadMoreProds() {
-  if (_loadingMore || !_hasMore) return;
-  _loadingMore = true;          // ล็อกทันที กัน scroll ยิงซ้ำ
-  currentPage++;
-  const el = document.getElementById('scroll-status');
-  if (el) el.textContent = '⏳ กำลังโหลด...';
-  _loadingMore = false;          // ปลดล็อกให้ loadProds จัดการเอง
-  await loadProds(true);
-}
-
-// scroll listener — โหลดเพิ่มเมื่อใกล้สุด (throttle)
-let _scrollTimer = null;
-window.addEventListener('scroll', () => {
-  if (_scrollTimer) return;
-  _scrollTimer = setTimeout(() => {
-    _scrollTimer = null;
-    if (_loadingMore || !_hasMore) return;
-    const scrollBottom = window.innerHeight + window.scrollY;
-    const docHeight = document.documentElement.scrollHeight;
-    if (scrollBottom >= docHeight - 800) loadMoreProds();
-  }, 150);
-}, { passive: true });
+// (ใช้ pagination ล้วน — โหลด 72 ชิ้น/หน้าทันที ไม่ต้องเลื่อน)
 
 function renderGrid(data, append) {
   const grid = document.getElementById('prod-grid');
