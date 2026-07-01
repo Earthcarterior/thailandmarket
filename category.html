@@ -874,7 +874,8 @@ let cart = JSON.parse(localStorage.getItem('tm_cart') || '[]');
 let currentProduct = null;
 let qty = 1;
 let searchTimer = null;
-const PAGE = 24;
+const PAGE = 24;        // โหลดทีละชุด (chunk)
+const PAGE_MAX = 72;    // สูงสุดต่อหน้า (3 chunks) แล้วขึ้นเลขหน้าถัดไป
 
 // ── Toast ──────────────────────────────────────────────────
 function toast(msg, ok=false) {
@@ -1209,8 +1210,9 @@ function updateActiveTags() {
 
 // ── Load Products ──────────────────────────────────────────
 let _loadingMore = false;
-let _hasMore = true;
+let _hasMore = true;      // ยังมี chunk ในหน้านี้ให้โหลดไหม
 let _totalCount = 0;
+let _chunk = 0;           // ชุดย่อยในหน้าปัจจุบัน (0,1,2 = 72 ชิ้น)
 async function loadProds(append) {
   const grid = document.getElementById('prod-grid');
   const search = document.getElementById('search-inp')?.value?.trim() || '';
@@ -1220,8 +1222,8 @@ async function loadProds(append) {
   if (_loadingMore) return;
   _loadingMore = true;
 
-  // เริ่มโหลดใหม่ (ไม่ append) → reset infinite scroll state
-  if (!append) { _hasMore = true; }
+  // เริ่มโหลดใหม่ (ไม่ append) → reset chunk + hasMore
+  if (!append) { _hasMore = true; _chunk = 0; }
 
   // Skeleton เฉพาะโหลดหน้าแรก (ไม่ append)
   if (!append) {
@@ -1234,10 +1236,14 @@ async function loadProds(append) {
   }
 
   try {
+    // range: หน้าใหญ่ (PAGE_MAX) + chunk ย่อย (PAGE)
+    const pageStart = (currentPage - 1) * PAGE_MAX;   // จุดเริ่มของหน้านี้
+    const rangeFrom = pageStart + _chunk * PAGE;
+    const rangeTo   = rangeFrom + PAGE - 1;
     let q = sb.from('products')
       .select('id,name_th,price,compare_price,discount_percent,stock_quantity,images,thumbnail,is_flash_sale,is_featured,rating_avg,rating_count,sold_count,tags,category_id,categories(name_th,icon)', { count:'exact' })
       .eq('status','active')
-      .range((currentPage-1)*PAGE, currentPage*PAGE-1);
+      .range(rangeFrom, rangeTo);
 
     // Category filter (รวมหมวดย่อย) — เฉพาะเมื่อ currentCat เป็น uuid ที่ถูกต้อง
     const catIsUuid = currentCat && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentCat);
@@ -1302,22 +1308,25 @@ async function loadProds(append) {
     if (currentView==='grid') renderGrid(data, append);
     else renderList(data, append);
 
-    // เช็คว่ายังมีสินค้าให้โหลดอีกไหม
-    const loadedSoFar = currentPage * PAGE;
-    // ถ้า batch นี้ได้น้อยกว่า PAGE = หน้าสุดท้าย หรือ โหลดครบ total แล้ว
-    _hasMore = (data.length >= PAGE) && (loadedSoFar < _totalCount);
+    // เลื่อน chunk ถัดไป
+    _chunk++;
+    const loadedInPage = _chunk * PAGE;                    // โหลดในหน้านี้กี่ชิ้นแล้ว
+    const loadedTotal  = (currentPage-1)*PAGE_MAX + loadedInPage;
+    // ยังมี chunk ต่อไหม: ยังไม่ครบ 72 AND batch เต็ม AND ยังมีสินค้าเหลือ
+    _hasMore = (loadedInPage < PAGE_MAX) && (data.length >= PAGE) && (loadedTotal < _totalCount);
 
-    // ซ่อน pagination เดิม — ใช้ infinite scroll แทน
-    document.getElementById('pagination').style.display='none';
-    _loadingMore = false;        // ปลดล็อกก่อน render status ให้แสดงถูกต้อง
+    // ซ่อน pagination ระหว่างยังโหลด chunk ในหน้า
+    _loadingMore = false;
     renderScrollStatus();
+    // แสดง pagination เมื่อโหลดครบหน้า (72 หรือหมดสินค้าในหน้า)
+    if (!_hasMore) renderPagination(_totalCount);
+    else document.getElementById('pagination').style.display='none';
 
   } catch(e) {
     if (!append) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--red)">❌ ${e.message}</div>`;
     _loadingMore = false;
   } finally {
     _loadingMore = false;
-    renderScrollStatus();
   }
 }
 
@@ -1332,8 +1341,8 @@ function renderScrollStatus() {
     grid.parentNode.insertBefore(el, grid.nextSibling);
   }
   if (_loadingMore) el.textContent = '⏳ กำลังโหลด...';
-  else if (!_hasMore && _totalCount>0) el.textContent = `— แสดงครบ ${_totalCount.toLocaleString()} รายการ —`;
-  else el.textContent = '';
+  else if (_hasMore) el.textContent = '↓ เลื่อนเพื่อโหลดเพิ่ม';
+  else el.textContent = '';   // ครบหน้าแล้ว — pagination จะแสดงแทน
 }
 
 // โหลดหน้าถัดไปต่อท้าย (infinite scroll)
@@ -1451,7 +1460,7 @@ function renderList(data, append) {
 
 function renderPagination(total) {
   const pg = document.getElementById('pagination');
-  const totalPages = Math.ceil(total/PAGE);
+  const totalPages = Math.ceil(total/PAGE_MAX);
   if (totalPages<=1) { pg.style.display='none'; return; }
   pg.style.display='flex';
   let html='';
@@ -1467,7 +1476,7 @@ function renderPagination(total) {
   pg.innerHTML=html;
 }
 
-function goPage(p) { currentPage=p; loadProds(); window.scrollTo({top:300,behavior:'smooth'}); }
+function goPage(p) { currentPage=p; _chunk=0; _hasMore=true; loadProds(); window.scrollTo({top:0,behavior:'smooth'}); }
 
 // ── View toggle ────────────────────────────────────────────
 function setView(v) {
