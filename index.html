@@ -336,7 +336,7 @@ input,select{font-family:var(--font)}
 .cat-btn:hover{background:var(--black);color:var(--white)}
 
 /* ── BRANDS ── */
-.brands-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:0;border:var(--border);margin-bottom:32px}
+.brands-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:0;border-top:var(--border);border-left:var(--border);margin-bottom:32px}
 
 /* ── ARTICLES SECTION (HomePro-style) [PATCH 2026-05-03] ── */
 .articles-section{margin-bottom:48px;margin-top:8px}
@@ -368,8 +368,7 @@ input,select{font-family:var(--font)}
 
 .art-skel{aspect-ratio:16/10;background:linear-gradient(90deg,#f5f5f5 25%,#fafafa 50%,#f5f5f5 75%);background-size:200% 100%;animation:artskel 1.4s infinite;border:var(--border)}
 @keyframes artskel{to{background-position:-200% 0}}
-.brand-card{padding:16px 10px;text-align:center;cursor:pointer;transition:all .15s;border-right:var(--border);display:flex;flex-direction:column;align-items:center;gap:6px}
-.brand-card:last-child{border-right:none}
+.brand-card{padding:16px 10px;text-align:center;cursor:pointer;transition:all .15s;border-right:var(--border);border-bottom:var(--border);display:flex;flex-direction:column;align-items:center;gap:6px}
 .brand-card:hover{background:var(--black);color:var(--white)}
 .brand-ico{font-size:22px}
 .brand-name{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--g600);transition:color .15s}
@@ -1529,7 +1528,7 @@ function renderCatSections() {
 async function loadBrands() {
   const el = document.getElementById('brands-grid');
   if (!el) return;
-  const { data } = await sb.from('brands').select('*').eq('is_active',true).eq('is_featured',true).order('sort_order').limit(8);
+  const { data } = await sb.from('brands').select('*').eq('is_active',true).order('sort_order').order('name');
   const brands = data || [];
 
   if (!brands.length) {
@@ -1547,7 +1546,8 @@ async function loadBrands() {
     return;
   }
   el.innerHTML = brands.map(b => `
-    <div class="brand-card" onclick="location.href='category.html'">
+  el.innerHTML = brands.map(b => `
+    <div class="brand-card" onclick="location.href='category.html?brand=${b.id}'">
       <div class="brand-ico">${b.icon || '🏷️'}</div>
       <div class="brand-name">${b.name}</div>
     </div>`).join('');
