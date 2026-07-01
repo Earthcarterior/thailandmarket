@@ -898,6 +898,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
 
     <div class="sb-sec-lbl">📦 สินค้า</div>
     <div class="sni" onclick="goto('products',this)"><span class="sni-ico">📦</span>สินค้าของฉัน</div>
+    <div class="sni" onclick="goto('ads',this)"><span class="sni-ico">📢</span>โฆษณาสินค้า</div>
     <div class="sni" onclick="goto('add-product',this)"><span class="sni-ico">➕</span>เพิ่มสินค้าใหม่</div>
     <div class="sni" onclick="goto('inventory',this)"><span class="sni-ico">🏭</span>จัดการสต็อก</div>
     <div class="sni" onclick="goto('bulk',this)"><span class="sni-ico">📊</span>จัดการเป็นกลุ่ม</div>
@@ -1222,6 +1223,69 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
           <tr><td colspan="8" class="pr-empty">⏳ กำลังโหลด...</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ADS / โฆษณาสินค้า -->
+  <div class="page" id="page-ads">
+    <div class="ph">📢 โฆษณาสินค้า — ดันสินค้าขึ้นหน้าแรก</div>
+
+    <!-- Ad Wallet -->
+    <div class="sg sg3" style="margin-bottom:16px">
+      <div class="sc"><div class="sc-lbl">💳 ยอดเงินโฆษณา</div><div class="sc-val" id="ad-wallet-balance">฿0</div><div class="sc-chg">พร้อมใช้ซื้อโฆษณา</div></div>
+      <div class="sc"><div class="sc-lbl">📈 เติมสะสม</div><div class="sc-val" id="ad-wallet-topup">฿0</div></div>
+      <div class="sc"><div class="sc-lbl">📉 ใช้ไปแล้ว</div><div class="sc-val" id="ad-wallet-spent">฿0</div></div>
+    </div>
+
+    <!-- เติมเงิน -->
+    <div class="card" style="margin-bottom:16px;padding:16px">
+      <div class="ct" style="margin-bottom:10px">💳 เติมเงินโฆษณา</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn-o btn-sm" onclick="adTopup(500)">+ ฿500</button>
+        <button class="btn-o btn-sm" onclick="adTopup(1000)">+ ฿1,000</button>
+        <button class="btn-o btn-sm" onclick="adTopup(2000)">+ ฿2,000</button>
+        <button class="btn-o btn-sm" onclick="adTopup(5000)">+ ฿5,000</button>
+        <span style="font-size:11px;color:#888">(ระบบทดสอบ — เติมเข้าทันที)</span>
+      </div>
+    </div>
+
+    <!-- แพ็กเกจโฆษณา -->
+    <div class="card" style="margin-bottom:16px;padding:16px">
+      <div class="ct" style="margin-bottom:4px">📢 ซื้อโฆษณาให้สินค้า</div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px">เลือกสินค้า + แพ็กเกจ → สินค้าจะขึ้นบนสุดของหมวดพร้อม badge "โฆษณา"</div>
+      <div style="margin-bottom:12px">
+        <label class="fl" style="display:block;margin-bottom:4px">เลือกสินค้า</label>
+        <select id="ad-product-select" style="width:100%;max-width:400px;padding:8px 12px;border:1px solid #E5E5E5;font-size:13px">
+          <option value="">-- เลือกสินค้า --</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+        <div class="ad-pkg" style="border:1px solid #E5E5E5;padding:16px;text-align:center;border-radius:8px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px">รายวัน</div>
+          <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:700;margin-bottom:2px">฿100</div>
+          <div style="font-size:11px;color:#888;margin-bottom:12px">ดัน 1 วัน</div>
+          <button class="btn-p" style="width:100%" onclick="buyAd('daily')">ซื้อ</button>
+        </div>
+        <div class="ad-pkg" style="border:2px solid #0A0A0A;padding:16px;text-align:center;border-radius:8px;position:relative">
+          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#E63329;color:#fff;font-size:9px;padding:2px 8px;font-family:'DM Mono',monospace">คุ้มสุด</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px">รายสัปดาห์</div>
+          <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:700;margin-bottom:2px">฿600</div>
+          <div style="font-size:11px;color:#888;margin-bottom:12px">ดัน 7 วัน (฿86/วัน)</div>
+          <button class="btn-p" style="width:100%" onclick="buyAd('weekly')">ซื้อ</button>
+        </div>
+        <div class="ad-pkg" style="border:1px solid #E5E5E5;padding:16px;text-align:center;border-radius:8px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px">รายเดือน</div>
+          <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:700;margin-bottom:2px">฿2,000</div>
+          <div style="font-size:11px;color:#888;margin-bottom:12px">ดัน 30 วัน (฿67/วัน)</div>
+          <button class="btn-p" style="width:100%" onclick="buyAd('monthly')">ซื้อ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- โฆษณาที่กำลังทำงาน -->
+    <div class="card" style="padding:16px">
+      <div class="ct" style="margin-bottom:10px">📊 โฆษณาของฉัน</div>
+      <div id="ad-list"><div style="padding:20px;text-align:center;color:#888">กำลังโหลด...</div></div>
     </div>
   </div>
 
@@ -2643,37 +2707,6 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
   </div>
 
   <!-- ═══ ADS: TMS Ads ═══ -->
-  <div class="page" id="page-ads">
-    <div class="tms-page-header">
-      <div><div class="tms-page-title">📣 TMS Ads</div><div class="tms-page-sub">SEARCH & DISCOVERY ADVERTISING</div></div>
-      <button class="tms-btn tms-btn-acc" onclick="alert('Coming soon — รอ integration กับ Google/Meta Ads API')">+ สร้างแคมเปญ</button>
-    </div>
-    <div class="tms-kpi-grid">
-      <div class="tms-kpi"><div class="tms-kpi-l">Impressions</div><div class="tms-kpi-v">128K</div><div class="tms-kpi-m up">+18%</div></div>
-      <div class="tms-kpi"><div class="tms-kpi-l">Clicks</div><div class="tms-kpi-v">3,420</div><div class="tms-kpi-m up">+22%</div></div>
-      <div class="tms-kpi"><div class="tms-kpi-l">CTR</div><div class="tms-kpi-v">2.67%</div><div class="tms-kpi-m up">+0.4%</div></div>
-      <div class="tms-kpi"><div class="tms-kpi-l">CPC</div><div class="tms-kpi-v">฿2.46</div><div class="tms-kpi-m down">-฿0.32</div></div>
-    </div>
-    <div class="tms-card">
-      <div class="tms-card-h"><div class="tms-card-t">แคมเปญที่ทำงาน</div></div>
-      <div class="tms-card-b p0" style="overflow-x:auto">
-        <table class="tms-table">
-          <thead><tr><th>แคมเปญ</th><th>ประเภท</th><th style="text-align:right">งบ/วัน</th><th style="text-align:right">ใช้แล้ว</th><th style="text-align:right">ROAS</th><th>สถานะ</th><th></th></tr></thead>
-          <tbody id="ads-list">
-            <tr><td colspan="7" style="text-align:center;padding:30px;color:#888">ยังไม่มีแคมเปญ — สร้างแคมเปญแรกเพื่อเริ่มโฆษณา</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="tms-section-title">วิธีการทำงาน</div>
-    <div class="tms-card"><div class="tms-card-b" style="font-size:12px;line-height:1.8;color:#666">
-      <strong>📊 Search Ads</strong> — โฆษณาในผลค้นหา จ่ายเฉพาะเมื่อมีคนคลิก<br>
-      <strong>🎯 GMV Max</strong> — Auto-bid เพื่อ maximize GMV<br>
-      <strong>🌟 Discovery</strong> — แสดงในหน้า Discovery / Recommendation<br>
-      <strong>💰 Billing</strong> — หักจาก Seller Balance อัตโนมัติทุกวัน
-    </div></div>
-  </div>
-
   <!-- ═══ LIVE & VIDEO ═══ -->
   <div class="page" id="page-live">
     <div class="tms-page-header">
@@ -7201,6 +7234,84 @@ let _finTxns = [];
 let _finPayouts = [];
 let _finFilter = 'all';
 
+// ── ระบบโฆษณาสินค้า ──────────────────────────────────────
+async function renderAdsLive() {
+  if (!_sellerSellerId) { toast('ต้องเป็นร้านค้าก่อน','error'); return; }
+  try {
+    const { data } = await _sb.rpc('get_seller_ads', { p_seller_id: _sellerSellerId });
+    if (!data || data.ok === false) throw new Error(data?.error || 'load_failed');
+    const w = data.wallet || {};
+    const fmt = n => '฿' + Math.round(n||0).toLocaleString();
+    document.getElementById('ad-wallet-balance').textContent = fmt(w.balance);
+    document.getElementById('ad-wallet-topup').textContent = fmt(w.total_topup);
+    document.getElementById('ad-wallet-spent').textContent = fmt(w.total_spent);
+
+    // เติม dropdown สินค้า
+    const sel = document.getElementById('ad-product-select');
+    if (sel && sel.options.length <= 1) {
+      const prods = _sellerProducts || [];
+      sel.innerHTML = '<option value="">-- เลือกสินค้า --</option>' +
+        prods.map(p => `<option value="${p.id}">${sfEsc(p.name_th)}</option>`).join('');
+    }
+
+    // รายการโฆษณา
+    const list = document.getElementById('ad-list');
+    const ads = data.ads || [];
+    if (!ads.length) {
+      list.innerHTML = '<div style="padding:20px;text-align:center;color:#888">ยังไม่มีโฆษณา — เลือกสินค้าและซื้อแพ็กเกจด้านบน</div>';
+    } else {
+      list.innerHTML = `<table style="width:100%;font-size:13px"><thead><tr style="text-align:left;border-bottom:2px solid #eee">
+        <th style="padding:8px">สินค้า</th><th>แพ็กเกจ</th><th>สถานะ</th><th>แสดง</th><th>คลิก</th><th>สิ้นสุด</th></tr></thead><tbody>` +
+        ads.map(a => {
+          const end = a.ends_at ? new Date(a.ends_at).toLocaleDateString('th-TH') : '-';
+          const st = a.active
+            ? '<span style="color:#16A34A;font-weight:600">🟢 กำลังแสดง</span>'
+            : '<span style="color:#888">⚪ หมดอายุ</span>';
+          const pkg = {daily:'รายวัน',weekly:'รายสัปดาห์',monthly:'รายเดือน'}[a.package]||a.package;
+          return `<tr style="border-bottom:1px solid #f0f0f0">
+            <td style="padding:8px">${sfEsc(a.product_name||'')}</td>
+            <td>${pkg}</td><td>${st}</td>
+            <td style="font-family:monospace">${(a.impressions||0).toLocaleString()}</td>
+            <td style="font-family:monospace">${(a.clicks||0).toLocaleString()}</td>
+            <td style="font-size:11px">${end}</td></tr>`;
+        }).join('') + '</tbody></table>';
+    }
+  } catch(e) {
+    document.getElementById('ad-list').innerHTML =
+      `<div style="padding:20px;text-align:center;color:#E63329">❌ ${e.message}<br><small>รัน ads_package_system.sql ก่อน</small></div>`;
+  }
+}
+
+async function adTopup(amount) {
+  if (!_sellerSellerId) return;
+  try {
+    const { data } = await _sb.rpc('ad_wallet_topup', { p_seller_id: _sellerSellerId, p_amount: amount });
+    if (data?.ok) { toast(`เติมเงิน ฿${amount.toLocaleString()} สำเร็จ`,'success'); renderAdsLive(); }
+    else toast('เติมเงินไม่สำเร็จ: '+(data?.error||''),'error');
+  } catch(e) { toast('❌ '+e.message,'error'); }
+}
+
+async function buyAd(pkg) {
+  if (!_sellerSellerId) return;
+  const sel = document.getElementById('ad-product-select');
+  const pid = sel?.value;
+  if (!pid) { toast('กรุณาเลือกสินค้าก่อน','error'); return; }
+  const prices = {daily:100, weekly:600, monthly:2000};
+  const names  = {daily:'รายวัน', weekly:'รายสัปดาห์', monthly:'รายเดือน'};
+  if (!confirm(`ซื้อโฆษณา${names[pkg]} ฿${prices[pkg].toLocaleString()}?\nสินค้าจะขึ้นบนสุดของหมวด`)) return;
+  try {
+    const { data } = await _sb.rpc('buy_product_ad', { p_product_id: pid, p_package: pkg });
+    if (data?.ok) {
+      toast(`ซื้อโฆษณา${names[pkg]}สำเร็จ! สินค้าจะขึ้นบนสุด ${data.days} วัน`,'success');
+      renderAdsLive();
+    } else if (data?.error === 'insufficient_balance') {
+      toast(`ยอดเงินไม่พอ (มี ฿${Math.round(data.balance).toLocaleString()} ต้องการ ฿${Math.round(data.needed).toLocaleString()}) — เติมเงินก่อน`,'error');
+    } else {
+      toast('ซื้อไม่สำเร็จ: '+(data?.error||''),'error');
+    }
+  } catch(e) { toast('❌ '+e.message,'error'); }
+}
+
 async function renderFinanceLive() {
   if (!_sellerSellerId) return;
   try {
@@ -7849,10 +7960,6 @@ async function renderMarketingHubLive() {
 }
 
 // ═══ ADS ═══
-async function renderAdsLive() {
-  // Placeholder — ad system needs Omise/Stripe + ad platform integration
-}
-
 // ═══ LIVE STREAM ═══
 async function renderLiveStreamLive() {
   // Placeholder — live streaming infrastructure needed
