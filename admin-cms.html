@@ -689,6 +689,9 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="sni" id="nav-banners" onclick="showPanel('banners')">
         <span class="sni-ico">🖼️</span> Banners
       </div>
+      <div class="sni" id="nav-ads" onclick="showPanel('ads')">
+        <span class="sni-ico">📢</span> โฆษณาสินค้า
+      </div>
 
       <div class="sb-section-lbl">จัดการร้านค้า</div>
       <div class="sni" id="nav-sellers" onclick="showPanel('sellers')">
@@ -1560,6 +1563,32 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
 
+
+    <!-- ════════ ADS PANEL ════════ -->
+    <div id="panel-ads" class="panel admin-only" style="padding:24px;display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div>
+          <div style="font-size:18px;font-weight:700">📢 โฆษณาสินค้า</div>
+          <div style="font-size:12px;color:#888">จัดการโฆษณาที่ร้านค้าซื้อ — ดันสินค้าขึ้นหน้าแรก</div>
+        </div>
+        <button class="btn btn-sm" style="background:var(--g100)" onclick="loadAdminAds()">🔄 รีเฟรช</button>
+      </div>
+
+      <!-- สรุปยอด -->
+      <div class="stats-grid" style="margin-bottom:18px">
+        <div class="stat-card"><div class="stat-accent" style="background:var(--green)"></div><div class="stat-label">โฆษณาทั้งหมด</div><div class="stat-value" id="ads-total">—</div><div class="stat-sub">รายการ</div></div>
+        <div class="stat-card"><div class="stat-accent" style="background:var(--black)"></div><div class="stat-label">กำลังแสดง</div><div class="stat-value" id="ads-active">—</div><div class="stat-sub">active</div></div>
+        <div class="stat-card"><div class="stat-accent" style="background:var(--amber)"></div><div class="stat-label">รายได้โฆษณา</div><div class="stat-value" id="ads-revenue">—</div><div class="stat-sub">รวมทั้งหมด</div></div>
+        <div class="stat-card"><div class="stat-accent" style="background:var(--red)"></div><div class="stat-label">คลิกรวม</div><div class="stat-value" id="ads-clicks">—</div><div class="stat-sub">clicks</div></div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>สินค้า</th><th>ร้านค้า</th><th>แพ็กเกจ</th><th>ราคา</th><th>สถานะ</th><th>แสดง</th><th>คลิก</th><th>CTR</th><th>สิ้นสุด</th><th></th></tr></thead>
+          <tbody id="ads-tbody"><tr><td colspan="10" style="text-align:center;padding:30px;color:#888">⏳ กำลังโหลด...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- ════════════════════════════════════════════════════════════════
          REVIEWS PANEL [PATCH 2026-05-03]
@@ -6665,6 +6694,7 @@ window.showPanel = function(name) {
     case 'brands':      loadAdminBrands();             break;
     case 'coupons':     loadAdminCoupons(); loadCpKpis(); break;
     case 'banners':     loadAdminBanners(); break;
+    case 'ads':         loadAdminAds(); break;
     case 'reviews':     loadAdminReviews(); loadReviewStats(); break;
     case 'articles':    loadAdminArticles(); break;
     case 'flash':       loadFlash();                   break;
@@ -7287,6 +7317,64 @@ function bnSwitchTab(pos, btn) {
   document.querySelectorAll('.bn-tab').forEach(t => t.classList.remove('on'));
   if (btn) btn.classList.add('on');
   bnRenderTable();
+}
+
+// ── จัดการโฆษณาสินค้า ──────────────────────────────────────
+async function loadAdminAds() {
+  const tbody = document.getElementById('ads-tbody');
+  try {
+    const { data, error } = await sb.rpc('admin_list_ads');
+    if (error) throw error;
+    if (!data || data.ok === false) throw new Error(data?.error || 'access_denied');
+    const ads = data.ads || [];
+    const fmt = n => '฿' + Math.round(n||0).toLocaleString();
+
+    // สรุปยอด
+    const active = ads.filter(a => a.status==='active' && (!a.ends_at || new Date(a.ends_at)>new Date())).length;
+    const revenue = ads.reduce((s,a)=>s+(parseFloat(a.price_paid)||0),0);
+    const clicks = ads.reduce((s,a)=>s+(a.clicks||0),0);
+    document.getElementById('ads-total').textContent = ads.length;
+    document.getElementById('ads-active').textContent = active;
+    document.getElementById('ads-revenue').textContent = fmt(revenue);
+    document.getElementById('ads-clicks').textContent = clicks.toLocaleString();
+
+    if (!ads.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#888">ยังไม่มีโฆษณา</td></tr>';
+      return;
+    }
+    tbody.innerHTML = ads.map(a => {
+      const isActive = a.status==='active' && (!a.ends_at || new Date(a.ends_at)>new Date());
+      const st = isActive
+        ? '<span style="color:#16A34A;font-weight:600">🟢 แสดง</span>'
+        : '<span style="color:#888">⚪ '+(a.status==='ended'?'จบแล้ว':a.status)+'</span>';
+      const pkg = {daily:'รายวัน',weekly:'สัปดาห์',monthly:'เดือน'}[a.package]||a.package||'-';
+      const end = a.ends_at ? new Date(a.ends_at).toLocaleDateString('th-TH') : '-';
+      return `<tr>
+        <td style="font-weight:600">${escapeHtml(a.product_name||'—')}</td>
+        <td>${escapeHtml(a.shop_name||'—')}</td>
+        <td>${pkg}</td>
+        <td style="font-family:var(--mono)">${fmt(a.price_paid)}</td>
+        <td>${st}</td>
+        <td style="font-family:var(--mono)">${(a.impressions||0).toLocaleString()}</td>
+        <td style="font-family:var(--mono)">${(a.clicks||0).toLocaleString()}</td>
+        <td style="font-family:var(--mono)">${a.ctr||0}%</td>
+        <td style="font-size:11px">${end}</td>
+        <td>${isActive?`<button class="btn btn-sm" style="background:#FEE;color:#E63329" onclick="endAd('${a.id}')">หยุด</button>`:''}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#E63329">❌ ${escapeHtml(e.message)}<br><small>รัน ads_system.sql ก่อน</small></td></tr>`;
+  }
+}
+
+async function endAd(adId) {
+  if (!confirm('หยุดโฆษณานี้?')) return;
+  try {
+    const { error } = await sb.from('product_ads').update({ status:'ended' }).eq('id', adId);
+    if (error) throw error;
+    toast('หยุดโฆษณาแล้ว','success');
+    loadAdminAds();
+  } catch(e) { toast('❌ '+e.message,'error'); }
 }
 
 async function loadAdminBanners() {
