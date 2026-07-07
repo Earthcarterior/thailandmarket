@@ -898,16 +898,41 @@ img{max-width:100%;height:auto}
 <div class="toast-wrap" id="tw"></div>
 
 <script>
-const CATS=[
-  {id:'home',icon:'🛋️',name:'บ้าน/เฟอร์นิเจอร์',gp:6},
-  {id:'fashion',icon:'👗',name:'แฟชั่น',gp:11},
-  {id:'beauty',icon:'💄',name:'Beauty',gp:9},
-  {id:'fmcg',icon:'🛒',name:'FMCG/อาหาร',gp:6},
-  {id:'tech',icon:'💻',name:'Tech',gp:4},
-  {id:'auto',icon:'🚗',name:'Automotive',gp:4},
-  {id:'pet',icon:'🐾',name:'Pet',gp:9},
-  {id:'edu',icon:'📚',name:'Education',gp:4},
-];
+// โหลดหมวดหมู่หลัก + GP จาก DB จริง (sync กับ CMS)
+let CATS = [];
+async function loadCatsFromDB(){
+  try {
+    const SUPA='https://qmgyimsptzewwyafvjzk.supabase.co';
+    const ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
+    const res = await fetch(`${SUPA}/rest/v1/categories?select=id,name_th,icon,gp_percent&parent_id=is.null&is_active=eq.true&order=sort_order`, {
+      headers: { apikey: ANON, Authorization: 'Bearer '+ANON }
+    });
+    const data = await res.json();
+    if (Array.isArray(data) && data.length) {
+      CATS = data.map(c => ({
+        id: c.id,
+        icon: c.icon || '📦',
+        name: c.name_th,
+        gp: Number(c.gp_percent) || 0
+      }));
+    }
+  } catch(e) { console.error('loadCatsFromDB:', e); }
+  // fallback ถ้าโหลดไม่ได้
+  if (!CATS.length) {
+    CATS = [
+      {id:'home',icon:'🛋️',name:'บ้าน/เฟอร์นิเจอร์',gp:6},
+      {id:'fashion',icon:'👗',name:'แฟชั่น',gp:11},
+      {id:'beauty',icon:'💄',name:'Beauty',gp:9},
+      {id:'fmcg',icon:'🛒',name:'FMCG/อาหาร',gp:6},
+      {id:'tech',icon:'💻',name:'Tech',gp:4},
+      {id:'auto',icon:'🚗',name:'Automotive',gp:4},
+      {id:'pet',icon:'🐾',name:'Pet',gp:9},
+      {id:'edu',icon:'📚',name:'Education',gp:4},
+    ];
+  }
+  buildCatSelect();
+  buildGPTable();
+}
 const PROVINCES=['กรุงเทพมหานคร','เชียงใหม่','เชียงราย','นครราชสีมา','ขอนแก่น','อุดรธานี','อุบลราชธานี','สุราษฎร์ธานี','ภูเก็ต','สงขลา','พิษณุโลก','นครสวรรค์','ระยอง','ชลบุรี','ปทุมธานี','นนทบุรี','สมุทรปราการ','สมุทรสาคร','นครปฐม','กาญจนบุรี'];
 let currentStep=1;
 let maxReached=1;
@@ -1197,11 +1222,13 @@ function toggleCat(id,el){
 }
 
 function buildGPTable(){
-  document.getElementById('gp-table-body').innerHTML=CATS.map(c=>`
+  const el = document.getElementById('gp-table-body');
+  if (!el) return;
+  el.innerHTML=CATS.map(c=>`
     <tr class="${selCats.includes(c.id)?'active-cat':''}">
       <td>${c.icon} ${c.name}${selCats.includes(c.id)?' ✓':''}</td>
-      <td>${c.gp}%</td>
-      <td>รับ ฿${1000*(1-c.gp/100)}</td>
+      <td>${(+c.gp).toLocaleString(undefined,{maximumFractionDigits:1})}%</td>
+      <td>รับ ฿${Math.round(1000*(1-c.gp/100)).toLocaleString()}</td>
     </tr>
   `).join('');
 }
@@ -1211,7 +1238,7 @@ function buildProvinces(){
   PROVINCES.forEach(p=>{const o=document.createElement('option');o.textContent=p;sel.appendChild(o);});
 }
 
-buildCatSelect();
+loadCatsFromDB();
 buildProvinces();
 updateProgress();
 </script>
