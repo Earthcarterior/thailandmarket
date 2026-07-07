@@ -8246,11 +8246,27 @@ async function viewSellerDetail(sellerId) {
 
   try {
     const [sellerRes, prodsRes] = await Promise.all([
-      sb.from('sellers').select('*,users(display_name,email,created_at,avatar_url,loyalty_pts)').eq('id', sellerId).maybeSingle(),
+      sb.from('sellers').select('*').eq('id', sellerId).maybeSingle(),
       sb.from('products').select('id,name_th,price,status,thumbnail,sold_count').eq('seller_id', sellerId).order('created_at', {ascending:false}).limit(10),
     ]);
     const s = sellerRes.data;
     const prods = prodsRes.data || [];
+    if (!s) {
+      content.innerHTML = `<div style="text-align:center;padding:32px;color:#E63329">
+        ❌ โหลดข้อมูลร้านไม่สำเร็จ<br>
+        <small style="color:#888">${sellerRes.error?.message || 'ไม่พบข้อมูลร้าน หรือไม่มีสิทธิ์เข้าถึง'}</small>
+      </div>`;
+      return;
+    }
+    // โหลดข้อมูล user เจ้าของแยก (กัน RLS users กระทบการโหลดร้าน)
+    if (s.user_id) {
+      try {
+        const { data: u } = await sb.from('users')
+          .select('display_name,email,created_at,avatar_url,loyalty_pts')
+          .eq('id', s.user_id).maybeSingle();
+        s.users = u || null;
+      } catch(_) { s.users = null; }
+    }
     const stC = { pending:'#D97706', active:'#16A34A', rejected:'#E63329', inactive:'#737373' };
     const stL = { pending:'รอดำเนินการ', active:'อนุมัติแล้ว', rejected:'ปฏิเสธแล้ว', inactive:'ระงับ' };
 
