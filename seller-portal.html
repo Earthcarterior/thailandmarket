@@ -4312,21 +4312,28 @@ function renderVariantTypes(){
   if (!box) return;
   box.innerHTML = _variantTypes.map((t,i)=>`
     <div style="border:1px solid #E5E5E5;border-radius:6px;padding:10px;margin-bottom:8px;background:#fff">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-        <input class="fi" style="flex:0 0 140px" placeholder="ชื่อ เช่น สี, ไซส์"
-          value="${sfEsc(t.name)}" onchange="updateVariantTypeName(${i}, this.value)">
-        <button type="button" onclick="removeVariantType(${i})" style="background:#FEE;color:#E63329;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:12px">ลบ</button>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <input class="fi" style="flex:1;min-width:0" placeholder="ชื่อประเภท เช่น สี, ไซส์, รุ่น"
+          value="${sfEsc(t.name)}" onchange="updateVariantTypeName(${i}, this.value)" oninput="updateVariantTypeName(${i}, this.value)">
+        <button type="button" onclick="removeVariantType(${i})" style="background:#FEE;color:#E63329;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap">ลบ</button>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        ${t.values.map((v,vi)=>`<span style="display:inline-flex;align-items:center;gap:4px;background:#F2F2F2;padding:4px 8px;border-radius:4px;font-size:12px">${sfEsc(v)} <b style="cursor:pointer;color:#E63329" onclick="removeVariantValue(${i},${vi})">×</b></span>`).join('')}
-        <input class="fi" style="flex:0 0 120px;font-size:12px" placeholder="+ เพิ่มค่า แล้ว Enter"
-          onkeydown="if(event.key==='Enter'){event.preventDefault();addVariantValue(${i},this.value);this.value='';}">
+        ${t.values.map((v,vi)=>`<span style="display:inline-flex;align-items:center;gap:5px;background:#EBF5FF;color:#1D4ED8;padding:5px 10px;border-radius:14px;font-size:13px;font-weight:500">${sfEsc(v)} <b style="cursor:pointer;color:#E63329;font-size:15px" onclick="removeVariantValue(${i},${vi})">×</b></span>`).join('')}
+        <div style="display:flex;gap:4px;align-items:center">
+          <input class="fi" id="vinput-${i}" style="width:130px;font-size:13px" placeholder="พิมพ์ค่า เช่น ดำ"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addVariantValue(${i},this.value);this.value='';this.focus();}">
+          <button type="button" onclick="const el=document.getElementById('vinput-${i}');addVariantValue(${i},el.value);el.value='';el.focus();" style="background:#0A0A0A;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;white-space:nowrap">+ เพิ่ม</button>
+        </div>
       </div>
+      ${t.values.length ? '' : '<div style="font-size:11px;color:#E63329;margin-top:6px">⚠️ ใส่ค่าอย่างน้อย 1 ค่า แล้วกด "+ เพิ่ม" หรือ Enter</div>'}
     </div>
   `).join('');
 }
 
-function updateVariantTypeName(idx, val){ _variantTypes[idx].name = val.trim(); rebuildVariantMatrix(); }
+function updateVariantTypeName(idx, val){
+  if (_variantTypes[idx]) _variantTypes[idx].name = val.trim();
+  rebuildVariantMatrix();  // แค่อัปเดตตาราง ไม่ re-render input (กัน focus หลุด)
+}
 function addVariantValue(idx, val){
   val = val.trim(); if (!val) return;
   if (!_variantTypes[idx].values.includes(val)) _variantTypes[idx].values.push(val);
@@ -4430,6 +4437,11 @@ async function submitNewProduct(){
   if(!name_th){toast('⚠️ กรุณากรอกชื่อสินค้า','error');return;}
   if(!_selectedCatId){toast('⚠️ กรุณาเลือกหมวดหมู่','error');return;}
   if(price<=0){toast('⚠️ กรุณากรอกราคา','error');return;}
+  // เช็ค variant: ถ้าเปิดแต่ไม่มีค่า
+  if(document.getElementById('ap-has-variants')?.checked){
+    const valid=_variantTypes.filter(t=>t.name&&t.values.length);
+    if(!valid.length){toast('⚠️ เปิดตัวเลือกแล้ว ต้องใส่ประเภท+ค่าอย่างน้อย 1 หรือปิดตัวเลือก','error');return;}
+  }
   const btn=$('ap-submit-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ กำลังบันทึก...';}
   try{
