@@ -1388,7 +1388,7 @@ function updateVariantStock() {
       const priceEl = document.getElementById('prod-price');
       if (priceEl) priceEl.textContent = '฿' + Number(sku.price).toLocaleString();
     }
-    // แสดง stock
+    // แสดง stock (กล่อง variant)
     if (stockEl) {
       if (sku.stock > 0) {
         stockEl.innerHTML = `<span style="color:#16A34A">✓ มีสินค้า ${sku.stock} ชิ้น</span>`;
@@ -1398,7 +1398,24 @@ function updateVariantStock() {
         if (btnCart) { btnCart.disabled = true; btnCart.style.opacity = '0.5'; }
       }
     }
+    // อัปเดตช่องจำนวน "มีสินค้า X ชิ้น" ให้ตรงกับ variant
+    const qtyStockEl = document.getElementById('qty-stock');
+    if (qtyStockEl) {
+      qtyStockEl.textContent = sku.stock > 0 ? `มีสินค้า ${sku.stock} ชิ้น` : 'สินค้าหมด';
+    }
+    // ถ้า qty ปัจจุบันเกิน stock ของ variant → ลดลง
+    if (qty > sku.stock) {
+      qty = Math.max(1, sku.stock);
+      const qv = document.getElementById('qty-val');
+      if (qv) qv.textContent = qty;
+    }
   }
+}
+
+// หา stock ปัจจุบัน (variant ที่เลือก หรือ stock รวม)
+function currentMaxStock() {
+  if (_selectedSku && typeof _selectedSku.stock === 'number') return _selectedSku.stock;
+  return _product?.stock_quantity || 0;
 }
 
 async function renderSellerShipping(p) {
@@ -2038,8 +2055,13 @@ function selThumb(el, url) {
 }
 
 function changeQty(d) {
-  const max = _product?.stock_quantity || 99;
-  qty = Math.max(1, Math.min(max, qty + d));
+  const max = currentMaxStock() || 99;
+  const newQty = qty + d;
+  if (d > 0 && newQty > max) {
+    toast(max <= 0 ? '😔 สินค้าหมด' : `⚠️ มีสินค้าเพียง ${max} ชิ้น`);
+    return;
+  }
+  qty = Math.max(1, Math.min(max, newQty));
   document.getElementById('qty-val').textContent = qty;
 }
 
