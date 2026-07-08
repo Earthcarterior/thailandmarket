@@ -1112,6 +1112,7 @@ const sb = supabase.createClient(
 const productId = new URLSearchParams(location.search).get('id');
 let _product = null;
 let _selectedVariants = {};
+let _selectedSku = null;
 let qty = 1;
 let wishlisted = false;
 
@@ -1351,6 +1352,14 @@ function renderVariants(vo) {
       </div>`;
     wrap.appendChild(section);
   });
+  // เพิ่มกล่องแสดง stock ของ variant ที่เลือก
+  if (opts.length) {
+    const info = document.createElement('div');
+    info.id = 'variant-stock-info';
+    info.style.cssText = 'margin-top:8px;font-size:13px;font-weight:600';
+    wrap.appendChild(info);
+    updateVariantStock();
+  }
 }
 
 function selVariant(el, optName, value, idx) {
@@ -1359,6 +1368,37 @@ function selVariant(el, optName, value, idx) {
   _selectedVariants[optName] = value;
   const sel = document.getElementById('vo-sel-' + idx);
   if (sel) sel.textContent = value;
+  updateVariantStock();
+}
+
+// อัปเดต stock + ราคา ตาม variant ที่เลือก
+function updateVariantStock() {
+  const p = _product;
+  if (!p || !Array.isArray(p.variant_skus) || !p.variant_skus.length) return;
+  // สร้าง key จาก variant ที่เลือก (เรียงตามลำดับ options)
+  const opts = (p.variant_options && p.variant_options.options) ? p.variant_options.options : [];
+  const key = opts.map(o => _selectedVariants[o.name]).join(' / ');
+  const sku = p.variant_skus.find(s => s.key === key);
+  const stockEl = document.getElementById('variant-stock-info');
+  const btnCart = document.querySelector('.btn-cart');
+  if (sku) {
+    _selectedSku = sku;
+    // อัปเดตราคาถ้า variant มีราคาต่าง
+    if (sku.price && sku.price > 0) {
+      const priceEl = document.getElementById('prod-price');
+      if (priceEl) priceEl.textContent = '฿' + Number(sku.price).toLocaleString();
+    }
+    // แสดง stock
+    if (stockEl) {
+      if (sku.stock > 0) {
+        stockEl.innerHTML = `<span style="color:#16A34A">✓ มีสินค้า ${sku.stock} ชิ้น</span>`;
+        if (btnCart) { btnCart.disabled = false; btnCart.style.opacity = '1'; }
+      } else {
+        stockEl.innerHTML = `<span style="color:#E63329">✗ สินค้าหมด (แบบนี้)</span>`;
+        if (btnCart) { btnCart.disabled = true; btnCart.style.opacity = '0.5'; }
+      }
+    }
+  }
 }
 
 async function renderSellerShipping(p) {
@@ -1684,18 +1724,27 @@ async function loadRelated() {
 // ════════════════════════════════════════════════════════════════════
 async function addToCart() {
   if (!_product) return;
-  if (_product.stock_quantity <= 0) { toast('😔 สินค้าหมด'); return; }
+  // ถ้ามี variant → เช็ค stock ของ variant ที่เลือก
+  const hasVariants = _product.variant_skus && _product.variant_skus.length;
+  if (hasVariants) {
+    if (!_selectedSku) { toast('⚠️ กรุณาเลือกตัวเลือกสินค้า'); return; }
+    if (_selectedSku.stock <= 0) { toast('😔 ตัวเลือกนี้สินค้าหมด'); return; }
+  } else {
+    if (_product.stock_quantity <= 0) { toast('😔 สินค้าหมด'); return; }
+  }
 
   try {
     const img = _product.thumbnail || (_product.images || [])[0] || '';
     const name = _product.name_th || _product.name_en || 'สินค้า';
+    // ราคา: ใช้ราคา variant ถ้ามี ไม่งั้นราคาหลัก
+    const price = (hasVariants && _selectedSku?.price) ? Number(_selectedSku.price) : (Number(_product.price) || 0);
 
     // ── Use shared helper that always reads localStorage fresh ──
     if (typeof window.tmAddToCart === 'function') {
       window.tmAddToCart({
         id: productId,
         name: name,
-        price: Number(_product.price) || 0,
+        price: price,
         img: img,
         qty: qty,
         variants: _selectedVariants || {}
@@ -1711,7 +1760,7 @@ async function addToCart() {
       if (existing) {
         existing.qty = (existing.qty || 1) + qty;
       } else {
-        cart.push({ id: productId, name, price: Number(_product.price) || 0, img, qty, variants: _selectedVariants || {} });
+        cart.push({ id: productId, name, price: price, img, qty, variants: _selectedVariants || {} });
       }
       localStorage.setItem('tm_cart', JSON.stringify(cart));
     }

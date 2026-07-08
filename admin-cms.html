@@ -4547,6 +4547,11 @@ window.auCloseModal = function() { document.getElementById('au-modal-overlay').c
       <div class="form-section-body">
         <div class="form-grid-3">
           <div class="fg"><label class="lbl">จำนวน <span class="req">*</span></label><input class="inp" type="number" id="f-stock" placeholder="0" min="0" step="1"></div>
+          <div class="fg" id="f-variant-section" style="display:none;grid-column:1/-1;border:1px solid #E5E5E5;border-radius:8px;padding:12px;background:#FAFAFA">
+            <label class="lbl">🎨 ตัวเลือกสินค้า (สต็อกแยกแต่ละแบบ)</label>
+            <div id="f-variant-list" style="font-size:13px"></div>
+            <div style="font-size:11px;color:#888;margin-top:6px">💡 แก้สต็อกแต่ละแบบได้ที่นี่ — สต็อกรวมจะอัปเดตอัตโนมัติ</div>
+          </div>
           <div class="fg"><label class="lbl">SKU / รหัสสินค้า</label><input class="inp" type="text" id="f-sku" placeholder="TM-001-RED"></div>
           <div class="fg"><label class="lbl">น้ำหนัก (กรัม)</label><input class="inp" type="number" id="f-weight" placeholder="0" min="0"></div>
         </div>
@@ -5391,6 +5396,8 @@ function collectVariants() {
 function openProductModal(data) {
   editingProductId = data?.id || null;
   uploadedImages = [];
+  _adminVariantOptions = null; _adminVariantSkus = [];
+  const vsec = document.getElementById('f-variant-section'); if(vsec) vsec.style.display='none';
 
   document.getElementById('product-modal-title').textContent = editingProductId ? '✏️ แก้ไขสินค้า' : '➕ เพิ่มสินค้า / บริการใหม่';
   document.getElementById('save-btn-text').textContent = editingProductId ? '💾 บันทึก' : '📤 บันทึกและเผยแพร่';
@@ -5446,6 +5453,8 @@ function openProductModal(data) {
     document.getElementById('f-compare').value = data.compare_price || '';
     document.getElementById('f-stock').value = data.stock_quantity ?? '';
     document.getElementById('f-sku').value = data.sku || '';
+    // โหลด variant
+    try { renderAdminVariants(data.variant_options, data.variant_skus); } catch(_) {}
     document.getElementById('f-weight').value = data.weight_grams || '';
     document.getElementById('f-tags').value = (data.tags||[]).join(', ');
     document.getElementById('f-category').value = data.category_id || '';
@@ -5538,6 +5547,32 @@ async function loadBrandsIntoSelect() {
 
 function closeProductModal() { document.getElementById('product-modal').classList.remove('on'); }
 
+// ── variant ใน admin ──
+let _adminVariantOptions = null;
+let _adminVariantSkus = [];
+function renderAdminVariants(vo, skus){
+  _adminVariantOptions = vo || null;
+  _adminVariantSkus = Array.isArray(skus) ? JSON.parse(JSON.stringify(skus)) : [];
+  const sec = document.getElementById('f-variant-section');
+  const list = document.getElementById('f-variant-list');
+  const hasV = vo && vo.options && vo.options.length && _adminVariantSkus.length;
+  if (!hasV) { if(sec) sec.style.display='none'; return; }
+  sec.style.display='block';
+  list.innerHTML = `<table style="width:100%;border-collapse:collapse;margin-top:8px">
+    <thead><tr style="background:#F2F2F2"><th style="padding:6px;text-align:left">ตัวเลือก</th><th style="padding:6px;width:90px">สต็อก</th></tr></thead>
+    <tbody>${_adminVariantSkus.map((s,i)=>`
+      <tr style="border-bottom:1px solid #F0F0F0">
+        <td style="padding:6px;font-weight:500">${escapeHtml(s.key)}</td>
+        <td style="padding:4px"><input type="number" min="0" class="inp" style="padding:4px" value="${s.stock||0}" onchange="setAdminVariantStock(${i},this.value)"></td>
+      </tr>`).join('')}</tbody></table>`;
+}
+function setAdminVariantStock(i, val){
+  if (_adminVariantSkus[i]) _adminVariantSkus[i].stock = parseInt(val)||0;
+  // อัปเดต stock รวม
+  const total = _adminVariantSkus.reduce((s,x)=>s+(x.stock||0),0);
+  const si = document.getElementById('f-stock'); if(si) si.value = total;
+}
+
 async function editProduct(id) {
   try {
     const { data, error } = await sb.from('products').select('*').eq('id', id).single();
@@ -5576,6 +5611,8 @@ async function saveProduct(forceStatus) {
       discount_percent: comparePrice && comparePrice > price ? Math.round((1-price/comparePrice)*100) : 0,
       stock_quantity: stock,
       category_id: catId,
+      variant_options: _adminVariantOptions || {},
+      variant_skus: _adminVariantSkus || [],
       brand_id: document.getElementById('f-brand')?.value || null,
       sku: document.getElementById('f-sku').value.trim() || null,
       weight_grams: parseInt(document.getElementById('f-weight').value) || null,

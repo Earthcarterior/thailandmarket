@@ -1332,6 +1332,24 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
               <input class="fi" id="ap-sku" placeholder="รหัสสินค้า">
             </div>
           </div>
+
+          <!-- ═══ ตัวเลือกสินค้า (Variants) ═══ -->
+          <div class="fg" style="border:1px solid #E5E5E5;border-radius:8px;padding:14px;background:#FAFAFA;margin-top:4px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <label class="fl" style="margin:0">🎨 ตัวเลือกสินค้า (สี / ไซส์ / ฯลฯ)</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+                <input type="checkbox" id="ap-has-variants" onchange="toggleVariants()"> เปิดใช้ตัวเลือก
+              </label>
+            </div>
+            <div id="ap-variant-box" style="display:none">
+              <div style="font-size:11px;color:#888;margin-bottom:10px">เพิ่มประเภทตัวเลือก เช่น "สี" แล้วใส่ค่า เช่น ดำ, ขาว — ระบบจะสร้างตารางให้ใส่สต็อกแยกแต่ละแบบ</div>
+              <div id="ap-variant-types"></div>
+              <button type="button" class="btn-o btn-sm" onclick="addVariantType()" style="margin-bottom:12px">+ เพิ่มประเภทตัวเลือก</button>
+              <div id="ap-variant-matrix"></div>
+              <div style="font-size:11px;color:#888;margin-top:6px">💡 เมื่อเปิดตัวเลือก สต็อกรวมจะคำนวณจากผลรวมของทุกแบบอัตโนมัติ</div>
+            </div>
+          </div>
+
           <div class="fg">
             <label class="fl">แบรนด์</label>
             <select class="fi" id="ap-brand-id" onchange="onBrandChange()">
@@ -3628,7 +3646,7 @@ async function loadSellerProducts() {
     }
     
     let q = _sb.from('products')
-      .select('id,name_th,name_en,slug,price,compare_price,discount_percent,stock_quantity,sold_count,status,rating_avg,rating_count,thumbnail,images,category_id,categories(name_th,icon),seller_id,sku,brand,tags,is_flash_sale,flash_price,is_featured,violation_reason,created_at,updated_at')
+      .select('id,name_th,name_en,slug,price,compare_price,discount_percent,stock_quantity,sold_count,status,rating_avg,rating_count,thumbnail,images,category_id,categories(name_th,icon),seller_id,sku,brand,tags,is_flash_sale,flash_price,is_featured,violation_reason,created_at,updated_at,variant_options,variant_skus,weight,description')
       .eq('seller_id', _sellerSellerId)  // ← Force filter
       .order('created_at',{ ascending:false }).limit(200);
     const { data, error } = await q;
@@ -4260,6 +4278,150 @@ function renderSubCatsForProduct(subs,parentId){
   });
 }
 
+// ═══════════════ ระบบตัวเลือกสินค้า (Variants) ═══════════════
+let _variantTypes = [];  // [{name:'สี', values:['ดำ','ขาว']}, ...]
+let _variantStock = {};  // {'ดำ/S': {stock:10, price:null, sku:''}, ...}
+
+function toggleVariants(){
+  const on = document.getElementById('ap-has-variants').checked;
+  document.getElementById('ap-variant-box').style.display = on ? 'block' : 'none';
+  const stockInput = document.getElementById('ap-stock');
+  if (on) {
+    if (!_variantTypes.length) addVariantType();
+    if (stockInput) { stockInput.readOnly = true; stockInput.style.background = '#f0f0f0'; }
+  } else {
+    if (stockInput) { stockInput.readOnly = false; stockInput.style.background = ''; }
+  }
+  rebuildVariantMatrix();
+}
+
+function addVariantType(){
+  if (_variantTypes.length >= 3) { toast('เพิ่มได้สูงสุด 3 ประเภท','error'); return; }
+  _variantTypes.push({ name:'', values:[] });
+  renderVariantTypes();
+}
+
+function removeVariantType(idx){
+  _variantTypes.splice(idx,1);
+  renderVariantTypes();
+  rebuildVariantMatrix();
+}
+
+function renderVariantTypes(){
+  const box = document.getElementById('ap-variant-types');
+  if (!box) return;
+  box.innerHTML = _variantTypes.map((t,i)=>`
+    <div style="border:1px solid #E5E5E5;border-radius:6px;padding:10px;margin-bottom:8px;background:#fff">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <input class="fi" style="flex:0 0 140px" placeholder="ชื่อ เช่น สี, ไซส์"
+          value="${sfEsc(t.name)}" onchange="updateVariantTypeName(${i}, this.value)">
+        <button type="button" onclick="removeVariantType(${i})" style="background:#FEE;color:#E63329;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:12px">ลบ</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        ${t.values.map((v,vi)=>`<span style="display:inline-flex;align-items:center;gap:4px;background:#F2F2F2;padding:4px 8px;border-radius:4px;font-size:12px">${sfEsc(v)} <b style="cursor:pointer;color:#E63329" onclick="removeVariantValue(${i},${vi})">×</b></span>`).join('')}
+        <input class="fi" style="flex:0 0 120px;font-size:12px" placeholder="+ เพิ่มค่า แล้ว Enter"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();addVariantValue(${i},this.value);this.value='';}">
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateVariantTypeName(idx, val){ _variantTypes[idx].name = val.trim(); rebuildVariantMatrix(); }
+function addVariantValue(idx, val){
+  val = val.trim(); if (!val) return;
+  if (!_variantTypes[idx].values.includes(val)) _variantTypes[idx].values.push(val);
+  renderVariantTypes(); rebuildVariantMatrix();
+}
+function removeVariantValue(idx, vi){
+  _variantTypes[idx].values.splice(vi,1);
+  renderVariantTypes(); rebuildVariantMatrix();
+}
+
+// สร้างทุก combination (cartesian product)
+function variantCombos(){
+  const valid = _variantTypes.filter(t=>t.name && t.values.length);
+  if (!valid.length) return [];
+  let combos = [[]];
+  valid.forEach(t=>{
+    const next = [];
+    combos.forEach(c=> t.values.forEach(v=> next.push([...c, v])));
+    combos = next;
+  });
+  return combos.map(c=>c.join(' / '));
+}
+
+function rebuildVariantMatrix(){
+  const box = document.getElementById('ap-variant-matrix');
+  if (!box) return;
+  const combos = variantCombos();
+  if (!combos.length) { box.innerHTML=''; updateTotalStock(); return; }
+  box.innerHTML = `
+    <table style="width:100%;font-size:13px;border-collapse:collapse;margin-top:8px">
+      <thead><tr style="background:#F2F2F2">
+        <th style="padding:8px;text-align:left">ตัวเลือก</th>
+        <th style="padding:8px;width:100px">สต็อก</th>
+        <th style="padding:8px;width:120px">ราคา (ถ้าต่าง)</th>
+      </tr></thead>
+      <tbody>
+        ${combos.map(k=>`
+          <tr style="border-bottom:1px solid #F0F0F0">
+            <td style="padding:6px 8px;font-weight:500">${sfEsc(k)}</td>
+            <td style="padding:6px"><input type="number" min="0" class="fi" style="padding:6px" value="${_variantStock[k]?.stock||0}" onchange="setVariantStock('${sfEsc(k)}','stock',this.value)"></td>
+            <td style="padding:6px"><input type="number" min="0" class="fi" style="padding:6px" placeholder="ราคาหลัก" value="${_variantStock[k]?.price||''}" onchange="setVariantStock('${sfEsc(k)}','price',this.value)"></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+  updateTotalStock();
+}
+
+function setVariantStock(key, field, val){
+  if (!_variantStock[key]) _variantStock[key] = {stock:0, price:null, sku:''};
+  _variantStock[key][field] = field==='stock' ? (parseInt(val)||0) : (parseFloat(val)||null);
+  if (field==='stock') updateTotalStock();
+}
+
+function updateTotalStock(){
+  const combos = variantCombos();
+  if (!combos.length) return;
+  const total = combos.reduce((s,k)=> s + (_variantStock[k]?.stock||0), 0);
+  const si = document.getElementById('ap-stock');
+  if (si) si.value = total;
+}
+
+// แปลง variant เป็น JSON สำหรับบันทึก
+function getVariantPayload(){
+  if (!document.getElementById('ap-has-variants')?.checked) return { options:{}, skus:[] };
+  const valid = _variantTypes.filter(t=>t.name && t.values.length);
+  if (!valid.length) return { options:{}, skus:[] };
+  const combos = variantCombos();
+  return {
+    options: { options: valid.map(t=>({name:t.name, values:t.values})) },
+    skus: combos.map(k=>({ key:k, stock:_variantStock[k]?.stock||0, price:_variantStock[k]?.price||null, sku:_variantStock[k]?.sku||'' }))
+  };
+}
+
+// โหลด variant กลับมาตอน edit
+function loadVariantData(variant_options, variant_skus){
+  _variantTypes = []; _variantStock = {};
+  const hasV = variant_options && variant_options.options && variant_options.options.length;
+  const cb = document.getElementById('ap-has-variants');
+  if (hasV) {
+    _variantTypes = variant_options.options.map(o=>({name:o.name, values:[...o.values]}));
+    (variant_skus||[]).forEach(s=>{ _variantStock[s.key] = {stock:s.stock||0, price:s.price||null, sku:s.sku||''}; });
+    if (cb) cb.checked = true;
+    document.getElementById('ap-variant-box').style.display = 'block';
+    renderVariantTypes(); rebuildVariantMatrix();
+    const si=document.getElementById('ap-stock'); if(si){si.readOnly=true;si.style.background='#f0f0f0';}
+  } else {
+    if (cb) cb.checked = false;
+    document.getElementById('ap-variant-box').style.display = 'none';
+    const si=document.getElementById('ap-stock'); if(si){si.readOnly=false;si.style.background='';}
+  }
+}
+
+function sfEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
 async function submitNewProduct(){
   const name_th=$('ap-name-th')?.value?.trim();
   const price=parseFloat($('ap-price')?.value)||0;
@@ -4315,6 +4477,14 @@ async function submitNewProduct(){
       safeCatId = null;
     }
     const payload={name_th,price,stock_quantity:stock,category_id:safeCatId,name_en:g('ap-name-en')||name_th,description:g('ap-desc'),compare_price:cp,discount_percent:disc,sku:g('ap-sku'),brand:g('ap-brand'),tags:g('ap-tags')?g('ap-tags').split(',').map(t=>t.trim()).filter(Boolean):null,status:$('ap-status')?.value||'active',slug,weight:parseFloat($('ap-weight')?.value)||null,updated_at:new Date().toISOString()};
+    // ── variant (ตัวเลือกสินค้า) ──
+    try {
+      const vp = getVariantPayload();
+      payload.variant_options = vp.options;
+      payload.variant_skus = vp.skus;
+      // ถ้ามี variant → stock รวม = ผลรวมทุกแบบ
+      if (vp.skus.length) payload.stock_quantity = vp.skus.reduce((s,x)=>s+(x.stock||0),0);
+    } catch(_) {}
     if(thumbnail) payload.thumbnail=thumbnail;
     if(imageUrls.length) payload.images=imageUrls;
     if(_sellerSellerId) payload.seller_id=_sellerSellerId;
@@ -4369,6 +4539,8 @@ function openProductEdit(productId){
     const de=$('ap-desc');if(de)de.value=p.description||'';
     const te=$('ap-tags');if(te)te.value=(p.tags||[]).join(', ');
     const btn=$('ap-submit-btn');if(btn){btn.dataset.editId=productId;btn.textContent='💾 บันทึกการแก้ไข';}
+    // โหลด variant กลับ
+    try { loadVariantData(p.variant_options, p.variant_skus); } catch(_) {}
     
     // โหลดรูปเดิม (เป็น URL strings)
     _uploadedImages = [];
@@ -4400,6 +4572,13 @@ async function confirmDeleteProduct(id,name){
 
 function clearProductForm(){
   ['ap-name-th','ap-name-en','ap-desc','ap-price','ap-compare-price','ap-stock','ap-sku','ap-brand','ap-tags','ap-slug','ap-weight'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  // reset variant
+  _variantTypes=[]; _variantStock={};
+  const vcb=$('ap-has-variants'); if(vcb)vcb.checked=false;
+  const vbox=$('ap-variant-box'); if(vbox)vbox.style.display='none';
+  const si=$('ap-stock'); if(si){si.readOnly=false;si.style.background='';}
+  const vt=$('ap-variant-types'); if(vt)vt.innerHTML='';
+  const vm=$('ap-variant-matrix'); if(vm)vm.innerHTML='';
   const bs=$('ap-brand-id');if(bs)bs.value='';
   const bi=$('ap-brand');if(bi)bi.style.display='none';
   const se=$('ap-status');if(se)se.value='active';
