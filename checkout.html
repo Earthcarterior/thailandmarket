@@ -939,17 +939,28 @@ window.onSlipSelected = function(input) {
 window.renderPayDetails = renderPayDetails;
 
 function buildCart(){
-  document.getElementById('cart-items').innerHTML=CART.map((it,i)=>`<div class="cart-item">
+  document.getElementById('cart-items').innerHTML=CART.map((it,i)=>{
+    const maxS = (typeof it.maxStock === 'number') ? it.maxStock : null;
+    const atMax = maxS !== null && it.qty >= maxS;
+    const stockNote = maxS !== null
+      ? (maxS <= 0
+          ? '<span style="color:#E63329;font-size:12px;font-weight:600">⚠️ สินค้าหมด</span>'
+          : maxS <= 5
+            ? `<span style="color:#D97706;font-size:12px">🔥 เหลือ ${maxS} ชิ้น</span>`
+            : `<span style="color:#16A34A;font-size:12px">✓ มี ${maxS} ชิ้น</span>`)
+      : '';
+    return `<div class="cart-item">
     <div class="cart-img">${it.icon}</div>
     <div>
       <div class="cart-name">${it.name}</div>
-      <div class="cart-var">${it.var}</div>
+      ${it.var ? `<div class="cart-var" style="color:#1D4ED8;font-weight:500">🎨 ${it.var}</div>` : ''}
       <div class="cart-shop">🏪 ${it.shop}</div>
+      <div style="margin:4px 0">${stockNote}</div>
       <div style="display:flex;align-items:center;gap:10px">
         <div class="qty-ctrl">
           <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
           <div class="qty-val" id="qty-${i}">${it.qty}</div>
-          <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+          <button class="qty-btn" onclick="changeQty(${i},1)" ${atMax?'disabled style="opacity:.4;cursor:not-allowed"':''}>+</button>
         </div>
         <button class="del-btn" onclick="removeItem(${i})">🗑️</button>
       </div>
@@ -967,7 +978,8 @@ function buildCart(){
         </select>
       </div>
     </div>
-  </div>`).join('');
+  </div>`;
+  }).join('');
   // หลัง render → fill ตัวเลือกตามที่ cache ไว้ (ถ้า loadShippingMethods ทำงานแล้ว)
   refreshProductShippingDropdowns();
 }
@@ -2540,7 +2552,9 @@ async function loadCheckoutData() {
       seller_id: it.seller_id || null,   // ★ จำเป็นสำหรับ dropdown shipping ★
       icon: it.img ? `<img src="${it.img}" style="width:100%;height:100%;object-fit:cover">` : (it.icon || '📦'),
       name: it.name || 'สินค้า',
-      var: it.variant || it.var || '',
+      var: it.variant || it.var || (it.variants ? Object.entries(it.variants).map(([k,v])=>`${k}: ${v}`).join(', ') : ''),
+      variantKey: it.variants ? Object.values(it.variants).join(' / ') : '',
+      variants: it.variants || {},
       shop: it.shop || 'Thailand Market',
       price: Number(it.price || 0),
       old: Number(it.old || it.price || 0),
@@ -2552,16 +2566,28 @@ async function loadCheckoutData() {
 
   // ★ Safety net: ถ้ามี item ที่ไม่มี seller_id (เช่น legacy data จาก localStorage)
   // ให้ fetch จาก products table มา fill ให้ — เพื่อให้ dropdown shipping ทำงานได้
-  const missing = CART.filter(it => it.id && !it.seller_id).map(it => it.id);
-  if (missing.length > 0) {
+  // โหลด stock + variant จริงของทุก item (เพื่อจำกัดจำนวน + แสดง)
+  const allIds = CART.filter(it => it.id).map(it => it.id);
+  if (allIds.length > 0) {
     try {
-      const { data: prods } = await _sbCO.from('products').select('id, seller_id').in('id', missing);
-      const map = {};
-      (prods || []).forEach(p => { if (p.seller_id) map[p.id] = p.seller_id; });
+      const { data: prods } = await _sbCO.from('products')
+        .select('id, seller_id, stock_quantity, variant_options, variant_skus').in('id', allIds);
+      const pmap = {};
+      (prods || []).forEach(p => { pmap[p.id] = p; });
       CART.forEach(it => {
-        if (!it.seller_id && map[it.id]) it.seller_id = map[it.id];
+        const p = pmap[it.id];
+        if (!p) return;
+        if (!it.seller_id && p.seller_id) it.seller_id = p.seller_id;
+        // หา stock: ถ้ามี variant ให้ใช้ stock ของ variant ที่เลือก
+        let maxStock = p.stock_quantity || 0;
+        const skus = Array.isArray(p.variant_skus) ? p.variant_skus : [];
+        if (skus.length && it.variantKey) {
+          const sku = skus.find(s => s.key === it.variantKey);
+          if (sku) maxStock = sku.stock || 0;
+        }
+        it.maxStock = maxStock;
       });
-    } catch(e) { console.warn('[checkout] backfill seller_id failed:', e?.message || e); }
+    } catch(e) { console.warn('[checkout] load stock failed:', e?.message || e); }
   }
 
   // ── 2. ADDRESSES: from Supabase addresses table ──
@@ -2634,7 +2660,14 @@ async function loadCheckoutData() {
 // Quantity / remove using CART array (synced to Supabase if logged in)
 async function changeQty(idx, delta) {
   if (!CART[idx]) return;
-  CART[idx].qty = Math.max(1, (CART[idx].qty || 1) + delta);
+  const newQty = (CART[idx].qty || 1) + delta;
+  // เช็ค stock — ไม่ให้เกินจำนวนคงเหลือ
+  const maxS = CART[idx].maxStock;
+  if (delta > 0 && typeof maxS === 'number' && newQty > maxS) {
+    toast(maxS <= 0 ? '😔 สินค้าหมด' : `⚠️ มีสินค้าเพียง ${maxS} ชิ้น`);
+    return;
+  }
+  CART[idx].qty = Math.max(1, newQty);
   buildCart();
   updateTotal();
 
