@@ -2074,6 +2074,7 @@ async function doCheckout(){
         const sh = getEffectiveShipping(it);
         return {
           product_id: it.id, name: it.name, variant: it.var||'',
+          variant_key: it.variantKey||'',
           shop: it.shop, price: it.price, qty: it.qty,
           subtotal: it.price*it.qty,
           shipping_courier_code: sh ? sh.code : null,

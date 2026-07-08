@@ -5965,7 +5965,7 @@ async function renderInventoryLive() {
   }
   try {
     const { data, error } = await _sb.from('products')
-      .select('id,name_th,thumbnail,price,stock_quantity,low_stock_threshold,status')
+      .select('id,name_th,thumbnail,price,stock_quantity,low_stock_threshold,status,variant_skus,variant_options')
       .eq('seller_id', _sellerSellerId)
       .order('stock_quantity', {ascending:true});
     if (error) throw error;
@@ -6008,21 +6008,69 @@ function invRender() {
     const threshold = p.low_stock_threshold || 5;
     const cls = stock === 0 ? 'out' : (stock <= threshold ? 'low' : '');
     const status = stock === 0 ? '<span style="color:#E63329">❌ หมด</span>' : (stock <= threshold ? '<span style="color:#F59E0B">⚠️ ต่ำ</span>' : '<span style="color:#10B981">✅ พร้อมขาย</span>');
+    // เช็ค variant
+    const skus = Array.isArray(p.variant_skus) ? p.variant_skus : [];
+    const hasVar = skus.length > 0;
     html += `<tr class="inv-row ${cls}">
       <td><div style="display:flex;gap:10px;align-items:center">
         ${p.thumbnail?`<img class="inv-thumb" src="${sfEsc(p.thumbnail)}">`:'<div class="inv-thumb" style="display:flex;align-items:center;justify-content:center">📦</div>'}
-        <div style="font-size:13px;font-weight:500">${sfEsc(p.name_th)}</div>
+        <div>
+          <div style="font-size:13px;font-weight:500">${sfEsc(p.name_th)}</div>
+          ${hasVar?`<button onclick="invToggleVariants('${p.id}')" style="font-size:11px;color:#1D4ED8;background:none;border:none;cursor:pointer;padding:2px 0">🎨 ${skus.length} ตัวเลือก ▾</button>`:''}
+        </div>
       </div></td>
       <td>${sfMoney(p.price)}</td>
-      <td><input class="inv-stock-input" type="number" min="0" value="${stock}" onchange="invSetStock('${p.id}',this.value)"></td>
+      <td>${hasVar
+        ? `<span style="font-family:'DM Mono',monospace">${stock}</span><div style="font-size:10px;color:#888">รวมทุกแบบ</div>`
+        : `<input class="inv-stock-input" type="number" min="0" value="${stock}" onchange="invSetStock('${p.id}',this.value)">`}</td>
       <td><input class="inv-stock-input" type="number" min="0" value="${threshold}" onchange="invSetThreshold('${p.id}',this.value)" style="width:60px"></td>
       <td>${status}</td>
-      <td><button class="inv-btn" onclick="invQuickRestock('${p.id}')">+ เพิ่มสต็อก</button></td>
+      <td>${hasVar?'':`<button class="inv-btn" onclick="invQuickRestock('${p.id}')">+ เพิ่มสต็อก</button>`}</td>
     </tr>`;
+    // แถว variant (ซ่อนไว้ก่อน)
+    if (hasVar) {
+      html += `<tr class="inv-var-row" id="inv-var-${p.id}" style="display:none;background:#FAFAFA">
+        <td colspan="6" style="padding:0">
+          <table style="width:100%;font-size:12px;margin:0">
+            <tbody>${skus.map((s,si)=>{
+              const vstock = s.stock||0;
+              const vst = vstock===0?'<span style="color:#E63329">หมด</span>':(vstock<=5?'<span style="color:#F59E0B">ต่ำ</span>':'<span style="color:#10B981">พร้อม</span>');
+              return `<tr>
+                <td style="padding:6px 12px 6px 48px;font-weight:500">🎨 ${sfEsc(s.key)}</td>
+                <td style="width:120px">stock: <input class="inv-stock-input" type="number" min="0" value="${vstock}" style="width:70px" onchange="invSetVariantStock('${p.id}',${si},this.value)"></td>
+                <td style="width:80px">${vst}</td>
+                <td></td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table>
+        </td></tr>`;
+    }
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
 }
+
+// ขยาย/ยุบ variant ใน inventory
+window.invToggleVariants = function(pid) {
+  const row = document.getElementById('inv-var-' + pid);
+  if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+};
+// แก้ stock ของ variant → อัปเดต DB ทันที
+window.invSetVariantStock = async function(pid, skuIdx, val) {
+  const p = _invProducts.find(x => x.id === pid);
+  if (!p || !Array.isArray(p.variant_skus)) return;
+  p.variant_skus[skuIdx].stock = parseInt(val) || 0;
+  const total = p.variant_skus.reduce((s,x)=>s+(x.stock||0),0);
+  p.stock_quantity = total;
+  try {
+    await _sb.from('products').update({
+      variant_skus: p.variant_skus,
+      stock_quantity: total
+    }).eq('id', pid);
+    toast('✅ อัปเดตสต็อก '+total+' ชิ้น','ok');
+    invRender();
+  } catch(e) { toast('❌ '+e.message,'error'); }
+};
 
 window.invFilter = function() { _invSearch = document.getElementById('inv-search').value.trim(); invRender(); };
 window.invSetFilter = function(f, btn) {
