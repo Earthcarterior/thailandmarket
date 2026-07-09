@@ -9323,7 +9323,7 @@ window.orShowDetail = async function(orderId) {
               </div>
               <div style="font-size:12px;color:#666">🏪 ${orEsc(shopMap[s.seller_id]||'ร้าน')}</div>
               <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px">
-                <span>ยอด: <b>${orFmtMoney(s.total)}</b></span>
+                <span>สินค้า: <b>${orFmtMoney(s.items_subtotal)}</b>${s.shipping_fee>0?` + ส่ง ${orFmtMoney(s.shipping_fee)}`:''} = <b>${orFmtMoney(s.total)}</b></span>
                 ${s.tracking_number ? `<span style="font-family:monospace;color:#0891B2">📦 ${orEsc(s.tracking_number)}</span>` : '<span style="color:#999">ยังไม่มีเลขพัสดุ</span>'}
               </div>
               ${s.money_released ? `<div style="font-size:11px;color:#16A34A;margin-top:2px">✓ ปล่อยเงินแล้ว ฿${Number(s.net_to_seller||0).toLocaleString()}</div>` : ''}
