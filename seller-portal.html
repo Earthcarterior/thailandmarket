@@ -3713,11 +3713,25 @@ async function loadSellerOrders() {
     let data = null;
     try {
       const sr = await _sb.from('sub_orders')
-        .select('id,order_id,seller_id,sub_number,shop_index,status,items_subtotal,shipping_fee,total,commission,net_to_seller,tracking_number,tracking_carrier,shipped_at,delivered_at,money_released,created_at,orders!inner(order_number,payment_method,payment_status,shipping_name,shipping_phone,shipping_address,created_at)')
+        .select('id,order_id,seller_id,sub_number,shop_index,status,items_subtotal,shipping_fee,total,commission,net_to_seller,tracking_number,tracking_carrier,shipped_at,delivered_at,money_released,created_at')
         .eq('seller_id', _sellerSellerId)
         .order('created_at',{ ascending:false }).limit(200);
       if (sr.error) throw sr.error;
-      const subIds = (sr.data||[]).map(s => s.id);
+      const subs = sr.data || [];
+      if (!subs.length) { _sellerOrders = []; return; }
+
+      // query orders แยก (เลี่ยง RLS join)
+      const orderIds = [...new Set(subs.map(s => s.order_id))];
+      let ordMap = {};
+      try {
+        const or = await _sb.from('orders')
+          .select('id,order_number,payment_method,payment_status,shipping_name,shipping_phone,shipping_address,created_at')
+          .in('id', orderIds);
+        (or.data||[]).forEach(o => { ordMap[o.id] = o; });
+      } catch(_) {}
+
+      // query items ของแต่ละ sub_order
+      const subIds = subs.map(s => s.id);
       let itemsBySub = {};
       if (subIds.length) {
         const ir = await _sb.from('order_items')
@@ -3727,8 +3741,9 @@ async function loadSellerOrders() {
           (itemsBySub[it.sub_order_id] = itemsBySub[it.sub_order_id] || []).push(it);
         });
       }
-      data = (sr.data||[]).map(s => {
-        const ord = s.orders || {};
+
+      data = subs.map(s => {
+        const ord = ordMap[s.order_id] || {};
         return {
           id: s.id, sub_order_id: s.id, _order_id: s.order_id,
           order_number: s.sub_number, _is_multishop: s.shop_index > 1,
