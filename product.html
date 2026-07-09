@@ -1313,9 +1313,12 @@ function renderProduct() {
   // Variants
   renderVariants(p.variant_options);
 
-  // Stock
-  document.getElementById('qty-stock').textContent =
-    p.stock_quantity > 0 ? 'มีสินค้า ' + p.stock_quantity + ' ชิ้น' : 'สินค้าหมด';
+  // Stock — ถ้ามี variant ให้ updateVariantStock จัดการ (ไม่เซ็ตทับด้วย stock รวม)
+  const hasVariants = Array.isArray(p.variant_skus) && p.variant_skus.length;
+  if (!hasVariants) {
+    document.getElementById('qty-stock').textContent =
+      p.stock_quantity > 0 ? 'มีสินค้า ' + p.stock_quantity + ' ชิ้น' : 'สินค้าหมด';
+  }
   if (p.stock_quantity <= 0) {
     document.getElementById('btn-buy').disabled = true;
     document.getElementById('btn-buy').textContent = '😔 สินค้าหมด';
