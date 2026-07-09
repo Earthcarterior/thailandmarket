@@ -3665,7 +3665,7 @@ async function loadSellerProducts() {
           .not('orders.status', 'in', '(cancelled,refunded)');
         const sold30 = {};
         (items || []).forEach(it => {
-          sold30[it.product_id] = (sold30[it.product_id] || 0) + (it.quantity || 0);
+          sold30[it.product_id] = (sold30[it.product_id] || 0) + (it.qty || it.quantity || 0);
         });
         _sellerProds.forEach(p => p.sold_30d = sold30[p.id] || 0);
       }
@@ -3711,7 +3711,7 @@ async function loadSellerOrders() {
     
     // ดึงออเดอร์ที่มี order_items ของ products ของร้านเรา
     let q = _sb.from('orders')
-      .select('id,order_number,total_amount,subtotal,discount_amount,shipping_fee,status,payment_method,payment_status,created_at,updated_at,shipping_name,shipping_phone,shipping_address,shipping_province,tracking_number,shipping_carrier,order_items!inner(id,quantity,unit_price,name_th,product_id,thumbnail,products!inner(seller_id))')
+      .select('id,order_number,total_amount,subtotal,discount_amount,shipping_fee,status,payment_method,payment_status,created_at,updated_at,shipping_name,shipping_phone,shipping_address,shipping_province,tracking_number,shipping_carrier,order_items!inner(id,qty,price,name_th,product_id,thumbnail,variant_name,products!inner(seller_id))')
       .eq('order_items.products.seller_id', _sellerSellerId)
       .order('created_at',{ ascending:false }).limit(200);
     const { data, error } = await q;
@@ -4103,7 +4103,7 @@ function renderOrdersLive() {
       <td style="padding:10px 12px;font-family:monospace;font-size:11px">${o.order_number||o.id?.slice(0,8)}</td>
       <td style="padding:10px 12px"><div style="display:flex;align-items:flex-start;gap:6px">
         ${first?.thumbnail?`<img src="${first.thumbnail}" style="width:32px;height:32px;object-fit:cover;flex-shrink:0">`:'<span style="flex-shrink:0">📦</span>'}
-        <div style="font-size:12px;line-height:1.5;max-width:240px">${items.length?items.map(it=>`<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name_th||'—'}${it.quantity>1?` <span style="color:#888">x${it.quantity}</span>`:''}</div>`).join(''):'—'}</div></div></td>
+        <div style="font-size:12px;line-height:1.5;max-width:240px">${items.length?items.map(it=>`<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name_th||'—'}${(it.qty||it.quantity)>1?` <span style="color:#888">x${it.qty||it.quantity}</span>`:''}</div>`).join(''):'—'}</div></div></td>
       <td style="padding:10px 12px;font-size:12px">${o.shipping_name||'—'}</td>
       <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(o.total_amount)}</td>
       <td style="padding:10px 12px;font-size:11px;color:#888">${o.payment_method||'—'}</td>
@@ -4134,7 +4134,7 @@ async function shipOrder(id) {
 
 function openOrderDetail(id) {
   const o=_sellerOrders.find(x=>x.id===id); if(!o) return;
-  const items=(o.order_items||[]).map(i=>i.name_th+' x'+i.quantity).join(', ');
+  const items=(o.order_items||[]).map(i=>i.name_th+' x'+(i.qty||i.quantity||1)).join(', ');
   alert(`ออเดอร์: ${o.order_number}\nลูกค้า: ${o.shipping_name||'—'}\nที่อยู่: ${o.shipping_address||'—'}\nยอดรวม: ${fmtB(o.total_amount)}\nสินค้า: ${items||'—'}\nสถานะ: ${o.status}\nเลขพัสดุ: ${o.tracking_number||'—'}`);
 }
 

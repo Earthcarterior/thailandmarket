@@ -2100,6 +2100,22 @@ async function doCheckout(){
     }).select().single();
     if(oErr) throw new Error('Order: '+oErr.message);
 
+    // 1.5 สร้าง order_items (เพื่อให้ seller portal + trigger ตัด stock ทำงาน)
+    try {
+      const orderItems = CART.map(it => ({
+        order_id: order.id,
+        product_id: it.id,
+        qty: it.qty,
+        price: it.price,
+        name_th: it.name,
+        thumbnail: (it.icon && it.icon.includes('src=')) ? (it.icon.match(/src="([^"]+)"/)?.[1]||null) : null,
+        variant_name: it.var || null,
+        subtotal: it.price * it.qty
+      }));
+      const { error: oiErr } = await _sbCO.from('order_items').insert(orderItems);
+      if (oiErr) console.warn('order_items insert:', oiErr.message);
+    } catch(oiE) { console.warn('order_items failed:', oiE.message); }
+
     // 2. tracking event เริ่มต้น
     await _sbCO.from('order_tracking').insert({
       order_id: order.id, status: 'placed',
