@@ -3713,7 +3713,7 @@ async function loadSellerOrders() {
     let data = null;
     try {
       const sr = await _sb.from('sub_orders')
-        .select('id,order_id,seller_id,sub_number,shop_index,status,items_subtotal,shipping_fee,total,commission,net_to_seller,tracking_number,tracking_carrier,shipped_at,delivered_at,money_released,created_at,orders!inner(order_number,payment_method,payment_status,shipping_name,shipping_phone,shipping_address,shipping_province,created_at)')
+        .select('id,order_id,seller_id,sub_number,shop_index,status,items_subtotal,shipping_fee,total,commission,net_to_seller,tracking_number,tracking_carrier,shipped_at,delivered_at,money_released,created_at,orders!inner(order_number,payment_method,payment_status,shipping_name,shipping_phone,shipping_address,created_at)')
         .eq('seller_id', _sellerSellerId)
         .order('created_at',{ ascending:false }).limit(200);
       if (sr.error) throw sr.error;
@@ -3737,7 +3737,7 @@ async function loadSellerOrders() {
           payment_method: ord.payment_method, payment_status: ord.payment_status,
           created_at: s.created_at, updated_at: s.created_at,
           shipping_name: ord.shipping_name, shipping_phone: ord.shipping_phone,
-          shipping_address: ord.shipping_address, shipping_province: ord.shipping_province,
+          shipping_address: ord.shipping_address,
           tracking_number: s.tracking_number, shipping_carrier: s.tracking_carrier,
           commission: s.commission, net_to_seller: s.net_to_seller, money_released: s.money_released,
           order_items: (itemsBySub[s.id]||[])
@@ -3746,7 +3746,7 @@ async function loadSellerOrders() {
     } catch(subErr) {
       console.warn('[loadSellerOrders] sub_orders ไม่พร้อม ใช้ orders เดิม:', subErr.message);
       let q = _sb.from('orders')
-        .select('id,order_number,total_amount,subtotal,discount_amount,shipping_fee,status,payment_method,payment_status,created_at,updated_at,shipping_name,shipping_phone,shipping_address,shipping_province,tracking_number,shipping_carrier,order_items!inner(id,qty,price,name_th,product_id,thumbnail,variant_name,products!inner(seller_id))')
+        .select('id,order_number,total_amount,subtotal,discount_amount,shipping_fee,status,payment_method,payment_status,created_at,updated_at,shipping_name,shipping_phone,shipping_address,tracking_number,shipping_carrier,order_items!inner(id,qty,price,name_th,product_id,thumbnail,variant_name,products!inner(seller_id))')
         .eq('order_items.products.seller_id', _sellerSellerId)
         .order('created_at',{ ascending:false }).limit(200);
       const rq = await q;
