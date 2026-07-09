@@ -9588,11 +9588,11 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       var products = await s.from('products').select('id,name_th,thumbnail,images').eq('seller_id', seller.id);
       var pIds = (products.data||[]).map(function(p){return p.id;});
       // ดึง order_items ของร้าน: ผ่าน product_id (หลัก) — RLS policy เปิดให้อ่านแล้ว
-      var items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id');
+      var items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id,variant_name');
       if (pIds.length) {
-        items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id').in('product_id', pIds);
+        items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id,variant_name').in('product_id', pIds);
       } else {
-        items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id').eq('seller_id', seller.id);
+        items = await s.from('order_items').select('order_id,product_id,qty,price,subtotal,name_th,thumbnail,seller_id,variant_name').eq('seller_id', seller.id);
       }
       if (items.error){
         tbody.innerHTML = '<tr><td colspan="7" style="padding:40px;text-align:center;color:#c00">items error: '+esc(items.error.message)+'</td></tr>';
@@ -9617,6 +9617,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
         itemsByOrder[it.order_id].push({
           name: it.name_th || p.name_th || '',
           image: img,
+          variant_name: it.variant_name || '',
           qty: it.qty, price: it.price, subtotal: it.subtotal
         });
       });
@@ -9771,9 +9772,12 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     if (!o) { alert('ไม่พบออเดอร์'); return; }
     var info = STATUS_INFO[(o.status||'').toLowerCase()] || STATUS_INFO.pending;
     var items = (o._items||[]).map(function(it){
+      var vname = it.variant_name || it.variant || it.variant_text || '';
       return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed #eee">' +
         (it.image?'<img src="'+esc(it.image)+'" style="width:48px;height:48px;object-fit:cover;border-radius:4px">':'<div style="width:48px;height:48px;background:#f2f2f2;border-radius:4px;display:flex;align-items:center;justify-content:center">📦</div>') +
-        '<div style="flex:1"><div style="font-size:13px;font-weight:600">'+esc(it.name)+'</div><div style="font-size:11px;color:#999">'+it.qty+' × '+fmtMoney(it.price)+'</div></div>' +
+        '<div style="flex:1"><div style="font-size:13px;font-weight:600">'+esc(it.name)+'</div>' +
+        (vname?'<div style="font-size:11px;color:#1D4ED8;font-weight:500">🎨 '+esc(vname)+'</div>':'') +
+        '<div style="font-size:11px;color:#999">'+it.qty+' × '+fmtMoney(it.price)+'</div></div>' +
         '<div style="font-family:monospace;font-weight:700">'+fmtMoney(it.subtotal||(it.qty*it.price))+'</div></div>';
     }).join('');
     var html =
