@@ -3718,6 +3718,7 @@ async function loadSellerOrders() {
         .order('created_at',{ ascending:false }).limit(200);
       if (sr.error) throw sr.error;
       const subs = sr.data || [];
+      console.log('[loadSellerOrders] ✅ sub_orders โหลด', subs.length, 'ใบ สำหรับ seller', _sellerSellerId);
       if (!subs.length) { _sellerOrders = []; return; }
 
       // query orders แยก (เลี่ยง RLS join)
@@ -3730,16 +3731,19 @@ async function loadSellerOrders() {
         (or.data||[]).forEach(o => { ordMap[o.id] = o; });
       } catch(_) {}
 
-      // query items ของแต่ละ sub_order
+      // query items ของแต่ละ sub_order (ทนต่อ error — ไม่ให้ล้มทั้ง block)
       const subIds = subs.map(s => s.id);
       let itemsBySub = {};
       if (subIds.length) {
-        const ir = await _sb.from('order_items')
-          .select('sub_order_id,id,qty,price,name_th,product_id,thumbnail,variant_name')
-          .in('sub_order_id', subIds);
-        (ir.data||[]).forEach(it => {
-          (itemsBySub[it.sub_order_id] = itemsBySub[it.sub_order_id] || []).push(it);
-        });
+        try {
+          const ir = await _sb.from('order_items')
+            .select('sub_order_id,id,qty,price,name_th,product_id,thumbnail,variant_name')
+            .in('sub_order_id', subIds);
+          (ir.data||[]).forEach(it => {
+            if (!it.sub_order_id) return;
+            (itemsBySub[it.sub_order_id] = itemsBySub[it.sub_order_id] || []).push(it);
+          });
+        } catch(itErr) { console.warn('[loadSellerOrders] items:', itErr.message); }
       }
 
       data = subs.map(s => {
