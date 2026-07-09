@@ -950,18 +950,32 @@ async function loadCartUnified(){
     }
     // Migrate localStorage cart: hydrate missing seller_id/brand_id from products table
     let cart = getCart();
-    const needHydrate = cart.filter(c => !c.seller_id);
+    const needHydrate = cart.filter(c => !c.seller_id || (c.variants && Object.keys(c.variants||{}).length) || c.variantKey);
     if (needHydrate.length){
       const ids = needHydrate.map(c => c.id);
       try {
         const { data: prods } = await _sb.from('products')
-          .select('id, name_th, name_en, seller_id, brand_id, category_id, thumbnail, images, price, compare_price, stock_quantity')
+          .select('id, name_th, name_en, seller_id, brand_id, category_id, thumbnail, images, price, compare_price, stock_quantity, variant_options, variant_skus')
           .in('id', ids);
         const pmap = {};
         (prods||[]).forEach(p => { pmap[p.id] = p; });
         cart = cart.map(c => {
           const p = pmap[c.id];
           if (p){
+            // แปลง variants object → text + หา stock ของ variant
+            let variantText = c.variant || '';
+            let variantKey = c.variantKey || '';
+            if (c.variants && typeof c.variants === 'object' && Object.keys(c.variants).length) {
+              variantText = Object.entries(c.variants).map(([k,v])=>`${k}: ${v}`).join(', ');
+              variantKey = Object.values(c.variants).join(' / ');
+            }
+            // หา stock: ถ้ามี variant ใช้ stock ของ variant, ไม่งั้น stock รวม
+            let realStock = p.stock_quantity != null ? Number(p.stock_quantity) : null;
+            const skus = Array.isArray(p.variant_skus) ? p.variant_skus : [];
+            if (skus.length && variantKey) {
+              const sku = skus.find(s => s.key === variantKey);
+              if (sku) realStock = Number(sku.stock)||0;
+            }
             return {
               ...c,
               seller_id: c.seller_id || p.seller_id || null,
@@ -970,7 +984,9 @@ async function loadCartUnified(){
               name: c.name || p.name_th || p.name_en,
               img: c.img || (Array.isArray(p.images) && p.images[0]) || p.thumbnail || '',
               price_old: c.price_old || Number(p.compare_price||0),
-              stock: c.stock != null ? c.stock : (p.stock_quantity != null ? Number(p.stock_quantity) : null)
+              variant: variantText,
+              variantKey: variantKey,
+              stock: realStock
             };
           }
           return c;
