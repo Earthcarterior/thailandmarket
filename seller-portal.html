@@ -10132,8 +10132,8 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       // query ตรง — ดึง order_items ครบทุกรายการ + ชื่อลูกค้าจาก shipping_address
       const r = await sb()
         .from('orders')
-        .select('id, order_code, order_number, status, total_amount, payment_method, shipping_name, shipping_address, tracking_number, created_at, order_items!inner(seller_id, name_th, thumbnail, qty, price, variant_name)')
-        .eq('order_items.seller_id', sid)
+        .select('id, order_code, order_number, status, total_amount, payment_method, shipping_name, shipping_address, tracking_number, created_at, order_items!inner(seller_id, name_th, thumbnail, qty, price, variant_name, products!inner(seller_id))')
+        .eq('order_items.products.seller_id', sid)
         .order('created_at', { ascending: false })
         .limit(200);
       if (r.error) throw r.error;
