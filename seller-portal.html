@@ -10386,6 +10386,8 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
 
   // ── Render orders ──
   function render(){
+    // ใช้ระบบเดียว renderOrdersLive (_sellerOrders + sub_orders) เพื่อไม่ render ทับ
+    if (typeof renderOrdersLive === 'function') { renderOrdersLive(); return; }
     const tbody = document.getElementById('orders-table');
     if (!tbody) return;
 
@@ -10566,6 +10568,12 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
 
   // ── Refresh (reload + re-render) ──
   async function refresh(){
+    // โหลดผ่านระบบใหม่ (sub_orders) ถ้ามี
+    if (typeof loadSellerOrders === 'function') {
+      await loadSellerOrders();
+      if (typeof renderOrdersLive === 'function') renderOrdersLive();
+      return;
+    }
     await loadOrders();
     render();
     updateTabs();
