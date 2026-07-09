@@ -2078,8 +2078,12 @@ async function doCheckout(){
       total: total,
       total_amount: total,                     // เขียนทั้ง 2 column — กัน column split bug
       payment_method: selPay,
+      shipping_name: selectedAddr.name || '',
+      shipping_phone: selectedAddr.phone || '',
+      shipping_addr: selectedAddr.detail || '',
       shipping_address: {
         name: selectedAddr.name,
+        phone: selectedAddr.phone,
         detail: selectedAddr.detail,
         tag: selectedAddr.tag,
         addr_id: selectedAddr.id||null
@@ -2102,9 +2106,19 @@ async function doCheckout(){
 
     // 1.5 สร้าง order_items (เพื่อให้ seller portal + trigger ตัด stock ทำงาน)
     try {
+      // เผื่อ CART บางตัวไม่มี seller_id → ดึงจาก products
+      const missingSeller = CART.filter(it => it.id && !it.seller_id).map(it => it.id);
+      if (missingSeller.length) {
+        try {
+          const { data: sp } = await _sbCO.from('products').select('id,seller_id').in('id', missingSeller);
+          const smap = {}; (sp||[]).forEach(p => { smap[p.id] = p.seller_id; });
+          CART.forEach(it => { if (!it.seller_id && smap[it.id]) it.seller_id = smap[it.id]; });
+        } catch(_) {}
+      }
       const orderItems = CART.map(it => ({
         order_id: order.id,
         product_id: it.id,
+        seller_id: it.seller_id || null,
         qty: it.qty,
         price: it.price,
         name_th: it.name,
