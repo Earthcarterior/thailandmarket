@@ -954,6 +954,7 @@ function buildCart(){
     <div>
       <div class="cart-name">${it.name}</div>
       ${it.var ? `<div class="cart-var" style="color:#1D4ED8;font-weight:500">🎨 ${it.var}</div>` : ''}
+      ${it.needVariant ? `<div style="font-size:12px;color:#E63329;background:#FEE;padding:4px 8px;border-radius:4px;margin:4px 0">⚠️ ต้องเลือกไซส์/สีก่อน — <a href="product.html?id=${it.id}" style="color:#E63329;font-weight:600;text-decoration:underline">เลือกใหม่</a></div>` : ''}
       <div class="cart-shop">🏪 ${it.shop}</div>
       <div style="margin:4px 0">${stockNote}</div>
       <div style="display:flex;align-items:center;gap:10px">
@@ -1963,6 +1964,19 @@ async function doCheckout(){
   if(!selPay){toast('⚠️ กรุณาเลือกวิธีชำระเงิน');return;}
   if(!CART.length){toast('⚠️ ตะกร้าว่างเปล่า');return;}
 
+  // เช็คสินค้าที่มี variant แต่ไม่ได้เลือก
+  const needVar = CART.find(it => it.needVariant);
+  if (needVar) {
+    toast('⚠️ มีสินค้าที่ต้องเลือกไซส์/สีก่อน — กรุณาลบแล้วเลือกใหม่');
+    return;
+  }
+  // เช็ค stock เกิน
+  const overStock = CART.find(it => typeof it.maxStock === 'number' && it.qty > it.maxStock);
+  if (overStock) {
+    toast(`⚠️ "${overStock.name}" มีสินค้าเพียง ${overStock.maxStock} ชิ้น`);
+    return;
+  }
+
   const selectedAddr = ADDRS.find(a=>a.sel);
   if(!selectedAddr){toast('⚠️ กรุณาเลือกที่อยู่จัดส่ง');return;}
 
@@ -2585,6 +2599,8 @@ async function loadCheckoutData() {
         if (skus.length && it.variantKey) {
           const sku = skus.find(s => s.key === it.variantKey);
           if (sku) maxStock = sku.stock || 0;
+        } else if (skus.length && !it.variantKey) {
+          it.needVariant = true;  // มี variant แต่ไม่ได้เลือก
         }
         it.maxStock = maxStock;
       });
