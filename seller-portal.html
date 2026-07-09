@@ -9824,8 +9824,28 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
   };
 
   window.openOrderDetail = function(orderId){
-    var o = _spOrders.find(function(x){ return x.id === orderId; });
+    // หาใน _sellerOrders ก่อน (ข้อมูล sub_order ที่แยกร้านแล้ว)
+    var o = (typeof _sellerOrders !== 'undefined' && _sellerOrders.find)
+      ? _sellerOrders.find(function(x){ return x.id === orderId || x.sub_order_id === orderId; })
+      : null;
+    // fallback: _spOrders (หน้าจัดส่ง)
+    if (!o && typeof _spOrders !== 'undefined' && _spOrders.find) {
+      o = _spOrders.find(function(x){ return x.id === orderId; });
+    }
     if (!o) { alert('ไม่พบออเดอร์'); return; }
+    // normalize items: รองรับทั้ง _items (เก่า) และ order_items (sub_order)
+    if (!o._items && o.order_items) {
+      o._items = o.order_items.map(function(it){
+        return {
+          name: it.name_th || it.name || '',
+          image: it.thumbnail || it.image || '',
+          variant_name: it.variant_name || '',
+          qty: it.qty || it.quantity || 1,
+          price: it.price || 0,
+          subtotal: it.subtotal || ((it.price||0)*(it.qty||it.quantity||1))
+        };
+      });
+    }
     var info = STATUS_INFO[(o.status||'').toLowerCase()] || STATUS_INFO.pending;
     var items = (o._items||[]).map(function(it){
       var vname = it.variant_name || it.variant || it.variant_text || '';
