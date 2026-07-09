@@ -4105,7 +4105,7 @@ function renderOrdersLive() {
         ${first?.thumbnail?`<img src="${first.thumbnail}" style="width:32px;height:32px;object-fit:cover;flex-shrink:0">`:'<span style="flex-shrink:0">📦</span>'}
         <div style="font-size:12px;line-height:1.5;max-width:240px">${items.length?items.map(it=>`<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name_th||'—'}${(it.qty||it.quantity)>1?` <span style="color:#888">x${it.qty||it.quantity}</span>`:''}</div>`).join(''):'—'}</div></div></td>
       <td style="padding:10px 12px;font-size:12px">${o.shipping_name||'—'}</td>
-      <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(o.total_amount)}</td>
+      <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(o.seller_subtotal != null ? o.seller_subtotal : o.total_amount)}</td>
       <td style="padding:10px 12px;font-size:11px;color:#888">${o.payment_method||'—'}</td>
       <td style="padding:10px 12px"><span style="background:${stB[o.status]||'#F2F2F2'};color:${stC[o.status]||'#888'};padding:3px 10px;font-size:11px;font-family:monospace;white-space:nowrap">${stL[o.status]||o.status}</span></td>
       <td style="padding:10px 12px;font-size:11px;color:#888">${fmtDate(o.created_at)}</td>
@@ -9571,7 +9571,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
   var esc = function(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
   var fmtMoney = function(n){ return '฿' + Number(n||0).toLocaleString(); };
   var fmtDT = function(d){ return d ? new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '—'; };
-  var orderTotal = function(o){ return Number(o.total) || Number(o.total_amount) || Number(o.grand_total) || 0; };
+  var orderTotal = function(o){ return (o.seller_subtotal != null ? Number(o.seller_subtotal) : (Number(o.total) || Number(o.total_amount) || Number(o.grand_total) || 0)); };
 
   async function spLoadOrders(){
     var tbody = document.getElementById('orders-table');
@@ -9687,11 +9687,11 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
 
       var actions = '';
       if (st === 'paid' || st === 'confirmed'){
-        actions = '<button style="background:#7C3AED;color:#fff;border:none;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer;margin-right:4px" onclick="confirmOrder(\''+o.id+'\')">📦 เตรียมพัสดุ</button>';
+        actions = '<button style="background:#7C3AED;color:#fff;border:none;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer;margin-right:4px" onclick="confirmOrder(\''+(o.sub_order_id||o.id)+'\')">📦 เตรียมพัสดุ</button>';
       } else if (st === 'preparing' || st === 'processing'){
-        actions = '<button style="background:#0891B2;color:#fff;border:none;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer;margin-right:4px" onclick="shipOrder(\''+o.id+'\')">🚚 ส่งพัสดุ</button>';
+        actions = '<button style="background:#0891B2;color:#fff;border:none;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer;margin-right:4px" onclick="shipOrder(\''+(o.sub_order_id||o.id)+'\')">🚚 ส่งพัสดุ</button>';
       } else if (st === 'shipping' || st === 'shipped'){
-        actions = '<button style="background:#16A34A;color:#fff;border:none;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer;margin-right:4px" onclick="markDelivered(\''+o.id+'\')">✅ ส่งถึงแล้ว</button>';
+        actions = '<button style="background:#16A34A;color:#fff;border:none;padding:5px 10px;font-size:11px;border-radius:3px;cursor:pointer;margin-right:4px" onclick="markDelivered(\''+(o.sub_order_id||o.id)+'\')">✅ ส่งถึงแล้ว</button>';
         if (o.tracking_number||o.tracking_no){
           actions += '<div style="font-size:10px;color:#737373;font-family:monospace;margin-top:3px">'+esc(o.tracking_number||o.tracking_no)+'</div>';
         }
@@ -9725,36 +9725,51 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     spRenderTable();
   };
 
-  window.confirmOrder = async function(orderId){
+  window.confirmOrder = async function(subOrderId){
     if (!confirm('ยืนยันออเดอร์นี้และเริ่มเตรียมพัสดุ?')) return;
     var s = sb();
-    var r = await s.from('orders').update({status:'preparing', preparing_at: new Date().toISOString(), updated_at: new Date().toISOString()}).eq('id', orderId);
-    if (r.error){ alert('❌ '+r.error.message); return; }
+    // ลอง update sub_order ก่อน
+    var r = await s.from('sub_orders').update({status:'preparing', updated_at: new Date().toISOString()}).eq('id', subOrderId);
+    if (r.error) {
+      // fallback: orders
+      r = await s.from('orders').update({status:'preparing', preparing_at: new Date().toISOString(), updated_at: new Date().toISOString()}).eq('id', subOrderId);
+      if (r.error){ alert('❌ '+r.error.message); return; }
+    }
     alert('✅ เปลี่ยนเป็น "เตรียมพัสดุ" — ลูกค้าจะเห็น update');
     await spLoadOrders();
   };
 
-  window.shipOrder = async function(orderId){
+  window.shipOrder = async function(subOrderId){
     var trackingNo = prompt('กรอกเลขพัสดุ:');
     if (!trackingNo) return;
     var carrier = prompt('ค่ายขนส่ง (kerry/flash/thaipost/jt/ninja/scg/best/dhl/ems):', 'kerry');
     if (!carrier) return;
     var s = sb();
-    var r = await s.from('orders').update({
-      status:'shipped', tracking_number: trackingNo, tracking_no: trackingNo,
-      tracking_carrier: carrier, shipping_method: carrier,
-      shipped_at: new Date().toISOString(), updated_at: new Date().toISOString()
-    }).eq('id', orderId);
-    if (r.error){ alert('❌ '+r.error.message); return; }
+    // ลองใช้ sub_order RPC ก่อน
+    var r = await s.rpc('ship_sub_order', { p_sub_order_id: subOrderId, p_tracking: trackingNo, p_carrier: carrier });
+    if (r.error || (r.data && r.data.ok === false)) {
+      // fallback: update orders โดยตรง (ระบบเก่า)
+      var r2 = await s.from('orders').update({
+        status:'shipped', tracking_number: trackingNo, tracking_no: trackingNo,
+        tracking_carrier: carrier, shipping_method: carrier,
+        shipped_at: new Date().toISOString(), updated_at: new Date().toISOString()
+      }).eq('id', subOrderId);
+      if (r2.error){ alert('❌ '+r2.error.message); return; }
+    }
     alert('✅ เปลี่ยนเป็น "จัดส่งแล้ว"\nเลขพัสดุ: '+trackingNo+'\nค่าย: '+carrier);
     await spLoadOrders();
   };
 
-  window.markDelivered = async function(orderId){
+  window.markDelivered = async function(subOrderId){
     if (!confirm('ยืนยันว่าพัสดุถึงมือลูกค้าแล้ว?\n\nเงินจะถูกปล่อยเข้า "ยอดพร้อมถอน"')) return;
     var s = sb();
-    var r = await s.rpc('mark_order_delivered', { p_order_id: orderId });
-    if (r.error){ alert('❌ '+r.error.message); return; }
+    // ลองใช้ sub_order RPC ก่อน
+    var r = await s.rpc('deliver_sub_order', { p_sub_order_id: subOrderId });
+    if (r.error) {
+      // fallback: RPC เก่า
+      r = await s.rpc('mark_order_delivered', { p_order_id: subOrderId });
+      if (r.error){ alert('❌ '+r.error.message); return; }
+    }
     var d = r.data;
     if (d && d.ok === false){ alert('⚠️ '+(d.message||d.error)); return; }
     if (d && d.ok){
@@ -9783,7 +9798,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     var html =
       '<div style="background:#fff;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;border-radius:8px;padding:20px">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">' +
-        '<div><div style="font-family:monospace;font-size:14px;font-weight:700">#'+esc(o.order_number||o.id.slice(0,8))+'</div>' +
+        '<div><div style="font-family:monospace;font-size:14px;font-weight:700">#'+esc(o.order_number||o.id.slice(0,8))+(o._is_multishop?' <span style="font-size:10px;background:#EBF5FF;color:#1D4ED8;padding:2px 6px;border-radius:8px;font-family:sans-serif">แยกจากออเดอร์รวมหลายร้าน</span>':'')+'</div>' +
         '<div style="font-size:11px;color:#999">'+fmtDT(o.created_at)+'</div></div>' +
         '<button onclick="document.getElementById(\'sp-od-overlay\').remove()" style="background:none;border:none;font-size:22px;cursor:pointer">×</button>' +
       '</div>' +
@@ -10129,7 +10144,75 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       return [];
     }
     try {
-      // query ตรง — ดึง order_items ครบทุกรายการ + ชื่อลูกค้าจาก shipping_address
+      // เฟส 2: อ่านจาก sub_orders จริง (แต่ละร้านเห็นใบของตัวเอง)
+      const r = await sb()
+        .from('sub_orders')
+        .select('id, order_id, seller_id, sub_number, shop_index, status, items_subtotal, shipping_fee, total, commission, net_to_seller, tracking_number, tracking_carrier, shipped_at, delivered_at, money_released, created_at, orders!inner(order_number, payment_method, shipping_name, shipping_phone, shipping_address, shipping_addr, created_at)')
+        .eq('seller_id', sid)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (r.error) throw r.error;
+
+      // ดึง items ของแต่ละ sub_order
+      const subIds = (r.data||[]).map(s => s.id);
+      let itemsBySub = {};
+      if (subIds.length) {
+        const ir = await sb().from('order_items')
+          .select('sub_order_id, name_th, thumbnail, qty, price, variant_name')
+          .in('sub_order_id', subIds);
+        (ir.data||[]).forEach(it => {
+          if (!itemsBySub[it.sub_order_id]) itemsBySub[it.sub_order_id] = [];
+          itemsBySub[it.sub_order_id].push(it);
+        });
+      }
+
+      const data = (r.data || []).map(s => {
+        const ord = s.orders || {};
+        const addr = ord.shipping_address || {};
+        const custName = ord.shipping_name || addr.name || addr.fullname || '—';
+        return {
+          id: s.order_id,               // order หลัก (สำหรับ compat)
+          sub_order_id: s.id,           // sub_order จริง
+          order_number: s.sub_number,   // เลขใบย่อย TM-xxx-R1
+          _original_order_number: ord.order_number,
+          _is_multishop: s.shop_index > 1 || false,
+          status: s.status,
+          seller_subtotal: s.items_subtotal,
+          total_amount: s.total,
+          shipping_fee: s.shipping_fee,
+          commission: s.commission,
+          net_to_seller: s.net_to_seller,
+          payment_method: ord.payment_method,
+          shipping_name: custName,
+          shipping_phone: ord.shipping_phone || addr.phone || '',
+          shipping_addr: ord.shipping_addr || addr.detail || '',
+          shipping_address: addr,
+          tracking_number: s.tracking_number,
+          tracking_carrier: s.tracking_carrier,
+          money_released: s.money_released,
+          created_at: s.created_at,
+          order_items: (itemsBySub[s.id] || []).map(i => ({
+            name_th: i.name_th || '—',
+            thumbnail: i.thumbnail,
+            quantity: i.qty || 1,
+            price: i.price || 0,
+            variant_name: i.variant_name
+          }))
+        };
+      });
+
+      _allOrders = data || [];
+      return _allOrders;
+    } catch(e) {
+      console.error('[orders] load fail:', e);
+      // fallback: ถ้า sub_orders ยังไม่มี ใช้วิธีเดิม
+      return await loadAllOrdersLegacy(sid);
+    }
+  }
+
+  // วิธีเดิม (fallback ถ้ายังไม่ได้รัน SQL เฟส 1)
+  async function loadAllOrdersLegacy(sid) {
+    try {
       const r = await sb()
         .from('orders')
         .select('id, order_code, order_number, status, total_amount, payment_method, shipping_name, shipping_address, tracking_number, created_at, order_items!inner(seller_id, name_th, thumbnail, qty, price, variant_name, products!inner(seller_id))')
@@ -10140,22 +10223,30 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       const data = (r.data || []).map(o => {
         const addr = o.shipping_address || {};
         const custName = o.shipping_name || addr.name || addr.fullname || addr.full_name || '—';
+        const myItems = (o.order_items || []).filter(i =>
+          i.seller_id === sid || (i.products && i.products.seller_id === sid));
+        const myTotal = myItems.reduce((s,i) => s + ((i.price||0) * (i.qty||1)), 0);
+        const allSellers = [...new Set((o.order_items||[]).map(i =>
+          i.seller_id || (i.products && i.products.seller_id)).filter(Boolean))];
+        const shopIdx = allSellers.indexOf(sid);
+        const isMultiShop = allSellers.length > 1;
+        const subOrderNo = isMultiShop
+          ? `${o.order_number || o.id.slice(0,8)}-R${shopIdx >= 0 ? shopIdx + 1 : 1}`
+          : (o.order_number || o.id.slice(0,8));
         return {
-          ...o,
-          shipping_name: custName,
-          order_items: (o.order_items || []).map(i => ({
-            name_th: i.name_th || '—',
-            thumbnail: i.thumbnail,
-            quantity: i.qty || 1,
-            variant_name: i.variant_name
+          ...o, shipping_name: custName, order_number: subOrderNo,
+          _original_order_number: o.order_number, _is_multishop: isMultiShop,
+          seller_subtotal: myTotal,
+          order_items: myItems.map(i => ({
+            name_th: i.name_th||'—', thumbnail: i.thumbnail,
+            quantity: i.qty||1, price: i.price||0, variant_name: i.variant_name
           }))
         };
       });
-
       _allOrders = data || [];
       return _allOrders;
     } catch(e) {
-      console.error('[orders] load fail:', e);
+      console.error('[orders] legacy fail:', e);
       return [];
     }
   }
@@ -10249,7 +10340,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
           </div>
         </td>
         <td style="padding:10px 12px;font-size:12px">${fmt(o.shipping_name || '-')}</td>
-        <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(o.total_amount)}</td>
+        <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(o.seller_subtotal != null ? o.seller_subtotal : o.total_amount)}</td>
         <td style="padding:10px 12px;font-size:11px;color:#888">${fmt(o.payment_method || '-')}</td>
         <td style="padding:10px 12px"><span style="background:${sc[0]};color:${sc[1]};padding:3px 10px;font-size:11px;border-radius:12px;white-space:nowrap">${sl}</span></td>
         <td style="padding:10px 12px;white-space:nowrap">${actions}</td>

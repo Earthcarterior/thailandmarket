@@ -9219,6 +9219,11 @@ window.orShowDetail = async function(orderId) {
         </div>
       </div>
 
+      <div class="or-section" id="or-suborders-section" style="display:none">
+        <div class="or-section-title">🏪 แยกตามร้าน (Sub-orders)</div>
+        <div id="or-suborders-list" style="font-size:12px"></div>
+      </div>
+
       <div class="or-section">
         <div class="or-section-title">🛒 รายการสินค้า (${items.length})</div>
         ${items.map(it => `
@@ -9292,6 +9297,42 @@ window.orShowDetail = async function(orderId) {
         <button class="or-btn primary" onclick="orChangeStatus('${order.id}')">บันทึกสถานะ</button>
       </div>
     `;
+
+    // โหลด sub_orders แยกตามร้าน (ถ้ามี)
+    try {
+      const soRes = await sb.from('sub_orders')
+        .select('sub_number, seller_id, status, items_subtotal, shipping_fee, total, tracking_number, tracking_carrier, money_released, net_to_seller')
+        .eq('order_id', order.id)
+        .order('shop_index', { ascending: true });
+      const subs = soRes.data || [];
+      if (subs.length > 1) {
+        // หาชื่อร้าน
+        const sellerIds = subs.map(s => s.seller_id);
+        const shopRes = await sb.from('sellers').select('id, shop_name').in('id', sellerIds);
+        const shopMap = {}; (shopRes.data||[]).forEach(s => shopMap[s.id] = s.shop_name);
+        const stLabel = { pending:'รอชำระ', paid:'ชำระแล้ว', preparing:'เตรียมพัสดุ', processing:'เตรียมพัสดุ', shipped:'จัดส่งแล้ว', shipping:'จัดส่งแล้ว', delivered:'ส่งสำเร็จ', cancelled:'ยกเลิก' };
+        const stColor = { pending:'#D97706', paid:'#2563EB', preparing:'#7C3AED', processing:'#7C3AED', shipped:'#0891B2', shipping:'#0891B2', delivered:'#16A34A', cancelled:'#DC2626' };
+        const listEl = document.getElementById('or-suborders-list');
+        const secEl = document.getElementById('or-suborders-section');
+        if (listEl && secEl) {
+          listEl.innerHTML = subs.map(s => `
+            <div style="border:1px solid #E5E5E5;border-radius:6px;padding:10px;margin-bottom:8px;background:#fff">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <span style="font-family:monospace;font-weight:700">${orEsc(s.sub_number)}</span>
+                <span style="background:${stColor[s.status]||'#888'};color:#fff;padding:2px 10px;border-radius:10px;font-size:11px">${stLabel[s.status]||s.status}</span>
+              </div>
+              <div style="font-size:12px;color:#666">🏪 ${orEsc(shopMap[s.seller_id]||'ร้าน')}</div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px">
+                <span>ยอด: <b>${orFmtMoney(s.total)}</b></span>
+                ${s.tracking_number ? `<span style="font-family:monospace;color:#0891B2">📦 ${orEsc(s.tracking_number)}</span>` : '<span style="color:#999">ยังไม่มีเลขพัสดุ</span>'}
+              </div>
+              ${s.money_released ? `<div style="font-size:11px;color:#16A34A;margin-top:2px">✓ ปล่อยเงินแล้ว ฿${Number(s.net_to_seller||0).toLocaleString()}</div>` : ''}
+            </div>
+          `).join('');
+          secEl.style.display = 'block';
+        }
+      }
+    } catch(soE) { console.warn('sub_orders load:', soE.message); }
   } catch(e) {
     orLog('detail error:', e);
     body.innerHTML = `<div style="text-align:center;padding:40px;color:#E63329">❌ โหลดไม่สำเร็จ: ${orEsc(e.message)}</div>`;
