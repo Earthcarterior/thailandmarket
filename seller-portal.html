@@ -9720,6 +9720,9 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
   }
 
   function spRenderTable(){
+    // ปิดการทำงาน — ระบบใหม่ renderOrdersLive (_sellerOrders + sub_orders) คุมตาราง orders-table แทน
+    // เพื่อไม่ให้ render ทับกัน (เคยทำให้ข้อมูล sub_order ถูกทับด้วย order เก่า)
+    if (typeof renderOrdersLive === 'function') { renderOrdersLive(); return; }
     var tbody = document.getElementById('orders-table');
     if (!tbody) return;
     var filtered = _spOrders.filter(function(o){
@@ -10543,8 +10546,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     else if (txt.startsWith('จัดส่งแล้ว')) { _ordTabFilter = 'shipped'; spTabVal = 'shipped'; }
     else if (txt.startsWith('สำเร็จ')) { _ordTabFilter = 'completed'; spTabVal = 'completed'; }
     else if (txt.startsWith('ยกเลิก')) { _ordTabFilter = 'cancelled'; spTabVal = 'cancelled'; }
-    // เชื่อมกับระบบ _spOrders (ตัวที่ render ตารางจริง)
-    if (typeof window.spSetTab === 'function') window.spSetTab(spTabVal, el);
+    // ใช้ระบบใหม่ (renderOrdersLive → _sellerOrders แยก sub_order) เท่านั้น
     if (typeof renderOrdersLive === 'function') renderOrdersLive();
   };
 
