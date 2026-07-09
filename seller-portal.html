@@ -3709,13 +3709,54 @@ async function loadSellerOrders() {
       return;
     }
     
-    // ดึงออเดอร์ที่มี order_items ของ products ของร้านเรา
-    let q = _sb.from('orders')
-      .select('id,order_number,total_amount,subtotal,discount_amount,shipping_fee,status,payment_method,payment_status,created_at,updated_at,shipping_name,shipping_phone,shipping_address,shipping_province,tracking_number,shipping_carrier,order_items!inner(id,qty,price,name_th,product_id,thumbnail,variant_name,products!inner(seller_id))')
-      .eq('order_items.products.seller_id', _sellerSellerId)
-      .order('created_at',{ ascending:false }).limit(200);
-    const { data, error } = await q;
-    if (error) throw error;
+    // ดึงจาก sub_orders (แยกใบต่อร้าน) — fallback เป็น orders ถ้ายังไม่มี
+    let data = null;
+    try {
+      const sr = await _sb.from('sub_orders')
+        .select('id,order_id,seller_id,sub_number,shop_index,status,items_subtotal,shipping_fee,total,commission,net_to_seller,tracking_number,tracking_carrier,shipped_at,delivered_at,money_released,created_at,orders!inner(order_number,payment_method,payment_status,shipping_name,shipping_phone,shipping_address,shipping_province,created_at)')
+        .eq('seller_id', _sellerSellerId)
+        .order('created_at',{ ascending:false }).limit(200);
+      if (sr.error) throw sr.error;
+      const subIds = (sr.data||[]).map(s => s.id);
+      let itemsBySub = {};
+      if (subIds.length) {
+        const ir = await _sb.from('order_items')
+          .select('sub_order_id,id,qty,price,name_th,product_id,thumbnail,variant_name')
+          .in('sub_order_id', subIds);
+        (ir.data||[]).forEach(it => {
+          (itemsBySub[it.sub_order_id] = itemsBySub[it.sub_order_id] || []).push(it);
+        });
+      }
+      data = (sr.data||[]).map(s => {
+        const ord = s.orders || {};
+        return {
+          id: s.id, sub_order_id: s.id, _order_id: s.order_id,
+          order_number: s.sub_number, _is_multishop: s.shop_index > 1,
+          total_amount: s.total, subtotal: s.items_subtotal, shipping_fee: s.shipping_fee,
+          discount_amount: 0, status: s.status,
+          payment_method: ord.payment_method, payment_status: ord.payment_status,
+          created_at: s.created_at, updated_at: s.created_at,
+          shipping_name: ord.shipping_name, shipping_phone: ord.shipping_phone,
+          shipping_address: ord.shipping_address, shipping_province: ord.shipping_province,
+          tracking_number: s.tracking_number, shipping_carrier: s.tracking_carrier,
+          commission: s.commission, net_to_seller: s.net_to_seller, money_released: s.money_released,
+          order_items: (itemsBySub[s.id]||[])
+        };
+      });
+    } catch(subErr) {
+      console.warn('[loadSellerOrders] sub_orders ไม่พร้อม ใช้ orders เดิม:', subErr.message);
+      let q = _sb.from('orders')
+        .select('id,order_number,total_amount,subtotal,discount_amount,shipping_fee,status,payment_method,payment_status,created_at,updated_at,shipping_name,shipping_phone,shipping_address,shipping_province,tracking_number,shipping_carrier,order_items!inner(id,qty,price,name_th,product_id,thumbnail,variant_name,products!inner(seller_id))')
+        .eq('order_items.products.seller_id', _sellerSellerId)
+        .order('created_at',{ ascending:false }).limit(200);
+      const rq = await q;
+      if (rq.error) throw rq.error;
+      data = (rq.data||[]).map(o => {
+        const myItems = (o.order_items||[]).filter(i => i.products && i.products.seller_id === _sellerSellerId);
+        const myTotal = myItems.reduce((s,i)=>s+((i.price||0)*(i.qty||1)),0);
+        return { ...o, total_amount: myTotal, subtotal: myTotal, order_items: myItems };
+      });
+    }
     _sellerOrders = data || [];
     const now=new Date();
     const thisMonth=d=>{ const x=new Date(d); return x.getMonth()===now.getMonth()&&x.getFullYear()===now.getFullYear(); };
