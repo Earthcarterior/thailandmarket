@@ -964,7 +964,8 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
   <!-- DASHBOARD -->
   <div class="page active" id="page-dashboard">
     <div class="ph">📊 Dashboard ผู้ขาย</div>
-    <div class="ps">ภาพรวมร้านค้า · อัปเดต 28 เม.ย. 2569</div>
+    <div class="ps">ภาพรวมร้านค้า · อัปเดต <span id="dash-updated"></span></div>
+    <script>document.getElementById('dash-updated').textContent = new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});</script>
     <div class="sg sg4" style="margin-bottom:14px">
       <div class="sc"><div class="sc-ac" style="background:var(--accent)"></div><div class="sc-lbl">💰 ยอดขายเดือนนี้</div><div class="sc-val">฿284,520</div><div class="sc-chg up">▲ +12.4% vs เดือนที่แล้ว</div></div>
       <div class="sc"><div class="sc-ac" style="background:var(--bl)"></div><div class="sc-lbl">📦 ออเดอร์รอดำเนิน</div><div class="sc-val">12</div><div class="sc-chg" style="color:var(--am)">⚠️ ต้องดำเนินการด่วน</div></div>
@@ -3780,15 +3781,27 @@ async function loadSellerOrders() {
     const now=new Date();
     const thisMonth=d=>{ const x=new Date(d); return x.getMonth()===now.getMonth()&&x.getFullYear()===now.getFullYear(); };
     const mo=_sellerOrders.filter(o=>thisMonth(o.created_at));
+    const SALE_ST=['paid','confirmed','preparing','processing','shipped','delivered'];
     _sellerStats = {
       ..._sellerStats,
       totalOrders:      _sellerOrders.length,
-      pendingOrders:    _sellerOrders.filter(o=>o.status==='pending').length,
+      pendingOrders:    _sellerOrders.filter(o=>['paid','confirmed','preparing','processing'].includes(o.status)).length,
       shippedOrders:    _sellerOrders.filter(o=>o.status==='shipped').length,
       deliveredOrders:  _sellerOrders.filter(o=>o.status==='delivered').length,
-      monthRevenue:     mo.filter(o=>!['cancelled','returned'].includes(o.status)).reduce((s,o)=>s+(o.total_amount||0),0),
+      monthRevenue:     mo.filter(o=>SALE_ST.includes(o.status)).reduce((s,o)=>s+(o.total_amount||0),0),
       totalRevenue:     _sellerOrders.filter(o=>o.status==='delivered').reduce((s,o)=>s+(o.total_amount||0),0),
     };
+    // ยอดเงินจริง — ให้การ์ด Dashboard ตรงกับหน้า "รายได้ของฉัน"
+    try {
+      const [balR, gpR] = await Promise.all([
+        _sb.from('seller_balances').select('available,escrow,total_earned').eq('seller_id', _sellerSellerId).maybeSingle(),
+        _sb.rpc('get_seller_gp_summary', { p_seller_id: _sellerSellerId })
+      ]);
+      _sellerStats.escrow      = (balR.data && balR.data.escrow) || 0;
+      _sellerStats.availableBal= (balR.data && balR.data.available) || 0;
+      _sellerStats.totalEarned = (balR.data && balR.data.total_earned) || 0;
+      _sellerStats.gpTotal     = (gpR.data && gpR.data.gp_total) || 0;
+    } catch(_){}
   } catch(e) { console.error('loadSellerOrders:',e); }
 }
 
@@ -3828,9 +3841,9 @@ function renderDashboardLive() {
     else if (lbl.includes('ผู้เข้าชม'))   { val.textContent='—'; }
     else if (lbl.includes('Flash Sale'))  { val.textContent=(s.flashCount||0)+' รายการ'; }
     else if (lbl.includes('สินค้าที่เข้าร่วม')){ val.textContent=(s.flashCount||0)+' ชิ้น'; }
-    else if (lbl.includes('รอโอน'))       { val.textContent=fmtB(Math.round((s.monthRevenue||0)*.7)); }
-    else if (lbl.includes('โอนแล้ว'))     { val.textContent=fmtB(s.totalRevenue||0); }
-    else if (lbl.includes('GP'))          { val.textContent=fmtB(Math.round((s.monthRevenue||0)*.05)); }
+    else if (lbl.includes('รอโอน'))       { val.textContent=fmtB(s.escrow||0); if(chg) chg.textContent='Escrow ปลอดภัย'; }
+    else if (lbl.includes('โอนแล้ว'))     { val.textContent=fmtB(s.totalEarned||0); if(chg) chg.textContent='▲ รายได้สะสม (หลังหัก GP)'; }
+    else if (lbl.includes('GP'))          { val.textContent=fmtB(s.gpTotal||0); if(chg) chg.textContent='ตามหมวดสินค้า'; }
     else if (lbl.includes('คะแนนเฉลี่ย')){ val.textContent=s.avgRating||'—'; }
     else if (lbl.includes('รีวิวทั้งหมด')){ val.textContent=fmt(s.totalReviews||0); }
     else if (lbl.includes('5 ดาว'))       { val.textContent=(s.fiveStarPct||0)+'%'; }
@@ -10062,7 +10075,23 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     var products = await s.from('products').select('id').eq('seller_id', seller.id);
     var pIds = (products.data||[]).map(function(p){return p.id;});
     var monthRevenue = 0, pendingCount = 0;
-    if (pIds.length){
+    // ── คำนวณจาก sub_orders ของร้าน (แหล่งเดียวกับหน้า "รายได้ของฉัน") ──
+    try {
+      var subsRes = await s.from('sub_orders')
+        .select('total,net_to_seller,status,created_at')
+        .eq('seller_id', seller.id);
+      var subs = subsRes.data || [];
+      var firstOfMonth = new Date(); firstOfMonth.setDate(1); firstOfMonth.setHours(0,0,0,0);
+      var SALE_ST = ['paid','confirmed','preparing','processing','shipped','delivered'];
+      var PEND_ST = ['paid','confirmed','preparing','processing'];
+      subs.forEach(function(so){
+        if (SALE_ST.indexOf(so.status) > -1 && new Date(so.created_at) >= firstOfMonth) {
+          monthRevenue += Number(so.total || 0);
+        }
+        if (PEND_ST.indexOf(so.status) > -1) pendingCount++;
+      });
+    } catch(subE) { console.warn('dash sub_orders:', subE); }
+    if (false && pIds.length){
       var items = await s.from('order_items').select('order_id').in('product_id', pIds);
       var orderIds = [...new Set((items.data||[]).map(function(i){return i.order_id;}))];
 
