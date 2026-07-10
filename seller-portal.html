@@ -7652,6 +7652,37 @@ async function renderFinanceLive() {
     document.getElementById('fin-total-paid').textContent = sfMoney(_finBalance.total_paid_out || 0);
     document.getElementById('fin-total-refund').textContent = sfMoney(_finBalance.total_refunded || 0);
 
+    // ── แยกยอดสินค้า / ค่าส่ง / GP (ค่าส่งไม่ถูกหัก GP) ──
+    try {
+      const { data: fs } = await _sb.rpc('get_seller_finance_summary', { p_seller_id: _sellerSellerId });
+      if (fs) {
+        const escEl = document.getElementById('fin-escrow');
+        if (escEl && escEl.nextElementSibling && escEl.nextElementSibling.classList.contains('sc-chg')) {
+          escEl.nextElementSibling.innerHTML =
+            'สินค้า(หลัง GP) <b>' + sfMoney(fs.escrow_items||0) + '</b> + ค่าส่ง <b>' + sfMoney(fs.escrow_shipping||0) + '</b>';
+        }
+        const teEl = document.getElementById('fin-total-earned');
+        if (teEl && teEl.nextElementSibling && teEl.nextElementSibling.classList.contains('sc-chg')) {
+          teEl.nextElementSibling.innerHTML =
+            'สินค้า ' + sfMoney(fs.items_total||0) + ' − GP ' + sfMoney(fs.gp_total||0) + ' + ค่าส่ง ' + sfMoney(fs.shipping_total||0);
+        }
+        // แถบสรุปแยกส่วน ใต้การ์ด
+        let strip = document.getElementById('fin-split-strip');
+        if (!strip) {
+          strip = document.createElement('div');
+          strip.id = 'fin-split-strip';
+          strip.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0;padding:14px;background:#FAFAFA;border:1px solid #EFEFEF;border-radius:8px;font-size:12px';
+          const anchor = escEl ? escEl.closest('.sc')?.parentElement : null;
+          if (anchor && anchor.parentElement) anchor.parentElement.insertBefore(strip, anchor.nextSibling);
+        }
+        if (strip) strip.innerHTML =
+          '<div>🛍️ ยอดสินค้าสะสม<br><b style="font-size:16px;font-family:\'DM Mono\',monospace">' + sfMoney(fs.items_total||0) + '</b></div>' +
+          '<div>🚚 ค่าส่งสะสม (ไม่หัก GP)<br><b style="font-size:16px;font-family:\'DM Mono\',monospace;color:#2563EB">' + sfMoney(fs.shipping_total||0) + '</b></div>' +
+          '<div>📊 GP หักสะสม (ตามหมวด)<br><b style="font-size:16px;font-family:\'DM Mono\',monospace;color:#E63329">−' + sfMoney(fs.gp_total||0) + '</b></div>' +
+          '<div>💰 ร้านได้รับสุทธิ<br><b style="font-size:16px;font-family:\'DM Mono\',monospace;color:#10B981">' + sfMoney(fs.net_total||0) + '</b></div>';
+      }
+    } catch(e) { console.warn('finance summary:', e); }
+
     // คำนวณ GP รวมจากออเดอร์ delivered จริง (ตามหมวดสินค้า)
     try {
       const { data: gpSum } = await _sb.rpc('get_seller_gp_summary', { p_seller_id: _sellerSellerId });
@@ -9836,8 +9867,9 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     var d = r.data;
     if (d && d.ok === false){ alert('⚠️ '+(d.message||d.error)); return; }
     if (d && d.ok){
-      alert('✅ จัดส่งสำเร็จ!\nยอดขาย ฿'+(d.gross||0).toLocaleString()+
-            '\nหักค่าธรรมเนียม ฿'+(d.commission||0).toLocaleString()+
+      alert('✅ จัดส่งสำเร็จ!\nยอดสินค้า ฿'+(d.gross||0).toLocaleString()+
+            '\nหัก GP (ตามหมวดสินค้า) −฿'+(d.commission||0).toLocaleString()+
+            '\nค่าส่ง (ไม่หัก GP) +฿'+(d.shipping||0).toLocaleString()+
             '\nเข้ายอดพร้อมถอน ฿'+(d.net_to_seller||0).toLocaleString());
     } else {
       alert('✅ เปลี่ยนเป็นจัดส่งสำเร็จแล้ว');
