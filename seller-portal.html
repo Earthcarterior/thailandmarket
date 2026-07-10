@@ -9846,14 +9846,11 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
   window.confirmOrder = async function(subOrderId){
     if (!confirm('ยืนยันออเดอร์นี้และเริ่มเตรียมพัสดุ?')) return;
     var s = sb();
-    // ลอง update sub_order ก่อน
-    var r = await s.from('sub_orders').update({status:'preparing', updated_at: new Date().toISOString()}).eq('id', subOrderId);
-    if (r.error) {
-      // fallback: orders
-      r = await s.from('orders').update({status:'preparing', preparing_at: new Date().toISOString(), updated_at: new Date().toISOString()}).eq('id', subOrderId);
-      if (r.error){ alert('❌ '+r.error.message); return; }
-    }
+    var r = await s.rpc('confirm_sub_order', { p_sub_order_id: subOrderId });
+    if (r.error){ alert('❌ '+r.error.message); return; }
+    if (r.data && r.data.ok === false){ alert('⚠️ '+(r.data.message||'')); return; }
     alert('✅ เปลี่ยนเป็น "เตรียมพัสดุ" — ลูกค้าจะเห็น update');
+    try { if (typeof loadSellerOrders === 'function') { await loadSellerOrders(); renderOrdersLive(); } } catch(_){}
     await spLoadOrders();
   };
 
@@ -9863,18 +9860,12 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     var carrier = prompt('ค่ายขนส่ง (kerry/flash/thaipost/jt/ninja/scg/best/dhl/ems):', 'kerry');
     if (!carrier) return;
     var s = sb();
-    // ลองใช้ sub_order RPC ก่อน
     var r = await s.rpc('ship_sub_order', { p_sub_order_id: subOrderId, p_tracking: trackingNo, p_carrier: carrier });
-    if (r.error || (r.data && r.data.ok === false)) {
-      // fallback: update orders โดยตรง (ระบบเก่า)
-      var r2 = await s.from('orders').update({
-        status:'shipped', tracking_number: trackingNo, tracking_no: trackingNo,
-        tracking_carrier: carrier, shipping_method: carrier,
-        shipped_at: new Date().toISOString(), updated_at: new Date().toISOString()
-      }).eq('id', subOrderId);
-      if (r2.error){ alert('❌ '+r2.error.message); return; }
-    }
+    if (r.error){ alert('❌ '+r.error.message); return; }
+    if (r.data && r.data.ok === false){ alert('⚠️ '+(r.data.message||'')); return; }
     alert('✅ เปลี่ยนเป็น "จัดส่งแล้ว"\nเลขพัสดุ: '+trackingNo+'\nค่าย: '+carrier);
+    try { if (typeof loadSellerOrders === 'function') { await loadSellerOrders(); renderOrdersLive(); } } catch(_){}
+    try { if (typeof renderShipPendingLive === 'function') renderShipPendingLive(); } catch(_){}
     await spLoadOrders();
   };
 
@@ -9889,7 +9880,12 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       if (r.error){ alert('❌ '+r.error.message); return; }
     }
     var d = r.data;
-    if (d && d.ok === false){ alert('⚠️ '+(d.message||d.error)); return; }
+    if (d && d.ok === false){
+      alert('⚠️ '+(d.message||d.error));
+      // refresh เผื่อหน้าจอค้างสถานะเก่า (เช่น DB delivered แล้วแต่ตารางยังโชว์ shipped)
+      try { if (typeof loadSellerOrders === 'function') { await loadSellerOrders(); renderOrdersLive(); } } catch(_){}
+      return;
+    }
     if (d && d.ok){
       alert('✅ จัดส่งสำเร็จ!\nยอดสินค้า ฿'+(d.gross||0).toLocaleString()+
             '\nหัก GP (ตามหมวดสินค้า) −฿'+(d.commission||0).toLocaleString()+
@@ -9898,6 +9894,10 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     } else {
       alert('✅ เปลี่ยนเป็นจัดส่งสำเร็จแล้ว');
     }
+    // refresh ทุกมุมมองให้สถานะตรงกันทันที
+    try { if (typeof loadSellerOrders === 'function') { await loadSellerOrders(); renderOrdersLive(); } } catch(_){}
+    try { if (typeof renderShipPendingLive === 'function') renderShipPendingLive(); } catch(_){}
+    try { if (typeof renderFinanceLive === 'function') renderFinanceLive(); } catch(_){}
     await spLoadOrders();
   };
 
