@@ -8673,38 +8673,55 @@ window.shipShowAllDropoff = function(){
 
 async function shipLoadOrders() {
   try {
-    // ดึง order_items ของร้านโดยตรงจาก seller_id (ไม่พึ่ง products — กันหลุด)
-    const { data: items } = await _sb.from('order_items')
-      .select('order_id,product_id,qty,subtotal,name_th,thumbnail')
-      .eq('seller_id', _sellerSellerId);
-    let itemRows = items || [];
-    // fallback: ถ้า seller_id ในorder_items ว่าง ลองผ่าน products
-    if (!itemRows.length) {
-      const { data: prods } = await _sb.from('products').select('id').eq('seller_id', _sellerSellerId);
-      const pIds = (prods || []).map(p => p.id);
-      if (pIds.length) {
-        const { data: items2 } = await _sb.from('order_items')
-          .select('order_id,product_id,qty,subtotal,name_th,thumbnail')
-          .in('product_id', pIds);
-        itemRows = items2 || [];
-      }
-    }
-    const orderIds = [...new Set(itemRows.map(i => i.order_id))];
-    if (!orderIds.length) { _spOrders = []; return; }
-
-    const { data: orders } = await _sb.from('orders')
-      .select('id,order_number,status,total,shipping_method,shipping_method_name,shipping_address,tracking_number,created_at,paid_at')
-      .in('id', orderIds)
+    // ดึงใบของร้านจาก sub_orders โดยตรง (แหล่งเดียวกับหน้า "ออเดอร์ทั้งหมด")
+    const { data: subs, error } = await _sb.from('sub_orders')
+      .select('id,order_id,sub_number,status,total,items_subtotal,shipping_fee,tracking_number,tracking_carrier,created_at')
+      .eq('seller_id', _sellerSellerId)
       .in('status', ['paid', 'confirmed', 'preparing', 'processing'])
       .order('created_at', {ascending: true});
+    if (error) throw error;
+    const subRows = subs || [];
+    if (!subRows.length) { _spOrders = []; return; }
 
-    const itemsByOrder = {};
-    itemRows.forEach(it => {
-      if (!itemsByOrder[it.order_id]) itemsByOrder[it.order_id] = [];
-      itemsByOrder[it.order_id].push(it);
+    // ข้อมูลใบแม่ (ที่อยู่/วิธีส่ง/เวลาจ่าย)
+    const orderIds = [...new Set(subRows.map(s => s.order_id))];
+    let ordMap = {};
+    try {
+      const { data: ords } = await _sb.from('orders')
+        .select('id,order_number,shipping_method,shipping_method_name,shipping_address,paid_at,created_at')
+        .in('id', orderIds);
+      (ords || []).forEach(o => { ordMap[o.id] = o; });
+    } catch(_) {}
+
+    // items ต่อ sub_order
+    let itemsBySub = {};
+    try {
+      const { data: its } = await _sb.from('order_items')
+        .select('sub_order_id,order_id,product_id,qty,subtotal,name_th,thumbnail')
+        .in('sub_order_id', subRows.map(s => s.id));
+      (its || []).forEach(it => {
+        if (!it.sub_order_id) return;
+        (itemsBySub[it.sub_order_id] = itemsBySub[it.sub_order_id] || []).push(it);
+      });
+    } catch(_) {}
+
+    _spOrders = subRows.map(s => {
+      const ord = ordMap[s.order_id] || {};
+      return {
+        id: s.id,                    // = sub_order id → ปุ่มทุกตัวยิงที่ใบของร้านเอง
+        _order_id: s.order_id,
+        order_number: s.sub_number,
+        status: s.status,
+        total: s.total,
+        tracking_number: s.tracking_number,
+        shipping_method: ord.shipping_method,
+        shipping_method_name: ord.shipping_method_name,
+        shipping_address: ord.shipping_address,
+        paid_at: ord.paid_at,
+        created_at: s.created_at,
+        items: itemsBySub[s.id] || []
+      };
     });
-
-    _spOrders = (orders || []).map(o => ({...o, items: itemsByOrder[o.id] || []}));
   } catch(e) {
     console.warn('spLoadOrders:', e);
     _spOrders = [];
@@ -8901,27 +8918,24 @@ window.shipConfirmSave = async function(){
   const o = (_spOrders||[]).find(x=>x.id===orderId) || {};
 
   try {
-    const { error } = await _sb.from('orders').update({
-      status: 'shipped',
-      tracking_number: tracking,
-      tracking_no: tracking,
-      shipping_method_name: carrier,
-      tracking_carrier: carrier,
-      shipped_at: new Date().toISOString(),
-      fulfillment_status: 'in_transit',
-      updated_at: new Date().toISOString()
-    }).eq('id', orderId);
-    if (error) throw error;
-    // บันทึก/อัปเดต fulfillment
-    const fres = await _sb.from('fulfillments').insert({
-      order_id: orderId, seller_id: sid, method: 'manual',
-      carrier_label: carrier, tracking_number: tracking,
-      status: 'in_transit', created_by: sid
-    });
-    if (fres.error) console.error('fulfillment:', fres.error.message);
+    // จัดส่งที่ใบของร้าน (sub_order) — สถานะ sync ทุกหน้า + roll-up ขึ้นใบแม่อัตโนมัติ
+    const r = await _sb.rpc('ship_sub_order', { p_sub_order_id: orderId, p_tracking: tracking, p_carrier: carrier });
+    if (r.error) throw r.error;
+    if (r.data && r.data.ok === false) throw new Error(r.data.message || 'จัดส่งไม่สำเร็จ');
+    // บันทึก fulfillment (อ้างใบแม่)
+    try {
+      await _sb.from('fulfillments').insert({
+        order_id: o._order_id || orderId, seller_id: sid, method: 'manual',
+        carrier_label: carrier, tracking_number: tracking,
+        status: 'in_transit', created_by: sid
+      });
+    } catch(fe) { console.warn('fulfillment:', fe); }
     document.getElementById('ship-confirm-modal').style.display='none';
     toast('✅ ยืนยันส่งสำเร็จ · '+carrier+' '+tracking,'ok');
     await renderShipPendingLive();
+    // sync หน้า "ออเดอร์ทั้งหมด" ทันที
+    try { if (typeof loadSellerOrders === 'function') { await loadSellerOrders(); renderOrdersLive(); } } catch(_){}
+    try { if (typeof spLoadOrders === 'function') spLoadOrders(); } catch(_){}
   } catch(e){ alert('❌ '+e.message); }
 };
 
@@ -8947,16 +8961,14 @@ window.spStorePickup = async function(){
   try {
     let ok = 0, fail = 0;
     for (const id of ids) {
-      const { error } = await _sb.from('orders').update({
-        status: 'delivered',
-        fulfillment_method: 'store_pickup',
-        fulfillment_status: 'delivered',
-        delivered_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }).eq('id', id);
-      if (error) { fail++; console.error('store pickup fail:', id, error.message); continue; }
+      // ปิดใบของร้าน (sub_order) — ปล่อยเงินเข้าพร้อมถอน + roll-up ใบแม่อัตโนมัติ
+      const r = await _sb.rpc('deliver_sub_order', { p_sub_order_id: id });
+      if (r.error || (r.data && r.data.ok === false)) {
+        fail++; console.error('store pickup fail:', id, r.error?.message || r.data?.message); continue;
+      }
+      const o = (_spOrders||[]).find(x => x.id === id) || {};
       const fres = await _sb.from('fulfillments').insert({
-        order_id: id, seller_id: sid, method: 'store_pickup',
+        order_id: o._order_id || id, seller_id: sid, method: 'store_pickup',
         status: 'delivered', note: 'ลูกค้ามารับที่ร้าน', created_by: sid
       });
       if (fres.error) console.error('fulfillment:', fres.error.message);
@@ -8965,6 +8977,7 @@ window.spStorePickup = async function(){
     if (fail) toast(`⚠️ สำเร็จ ${ok}, ไม่สำเร็จ ${fail} ออเดอร์`,'error');
     else toast(`✅ ปิดออเดอร์รับหน้าร้าน ${ok} รายการ`,'ok');
     await renderShipPendingLive();
+    try { if (typeof loadSellerOrders === 'function') { await loadSellerOrders(); renderOrdersLive(); } } catch(_){}
   } catch(e){ toast('❌ '+e.message,'error'); }
 };
 
@@ -9070,18 +9083,14 @@ window.spArrangePickup = async function(scope) {
     for (const id of ids) {
       const o = _spOrders.find(x => x.id === id) || {};
       const trk = 'TH' + Math.random().toString().slice(2,11) + 'TH';
-      const { error } = await _sb.from('orders').update({
-        status: 'processing',
-        fulfillment_method: 'pickup',
-        pickup_date: pickupDate,
-        fulfillment_status: 'requested',
-        tracking_number: trk,
-        updated_at: new Date().toISOString()
-      }).eq('id', id);
-      if (error) { fail++; console.error('นัดรับ fail:', id, error.message); continue; }
+      // นัดรับที่ใบของร้าน (sub_order)
+      const r = await _sb.rpc('request_pickup_sub_order', { p_sub_order_id: id, p_tracking: trk, p_pickup_date: pickupDate });
+      if (r.error || (r.data && r.data.ok === false)) {
+        fail++; console.error('นัดรับ fail:', id, r.error?.message || r.data?.message); continue;
+      }
       // บันทึก fulfillment log (เช็ค error จริง)
       const fres = await _sb.from('fulfillments').insert({
-        order_id: id,
+        order_id: o._order_id || id,
         seller_id: sid,
         method: 'pickup',
         carrier: o.shipping_method || null,
@@ -9097,6 +9106,7 @@ window.spArrangePickup = async function(scope) {
     if (fail) toast(`⚠️ นัดรับสำเร็จ ${ok} พัสดุ, ไม่สำเร็จ ${fail} พัสดุ`,'error');
     else toast(`✅ นัดรับ ${ok} พัสดุสำเร็จ`,'ok');
     await renderShipPendingLive();
+    try { if (typeof loadSellerOrders === 'function') { await loadSellerOrders(); renderOrdersLive(); } } catch(_){}
   } catch(e) { toast('❌ ' + e.message,'error'); }
 };
 
@@ -9136,18 +9146,13 @@ window.spDropOff = async function(scope) {
     for (const id of ids) {
       const o = _spOrders.find(x => x.id === id) || {};
       const trk = 'TH' + Math.random().toString().slice(2,11) + 'DO';
-      const { error } = await _sb.from('orders').update({
-        status: 'shipped',
-        fulfillment_method: 'dropoff',
-        dropoff_point_id: dp.id || null,
-        fulfillment_status: 'in_transit',
-        shipped_at: new Date().toISOString(),
-        tracking_number: trk,
-        updated_at: new Date().toISOString()
-      }).eq('id', id);
-      if (error) { fail++; console.error('dropoff fail:', id, error.message); continue; }
+      // ส่งแบบ drop-off ที่ใบของร้าน (sub_order)
+      const r = await _sb.rpc('ship_sub_order', { p_sub_order_id: id, p_tracking: trk, p_carrier: 'dropoff' + (dp.name ? ':' + dp.name : '') });
+      if (r.error || (r.data && r.data.ok === false)) {
+        fail++; console.error('dropoff fail:', id, r.error?.message || r.data?.message); continue;
+      }
       const fres = await _sb.from('fulfillments').insert({
-        order_id: id,
+        order_id: o._order_id || id,
         seller_id: sid,
         method: 'dropoff',
         carrier: o.shipping_method || null,
@@ -9164,6 +9169,7 @@ window.spDropOff = async function(scope) {
     if (fail) toast(`⚠️ ส่งสำเร็จ ${ok}, ไม่สำเร็จ ${fail} พัสดุ`,'error');
     else toast(`✅ นำส่งที่สาขาสำเร็จ ${ok} พัสดุ`,'ok');
     await renderShipPendingLive();
+    try { if (typeof loadSellerOrders === 'function') { await loadSellerOrders(); renderOrdersLive(); } } catch(_){}
   } catch(e) { toast('❌ ' + e.message,'error'); }
 };
 
