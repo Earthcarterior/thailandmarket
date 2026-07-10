@@ -4146,9 +4146,9 @@ function renderOrdersLive() {
   const page=$('page-orders'); if(!page) return;
   const tbl=page.querySelector('tbody'); if(!tbl) return;
   ordUpdateTabs();
-  const stC={pending:'#D97706',confirmed:'#2563EB',processing:'#7C3AED',shipped:'#0891B2',delivered:'#16A34A',cancelled:'#737373',return_requested:'#D97706'};
-  const stB={pending:'#FEF3C7',confirmed:'#DBEAFE',processing:'#EDE9FE',shipped:'#CFFAFE',delivered:'#DCFCE7',cancelled:'#F2F2F2',return_requested:'#FEF3C7'};
-  const stL={pending:'รอยืนยัน',confirmed:'ยืนยันแล้ว',processing:'กำลังเตรียม',shipped:'กำลังส่ง',delivered:'สำเร็จ',cancelled:'ยกเลิก',return_requested:'ขอคืนสินค้า'};
+  const stC={pending:'#D97706',paid:'#16A34A',confirmed:'#2563EB',preparing:'#7C3AED',processing:'#7C3AED',shipped:'#0891B2',delivered:'#16A34A',cancelled:'#737373',return_requested:'#D97706'};
+  const stB={pending:'#FEF3C7',paid:'#DCFCE7',confirmed:'#DBEAFE',preparing:'#EDE9FE',processing:'#EDE9FE',shipped:'#CFFAFE',delivered:'#DCFCE7',cancelled:'#F2F2F2',return_requested:'#FEF3C7'};
+  const stL={pending:'รอชำระ',paid:'จ่ายแล้ว·รอจัดส่ง',confirmed:'ยืนยันแล้ว',preparing:'เตรียมพัสดุ',processing:'กำลังเตรียม',shipped:'จัดส่งแล้ว',delivered:'สำเร็จ',cancelled:'ยกเลิก',return_requested:'ขอคืนสินค้า'};
   var _list = _ordTabFilter
     ? _sellerOrders.filter(function(o){ return (ORD_TAB_GROUPS[_ordTabFilter]||[]).includes(o.status); })
     : _sellerOrders;
@@ -4171,24 +4171,29 @@ function renderOrdersLive() {
       <td style="padding:10px 12px;font-size:11px;color:#888">${fmtDate(o.created_at)}</td>
       <td style="padding:10px 12px;white-space:nowrap">
         <button onclick="openOrderDetail('${o.id}')" style="background:none;border:1px solid #E5E5E5;padding:4px 8px;font-size:11px;cursor:pointer">ดู</button>
-        ${o.status==='pending'?`<button onclick="confirmOrder('${o.id}')" style="background:#2563EB;color:#fff;border:none;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:4px">ยืนยัน</button>`:''}
-        ${['confirmed','processing'].includes(o.status)?`<button onclick="shipOrder('${o.id}')" style="background:#0891B2;color:#fff;border:none;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:4px">ส่งสินค้า</button>`:''}
+        ${['paid','confirmed'].includes(o.status)?`<button onclick="confirmOrder('${o.id}')" style="background:#7C3AED;color:#fff;border:none;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:4px">📦 เตรียมของ</button>`:''}
+        ${['paid','confirmed','preparing','processing'].includes(o.status)?`<button onclick="shipOrder('${o.id}')" style="background:#0891B2;color:#fff;border:none;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:4px">🚚 ส่งสินค้า</button>`:''}
+        ${o.status==='shipped'?`<button onclick="markDelivered('${o.id}')" style="background:#16A34A;color:#fff;border:none;padding:4px 8px;font-size:11px;cursor:pointer;margin-left:4px">✅ ถึงมือลูกค้า</button>`:''}
       </td></tr>`;
   }).join('');
 }
 
 async function confirmOrder(id) {
-  const {error}=await _sb.from('orders').update({status:'confirmed',updated_at:new Date().toISOString()}).eq('id',id);
-  if(error){toast('❌ '+error.message,'error');return;}
-  toast('✅ ยืนยันออเดอร์แล้ว','ok');
+  const r = await _sb.rpc('confirm_sub_order', { p_sub_order_id: id });
+  if (r.error){ toast('❌ '+r.error.message,'error'); return; }
+  if (r.data && r.data.ok === false){ toast('⚠️ '+(r.data.message||''),'error'); return; }
+  toast('✅ รับออเดอร์แล้ว — สถานะ: เตรียมพัสดุ','ok');
   await loadSellerOrders(); renderOrdersLive();
 }
 
 async function shipOrder(id) {
-  const tracking=prompt('เลขพัสดุ (ถ้ามี):')||'';
-  const {error}=await _sb.from('orders').update({status:'shipped',tracking_number:tracking,updated_at:new Date().toISOString()}).eq('id',id);
-  if(error){toast('❌ '+error.message,'error');return;}
-  toast('✅ อัปเดตส่งสินค้าแล้ว','ok');
+  const tracking = prompt('เลขพัสดุ:') || '';
+  if (!tracking.trim()){ toast('⚠️ กรุณากรอกเลขพัสดุ','error'); return; }
+  const carrier = prompt('บริษัทขนส่ง (เช่น Kerry, Flash, ไปรษณีย์ไทย):') || '';
+  const r = await _sb.rpc('ship_sub_order', { p_sub_order_id: id, p_tracking: tracking.trim(), p_carrier: carrier.trim() });
+  if (r.error){ toast('❌ '+r.error.message,'error'); return; }
+  if (r.data && r.data.ok === false){ toast('⚠️ '+(r.data.message||''),'error'); return; }
+  toast('✅ จัดส่งแล้ว · เลขพัสดุ '+tracking,'ok');
   await loadSellerOrders(); renderOrdersLive();
 }
 
