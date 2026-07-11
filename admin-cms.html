@@ -3039,6 +3039,27 @@ window.pmDisableMaintenance = async function() {
       <div class="pp-tab" data-pp="all" onclick="ppFilter('all',this)">ทั้งหมด</div>
     </div>
 
+    <!-- ⏳ ระยะกันเงิน (Holding Period) -->
+    <div style="background:#fff;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:14px">
+      <div style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer"
+           onclick="var b=document.getElementById('pp-hold-body');b.style.display=b.style.display==='none'?'block':'none';if(b.style.display==='block')ppLoadHolding();">
+        <b style="font-size:13px">⏳ ระยะกันเงิน (Holding Period)</b>
+        <span style="font-size:11px;color:#666">ตั้งวันกันเงินรายร้าน · ดูกำหนดปล่อยเงินรายใบ ▾</span>
+      </div>
+      <div id="pp-hold-body" style="display:none;padding:0 14px 14px">
+        <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:16px">
+          <div>
+            <div style="font-size:11px;color:#666;margin:8px 0">🏪 วันกันเงินรายร้าน — ว่าง = ค่าเริ่มต้น (ร้าน PRIME 3 วัน / ทั่วไป 7 วัน) · 0 = ปล่อยทันที</div>
+            <div id="pp-hold-sellers" style="font-size:12px">กำลังโหลด...</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#666;margin:8px 0">📦 ใบที่กำลังกันเงินอยู่ (ส่งสำเร็จแล้ว รอครบกำหนด)</div>
+            <div id="pp-hold-subs" style="font-size:12px;max-height:360px;overflow:auto">กำลังโหลด...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="ppPayModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)ppPayClose()">
   <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -3068,6 +3089,71 @@ window.pmDisableMaintenance = async function() {
 let _ppRequests = [];
 let _ppFilter = 'pending';
 let _ppSellers = {};
+
+// ── ⏳ Holding Period management ──
+async function ppLoadHolding(){
+  try {
+    const [selRes, subRes] = await Promise.all([
+      sb.from('sellers').select('id,shop_name,is_preferred,payout_hold_days').order('shop_name').limit(200),
+      sb.from('sub_orders').select('id,sub_number,seller_id,net_to_seller,release_at')
+        .eq('status','delivered').eq('money_released',false).order('release_at').limit(200)
+    ]);
+    const sellers = selRes.data || [];
+    const nameMap = {}; sellers.forEach(s => nameMap[s.id] = s.shop_name);
+
+    // ตารางร้าน + ตั้งวันกัน
+    const selEl = document.getElementById('pp-hold-sellers');
+    if (selEl) selEl.innerHTML = sellers.map(s => {
+      const def = s.is_preferred ? 3 : 7;
+      const cur = (s.payout_hold_days === null || s.payout_hold_days === undefined) ? '' : s.payout_hold_days;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F2F2F2">
+        <div style="flex:1;min-width:0"><b>${s.shop_name}</b>${s.is_preferred?' <span style="background:#FEF3C7;color:#92400E;font-size:9px;padding:1px 6px;border-radius:8px">PRIME</span>':''}
+          <div style="font-size:10px;color:#999">default ${def} วัน</div></div>
+        <input id="pp-hold-inp-${s.id}" type="number" min="0" max="30" value="${cur}" placeholder="${def}"
+               style="width:56px;padding:5px;border:1px solid #E5E5E5;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;text-align:center">
+        <span style="font-size:11px;color:#666">วัน</span>
+        <button class="pp-btn" style="padding:5px 10px" onclick="ppSetHold('${s.id}')">บันทึก</button>
+      </div>`;
+    }).join('') || '<div style="color:#999">ไม่มีร้าน</div>';
+
+    // ตารางใบที่กันเงินอยู่
+    const subEl = document.getElementById('pp-hold-subs');
+    const now = Date.now();
+    if (subEl) subEl.innerHTML = (subRes.data||[]).map(so => {
+      const rel = so.release_at ? new Date(so.release_at) : null;
+      const due = rel && rel.getTime() <= now;
+      const relTxt = rel ? rel.toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F2F2F2">
+        <div style="flex:1;min-width:0">
+          <b style="font-family:'DM Mono',monospace;font-size:11px">${so.sub_number}</b>
+          <div style="font-size:10px;color:#999">${nameMap[so.seller_id]||'—'}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'DM Mono',monospace">฿${Number(so.net_to_seller||0).toLocaleString()}</div>
+          <div style="font-size:10px;color:${due?'#10B981':'#F59E0B'}">${due?'✅ ครบกำหนดแล้ว':'⏳ ปล่อย '+relTxt}</div>
+        </div>
+        <button class="pp-btn primary" style="padding:5px 10px;font-size:11px" onclick="ppReleaseOne('${so.id}','${so.sub_number}')">ปล่อยเลย</button>
+      </div>`;
+    }).join('') || '<div style="color:#999;padding:8px 0">ไม่มีใบที่กันเงินอยู่ 🎉</div>';
+  } catch(e){ console.error('ppLoadHolding:', e); }
+}
+
+async function ppSetHold(sellerId){
+  const inp = document.getElementById('pp-hold-inp-'+sellerId);
+  const raw = (inp && inp.value !== '') ? parseInt(inp.value, 10) : null;
+  const r = await sb.rpc('admin_set_payout_hold', { p_seller_id: sellerId, p_days: raw });
+  if (r.error || (r.data && r.data.ok === false)) { alert('❌ '+(r.error?.message || r.data?.message)); return; }
+  alert('✅ ตั้งวันกันเงินแล้ว: '+(raw === null ? 'ใช้ค่า default' : raw+' วัน')+'\n(มีผลกับใบที่ส่งสำเร็จหลังจากนี้)');
+  ppLoadHolding();
+}
+
+async function ppReleaseOne(subId, subNumber){
+  if (!confirm('ปล่อยเงินใบ '+subNumber+' ก่อนกำหนด?\nเงินจะเข้ายอดพร้อมถอนของร้านทันที')) return;
+  const r = await sb.rpc('admin_release_sub', { p_sub_order_id: subId });
+  if (r.error || (r.data && r.data.ok === false)) { alert('❌ '+(r.error?.message || r.data?.message)); return; }
+  alert('✅ ปล่อยแล้ว '+(r.data?.released_count||0)+' รายการ ฿'+Number(r.data?.released_total||0).toLocaleString());
+  ppLoadHolding(); ppLoad();
+}
 
 async function ppLoad() {
   const wrap = document.getElementById('pp-list-wrap');
