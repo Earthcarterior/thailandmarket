@@ -7623,6 +7623,12 @@ async function renderFinanceLive() {
   try {
     // Ensure balance exists
     try { await _sb.rpc('ensure_seller_balance', {p_seller_id: _sellerSellerId}); } catch(_) {}
+    // ปล่อยเงินที่ครบกำหนดกันเงิน (fallback สำหรับกรณีไม่มี cron)
+    try {
+      const rel = await _sb.rpc('release_due_escrow');
+      if (rel.data && rel.data.released_count > 0)
+        toast('💰 ปล่อยเงินครบกำหนด '+rel.data.released_count+' รายการ ฿'+Number(rel.data.released_total||0).toLocaleString(),'ok');
+    } catch(_) {}
 
     const [{data: bal}, {data: txns}, {data: payouts}] = await Promise.all([
       _sb.from('seller_balances').select('*').eq('seller_id', _sellerSellerId).maybeSingle(),
@@ -9887,10 +9893,15 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
       return;
     }
     if (d && d.ok){
+      var relTxt = '';
+      if (d.held && d.release_at) {
+        relTxt = '\n\n⏳ กันเงิน '+(d.hold_days||'')+' วัน — เข้ายอดพร้อมถอนวันที่ '+
+                 new Date(d.release_at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      }
       alert('✅ จัดส่งสำเร็จ!\nยอดสินค้า ฿'+(d.gross||0).toLocaleString()+
             '\nหัก GP (ตามหมวดสินค้า) −฿'+(d.commission||0).toLocaleString()+
             '\nค่าส่ง (ไม่หัก GP) +฿'+(d.shipping||0).toLocaleString()+
-            '\nเข้ายอดพร้อมถอน ฿'+(d.net_to_seller||0).toLocaleString());
+            '\nร้านได้รับ ฿'+(d.net_to_seller||0).toLocaleString()+relTxt);
     } else {
       alert('✅ เปลี่ยนเป็นจัดส่งสำเร็จแล้ว');
     }
