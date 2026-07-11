@@ -557,10 +557,12 @@ async function loadCoupons() {
       if (!error && data) coupons = data;
     } catch(e) {}
 
-    // fallback: query ตรงเข้าตาราง
-    if (!coupons) {
+    // fallback: query ตรงเข้าตาราง (RPC error หรือคืนลิสต์ว่าง)
+    if (!coupons || !coupons.length) {
+      const nowIso = new Date().toISOString();
       const { data, error } = await sb.from('coupons').select('*')
         .eq('is_active', true)
+        .or(`end_at.is.null,end_at.gte.${nowIso}`)
         .order('priority', { ascending: false })
         .order('end_at', { ascending: true });
       if (error) throw error;
@@ -589,7 +591,44 @@ async function loadCoupons() {
       }));
     }
 
-    allCoupons = coupons || [];
+    // ── รวมคูปองร้านค้า (shop_vouchers ที่ร้านสร้างจาก seller portal) ──
+    let shopCoupons = [];
+    try {
+      const nowIso = new Date().toISOString();
+      const { data: sv } = await sb.from('shop_vouchers')
+        .select('*, sellers(shop_name, slug)')
+        .eq('status', 'active')
+        .or(`valid_until.is.null,valid_until.gte.${nowIso}`)
+        .order('created_at', { ascending: false })
+        .limit(60);
+      shopCoupons = (sv || []).map(v => ({
+        id: 'sv-' + v.id,
+        is_shop_voucher: true,
+        code: v.code,
+        name: v.name_th || v.code,
+        description: (v.voucher_type === 'follow_prize' ? '🎁 รางวัลผู้ติดตามร้าน ' : 'คูปองร้าน ') + (v.sellers?.shop_name || ''),
+        icon: v.voucher_type === 'follow_prize' ? '⭐' : '🏪',
+        banner_color: '#7C3AED',
+        type: v.discount_type === 'percent' ? 'percent' : 'fixed',
+        value: v.discount_value || 0,
+        min_order: v.min_order_amount || 0,
+        max_discount: v.max_discount || null,
+        usage_limit: v.max_uses_total || null,
+        used_count: v.uses_count || 0,
+        end_at: v.valid_until,
+        created_at: v.created_at,
+        seller_id: v.seller_id,
+        shop_name: v.sellers?.shop_name || '',
+        shop_slug: v.sellers?.slug || '',
+        priority: 50,
+        claimed: false
+      }));
+    } catch(svE) { console.warn('shop_vouchers:', svE); }
+
+    // กรองตัวหมดอายุออกทั้งสองแหล่ง แล้วรวม
+    const nowTs = Date.now();
+    const fresh = (coupons || []).filter(c => !c.end_at || new Date(c.end_at).getTime() >= nowTs);
+    allCoupons = fresh.concat(shopCoupons);
     document.getElementById('daily-counter').textContent = allCoupons.length + ' คูปอง';
 
     renderSections();
@@ -692,13 +731,18 @@ function couponCardHTML(c, kind) {
     ? `<div class="coup-coin">🪙 ${c.coin_cost} Coin</div>` : '';
 
   // store name
-  const storeBadge = (kind === 'store' && (c.brand_id || c.seller_id))
+  const storeBadge = c.shop_name
+    ? `<div class="coup-store">🏪 ${c.shop_name}</div>`
+    : (kind === 'store' && (c.brand_id || c.seller_id))
     ? `<div class="coup-store">${c.brand_id ? '🏷️ Brand' : '🏪 Seller'}</div>` : '';
 
   // action button
   const claimed = c.claimed === true;
   const actionBtn = expired
     ? '<button class="coup-btn" disabled style="opacity:.5">หมดอายุ</button>'
+    : c.is_shop_voucher
+    ? `<button class="coup-btn primary" onclick="event.stopPropagation();copyCode('${c.code}')">📋 คัดลอกโค้ด</button>
+       ${c.shop_slug ? `<button class="coup-btn" onclick="event.stopPropagation();location.href='shop.html?slug=${c.shop_slug}'">ไปที่ร้าน</button>` : ''}`
     : claimed
     ? `<button class="coup-btn claimed" disabled>✓ เก็บแล้ว</button>
        <button class="coup-btn primary" onclick="event.stopPropagation();useCoupon('${c.code}')">ใช้เลย</button>`
