@@ -7103,8 +7103,10 @@ async function loadAdminCoupons() {
                    : c.type === 'shipping' ? 'ส่งฟรี'
                    : '฿' + Number(c.value || 0).toLocaleString();
       const expired = c.end_at && new Date(c.end_at) < new Date();
+      const quotaFull = c.usage_limit && (c.claim_count || 0) >= c.usage_limit;
       const status = !c.is_active ? '<span style="background:#737373;color:#fff;padding:2px 8px;font-size:10px">⏸ ปิด</span>'
-                   : expired ? '<span style="background:#DC2626;color:#fff;padding:2px 8px;font-size:10px">⌛ หมด</span>'
+                   : expired ? '<span style="background:#DC2626;color:#fff;padding:2px 8px;font-size:10px">⌛ หมดอายุ</span>'
+                   : quotaFull ? '<span style="background:#D97706;color:#fff;padding:2px 8px;font-size:10px">🈵 เต็มโควตา</span>'
                    : '<span style="background:#16A34A;color:#fff;padding:2px 8px;font-size:10px">✓ ACTIVE</span>';
       const endTxt = c.end_at ? new Date(c.end_at).toLocaleDateString('th-TH', {day:'2-digit',month:'short',year:'2-digit'}) : 'ไม่จำกัด';
 
@@ -7117,12 +7119,15 @@ async function loadAdminCoupons() {
         <td><span class="cp-type-pill ${c.type||'fixed'}">${typeLabels[c.type] || c.type || 'fixed'}</span></td>
         <td style="font-family:'DM Mono',monospace;font-weight:600">${valStr}</td>
         <td style="font-family:'DM Mono',monospace;font-size:12px">
-          <span style="color:#16A34A">${c.claim_count || 0}</span> / 
-          <span style="color:#E63329">${c.used_count || 0}</span>
+          <span style="color:#16A34A" title="เก็บแล้ว">${c.claim_count || 0}</span> / 
+          <span style="color:#E63329" title="ใช้แล้ว">${c.used_count || 0}</span>
+          <div style="font-size:10px;color:#999">โควตา ${c.usage_limit ? Number(c.usage_limit).toLocaleString() : '∞'}</div>
         </td>
         <td style="font-family:'DM Mono',monospace;font-size:11px;color:#737373">${endTxt}</td>
         <td>${status}</td>
-        <td>
+        <td style="white-space:nowrap">
+          ${expired ? `<button class="btn btn-sm" style="border:none;background:#16A34A;color:#fff;margin-right:4px" title="ต่ออายุ" onclick="cpExtend('${c.id}','${(c.code||'')}')">⚡ ต่ออายุ</button>` : ''}
+          ${(!expired && quotaFull) ? `<button class="btn btn-sm" style="border:none;background:#D97706;color:#fff;margin-right:4px" title="เพิ่มโควตา" onclick="cpAddQuota('${c.id}',${c.usage_limit||0})">➕ เพิ่มโควตา</button>` : ''}
           <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff;margin-right:4px" onclick="editCoupon('${c.id}')">✏️</button>
           <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="cpToggleActive('${c.id}',${!c.is_active})">${c.is_active?'⏸':'▶️'}</button>
           <button class="btn btn-sm" style="border:1px solid #E5E5E5;background:#fff" onclick="deleteCoupon('${c.id}','${((c.name||c.code||'').replace(/'/g,''))}')">🗑️</button>
@@ -7240,6 +7245,35 @@ async function editCoupon(id) {
     if (error || !data) throw error || new Error('ไม่พบคูปอง');
     openCouponModal(data);
   } catch(e) { alert('โหลดไม่สำเร็จ: ' + e.message); }
+}
+
+// ⚡ ต่ออายุคูปองที่หมดอายุ (ไม่ต้องเปิดฟอร์ม)
+async function cpExtend(id, code) {
+  const days = prompt('ต่ออายุคูปอง ' + code + ' อีกกี่วัน?', '30');
+  if (!days) return;
+  const n = parseInt(days, 10);
+  if (!n || n < 1 || n > 365) { alert('กรอก 1-365 วัน'); return; }
+  const newEnd = new Date(Date.now() + n * 86400000).toISOString();
+  const { error } = await sb.from('coupons').update({
+    end_at: newEnd, expires_at: newEnd, is_active: true, updated_at: new Date().toISOString()
+  }).eq('id', id);
+  if (error) { alert('❌ ' + error.message); return; }
+  alert('✅ ต่ออายุแล้วถึง ' + new Date(newEnd).toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'}));
+  await loadAdminCoupons(); await loadCpKpis();
+}
+
+// ➕ เพิ่มโควตาคูปองที่เต็ม
+async function cpAddQuota(id, current) {
+  const add = prompt('เพิ่มโควตาอีกกี่ใบ? (ปัจจุบัน ' + Number(current).toLocaleString() + ')', '100');
+  if (!add) return;
+  const n = parseInt(add, 10);
+  if (!n || n < 1) { alert('กรอกจำนวนมากกว่า 0'); return; }
+  const { error } = await sb.from('coupons').update({
+    usage_limit: (current || 0) + n, updated_at: new Date().toISOString()
+  }).eq('id', id);
+  if (error) { alert('❌ ' + error.message); return; }
+  alert('✅ เพิ่มโควตาเป็น ' + ((current||0) + n).toLocaleString() + ' ใบ');
+  await loadAdminCoupons(); await loadCpKpis();
 }
 
 async function saveCoupon() {
