@@ -3047,14 +3047,24 @@ window.pmDisableMaintenance = async function() {
         <span style="font-size:11px;color:#666">ตั้งวันกันเงินรายร้าน · ดูกำหนดปล่อยเงินรายใบ ▾</span>
       </div>
       <div id="pp-hold-body" style="display:none;padding:0 14px 14px">
-        <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:16px">
+        <div id="pp-hold-summary" style="display:flex;gap:18px;flex-wrap:wrap;padding:10px 12px;background:#FAFAFA;border:1px solid #EFEFEF;border-radius:6px;margin-bottom:12px;font-size:12px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:16px">
           <div>
-            <div style="font-size:11px;color:#666;margin:8px 0">🏪 วันกันเงินรายร้าน — ว่าง = ค่าเริ่มต้น (ร้าน PRIME 3 วัน / ทั่วไป 7 วัน) · 0 = ปล่อยทันที</div>
-            <div id="pp-hold-sellers" style="font-size:12px">กำลังโหลด...</div>
+            <div style="font-size:11px;color:#666;margin:8px 0">🏪 วันกันเงินรายร้าน — ว่าง = ค่าเริ่มต้น (PRIME 3 วัน / ทั่วไป 7 วัน) · 0 = ปล่อยทันที</div>
+            <input id="pp-hold-seller-search" placeholder="🔍 ค้นหาร้าน..." oninput="ppRenderHoldSellers()"
+                   style="width:100%;padding:8px;border:1px solid #E5E5E5;border-radius:4px;font-size:12px;margin-bottom:8px;box-sizing:border-box">
+            <div id="pp-hold-sellers" style="font-size:12px;max-height:400px;overflow:auto">กำลังโหลด...</div>
           </div>
           <div>
             <div style="font-size:11px;color:#666;margin:8px 0">📦 ใบที่กำลังกันเงินอยู่ (ส่งสำเร็จแล้ว รอครบกำหนด)</div>
-            <div id="pp-hold-subs" style="font-size:12px;max-height:360px;overflow:auto">กำลังโหลด...</div>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <select id="pp-hold-shop-filter" onchange="ppRenderHoldSubs()"
+                      style="flex:1;padding:8px;border:1px solid #E5E5E5;border-radius:4px;font-size:12px;background:#fff">
+                <option value="">ทุกร้าน</option>
+              </select>
+              <button class="pp-btn" style="padding:8px 12px;white-space:nowrap" onclick="ppReleaseDueAll()">🔓 ปล่อยที่ครบกำหนด</button>
+            </div>
+            <div id="pp-hold-subs" style="font-size:12px;max-height:400px;overflow:auto">กำลังโหลด...</div>
           </div>
         </div>
       </div>
@@ -3091,51 +3101,97 @@ let _ppFilter = 'pending';
 let _ppSellers = {};
 
 // ── ⏳ Holding Period management ──
+let _ppHoldSellers = [], _ppHoldSubs = [];
+
 async function ppLoadHolding(){
   try {
     const [selRes, subRes] = await Promise.all([
-      sb.from('sellers').select('id,shop_name,is_preferred,payout_hold_days').order('shop_name').limit(200),
-      sb.from('sub_orders').select('id,sub_number,seller_id,net_to_seller,release_at')
-        .eq('status','delivered').eq('money_released',false).order('release_at').limit(200)
+      sb.from('sellers').select('id,shop_name,is_preferred,payout_hold_days').order('shop_name').limit(300),
+      sb.from('sub_orders').select('id,sub_number,seller_id,net_to_seller,release_at,delivered_at')
+        .eq('status','delivered').eq('money_released',false).order('release_at').limit(300)
     ]);
-    const sellers = selRes.data || [];
-    const nameMap = {}; sellers.forEach(s => nameMap[s.id] = s.shop_name);
+    _ppHoldSellers = selRes.data || [];
+    _ppHoldSubs = subRes.data || [];
 
-    // ตารางร้าน + ตั้งวันกัน
-    const selEl = document.getElementById('pp-hold-sellers');
-    if (selEl) selEl.innerHTML = sellers.map(s => {
-      const def = s.is_preferred ? 3 : 7;
-      const cur = (s.payout_hold_days === null || s.payout_hold_days === undefined) ? '' : s.payout_hold_days;
-      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F2F2F2">
-        <div style="flex:1;min-width:0"><b>${s.shop_name}</b>${s.is_preferred?' <span style="background:#FEF3C7;color:#92400E;font-size:9px;padding:1px 6px;border-radius:8px">PRIME</span>':''}
-          <div style="font-size:10px;color:#999">default ${def} วัน</div></div>
-        <input id="pp-hold-inp-${s.id}" type="number" min="0" max="30" value="${cur}" placeholder="${def}"
-               style="width:56px;padding:5px;border:1px solid #E5E5E5;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;text-align:center">
-        <span style="font-size:11px;color:#666">วัน</span>
-        <button class="pp-btn" style="padding:5px 10px" onclick="ppSetHold('${s.id}')">บันทึก</button>
-      </div>`;
-    }).join('') || '<div style="color:#999">ไม่มีร้าน</div>';
-
-    // ตารางใบที่กันเงินอยู่
-    const subEl = document.getElementById('pp-hold-subs');
+    // สรุปยอด
+    const total = _ppHoldSubs.reduce((s,x)=>s+Number(x.net_to_seller||0),0);
     const now = Date.now();
-    if (subEl) subEl.innerHTML = (subRes.data||[]).map(so => {
-      const rel = so.release_at ? new Date(so.release_at) : null;
-      const due = rel && rel.getTime() <= now;
-      const relTxt = rel ? rel.toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
-      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F2F2F2">
-        <div style="flex:1;min-width:0">
-          <b style="font-family:'DM Mono',monospace;font-size:11px">${so.sub_number}</b>
-          <div style="font-size:10px;color:#999">${nameMap[so.seller_id]||'—'}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:'DM Mono',monospace">฿${Number(so.net_to_seller||0).toLocaleString()}</div>
-          <div style="font-size:10px;color:${due?'#10B981':'#F59E0B'}">${due?'✅ ครบกำหนดแล้ว':'⏳ ปล่อย '+relTxt}</div>
-        </div>
-        <button class="pp-btn primary" style="padding:5px 10px;font-size:11px" onclick="ppReleaseOne('${so.id}','${so.sub_number}')">ปล่อยเลย</button>
-      </div>`;
-    }).join('') || '<div style="color:#999;padding:8px 0">ไม่มีใบที่กันเงินอยู่ 🎉</div>';
+    const dueSubs = _ppHoldSubs.filter(x=>x.release_at && new Date(x.release_at).getTime()<=now);
+    const dueTotal = dueSubs.reduce((s,x)=>s+Number(x.net_to_seller||0),0);
+    const shops = new Set(_ppHoldSubs.map(x=>x.seller_id)).size;
+    const sum = document.getElementById('pp-hold-summary');
+    if (sum) sum.innerHTML =
+      `<div>💰 เงินกันอยู่รวม<br><b style="font-size:16px;font-family:'DM Mono',monospace">฿${total.toLocaleString(undefined,{minimumFractionDigits:2})}</b></div>`+
+      `<div>📦 จำนวนใบ<br><b style="font-size:16px;font-family:'DM Mono',monospace">${_ppHoldSubs.length}</b> <span style="color:#999">(${shops} ร้าน)</span></div>`+
+      `<div>✅ ครบกำหนดแล้ว รอปล่อย<br><b style="font-size:16px;font-family:'DM Mono',monospace;color:#10B981">${dueSubs.length} ใบ · ฿${dueTotal.toLocaleString()}</b></div>`;
+
+    // dropdown ร้าน (เฉพาะร้านที่มีใบกันอยู่) + จำ selection เดิม
+    const sel = document.getElementById('pp-hold-shop-filter');
+    if (sel) {
+      const keep = sel.value;
+      const nameMap = {}; _ppHoldSellers.forEach(s=>nameMap[s.id]=s.shop_name);
+      const byShop = {};
+      _ppHoldSubs.forEach(x=>{ byShop[x.seller_id]=(byShop[x.seller_id]||0)+Number(x.net_to_seller||0); });
+      sel.innerHTML = '<option value="">ทุกร้าน ('+_ppHoldSubs.length+' ใบ)</option>' +
+        Object.keys(byShop).map(sid =>
+          `<option value="${sid}">${nameMap[sid]||'—'} · ฿${byShop[sid].toLocaleString()}</option>`).join('');
+      if (keep && byShop[keep] !== undefined) sel.value = keep;
+    }
+
+    ppRenderHoldSellers();
+    ppRenderHoldSubs();
   } catch(e){ console.error('ppLoadHolding:', e); }
+}
+
+function ppRenderHoldSellers(){
+  const qEl = document.getElementById('pp-hold-seller-search');
+  const term = (qEl && qEl.value || '').toLowerCase().trim();
+  const heldBy = {};
+  _ppHoldSubs.forEach(x=>{ heldBy[x.seller_id]=(heldBy[x.seller_id]||0)+1; });
+  let list = _ppHoldSellers.filter(s => !term || (s.shop_name||'').toLowerCase().includes(term));
+  // ร้านที่มีใบกันอยู่ขึ้นก่อน
+  list.sort((a,b)=>(heldBy[b.id]||0)-(heldBy[a.id]||0) || (a.shop_name||'').localeCompare(b.shop_name||''));
+  const el = document.getElementById('pp-hold-sellers');
+  if (!el) return;
+  el.innerHTML = list.map(s => {
+    const def = s.is_preferred ? 3 : 7;
+    const cur = (s.payout_hold_days === null || s.payout_hold_days === undefined) ? '' : s.payout_hold_days;
+    const held = heldBy[s.id] ? `<span style="background:#FEF3C7;color:#92400E;font-size:9px;padding:1px 6px;border-radius:8px">กันอยู่ ${heldBy[s.id]} ใบ</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F2F2F2">
+      <div style="flex:1;min-width:0"><b>${s.shop_name}</b>${s.is_preferred?' <span style="background:#EDE9FE;color:#5B21B6;font-size:9px;padding:1px 6px;border-radius:8px">PRIME</span>':''} ${held}
+        <div style="font-size:10px;color:#999">default ${def} วัน${cur!==''?' · ตั้งเอง '+cur+' วัน':''}</div></div>
+      <input id="pp-hold-inp-${s.id}" type="number" min="0" max="30" value="${cur}" placeholder="${def}"
+             style="width:52px;padding:5px;border:1px solid #E5E5E5;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;text-align:center">
+      <button class="pp-btn" style="padding:5px 10px" onclick="ppSetHold('${s.id}')">บันทึก</button>
+    </div>`;
+  }).join('') || '<div style="color:#999;padding:8px 0">ไม่พบร้าน</div>';
+}
+
+function ppRenderHoldSubs(){
+  const el = document.getElementById('pp-hold-subs');
+  if (!el) return;
+  const sel = document.getElementById('pp-hold-shop-filter');
+  const filterShop = sel ? sel.value : '';
+  const nameMap = {}; _ppHoldSellers.forEach(s=>nameMap[s.id]=s.shop_name);
+  const now = Date.now();
+  const rows = _ppHoldSubs.filter(x => !filterShop || x.seller_id === filterShop);
+  el.innerHTML = rows.map(so => {
+    const rel = so.release_at ? new Date(so.release_at) : null;
+    const due = rel && rel.getTime() <= now;
+    const daysLeft = rel ? Math.ceil((rel.getTime()-now)/(24*3600*1000)) : null;
+    const relTxt = rel ? rel.toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #F2F2F2">
+      <div style="flex:1;min-width:0">
+        <span style="background:#F2F2F2;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600">${nameMap[so.seller_id]||'—'}</span>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;margin-top:3px">${so.sub_number}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'DM Mono',monospace;font-weight:600">฿${Number(so.net_to_seller||0).toLocaleString()}</div>
+        <div style="font-size:10px;color:${due?'#10B981':'#F59E0B'}">${due?'✅ ครบกำหนดแล้ว':'⏳ อีก '+daysLeft+' วัน ('+relTxt+')'}</div>
+      </div>
+      <button class="pp-btn ${due?'primary':''}" style="padding:5px 10px;font-size:11px" onclick="ppReleaseOne('${so.id}','${so.sub_number}')">ปล่อยเลย</button>
+    </div>`;
+  }).join('') || '<div style="color:#999;padding:8px 0">ไม่มีใบที่กันเงินอยู่ 🎉</div>';
 }
 
 async function ppSetHold(sellerId){
@@ -3151,6 +3207,14 @@ async function ppReleaseOne(subId, subNumber){
   if (!confirm('ปล่อยเงินใบ '+subNumber+' ก่อนกำหนด?\nเงินจะเข้ายอดพร้อมถอนของร้านทันที')) return;
   const r = await sb.rpc('admin_release_sub', { p_sub_order_id: subId });
   if (r.error || (r.data && r.data.ok === false)) { alert('❌ '+(r.error?.message || r.data?.message)); return; }
+  alert('✅ ปล่อยแล้ว '+(r.data?.released_count||0)+' รายการ ฿'+Number(r.data?.released_total||0).toLocaleString());
+  ppLoadHolding(); ppLoad();
+}
+
+async function ppReleaseDueAll(){
+  if (!confirm('ปล่อยเงินทุกใบที่ครบกำหนดแล้ว?')) return;
+  const r = await sb.rpc('release_due_escrow');
+  if (r.error) { alert('❌ '+r.error.message); return; }
   alert('✅ ปล่อยแล้ว '+(r.data?.released_count||0)+' รายการ ฿'+Number(r.data?.released_total||0).toLocaleString());
   ppLoadHolding(); ppLoad();
 }
