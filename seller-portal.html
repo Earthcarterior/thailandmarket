@@ -7819,6 +7819,7 @@ window.finRequestPayout = async function() {
 
   const { data, error } = await _sb.rpc('request_payout', {p_amount: amt});
   if (error) { alert('❌ ' + error.message); return; }
+  if (data && data.ok === false) { alert('⚠️ ' + (data.message || 'ส่งคำขอไม่สำเร็จ')); return; }
   if (data && data.error) {
     const msgs = {NO_BANK_ACCOUNT:'กรุณาตั้งบัญชีธนาคารใน Settings ก่อน', INSUFFICIENT_FUNDS:'ยอด available ไม่พอ', BELOW_MINIMUM:'ขั้นต่ำ ฿100'};
     alert('⚠️ ' + (msgs[data.error] || data.message || data.error));
@@ -10236,6 +10237,7 @@ setTimeout(() => { if (_sellerSellerId) renderTasksToday(); }, 3000);
     if (amt > available){ alert('❌ ยอดเกินที่พร้อมถอน ('+fmtMoney(available)+')'); return; }
     var r = await s.rpc('request_payout', {p_amount: amt});
     if (r.error){ alert('❌ ส่งคำขอไม่สำเร็จ: '+r.error.message); return; }
+    if (r.data && r.data.ok === false){ alert('⚠️ '+(r.data.message||'ส่งคำขอไม่สำเร็จ')); return; }
     alert('✅ ส่งคำขอถอน '+fmtMoney(amt)+' เรียบร้อย\n\nรอ Admin อนุมัติ');
     await loadFinance();
     await loadDashStats();
