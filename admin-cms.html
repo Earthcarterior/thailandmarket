@@ -7345,6 +7345,7 @@ async function saveCoupon() {
 
     const payload = {
       code, name,
+      title: name,   // คอลัมน์เก่า NOT NULL — ใช้ค่าเดียวกับ name
       description: document.getElementById('cp-desc').value || null,
       icon: document.getElementById('cp-icon').value || '🎟️',
       banner_color: document.getElementById('cp-color').value,
