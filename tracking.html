@@ -215,6 +215,33 @@ async function findOrder(query){
     if (r.data) order = r.data;
   }
 
+  // 4. โหลด sub-orders (แต่ละร้านส่งแยกกล่อง เลขพัสดุคนละตัว)
+  if (order) {
+    try {
+      const { data: subs } = await _sb.from('sub_orders')
+        .select('id,sub_number,seller_id,status,tracking_number,tracking_carrier,shipped_at,delivered_at,shipping_fee,items_subtotal')
+        .eq('order_id', order.id)
+        .order('shop_index', { ascending: true });
+      order._subs = subs || [];
+      // ดึงชื่อร้านแยก (ไม่พึ่ง FK embed)
+      const sids = [...new Set(order._subs.map(s => s.seller_id).filter(Boolean))];
+      let nameMap = {};
+      if (sids.length) {
+        const { data: shops } = await _sb.from('sellers').select('id,shop_name').in('id', sids);
+        (shops || []).forEach(x => { nameMap[x.id] = x.shop_name; });
+      }
+      // ผูก items เข้ากับ sub ผ่าน seller_id
+      const bySeller = {};
+      (order.order_items || []).forEach(it => {
+        (bySeller[it.seller_id] = bySeller[it.seller_id] || []).push(it);
+      });
+      order._subs.forEach(s => {
+        s._items = bySeller[s.seller_id] || [];
+        s._shop_name = nameMap[s.seller_id] || '';
+      });
+    } catch(e) { console.warn('sub_orders:', e); order._subs = []; }
+  }
+
   return order;
 }
 
@@ -340,9 +367,45 @@ function renderOrder(order){
     </div>`;
   }
 
-  // Tracking box
+  // Tracking box — แยกพัสดุรายร้าน (multi-shop: แต่ละร้านส่งแยกกล่อง)
   let trackingHtml = '';
-  if (order.tracking_number) {
+  const subs = order._subs || [];
+  if (subs.length > 0) {
+    const SUB_ST = {
+      pending:   { label:'รอชำระเงิน',      color:'#D97706', icon:'⏳' },
+      paid:      { label:'ร้านรับออเดอร์แล้ว', color:'#16A34A', icon:'✅' },
+      confirmed: { label:'ยืนยันแล้ว',       color:'#2563EB', icon:'✅' },
+      preparing: { label:'กำลังเตรียมพัสดุ',  color:'#7C3AED', icon:'📦' },
+      processing:{ label:'กำลังเตรียมพัสดุ',  color:'#7C3AED', icon:'📦' },
+      shipped:   { label:'จัดส่งแล้ว',        color:'#0891B2', icon:'🚚' },
+      delivered: { label:'ส่งถึงแล้ว',        color:'#16A34A', icon:'🏠' },
+      cancelled: { label:'ยกเลิก',            color:'#737373', icon:'✖' }
+    };
+    trackingHtml = `<div style="padding:16px 20px 4px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">🚚 พัสดุแยกตามร้าน (${subs.length} กล่อง)</div>
+      ${subs.map(s => {
+        const ss = SUB_ST[s.status] || { label: s.status, color:'#737373', icon:'📦' };
+        const shopName = s._shop_name || 'ร้านค้า';
+        const itemNames = (s._items || []).map(it => esc(it.name_th)).slice(0,3).join(', ')
+          + ((s._items||[]).length > 3 ? ` +อีก ${(s._items.length-3)} ชิ้น` : '');
+        const trk = s.tracking_number
+          ? `<div class="tracking-num" style="font-size:15px" onclick="copy('${esc(s.tracking_number)}')">${esc(s.tracking_number)} 📋</div>
+             <div style="font-size:11px;color:#737373">${s.tracking_carrier ? esc(s.tracking_carrier) + ' · ' : ''}กดเพื่อคัดลอก</div>`
+          : `<div style="font-size:12px;color:#999">ยังไม่มีเลขพัสดุ — ร้านกำลังเตรียมจัดส่ง</div>`;
+        return `<div style="border:1px solid #EFEFEF;border-left:4px solid ${ss.color};border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#FDFDFD">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="min-width:0">
+              <div style="font-weight:700;font-size:13px">🏪 ${esc(shopName)}
+                <span style="font-family:monospace;font-size:10px;color:#999">· ${esc(s.sub_number||'')}</span></div>
+              ${itemNames ? `<div style="font-size:11px;color:#737373;margin-top:2px">${itemNames}</div>` : ''}
+            </div>
+            <span style="background:${ss.color}1A;color:${ss.color};font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;white-space:nowrap">${ss.icon} ${ss.label}</span>
+          </div>
+          <div style="margin-top:8px">${trk}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } else if (order.tracking_number) {
     const cls = order.delivered_at ? 'delivered' : 'shipped';
     trackingHtml = `<div class="tracking-box ${cls}">
       <div class="tracking-lbl">เลขพัสดุ${order.tracking_carrier ? ' (' + esc(order.tracking_carrier) + ')' : ''}</div>
