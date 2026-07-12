@@ -661,10 +661,12 @@ function renderSections() {
 }
 
 function matchCat(c, cat) {
+  // หมวดจริงจาก CMS มาก่อนเสมอ
+  if (c.category) return c.category === cat;
   if (cat === 'shipping') return c.type === 'shipping';
   if (cat === 'cashback') return c.type === 'cashback';
   if (cat === 'platform') return !c.seller_id && !c.brand_id;
-  // หมวดสินค้า — match จากชื่อหรือ description (best-effort เพราะ schema ยังไม่ได้ tag)
+  // fallback: คูปองเก่าที่ยังไม่ tag หมวด — เดาจาก keyword
   const keywords = {
     home: ['บ้าน','เฟอร์','ติดตั้ง','home'],
     fashion: ['แฟชั่น','เสื้อผ้า','รองเท้า','fashion'],

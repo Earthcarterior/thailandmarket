@@ -1352,6 +1352,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
           <div class="cp-form-grid">
             <div class="cp-fg">
+              <label class="cp-lbl">หมวดหมู่ (แสดงหน้า Coupon Hub)</label>
+              <select class="cp-inp" id="cp-category">
+                <option value="">— ไม่ระบุ (ขึ้นเฉพาะ "ทั้งหมด") —</option>
+                <option value="platform">Thailand Market คูปอง</option>
+                <option value="shipping">🚚 ฟรีค่าส่ง</option>
+                <option value="cashback">💰 แคชแบ็ก</option>
+                <option value="home">🏠 บ้านและเฟอร์นิเจอร์</option>
+                <option value="fashion">👗 แฟชั่น</option>
+                <option value="tech">📱 เทคโนโลยี</option>
+                <option value="beauty">💄 Beauty</option>
+                <option value="fmcg">🛍 FMCG</option>
+                <option value="pet">🐾 สัตว์เลี้ยง</option>
+              </select>
+            </div>
+            <div class="cp-fg">
               <label class="cp-lbl">User Segment</label>
               <select class="cp-inp" id="cp-segment">
                 <option value="all">ทุกคน</option>
@@ -7209,6 +7224,7 @@ function openCouponModal(data) {
   document.getElementById('cp-usage-limit').value = data?.usage_limit || '';
   document.getElementById('cp-user-limit').value = data?.user_limit || 1;
   document.getElementById('cp-segment').value = data?.user_segment || 'all';
+  document.getElementById('cp-category').value = data?.category || '';
   document.getElementById('cp-priority').value = data?.priority ?? 50;
   document.getElementById('cp-active').checked = data ? !!data.is_active : true;
   document.getElementById('cp-stackable').checked = data ? !!data.stackable : true;
@@ -7308,6 +7324,7 @@ async function saveCoupon() {
       coin_cost: parseInt(document.getElementById('cp-coin-cost').value) || 0,
       usage_limit: parseInt(document.getElementById('cp-usage-limit').value) || null,
       user_limit: parseInt(document.getElementById('cp-user-limit').value) || null,
+      category: document.getElementById('cp-category').value || null,
       user_segment: document.getElementById('cp-segment').value,
       priority: parseInt(document.getElementById('cp-priority').value) || 50,
       is_active: document.getElementById('cp-active').checked,
