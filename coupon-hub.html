@@ -550,12 +550,18 @@ async function loadUserStatus() {
 // ════════════════════════════════════════════════
 async function loadCoupons() {
   try {
-    // ลอง RPC ก่อน
+    // อ่านตารางตรงเป็นหลัก — ได้ครบทุกคอลัมน์รวม category (หมวดจาก CMS)
+    // หมายเหตุ: RPC get_available_coupons เดิมไม่ส่ง category กลับมา ทำให้ย้ายหมวดแล้วหน้าเว็บไม่เปลี่ยน
     let coupons = null;
+    // เติมสถานะ "เก็บแล้ว" ของผู้ใช้
+    let mineSet = new Set();
     try {
-      const { data, error } = await sb.rpc('get_available_coupons', { p_cart_total: 0 });
-      if (!error && data) coupons = data;
-    } catch(e) {}
+      if (currentUser) {
+        const { data: mine } = await sb.from('user_coupons')
+          .select('coupon_id').eq('user_id', currentUser.id);
+        mineSet = new Set((mine || []).map(x => x.coupon_id));
+      }
+    } catch(_) {}
 
     // fallback: query ตรงเข้าตาราง (RPC error หรือคืนลิสต์ว่าง)
     if (!coupons || !coupons.length) {
@@ -568,6 +574,7 @@ async function loadCoupons() {
       if (error) throw error;
       coupons = (data || []).map(c => ({
         ...c,
+        claimed: mineSet.has(c.id),
         // [PATCH 2026-05-03] normalize fallback name/description/icon
         name: c.name || c.title || c.code || 'คูปอง',
         description: c.description || '',
