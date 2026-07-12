@@ -3048,6 +3048,17 @@ window.pmDisableMaintenance = async function() {
       <div class="pp-stat"><div class="pp-stat-l">รวมที่จ่าย</div><div class="pp-stat-v" id="pp-stat-total" style="color:#3B82F6">—</div></div>
     </div>
 
+    <!-- 💰 ภาพรวมเงินทั้งระบบ (ทุกขั้นของวงจร) -->
+    <div style="background:#fff;border:1px solid #E5E5E5;border-radius:6px;margin-bottom:14px;padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <b style="font-size:13px">💰 เงินทั้งระบบ (ทุกร้าน · ทุกขั้น)</b>
+        <span style="font-size:10px;color:#999">จ่ายแล้ว → รอเคลียร์ → ส่งถึง+กันเงิน → พร้อมถอน → ขอถอน</span>
+      </div>
+      <div id="pp-money-overview" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:12px;font-size:12px">กำลังโหลด...</div>
+      <div style="margin-top:10px;font-size:12px;color:#2563EB;cursor:pointer" onclick="var b=document.getElementById('pp-money-shops');b.style.display=b.style.display==='none'?'block':'none'">📊 ดูยอดเงินรายร้าน ▾</div>
+      <div id="pp-money-shops" style="display:none;margin-top:8px;font-size:12px"></div>
+    </div>
+
     <div class="pp-tabs">
       <div class="pp-tab on" data-pp="pending" onclick="ppFilter('pending',this)">⏳ รออนุมัติ</div>
       <div class="pp-tab" data-pp="paid" onclick="ppFilter('paid',this)">✅ จ่ายแล้ว</div>
@@ -3115,6 +3126,71 @@ window.pmDisableMaintenance = async function() {
 let _ppRequests = [];
 let _ppFilter = 'pending';
 let _ppSellers = {};
+
+// ── 💰 ภาพรวมเงินทั้งระบบ ──
+async function ppLoadMoneyOverview(){
+  try {
+    const [balRes, subRes, selRes] = await Promise.all([
+      sb.from('seller_balances').select('seller_id,escrow,available,pending_payout,total_earned'),
+      sb.from('sub_orders').select('seller_id,status,net_to_seller,money_released')
+        .in('status', ['paid','confirmed','processing','preparing','shipped','delivered']),
+      sb.from('sellers').select('id,shop_name')
+    ]);
+    const bals = balRes.data || [], subs = subRes.data || [];
+    const names = {}; (selRes.data||[]).forEach(s => names[s.id] = s.shop_name);
+
+    const sum = (arr, f) => arr.reduce((t,x) => t + Number(f(x)||0), 0);
+    const escrowActive = sum(subs.filter(s => s.status !== 'delivered'), s => s.net_to_seller);           // จ่ายแล้ว ยังไม่ส่งถึง
+    const held         = sum(subs.filter(s => s.status === 'delivered' && !s.money_released), s => s.net_to_seller);  // ส่งถึงแล้ว กันเงินอยู่
+    const available    = sum(bals, b => b.available);
+    const pendingOut   = sum(bals, b => b.pending_payout);
+    const totalEarned  = sum(bals, b => b.total_earned);
+
+    const fB = n => '฿' + Number(n||0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+    const card = (icon, lbl, val, color, sub) =>
+      `<div style="border:1px solid #EFEFEF;border-radius:6px;padding:10px 12px">
+        <div style="font-size:10px;color:#666">${icon} ${lbl}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${color};margin-top:2px">${val}</div>
+        ${sub ? `<div style="font-size:9px;color:#999;margin-top:2px">${sub}</div>` : ''}
+      </div>`;
+    const ov = document.getElementById('pp-money-overview');
+    if (ov) ov.innerHTML =
+      card('🔒','รอเคลียร์ (ยังไม่ส่งถึง)', fB(escrowActive), '#F59E0B', 'จ่ายแล้ว/เตรียม/กำลังส่ง') +
+      card('⏳','ส่งถึงแล้ว · กันเงินอยู่', fB(held), '#7C3AED', 'รอครบกำหนดปล่อย') +
+      card('💚','พร้อมถอน (ทุกร้านรวม)', fB(available), '#10B981', 'ร้านกดขอถอนได้') +
+      card('📤','กำลังขอถอน', fB(pendingOut), '#0891B2', 'รอ admin โอน') +
+      card('📈','รายได้ร้านสะสมรวม', fB(totalEarned), '#171717', 'หลังหัก GP · รวมค่าส่ง');
+
+    // ตารางรายร้าน
+    const perShop = {};
+    subs.forEach(s => {
+      const p = perShop[s.seller_id] = perShop[s.seller_id] || { escrow:0, held:0 };
+      if (s.status !== 'delivered') p.escrow += Number(s.net_to_seller||0);
+      else if (!s.money_released) p.held += Number(s.net_to_seller||0);
+    });
+    bals.forEach(b => {
+      const p = perShop[b.seller_id] = perShop[b.seller_id] || { escrow:0, held:0 };
+      p.available = Number(b.available||0); p.pending = Number(b.pending_payout||0); p.earned = Number(b.total_earned||0);
+    });
+    const rows = Object.entries(perShop)
+      .filter(([_,p]) => (p.escrow||0)+(p.held||0)+(p.available||0)+(p.pending||0)+(p.earned||0) > 0)
+      .sort((a,b) => (b[1].earned||0)-(a[1].earned||0));
+    const shopsEl = document.getElementById('pp-money-shops');
+    if (shopsEl) shopsEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px">
+      <tr style="background:#FAFAFA;text-align:right">
+        <th style="text-align:left;padding:6px 8px">ร้าน</th><th style="padding:6px 8px">รอเคลียร์</th>
+        <th style="padding:6px 8px">กันเงินอยู่</th><th style="padding:6px 8px">พร้อมถอน</th>
+        <th style="padding:6px 8px">กำลังขอถอน</th><th style="padding:6px 8px">รายได้สะสม</th></tr>
+      ${rows.map(([sid,p]) => `<tr style="border-top:1px solid #F2F2F2;text-align:right;font-family:'DM Mono',monospace">
+        <td style="text-align:left;padding:6px 8px;font-family:inherit;font-weight:600">${names[sid]||'—'}</td>
+        <td style="padding:6px 8px;color:#F59E0B">${fB(p.escrow)}</td>
+        <td style="padding:6px 8px;color:#7C3AED">${fB(p.held)}</td>
+        <td style="padding:6px 8px;color:#10B981">${fB(p.available)}</td>
+        <td style="padding:6px 8px;color:#0891B2">${fB(p.pending||0)}</td>
+        <td style="padding:6px 8px">${fB(p.earned||0)}</td></tr>`).join('')}
+    </table>` || 'ไม่มีข้อมูล';
+  } catch(e){ console.error('ppLoadMoneyOverview:', e); }
+}
 
 // ── ⏳ Holding Period management ──
 let _ppHoldSellers = [], _ppHoldSubs = [];
@@ -3236,6 +3312,7 @@ async function ppReleaseDueAll(){
 }
 
 async function ppLoad() {
+  ppLoadMoneyOverview();
   const wrap = document.getElementById('pp-list-wrap');
   const sb = window._sb || window.sb;
   if (!sb) return;
