@@ -923,6 +923,7 @@ function renderProfileOrders() {
     })()}
     <div class="oi-bot"><div class="oi-total">฿${orderTotal.toLocaleString()}</div>
     <div class="oi-btns">
+      <button class="btn btn-sm btn-ghost" onclick="ordToggleDetail('${o.id}','${o.order_number||''}')">📦 รายละเอียด & Tracking</button>
       ${o.status==='pending'?`<button class="btn btn-sm" style="background:#FCD34D;color:#7C2D12;font-weight:700" onclick="location.href='checkout.html?direct=${o.id}'">⏳ ชำระเงิน</button>`:''}
       ${(o.status==='shipped'||o.status==='shipping')?`<button class="btn btn-sm btn-ghost" onclick="location.href='tracking.html?order=${o.order_number}'">📍 ติดตาม</button>`:''}
       ${canReview(o.status)?`<button class="btn btn-sm btn-ghost" onclick="location.href='review-write.html?order=${o.id}'">⭐ รีวิว</button>`:''}
@@ -931,7 +932,77 @@ function renderProfileOrders() {
       ${(o.status==='return_approved')?`<span class="btn btn-sm" style="background:#DBEAFE;color:#1E40AF;cursor:default">✅ อนุมัติคืนแล้ว · รอเงินคืน</span>`:''}
       ${(o.status==='refunded')?`<span class="btn btn-sm" style="background:#D1FAE5;color:#065F46;cursor:default">💰 คืนเงินเรียบร้อยแล้ว</span>`:''}
     </div></div>
+    <div id="oi-detail-${o.id}" style="display:none;margin-top:10px;border-top:1px dashed #E5E5E5;padding-top:10px"></div>
   </div>`}).join('');
+}
+
+// 📦 รายละเอียดออเดอร์ + Tracking แยกรายร้าน
+async function ordToggleDetail(orderId, orderNumber) {
+  const box = document.getElementById('oi-detail-' + orderId);
+  if (!box) return;
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = '<div style="color:#999;font-size:12px">กำลังโหลด...</div>';
+  try {
+    const [subRes, itemRes] = await Promise.all([
+      sb.from('sub_orders')
+        .select('id,sub_number,seller_id,status,tracking_number,tracking_carrier,shipping_fee,items_subtotal')
+        .eq('order_id', orderId).order('shop_index', {ascending: true}),
+      sb.from('order_items')
+        .select('name_th,qty,price,subtotal,thumbnail,seller_id')
+        .eq('order_id', orderId)
+    ]);
+    const subs = subRes.data || [], items = itemRes.data || [];
+    const sids = [...new Set([...subs.map(s=>s.seller_id), ...items.map(i=>i.seller_id)].filter(Boolean))];
+    let names = {};
+    if (sids.length) {
+      const { data: shops } = await sb.from('sellers').select('id,shop_name').in('id', sids);
+      (shops||[]).forEach(x => names[x.id] = x.shop_name);
+    }
+    const ST = {
+      pending:['รอชำระเงิน','#D97706'], paid:['ร้านรับออเดอร์แล้ว','#16A34A'],
+      confirmed:['ยืนยันแล้ว','#2563EB'], preparing:['กำลังเตรียมพัสดุ','#7C3AED'],
+      processing:['กำลังเตรียมพัสดุ','#7C3AED'], shipped:['จัดส่งแล้ว','#0891B2'],
+      delivered:['ส่งถึงแล้ว','#16A34A'], cancelled:['ยกเลิก','#737373']
+    };
+    const itemRow = it => `<div style="display:flex;align-items:center;gap:10px;padding:6px 0">
+      ${it.thumbnail ? `<img src="${it.thumbnail}" style="width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #EFEFEF">` : '<div style="width:38px;height:38px;background:#F5F5F5;border-radius:6px"></div>'}
+      <div style="flex:1;min-width:0;font-size:12px">${it.name_th || 'สินค้า'}</div>
+      <div style="font-size:11px;color:#737373">×${it.qty || 1}</div>
+      <div style="font-family:monospace;font-size:12px;font-weight:600">฿${Number(it.subtotal || (it.price*(it.qty||1)) || 0).toLocaleString()}</div>
+    </div>`;
+
+    if (subs.length) {
+      // แยกพัสดุรายร้าน + สินค้าของร้านนั้น
+      box.innerHTML = subs.map(s => {
+        const st = ST[s.status] || [s.status, '#737373'];
+        const its = items.filter(i => i.seller_id === s.seller_id);
+        const trk = s.tracking_number
+          ? `<div style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:6px;padding:6px 10px;margin-top:6px;font-size:12px;display:flex;align-items:center;gap:6px">
+              🚚 <b>${s.tracking_carrier || 'ขนส่ง'}</b>
+              <span style="font-family:monospace;background:#E0F2FE;padding:1px 6px;border-radius:3px">${s.tracking_number}</span>
+              <button onclick="navigator.clipboard.writeText('${s.tracking_number}');this.textContent='✓'" style="margin-left:auto;background:none;border:1px solid #7DD3FC;color:#0369A1;border-radius:4px;padding:1px 8px;font-size:11px;cursor:pointer">คัดลอก</button>
+            </div>`
+          : `<div style="font-size:11px;color:#999;margin-top:6px">ยังไม่มีเลขพัสดุ — ร้านกำลังเตรียมจัดส่ง</div>`;
+        return `<div style="border:1px solid #EFEFEF;border-left:4px solid ${st[1]};border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#FDFDFD">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <b style="font-size:12px">🏪 ${names[s.seller_id] || 'ร้านค้า'}</b>
+            <span style="font-family:monospace;font-size:10px;color:#999">${s.sub_number || ''}</span>
+            <span style="margin-left:auto;background:${st[1]}1A;color:${st[1]};font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px">${st[0]}</span>
+          </div>
+          ${trk}
+          <div style="margin-top:6px;border-top:1px solid #F5F5F5">${its.map(itemRow).join('') || '<div style="font-size:11px;color:#999;padding:6px 0">—</div>'}</div>
+          <div style="font-size:11px;color:#737373;text-align:right">สินค้า ฿${Number(s.items_subtotal||0).toLocaleString()} + ส่ง ฿${Number(s.shipping_fee||0).toLocaleString()}</div>
+        </div>`;
+      }).join('') + (orderNumber ? `<div style="text-align:right"><a href="tracking.html?order=${orderNumber}" style="font-size:12px;color:#2563EB">📍 เปิดหน้าติดตามพัสดุแบบเต็ม →</a></div>` : '');
+    } else {
+      // ออเดอร์เก่าไม่มี sub — โชว์สินค้าทุกชิ้นแบบแบน
+      box.innerHTML = `<div style="font-size:12px;font-weight:700;margin-bottom:4px">🛍️ สินค้าทั้งหมด (${items.length})</div>`
+        + (items.map(itemRow).join('') || '<div style="font-size:12px;color:#999">ไม่พบรายการสินค้า</div>');
+    }
+  } catch(e) {
+    box.innerHTML = '<div style="color:#DC2626;font-size:12px">โหลดไม่สำเร็จ: ' + e.message + '</div>';
+  }
 }
 
 // ขอคืนสินค้า — แจ้งให้ติดต่อ support (modal เต็มอยู่ใน order-history เดิม)
