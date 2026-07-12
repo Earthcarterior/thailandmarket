@@ -256,7 +256,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
     <div class="hero-sub">คูปองส่วนลด ฟรีค่าส่ง แคชแบ็ก รอคุณอยู่ทุกวัน · เก็บฟรี ไม่จำกัด</div>
 
     <div class="search-wrap">
-      <input type="text" id="search-input" placeholder="ค้นหา code คูปอง เช่น WELCOME50" maxlength="40">
+      <input type="text" id="search-input" placeholder="ค้นหาคูปอง เช่น ส่งฟรี, ลด 20%, WELCOME50" maxlength="40">
       <button onclick="searchCoupon()">ค้นหา</button>
     </div>
 
@@ -667,16 +667,37 @@ function renderSections() {
   // กรองตามหมวดหมู่
   const filtered = currentCat === 'all' ? allCoupons : allCoupons.filter(c => matchCat(c, currentCat));
 
-  // แบ่งกลุ่ม
-  const daily = filtered.slice(0, 4);
-  const popular = [...filtered].sort((a,b) => (b.claim_count||0) - (a.claim_count||0)).slice(0, 6);
-  const category = filtered.filter(c => c.type !== 'shipping' && c.type !== 'cashback').slice(0, 6);
-  const store = filtered.filter(c => c.seller_id || c.brand_id).slice(0, 8);
+  const showSec = (id, show) => {
+    const el = document.getElementById(id);
+    const sec = el && el.closest('.section');
+    if (sec) sec.style.display = show ? '' : 'none';
+  };
+  const setCatTitle = (txt) => {
+    const el = document.getElementById('category-list');
+    const t = el && el.closest('.section')?.querySelector('.section-title');
+    if (t) t.innerHTML = txt;
+  };
 
-  renderCouponList('daily-list',    daily,    'platform');
-  renderCouponList('popular-list',  popular,  'popular');
-  renderCouponList('category-list', category, 'category');
-  renderCouponList('store-list',    store,    'store');
+  if (currentCat === 'all') {
+    // หน้ารวม: มี section แนะนำ + "คูปองทั้งหมด" โชว์ครบทุกใบ ไม่หั่น ไม่คัดประเภททิ้ง
+    const daily = filtered.slice(0, 8);
+    const popular = [...filtered].sort((a,b) => (b.claim_count||0) - (a.claim_count||0)).slice(0, 6);
+    const store = filtered.filter(c => c.is_shop_voucher || c.seller_id || c.brand_id);
+    renderCouponList('daily-list',    daily,    'platform');
+    renderCouponList('popular-list',  popular,  'popular');
+    setCatTitle('<span class="ico">🎟️</span> คูปองทั้งหมด (' + filtered.length + ')');
+    renderCouponList('category-list', filtered, 'category');
+    renderCouponList('store-list',    store,    'store');
+    showSec('daily-list', true); showSec('popular-list', true);
+    showSec('category-list', true); showSec('store-list', store.length > 0);
+  } else {
+    // เลือกหมวด: โชว์คูปองของหมวดนั้นครบทุกใบในกริดเดียว
+    const pill = document.querySelector('.cat-pill.on');
+    setCatTitle('<span class="ico">🎟️</span> ' + (pill ? pill.textContent.trim() : 'หมวดนี้') + ' (' + filtered.length + ')');
+    renderCouponList('category-list', filtered, 'category');
+    showSec('daily-list', false); showSec('popular-list', false);
+    showSec('store-list', false); showSec('category-list', true);
+  }
 }
 
 function matchCat(c, cat) {
@@ -700,6 +721,8 @@ function matchCat(c, cat) {
 }
 
 function filterCat(cat, btn) {
+  const si = document.getElementById('search-input');
+  if (si) si.value = '';
   currentCat = cat;
   document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('on'));
   btn.classList.add('on');
@@ -882,24 +905,51 @@ function copyCode(code) {
 //  SEARCH
 // ════════════════════════════════════════════════
 async function searchCoupon() {
-  const code = document.getElementById('search-input').value.trim().toUpperCase();
-  if (!code) return;
+  const term = document.getElementById('search-input').value.trim();
+  if (!term) { renderSections(); return; }
+
+  // 1) ค้นจากคูปองที่โหลดมาแล้ว: ชื่อ / คำอธิบาย / โค้ด / ชื่อร้าน
+  const q = term.toLowerCase();
+  const hits = allCoupons.filter(c =>
+    (c.name || '').toLowerCase().includes(q) ||
+    (c.description || '').toLowerCase().includes(q) ||
+    (c.code || '').toLowerCase().includes(q) ||
+    (c.shop_name || '').toLowerCase().includes(q)
+  );
+
+  if (hits.length) {
+    // โชว์ผลค้นหาในกริดเดียว ซ่อน section อื่น
+    const showSec = (id, show) => {
+      const el = document.getElementById(id);
+      const sec = el && el.closest('.section');
+      if (sec) sec.style.display = show ? '' : 'none';
+    };
+    const el = document.getElementById('category-list');
+    const t = el && el.closest('.section')?.querySelector('.section-title');
+    if (t) t.innerHTML = '<span class="ico">🔍</span> ผลการค้นหา "' + term + '" (' + hits.length + ')';
+    renderCouponList('category-list', hits, 'category');
+    showSec('daily-list', false); showSec('popular-list', false);
+    showSec('store-list', false); showSec('category-list', true);
+    return;
+  }
+
+  // 2) ไม่เจอในลิสต์ → ลองเป็นโค้ดเป๊ะ (เผื่อคูปองลับ/ต้องเก็บก่อน)
+  const code = term.toUpperCase();
   try {
     const { data, error } = await sb.rpc('validate_coupon', {
       p_code: code, p_user_id: currentUser?.id || null, p_cart_total: 0
     });
     if (error) throw error;
-    if (!data?.valid) { toast(data?.reason || 'ไม่พบโค้ด', 'err'); return; }
+    if (!data?.valid) { toast('ไม่พบคูปองที่ตรงกับ "' + term + '"', 'err'); return; }
     toast(`✅ พบคูปอง "${data.name}" — กำลังเก็บ...`, 'ok');
     if (data.coupon_id) await claimCoupon(data.coupon_id, data.name);
   } catch(e) {
-    // fallback: ลอง query ตรง
     try {
       const { data: c } = await sb.from('coupons').select('*')
         .ilike('code', code).eq('is_active', true).limit(1).maybeSingle();
-      if (!c) { toast('ไม่พบโค้ด ' + code, 'err'); return; }
+      if (!c) { toast('ไม่พบคูปองที่ตรงกับ "' + term + '"', 'err'); return; }
       await claimCoupon(c.id, c.name);
-    } catch(e2) { toast('ไม่พบโค้ด', 'err'); }
+    } catch(e2) { toast('ไม่พบคูปองที่ตรงกับ "' + term + '"', 'err'); }
   }
 }
 
@@ -1032,6 +1082,10 @@ function scrollToSection(id) {
 }
 
 // Search on Enter
+document.getElementById('search-input').addEventListener('input', e => {
+  clearTimeout(window._hubSearchT);
+  window._hubSearchT = setTimeout(searchCoupon, 250);   // ค้นสดขณะพิมพ์
+});
 document.getElementById('search-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchCoupon();
 });
