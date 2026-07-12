@@ -1353,7 +1353,7 @@ window.addEventListener('DOMContentLoaded', () => {
           <div class="cp-form-grid">
             <div class="cp-fg">
               <label class="cp-lbl">หมวดหมู่ (แสดงหน้า Coupon Hub)</label>
-              <select class="cp-inp" id="cp-category">
+              <select class="cp-inp" id="cp-category" onchange="cpCategoryChanged(this)">
                 <option value="">— ไม่ระบุ (ขึ้นเฉพาะ "ทั้งหมด") —</option>
                 <option value="platform">Thailand Market คูปอง</option>
                 <option value="shipping">🚚 ฟรีค่าส่ง</option>
@@ -1364,6 +1364,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 <option value="beauty">💄 Beauty</option>
                 <option value="fmcg">🛍 FMCG</option>
                 <option value="pet">🐾 สัตว์เลี้ยง</option>
+                <option value="__new__">➕ เพิ่มหมวดใหม่...</option>
               </select>
             </div>
             <div class="cp-fg">
@@ -7224,7 +7225,7 @@ function openCouponModal(data) {
   document.getElementById('cp-usage-limit').value = data?.usage_limit || '';
   document.getElementById('cp-user-limit').value = data?.user_limit || 1;
   document.getElementById('cp-segment').value = data?.user_segment || 'all';
-  document.getElementById('cp-category').value = data?.category || '';
+  cpLoadCategories(data?.category || '');
   document.getElementById('cp-priority').value = data?.priority ?? 50;
   document.getElementById('cp-active').checked = data ? !!data.is_active : true;
   document.getElementById('cp-stackable').checked = data ? !!data.stackable : true;
@@ -7261,6 +7262,36 @@ async function editCoupon(id) {
     if (error || !data) throw error || new Error('ไม่พบคูปอง');
     openCouponModal(data);
   } catch(e) { alert('โหลดไม่สำเร็จ: ' + e.message); }
+}
+
+// ── หมวดคูปองแบบ dynamic (ตาราง coupon_categories) ──
+async function cpLoadCategories(selectedVal) {
+  const sel = document.getElementById('cp-category');
+  if (!sel) return;
+  try {
+    const { data } = await sb.from('coupon_categories')
+      .select('key,name_th,icon').eq('is_active', true).order('sort_order');
+    if (data && data.length) {
+      sel.innerHTML = '<option value="">— ไม่ระบุ (ขึ้นเฉพาะ "ทั้งหมด") —</option>' +
+        data.map(c => `<option value="${c.key}">${c.icon ? c.icon+' ' : ''}${c.name_th}</option>`).join('') +
+        '<option value="__new__">➕ เพิ่มหมวดใหม่...</option>';
+    }
+  } catch(e) { console.warn('cpLoadCategories:', e); }
+  if (selectedVal !== undefined) sel.value = selectedVal || '';
+}
+
+async function cpCategoryChanged(sel) {
+  if (sel.value !== '__new__') return;
+  const name = prompt('ชื่อหมวดใหม่ (ภาษาไทย):');
+  if (!name || !name.trim()) { sel.value = ''; return; }
+  const icon = prompt('ไอคอน emoji (เว้นว่างได้):', '🎟️') || '';
+  const key = 'cat_' + Date.now().toString(36);
+  const { error } = await sb.from('coupon_categories').insert({
+    key, name_th: name.trim(), icon: icon.trim(), sort_order: 500
+  });
+  if (error) { alert('❌ เพิ่มหมวดไม่สำเร็จ: ' + error.message); sel.value = ''; return; }
+  await cpLoadCategories(key);
+  alert('✅ เพิ่มหมวด "' + name.trim() + '" แล้ว — แท็บหน้า Coupon Hub จะขึ้นอัตโนมัติ');
 }
 
 // ⚡ ต่ออายุคูปองที่หมดอายุ (ไม่ต้องเปิดฟอร์ม)

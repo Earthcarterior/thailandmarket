@@ -591,6 +591,18 @@ async function loadCoupons() {
       }));
     }
 
+    // ── สร้างแท็บหมวดจากตาราง coupon_categories (dynamic) ──
+    try {
+      const { data: cats } = await sb.from('coupon_categories')
+        .select('key,name_th,icon').eq('is_active', true).order('sort_order');
+      if (cats && cats.length) {
+        const wrap = document.getElementById('cats');
+        wrap.innerHTML = '<button class="cat-pill on" data-cat="all" onclick="filterCat(\'all\', this)">ทั้งหมด</button>' +
+          cats.map(c => `<button class="cat-pill" data-cat="${c.key}" onclick="filterCat('${c.key}', this)">${c.icon ? c.icon+' ' : ''}${c.name_th}</button>`).join('') +
+          '<button class="cat-pill" data-cat="store" onclick="filterCat(\'store\', this)">🏪 คูปองร้านค้า</button>';
+      }
+    } catch(catE) { console.warn('coupon_categories:', catE); }
+
     // ── รวมคูปองร้านค้า (shop_vouchers ที่ร้านสร้างจาก seller portal) ──
     let shopCoupons = [];
     try {
@@ -662,6 +674,7 @@ function renderSections() {
 
 function matchCat(c, cat) {
   // หมวดจริงจาก CMS มาก่อนเสมอ
+  if (cat === 'store') return !!c.is_shop_voucher;
   if (c.category) return c.category === cat;
   if (cat === 'shipping') return c.type === 'shipping';
   if (cat === 'cashback') return c.type === 'cashback';
