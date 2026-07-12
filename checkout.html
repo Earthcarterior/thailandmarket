@@ -2075,6 +2075,12 @@ async function doCheckout(){
       shipping_fee: shipping,
       shipping_method: courierCode,            // courier code (kerry, flash, etc.)
       shipping_method_name: courierName,       // display name
+      // ค่าส่งแยกรายร้าน (ตามขนส่งที่ลูกค้าเลือกของแต่ละร้าน) — trigger ใช้ตอนสร้าง sub_orders
+      shipping_breakdown: Object.fromEntries(Object.entries(_shippingBySeller).map(([sid, s]) => [sid, {
+        fee: s.is_free ? 0 : Number(s.price || 0),
+        courier_code: s.code || null,
+        courier_name: s.name_th || null
+      }])),
       total: total,
       total_amount: total,                     // เขียนทั้ง 2 column — กัน column split bug
       payment_method: selPay,
