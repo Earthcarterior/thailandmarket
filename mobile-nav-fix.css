@@ -1,38 +1,58 @@
 /* ═══════════════════════════════════════════════════════════════════
-   📱 MOBILE NAV FIX — Thailand Market
-      วันที่: 2026-05-15
-         แก้ปัญหา nav responsive ทุก viewport
-         ═══════════════════════════════════════════════════════════════════ */
+   📱 MOBILE NAV FIX v2 — Thailand Market (2026-07-14)
+   หลัก: จอเล็กไม่เบียดทุกอย่างแถวเดียว — search แยกเป็นแถวเต็มกว้าง
+   แถว 1: โลโก้ ←→ ปุ่มไอคอน | แถว 2: ช่องค้นหาเต็มจอ | แถว 3: เมนูเลื่อนได้
+   ═══════════════════════════════════════════════════════════════════ */
 
-@media(max-width:1100px){
-    .nav-btn{padding:6px 8px!important;font-size:10px!important}
-    .nav-btn-ico{font-size:14px!important}
-    .nav-search{max-width:240px!important}
+/* กันหน้าเลื่อนข้าง + dropdown ค้นหาอยู่เหนือทุกชั้น */
+html, body { overflow-x: hidden; }
+.nav, .nav-top { position: relative; z-index: 300; }
+#search-dd { z-index: 400 !important; }
+
+@media (max-width: 1100px) {
+  .nav-btn { padding: 6px 8px !important; font-size: 10px !important; }
+  .nav-btn-ico { font-size: 14px !important; }
+  .nav-search { max-width: 240px !important; }
 }
 
-@media(max-width:900px){
-    /* แก้: .nav-search ที่เคย display:none — ลบทิ้ง */
-    .nav-search{display:flex!important;max-width:180px!important;margin:0 6px!important}
-    .nav-search input{padding:6px 10px!important;font-size:12px!important}
-    .nav-links{flex:0 1 auto;overflow-x:auto;max-width:160px}
-    .nav-links::-webkit-scrollbar{display:none}
+/* ── จุดเปลี่ยน: จัดใหม่เป็น 3 แถว ── */
+@media (max-width: 900px) {
+  .nav-top {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    row-gap: 8px;
+    padding: 8px 12px !important;
+    align-items: center;
+  }
+  .nav-logo  { order: 1; font-size: 14px !important; margin-right: auto !important; }
+  .nav-acts  { order: 2; margin-left: 0 !important; flex-shrink: 0 !important; gap: 2px; }
+  .nav-btn-lbl { display: none !important; }   /* เก็บเฉพาะไอคอน */
+
+  /* 🔍 ช่องค้นหา: แถวของตัวเอง เต็มความกว้าง — ไม่ซ้อนกับอะไรอีก */
+  .nav-search {
+    order: 3;
+    display: flex !important;
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  .nav-search input { padding: 9px 12px !important; font-size: 16px !important; } /* 16px กัน iOS ซูม */
+
+  /* เมนูหมวด: แถวล่าง เลื่อนแนวนอน */
+  .nav-links {
+    order: 4;
+    display: flex !important;
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    gap: 14px;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
 }
 
-@media(max-width:768px){
-    /* แก้: เก็บ nav-links — overflow scroll แทน display:none */
-    .nav-search{max-width:160px!important}
-    .nav-btn-lbl{display:none!important} /* ซ่อนแค่ label เก็บ icon */
-}
-
-@media(max-width:640px){
-    .nav-btn-lbl{display:none!important}
-    .nav-top{padding:0 8px!important;gap:4px!important}
-    .nav-logo{font-size:14px!important}
-}
-
-@media(max-width:420px){
-    .nav-search{max-width:110px!important}
-    .nav-logo{font-size:13px!important;max-width:90px;overflow:hidden;white-space:nowrap}
-    .nav-acts{gap:2px}
-    .nav-btn{padding:5px!important}
+@media (max-width: 420px) {
+  .nav-logo { font-size: 13px !important; }
+  .nav-btn  { padding: 5px !important; }
 }
