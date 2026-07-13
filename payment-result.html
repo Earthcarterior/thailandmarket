@@ -852,7 +852,10 @@ function tmToast(msg){
     install:   payment?.card_brand ? `🏦 ผ่อน ${payment.card_brand} ····${payment.card_last4||''}` : '🏦 ผ่อน 0%',
     qr:        '📱 QR PromptPay',
     counter:   '🏪 Counter Service'
-  }[order.payment_method] || order.payment_method;
+  }[order.payment_method]
+    // payment_method เป็น UUID ของช่องทางโอน → โชว์ชื่ออ่านได้แทนรหัส
+    || (/^[0-9a-f]{8}-[0-9a-f]{4}/.test(order.payment_method || '') ? '🏦 โอนธนาคาร (แนบสลิป)' : null)
+    || order.payment_method || '—';
 
   // status title — 3 ขั้น
   const isPaid = order.payment_status === 'paid'
