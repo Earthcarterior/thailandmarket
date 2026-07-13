@@ -2890,13 +2890,8 @@ async function placeOrder() {
       if (!_oiEx2) await _sbCO.from('order_items').insert(items);
     }
     
-    // อัปเดต loyalty points (฿100 = 10 แต้ม)
-    const pts = Math.floor(total/100)*10;
-    if (pts > 0) {
-      await _sbCO.from('users')
-        .update({loyalty_pts: pts, updated_at: new Date().toISOString()})
-        .eq('id', user.id);
-    }
+    // loyalty points: ย้ายไปแจกที่ DB trigger ตอน "จ่ายเงินแล้ว" (fn_points_on_paid)
+    // — แจกตรงนี้ไม่ได้เพราะยังไม่จ่าย และโค้ดเดิมเขียนทับยอดสะสม (บั๊ก)
 
     // [PATCH 2026-05-03] Redeem คูปองที่ใช้ — บันทึกประวัติ + เพิ่ม used_count
     try {
