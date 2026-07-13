@@ -831,6 +831,17 @@ function tmToast(msg){
   const { data:payment } = await sb.from('payments')
     .select('*').eq('order_id', order.id).maybeSingle();
 
+  // ดึงสลิปโอนล่าสุด (กรณีชำระด้วยการโอน)
+  let slip = null;
+  try {
+    const { data: slips } = await sb.from('payment_slips')
+      .select('id,status,created_at,verified_at')
+      .eq('order_id', order.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    slip = (slips && slips[0]) || null;
+  } catch(_) {}
+
   // วันที่
   const d = new Date(order.created_at);
   const dateStr = d.toLocaleDateString('th-TH', {year:'numeric',month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString('th-TH', {hour:'2-digit',minute:'2-digit'});
@@ -843,12 +854,31 @@ function tmToast(msg){
     counter:   '🏪 Counter Service'
   }[order.payment_method] || order.payment_method;
 
-  // status title
-  const isPaid = (payment?.status === 'paid') || (order.payment_method === 'credit');
-  document.getElementById('rc-title').textContent = isPaid ? 'ชำระเงินสำเร็จ!' : 'รอชำระเงิน';
-  document.getElementById('rc-sub').textContent = isPaid ? 'ออเดอร์ของคุณได้รับการยืนยันแล้ว' : 'กรุณาชำระเงินภายใน 24 ชั่วโมง';
-  document.getElementById('icon-anim').textContent = isPaid ? '✓' : '⏳';
-  if(!isPaid) document.getElementById('icon-anim').style.background = '#FCD34D';
+  // status title — 3 ขั้น
+  const isPaid = order.payment_status === 'paid'
+              || (payment?.status === 'paid')
+              || (slip && slip.status === 'verified')
+              || (order.payment_method === 'credit');
+  const isSlipPending = !isPaid && slip && slip.status === 'pending';
+
+  const titleEl = document.getElementById('rc-title');
+  const subEl   = document.getElementById('rc-sub');
+  const iconEl  = document.getElementById('icon-anim');
+  if (isPaid) {
+    titleEl.textContent = 'ชำระเงินสำเร็จ!';
+    subEl.textContent   = '📦 รอร้านค้าจัดส่งสินค้า — ติดตามพัสดุได้ที่ปุ่มด้านล่าง';
+    iconEl.textContent  = '✓';
+  } else if (isSlipPending) {
+    titleEl.textContent = 'ได้รับหลักฐานการโอนแล้ว';
+    subEl.textContent   = '🧾 กำลังตรวจสอบสลิป (โดยปกติไม่เกิน 1-2 ชม.) — ยืนยันแล้วออเดอร์จะเข้าสถานะรอจัดส่งทันที';
+    iconEl.textContent  = '🧾';
+    iconEl.style.background = '#DBEAFE';
+  } else {
+    titleEl.textContent = 'รอชำระเงิน';
+    subEl.textContent   = 'กรุณาชำระเงินภายใน 24 ชั่วโมง';
+    iconEl.textContent  = '⏳';
+    iconEl.style.background = '#FCD34D';
+  }
 
   // populate order fields
   document.getElementById('rc-order-num').textContent = '#'+order.order_number;
@@ -859,8 +889,8 @@ function tmToast(msg){
   const pts = Math.floor(Number(order.total)/10);
   document.getElementById('rc-points').textContent = '+'+pts.toLocaleString()+' แต้ม ⭐';
 
-  // pending payment instructions
-  if(!isPaid){
+  // pending payment instructions (ยังไม่จ่ายและยังไม่ได้ส่งสลิปเท่านั้น)
+  if(!isPaid && !isSlipPending){
     const box = document.getElementById('pending-actions');
     const cnt = document.getElementById('pending-content');
     const btn = document.getElementById('btn-confirm-paid');
