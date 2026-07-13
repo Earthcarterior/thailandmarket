@@ -2805,7 +2805,7 @@ async function pmLoadSlips() {
   try {
     // embed ผ่าน column ชื่อ — เลี่ยงปัญหา "more than one relationship found"
     let q = sb.from('payment_slips')
-      .select('*, order:order_id(id,order_number,total,total_amount,user_id), buyer:user_id(display_name,email,phone)')
+      .select('*, order:order_id(id,order_number,total,total_amount,user_id,payment_status,status), buyer:user_id(display_name,email,phone)')
       .order('created_at', { ascending: false }).limit(100);
     if (_pmSlipFilter !== 'all') q = q.eq('status', _pmSlipFilter);
     let { data, error } = await q;
@@ -2822,7 +2822,7 @@ async function pmLoadSlips() {
       const orderIds = [...new Set(data.map(s=>s.order_id).filter(Boolean))];
       const userIds = [...new Set(data.map(s=>s.user_id).filter(Boolean))];
       if (orderIds.length) {
-        const { data: ords } = await sb.from('orders').select('id,order_number,total,total_amount,user_id').in('id', orderIds);
+        const { data: ords } = await sb.from('orders').select('id,order_number,total,total_amount,user_id,payment_status,status').in('id', orderIds);
         const omap = {}; (ords||[]).forEach(o=>omap[o.id]=o);
         data.forEach(s => s.order = omap[s.order_id] || null);
       }
@@ -2871,9 +2871,15 @@ function pmRenderSlips() {
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
           <span class="pm-pill ${s.status==='pending'?'manual':s.status==='verified'?'api':'disabled'}" style="font-size:10px">${s.status}</span>
+          ${order.payment_status==='paid'
+            ? '<span style="background:#DCFCE7;color:#166534;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">💰 ออเดอร์ชำระแล้ว</span>'
+            : (order.id ? '<span style="background:#FEF3C7;color:#92400E;font-size:10px;padding:2px 8px;border-radius:10px">ออเดอร์ยังไม่ชำระ</span>' : '')}
           ${s.status==='pending'?`
             <button class="pm-btn primary" onclick="pmVerifySlip('${s.id}','verified')" style="font-size:11px">✅ อนุมัติ</button>
             <button class="pm-btn danger" onclick="pmVerifySlip('${s.id}','rejected')" style="font-size:11px">❌ ปฏิเสธ</button>
+          `:''}
+          ${s.status==='rejected'?`
+            <button class="pm-btn primary" onclick="pmVerifySlip('${s.id}','verified')" style="font-size:11px" title="กรณีปฏิเสธพลาด/ตรวจใหม่แล้วถูกต้อง">↩️ อนุมัติใหม่</button>
           `:''}
           <button onclick="orShowDetail('${pmEsc(s.order_id)}')" class="pm-btn" style="font-size:11px;cursor:pointer">📦 ดู order</button>
         </div>
