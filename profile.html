@@ -1103,7 +1103,7 @@ async function ordReturn(orderId, orderNum, amount) {
     alert('✅ ส่งคำขอคืน ' + (r.data?.created||0) + ' ร้านเรียบร้อย' +
           ((r.data?.skipped||0) ? ' (ข้าม ' + r.data.skipped + ' ร้านที่มีคำขอค้าง)' : '') +
           '\nทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ');
-    if (typeof loadOrders === 'function') loadOrders(currentAuthId);
+    if (typeof loadOrders === 'function') loadOrders(currentUserId || currentAuthId);
   };
 }
 
