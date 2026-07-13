@@ -2132,8 +2132,14 @@ async function doCheckout(){
         variant_name: it.var || null,
         subtotal: it.price * it.qty
       }));
-      const { error: oiErr } = await _sbCO.from('order_items').insert(orderItems);
-      if (oiErr) console.warn('order_items insert:', oiErr.message);
+      // กัน insert ซ้ำ: DB trigger สร้าง order_items (ผูก sub_order) ให้แล้ว
+      // insert เองเฉพาะกรณี trigger ไม่ทำงาน (ยังไม่มีแถวเลย)
+      const { count: _oiExisting } = await _sbCO.from('order_items')
+        .select('id', { count: 'exact', head: true }).eq('order_id', order.id);
+      if (!_oiExisting) {
+        const { error: oiErr } = await _sbCO.from('order_items').insert(orderItems);
+        if (oiErr) console.warn('order_items insert:', oiErr.message);
+      }
     } catch(oiE) { console.warn('order_items failed:', oiE.message); }
 
     // 2. tracking event เริ่มต้น
@@ -2878,7 +2884,11 @@ async function placeOrder() {
       price: i.price, qty: i.qty||1, subtotal: i.price*(i.qty||1),
       created_at: new Date().toISOString(),
     }));
-    await _sbCO.from('order_items').insert(items);
+    {
+      const { count: _oiEx2 } = await _sbCO.from('order_items')
+        .select('id', { count: 'exact', head: true }).eq('order_id', order.id);
+      if (!_oiEx2) await _sbCO.from('order_items').insert(items);
+    }
     
     // อัปเดต loyalty points (฿100 = 10 แต้ม)
     const pts = Math.floor(total/100)*10;
