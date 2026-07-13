@@ -1007,93 +1007,104 @@ async function ordToggleDetail(orderId, orderNumber) {
 
 // ขอคืนสินค้า — แจ้งให้ติดต่อ support (modal เต็มอยู่ใน order-history เดิม)
 async function ordReturn(orderId, orderNum, amount) {
+  // ── ขอคืนสินค้าแบบเลือกรายชิ้น/รายร้าน ──
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { alert('⚠️ กรุณาเข้าสู่ระบบ'); return; }
+
+  // โหลดข้อมูล: subs + items + ชื่อร้าน + คำขอที่มีอยู่
+  let subs = [], items = [], names = {}, activeSellers = new Set();
   try {
-    const { data:{ session } } = await sb.auth.getSession();
-    if (!session) { alert('\u26a0\ufe0f กรุณาเข้าสู่ระบบ'); return; }
-
-    // Bug 1 fix: กันสร้างคำขอคืนซ้ำ
-    const { data: existing } = await sb.from('return_requests')
-      .select('id, status')
-      .eq('order_id', orderId);
-    const active = (existing || []).filter(r => ['pending','approved','processing'].includes(r.status));
-    if (active.length) {
-      alert('\u26a0\ufe0f ออเดอร์นี้มีคำขอคืนสินค้าอยู่แล้ว (สถานะ: ' + active[0].status + ')\nไม่สามารถส่งคำขอซ้ำได้ กรุณารอผลการพิจารณา');
-      return;
-    }
-
-    const reason = prompt('ขอคืนสินค้า — ออเดอร์ ' + orderNum + '\nยอด \u0e3f' + Number(amount).toLocaleString() + '\n\nกรุณาระบุเหตุผล:');
-    if (!reason) return;
-    if (reason.trim().length < 5) { alert('\u26a0\ufe0f กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร'); return; }
-
-    const { data: u } = await sb.from('users').select('id').eq('email', session.user.email).maybeSingle();
-    const userId = u?.id || null;
-
-    // ดึง order จาก cache เพื่อเอา items (Bug 3) + amount สำรอง (Bug 2)
-    const order = (_profileOrders || []).find(o => o.id === orderId) || {};
-    const allItems = Array.isArray(order.items) ? order.items : [];
-
-    const { data: oItems } = await sb.from('order_items')
-      .select('product_id, products(seller_id)')
-      .eq('order_id', orderId);
-
-    const sellerIds = [...new Set(
-      (oItems || []).map(oi => oi.products?.seller_id).filter(Boolean)
-    )];
-
-    if (!sellerIds.length) {
-      alert('\u274c ไม่พบข้อมูลร้านค้าของออเดอร์นี้');
-      return;
-    }
-
-    // Bug 2 fix: amount สำรอง
-    let baseAmount = Number(amount) || 0;
-    if (!baseAmount && allItems.length) {
-      baseAmount = allItems.reduce((s,i) => s + (Number(i.price)||0) * (Number(i.qty)||1), 0);
-    }
-
-    // สร้างคำขอคืน 1 แถวต่อร้าน พร้อม items (Bug 3)
-    const rows = sellerIds.map(sid => {
-      const sidProductIds = (oItems || [])
-        .filter(oi => oi.products?.seller_id === sid)
-        .map(oi => oi.product_id);
-      const sidItems = allItems.filter(it =>
-        !it.product_id || sidProductIds.includes(it.product_id)
-      );
-      const sidAmount = sidItems.length
-        ? sidItems.reduce((s,i) => s + (Number(i.price)||0) * (Number(i.qty)||1), 0)
-        : baseAmount;
-      return {
-        order_id: orderId,
-        user_id: userId,
-        seller_id: sid,
-        reason: reason.trim(),
-        amount: sidAmount || baseAmount,
-        items: sidItems.length ? sidItems : allItems,
-        status: 'pending',
-        return_type: 'refund'
-      };
+    const [subRes, itemRes, exRes] = await Promise.all([
+      sb.from('sub_orders').select('id,sub_number,seller_id,status').eq('order_id', orderId),
+      sb.from('order_items').select('id,name_th,qty,price,subtotal,thumbnail,seller_id,product_id').eq('order_id', orderId),
+      sb.from('return_requests').select('seller_id,status').eq('order_id', orderId)
+    ]);
+    subs = subRes.data || []; items = itemRes.data || [];
+    (exRes.data || []).forEach(r => {
+      if (['pending','approved','processing'].includes(r.status)) activeSellers.add(r.seller_id);
     });
-
-    const { error } = await sb.from('return_requests').insert(rows);
-
-    if (error) {
-      console.error('[ordReturn]', error);
-      alert('\u274c ส่งคำขอไม่สำเร็จ: ' + error.message);
-    } else {
-      // เปลี่ยนสถานะออเดอร์เป็น "ขอคืนสินค้า" (ค้างในรายการ ไม่หาย)
-      try {
-        await sb.from('orders').update({ status: 'return_requested' }).eq('id', orderId);
-      } catch(ue) { console.warn('update order status failed', ue); }
-      const msg = sellerIds.length > 1
-        ? '\u2705 ส่งคำขอคืนสินค้าแล้ว (' + sellerIds.length + ' ร้าน) — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ'
-        : '\u2705 ส่งคำขอคืนสินค้าแล้ว — ทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ';
-      alert(msg);
-      if (typeof loadOrders === 'function') loadOrders(currentAuthId);
+    const sids = [...new Set(items.map(i => i.seller_id).filter(Boolean))];
+    if (sids.length) {
+      const { data: shops } = await sb.from('sellers').select('id,shop_name').in('id', sids);
+      (shops||[]).forEach(x => names[x.id] = x.shop_name);
     }
-  } catch(e) {
-    console.error('[ordReturn]', e);
-    alert('\u274c เกิดข้อผิดพลาด: ' + e.message);
-  }
+  } catch(e) { alert('❌ โหลดข้อมูลไม่สำเร็จ: ' + e.message); return; }
+  if (!items.length) { alert('❌ ไม่พบรายการสินค้าของออเดอร์นี้'); return; }
+
+  // สร้าง modal
+  let m = document.getElementById('return-modal');
+  if (m) m.remove();
+  m = document.createElement('div');
+  m.id = 'return-modal';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  const bySeller = {};
+  items.forEach(it => { (bySeller[it.seller_id] = bySeller[it.seller_id] || []).push(it); });
+
+  m.innerHTML = `<div style="background:#fff;border-radius:12px;max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <b style="font-size:15px">↩️ ขอคืนสินค้า · ${orderNum}</b>
+      <span style="cursor:pointer;font-size:20px;color:#999" onclick="document.getElementById('return-modal').remove()">✕</span>
+    </div>
+    <div style="font-size:11px;color:#737373;margin:4px 0 12px">เลือกเฉพาะชิ้นที่ต้องการคืน — สินค้าจากร้านอื่นในออเดอร์เดียวกันไม่ได้รับผลกระทบ</div>
+    ${Object.entries(bySeller).map(([sid, its]) => {
+      const locked = activeSellers.has(sid);
+      return `<div style="border:1px solid #EFEFEF;border-radius:8px;padding:10px 12px;margin-bottom:8px;${locked?'opacity:.55;background:#FAFAFA':''}">
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">🏪 ${names[sid]||'ร้านค้า'}
+          ${locked ? '<span style="font-size:10px;color:#D97706;font-weight:400"> · มีคำขอคืนค้างอยู่แล้ว</span>' : ''}</div>
+        ${its.map(it => `<label style="display:flex;align-items:center;gap:10px;padding:6px 0;cursor:${locked?'not-allowed':'pointer'}">
+          <input type="checkbox" class="ret-item" ${locked?'disabled':''}
+                 data-seller="${sid}" data-amount="${Number(it.subtotal || (it.price*(it.qty||1)) || 0)}"
+                 data-item='${JSON.stringify({product_id:it.product_id,name:it.name_th,qty:it.qty,price:it.price}).replace(/'/g,"&#39;")}'>
+          ${it.thumbnail?`<img src="${it.thumbnail}" style="width:34px;height:34px;object-fit:cover;border-radius:5px">`:''}
+          <span style="flex:1;font-size:12px">${it.name_th||'สินค้า'} <span style="color:#999">×${it.qty||1}</span></span>
+          <b style="font-family:monospace;font-size:12px">฿${Number(it.subtotal||(it.price*(it.qty||1))||0).toLocaleString()}</b>
+        </label>`).join('')}
+      </div>`;
+    }).join('')}
+    <div style="margin:10px 0 4px;font-size:12px;font-weight:600">เหตุผลการคืน *</div>
+    <textarea id="ret-reason" rows="2" placeholder="เช่น สินค้าชำรุด, ได้รับผิดรุ่น/สี..." style="width:100%;box-sizing:border-box;border:1px solid #E5E5E5;border-radius:6px;padding:8px;font-size:12px;font-family:inherit"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+      <div style="font-size:13px">ยอดขอคืน: <b id="ret-total" style="color:#DC2626;font-family:monospace">฿0</b></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="document.getElementById('return-modal').remove()" style="padding:9px 16px;border:1px solid #E5E5E5;background:#fff;border-radius:6px;cursor:pointer;font-size:13px">ยกเลิก</button>
+        <button id="ret-submit" style="padding:9px 18px;border:none;background:#DC2626;color:#fff;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700">ส่งคำขอคืน</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+
+  const recalc = () => {
+    const t = [...m.querySelectorAll('.ret-item:checked')].reduce((s,c) => s + Number(c.dataset.amount||0), 0);
+    document.getElementById('ret-total').textContent = '฿' + t.toLocaleString();
+  };
+  m.querySelectorAll('.ret-item').forEach(c => c.addEventListener('change', recalc));
+
+  document.getElementById('ret-submit').onclick = async () => {
+    const checked = [...m.querySelectorAll('.ret-item:checked')];
+    if (!checked.length) { alert('⚠️ กรุณาเลือกสินค้าอย่างน้อย 1 ชิ้น'); return; }
+    const reason = document.getElementById('ret-reason').value.trim();
+    if (reason.length < 5) { alert('⚠️ กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร'); return; }
+    // จัดกลุ่มต่อร้าน
+    const perShop = {};
+    checked.forEach(c => {
+      const g = perShop[c.dataset.seller] = perShop[c.dataset.seller] || { seller_id: c.dataset.seller, items: [], amount: 0 };
+      g.items.push(JSON.parse(c.dataset.item.replace(/&#39;/g, "'")));
+      g.amount += Number(c.dataset.amount || 0);
+    });
+    const btn = document.getElementById('ret-submit');
+    btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+    const r = await sb.rpc('request_item_return', {
+      p_order_id: orderId, p_returns: Object.values(perShop), p_reason: reason
+    });
+    if (r.error || (r.data && r.data.ok === false)) {
+      alert('❌ ' + (r.error?.message || r.data?.message)); btn.disabled = false; btn.textContent = 'ส่งคำขอคืน'; return;
+    }
+    m.remove();
+    alert('✅ ส่งคำขอคืน ' + (r.data?.created||0) + ' ร้านเรียบร้อย' +
+          ((r.data?.skipped||0) ? ' (ข้าม ' + r.data.skipped + ' ร้านที่มีคำขอค้าง)' : '') +
+          '\nทีมงานจะติดต่อกลับภายใน 1-2 วันทำการ');
+    if (typeof loadOrders === 'function') loadOrders(currentAuthId);
+  };
 }
 
 // ── Load Wishlist ─────────────────────────────────────────
