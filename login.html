@@ -43,6 +43,15 @@ body{font-family:'IBM Plex Sans Thai','Inter',sans-serif;background:#FAFAFA;colo
 .mfa-icon{font-size:50px;text-align:center;margin-bottom:14px}
 .mfa-info{text-align:center;font-size:13px;color:var(--g500);margin-bottom:6px}
 </style>
+
+<style>/* 📱 responsive patch */
+
+@media (max-width: 480px){
+  .card{padding:24px 18px;border:none;box-shadow:none;border-radius:0}
+  body{overflow-x:hidden}
+  input,button{font-size:16px}  /* กัน iOS ซูมเอง */
+}
+</style>
 </head>
 <body>
 <div class="card">

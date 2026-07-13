@@ -213,6 +213,18 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .checkin-day-num{font-size:14px;font-weight:700;margin-bottom:2px}
 .checkin-day-coin{font-size:9px;opacity:.8}
 </style>
+
+<style>/* 📱 responsive patch */
+
+@media (max-width: 768px){
+  .coup-grid{grid-template-columns:1fr !important}
+  .hero h1{font-size:30px !important;line-height:1.15}
+  .hero{padding:28px 0 !important}
+  .stats-row{grid-template-columns:repeat(3,1fr) !important;gap:1px !important}
+  .section{padding:0 14px}
+  body{overflow-x:hidden}
+}
+</style>
 </head>
 <body>
 
@@ -904,7 +916,7 @@ function copyCode(code) {
 // ════════════════════════════════════════════════
 //  SEARCH
 // ════════════════════════════════════════════════
-async function searchCoupon() {
+async function searchCoupon(fromLive) {
   const term = document.getElementById('search-input').value.trim();
   if (!term) { renderSections(); return; }
 
@@ -928,6 +940,22 @@ async function searchCoupon() {
     const t = el && el.closest('.section')?.querySelector('.section-title');
     if (t) t.innerHTML = '<span class="ico">🔍</span> ผลการค้นหา "' + term + '" (' + hits.length + ')';
     renderCouponList('category-list', hits, 'category');
+    showSec('daily-list', false); showSec('popular-list', false);
+    showSec('store-list', false); showSec('category-list', true);
+    return;
+  }
+
+  // พิมพ์สด: แค่โชว์ผลว่าง ไม่ยิง RPC ไม่เด้ง toast รัวๆ
+  if (fromLive) {
+    const showSec = (id, show) => {
+      const el = document.getElementById(id);
+      const sec = el && el.closest('.section');
+      if (sec) sec.style.display = show ? '' : 'none';
+    };
+    const el = document.getElementById('category-list');
+    const t = el && el.closest('.section')?.querySelector('.section-title');
+    if (t) t.innerHTML = '<span class="ico">🔍</span> ผลการค้นหา "' + term + '" (0)';
+    renderCouponList('category-list', [], 'category');
     showSec('daily-list', false); showSec('popular-list', false);
     showSec('store-list', false); showSec('category-list', true);
     return;
@@ -1084,7 +1112,7 @@ function scrollToSection(id) {
 // Search on Enter
 document.getElementById('search-input').addEventListener('input', e => {
   clearTimeout(window._hubSearchT);
-  window._hubSearchT = setTimeout(searchCoupon, 250);   // ค้นสดขณะพิมพ์
+  window._hubSearchT = setTimeout(() => searchCoupon(true), 250);   // ค้นสดขณะพิมพ์ (กรองเงียบ)
 });
 document.getElementById('search-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchCoupon();

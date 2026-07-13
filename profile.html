@@ -274,6 +274,28 @@ nav, .nav {
   .nav-top{padding:0 12px!important;gap:4px!important}
 }
 </style>
+
+<style>/* 📱 responsive patch */
+
+@media (max-width: 900px){
+  .page{grid-template-columns:1fr}
+  .sidebar{min-height:auto;border-right:none;border-bottom:1px solid #E5E5E5;
+    display:flex;overflow-x:auto;white-space:nowrap;position:sticky;top:0;z-index:40;-webkit-overflow-scrolling:touch}
+  .sidebar::-webkit-scrollbar{display:none}
+  .sidebar > *{flex-shrink:0}
+  .lc-perks{grid-template-columns:repeat(2,1fr)}
+  .rg{grid-template-columns:1fr}
+  .tg{grid-template-columns:repeat(2,1fr)}
+  .fg-2{grid-template-columns:1fr}
+}
+@media (max-width: 640px){
+  .oi-bot{flex-direction:column;align-items:stretch;gap:8px}
+  .oi-btns{display:flex;flex-wrap:wrap;gap:6px}
+  .oi-btns .btn{flex:1;min-width:120px}
+  img, video{max-width:100%;height:auto}
+  body{overflow-x:hidden}
+}
+</style>
 </head>
 <body>
 
