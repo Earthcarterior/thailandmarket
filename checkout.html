@@ -2101,6 +2101,27 @@ async function doCheckout(){
       shipping_fee: shipping,
       shipping_method: courierCode,            // courier code (kerry, flash, etc.)
       shipping_method_name: courierName,       // display name
+      // ส่วนลดแยกรายร้าน: คูปองร้าน = ร้านรับภาระ / คูปอง platform = แพลตฟอร์มสมทบ (กระจายตามสัดส่วนยอด)
+      discount_breakdown: (() => {
+        const bd = {};
+        const items = (typeof CART !== 'undefined' ? CART : []).filter(it => !it.needVariant);
+        const totals = {}; let sum = 0;
+        items.forEach(it => { const t = (it.price * it.qty); totals[it.seller_id] = (totals[it.seller_id]||0) + t; sum += t; });
+        (_appliedCoupons || []).forEach(c => {
+          const disc = Number(c.discount || 0);
+          if (!disc) return;
+          if (c.seller_id) {
+            const g = bd[c.seller_id] = bd[c.seller_id] || { shop: 0, platform: 0 };
+            g.shop += disc;
+          } else if (sum > 0) {
+            Object.entries(totals).forEach(([sid, t]) => {
+              const g = bd[sid] = bd[sid] || { shop: 0, platform: 0 };
+              g.platform += Math.round(disc * t / sum * 100) / 100;
+            });
+          }
+        });
+        return bd;
+      })(),
       // ค่าส่งแยกรายร้าน (ตามขนส่งที่ลูกค้าเลือกของแต่ละร้าน) — trigger ใช้ตอนสร้าง sub_orders
       shipping_breakdown: Object.fromEntries(Object.entries(_shippingBySeller).map(([sid, s]) => [sid, {
         fee: s.is_free ? 0 : Number(s.price || 0),

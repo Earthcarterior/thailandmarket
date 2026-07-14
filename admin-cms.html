@@ -3138,8 +3138,8 @@ async function ppLoadMoneyOverview(){
   try {
     const [balRes, subRes, selRes] = await Promise.all([
       sb.from('seller_balances').select('seller_id,escrow,available,pending_payout,total_earned'),
-      sb.from('sub_orders').select('seller_id,status,net_to_seller,money_released')
-        .in('status', ['paid','confirmed','processing','preparing','shipped','delivered']),
+      sb.from('sub_orders').select('seller_id,status,net_to_seller,money_released,items_subtotal,commission,shipping_fee,shop_discount,platform_subsidy')
+        .in('status', ['paid','confirmed','processing','preparing','shipped','delivered','refunded','return_requested','return_approved']),
       sb.from('sellers').select('id,shop_name')
     ]);
     const bals = balRes.data || [], subs = subRes.data || [];
@@ -3166,6 +3166,32 @@ async function ppLoadMoneyOverview(){
       card('💚','พร้อมถอน (ทุกร้านรวม)', fB(available), '#10B981', 'ร้านกดขอถอนได้') +
       card('📤','กำลังขอถอน', fB(pendingOut), '#0891B2', 'รอ admin โอน') +
       card('📈','รายได้ร้านสะสมรวม', fB(totalEarned), '#171717', 'หลังหัก GP · รวมค่าส่ง');
+
+    // ── 📑 แจกแจงรายได้แพลตฟอร์ม (นโยบายคูปอง) ──
+    const active = subs.filter(s => !['refunded','cancelled'].includes(s.status));
+    const refunded = subs.filter(s => s.status === 'refunded');
+    const grossItems  = sum(active, s => s.items_subtotal);
+    const shopDisc    = sum(active, s => s.shop_discount);
+    const platSubsidy = sum(subs,   s => s.platform_subsidy);          // สมทบคูปอง platform ทุกใบที่เกิด
+    const gpIncome    = sum(active, s => s.commission);                 // GP เก็บได้ (ใบขายจริง)
+    const gpRefunded  = sum(refunded, s => s.commission);              // GP ที่คืนลูกค้าตอน refund
+    const shipTotal   = sum(active, s => s.shipping_fee);
+    const platNet     = gpIncome - platSubsidy - gpRefunded;
+
+    const ovEl = document.getElementById('pp-money-overview');
+    if (ovEl) {
+      const strip = document.createElement('div');
+      strip.style.cssText = 'grid-column:1/-1;border-top:1px dashed #E5E5E5;padding-top:10px;margin-top:2px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px';
+      strip.innerHTML =
+        card('🛍️','ยอดขายสินค้ารวม', fB(grossItems), '#171717', 'ก่อนหักส่วนลด/GP') +
+        card('🏪','คูปองร้าน (ร้านรับภาระ)', fB(shopDisc), '#D97706', 'หักจากยอดร้านแล้ว') +
+        card('🎟️','คูปอง Platform สมทบ', fB(platSubsidy), '#DC2626', 'ต้นทุนแพลตฟอร์ม') +
+        card('💼','GP เก็บได้', fB(gpIncome), '#16A34A', 'จากใบขายจริง') +
+        card('↩️','GP คืนใบ refund', fB(gpRefunded), '#DC2626', 'สมทบคืนลูกค้า') +
+        card('🚚','ค่าส่งรวม (ส่งผ่านให้ร้าน)', fB(shipTotal), '#0891B2', 'ไม่ใช่รายได้ platform') +
+        card('🏦','กำไร GP สุทธิแพลตฟอร์ม', fB(platNet), platNet >= 0 ? '#16A34A' : '#DC2626', 'GP − คูปองสมทบ − GP คืน refund');
+      ovEl.appendChild(strip);
+    }
 
     // ตารางรายร้าน
     const perShop = {};
