@@ -61,30 +61,28 @@ html, body { overflow-x: hidden; }
 }
 
 
-/* ── 📢 แถบประกาศบนสุด: มือถือ = บรรทัดเดียว เลื่อนวนอัตโนมัติ ── */
+/* ── 📢 แถบประกาศบนสุด: มือถือ = บรรทัดเดียว วิ่งเป็นขบวนเดียว (ทับกันไม่ได้) ── */
 @media (max-width: 900px) {
   .ann {
-    display: flex !important;
-    flex-wrap: nowrap !important;
+    display: block !important;
     overflow: hidden !important;
     white-space: nowrap !important;
-    padding: 8px 0 !important;
-    gap: 0 !important;
-    position: relative;
+    padding: 9px 0 !important;
+    text-align: left !important;
   }
+  /* ทุกข้อความใช้ transform เดียวกัน ไม่มี delay → เกาะกันเป็นแถวเดียว
+     ระยะห่างมาจาก padding จริงใน layout จึงชนกันไม่ได้ */
   .ann > span {
     display: inline-block;
-    padding: 0 22px;
-    flex-shrink: 0;
-    animation: ann-scroll 14s linear infinite;
+    padding: 0 26px 0 0;
     font-size: 12px !important;
+    animation: ann-train 16s linear infinite;
+    will-change: transform;
   }
-  @keyframes ann-scroll {
+  @keyframes ann-train {
     0%   { transform: translateX(100vw); }
-    100% { transform: translateX(-260%); }
+    100% { transform: translateX(calc(-100vw - 1200px)); }
   }
-  .ann > span:nth-child(2) { animation-delay: 4.6s; }
-  .ann > span:nth-child(3) { animation-delay: 9.2s; }
 }
 
 /* ช่องค้นหาที่มีไอคอนแว่น (category/search) — กันไอคอนทับข้อความ */
