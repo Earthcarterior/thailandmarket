@@ -492,7 +492,33 @@ img{max-width:100%;height:auto}
   .nav-top{padding:0 12px!important;gap:4px!important}
 }
 </style>
-<link rel="stylesheet" href="mobile-nav-fix.css"></head>
+<link rel="stylesheet" href="mobile-nav-fix.css"><style>/* 📱 checkout mobile fix — กันเนื้อหาตกขอบขวา */
+@media (max-width: 640px){
+  /* แถวสินค้า: คอลัมน์ราคา+เลือกขนส่ง ย้ายลงมาเป็นแถวเต็มกว้างของตัวเอง */
+  .cart-item{grid-template-columns:56px 1fr !important}
+  .cart-item > div:nth-child(3){
+    grid-column:1 / -1 !important;
+    text-align:left !important;
+    display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;
+    padding-top:6px;border-top:1px dashed #EFEFEF;margin-top:4px;
+  }
+  .cart-item .cart-old{margin-left:auto}
+  .ship-sel{width:100% !important;max-width:100% !important;font-size:13px !important}
+
+  /* แถวชิปคูปอง "ใช้ได้:" ห่อบรรทัดได้ ไม่ดันจอ */
+  #coup-suggest-wrap{flex-wrap:wrap !important;max-width:100%}
+  #coupon-chips-co{max-width:100%}
+
+  /* สรุปยอด: ตัวเลขชิดขอบขวาแบบไม่หลุดจอ */
+  .sum-row{gap:8px}
+  .sum-row .sum-val,.sum-row .sum-discount{white-space:nowrap;text-align:right}
+
+  /* กันการ์ด/ฟอร์มทุกใบเกินจอ */
+  .card,.layout > *{max-width:100% !important;min-width:0 !important}
+  input,select,textarea{max-width:100%;font-size:16px !important}
+}
+</style>
+</head>
 <body>
 <!-- ── ANNOUNCEMENT ── -->
 <div class="ann">
