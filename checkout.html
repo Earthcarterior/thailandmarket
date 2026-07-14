@@ -2318,7 +2318,7 @@ async function doCheckout(){
 
 function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),3000);}
 
-document.getElementById('card-form').style.display='block';
+// [FIX 2026-07-14] ลบโค้ดเก่าที่บังคับโชว์ฟอร์มบัตรตลอดเวลา — ฟอร์มบัตรคุมโดย selPayMethod ตามช่องทางที่เลือกเท่านั้น
 // Initial render handled by loadCheckoutData() in DOMContentLoaded
 </script>
 
