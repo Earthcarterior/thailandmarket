@@ -588,8 +588,13 @@ nav, .nav {
 
   /* 🎛 Filter: จากซ่อนทิ้ง → แผงสไลด์จากซ้าย */
   .filters{display:block !important;position:fixed;left:0;top:0;bottom:0;width:82%;max-width:320px;
+    height:100dvh !important;max-height:100dvh !important;   /* 🔑 ทับ height:fit-content ของ desktop — ไม่งั้นแผงยาวทะลุจอ เลื่อนไม่ได้ */
     background:#fff;z-index:3000;transform:translateX(-105%);transition:transform .25s ease;
-    overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 40px;box-shadow:4px 0 24px rgba(0,0,0,.15)}
+    overflow-y:auto !important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    padding:0 16px 60px;box-shadow:4px 0 24px rgba(0,0,0,.15)}
+  @supports not (height: 100dvh) {
+    .filters{height:100vh !important;max-height:100vh !important}
+  }
   .filters.open{transform:translateX(0)}
   #filter-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2999}
   #filter-backdrop.on{display:block}
