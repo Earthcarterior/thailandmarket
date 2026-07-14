@@ -588,10 +588,10 @@ nav, .nav {
 
   /* 🎛 Filter: จากซ่อนทิ้ง → แผงสไลด์จากซ้าย */
   .filters{display:block !important;position:fixed;left:0;top:0;bottom:0;width:82%;max-width:320px;
-    background:#fff;z-index:1200;transform:translateX(-105%);transition:transform .25s ease;
-    overflow-y:auto;padding:18px 16px;box-shadow:4px 0 24px rgba(0,0,0,.15)}
+    background:#fff;z-index:3000;transform:translateX(-105%);transition:transform .25s ease;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 40px;box-shadow:4px 0 24px rgba(0,0,0,.15)}
   .filters.open{transform:translateX(0)}
-  #filter-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1199}
+  #filter-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2999}
   #filter-backdrop.on{display:block}
   #filter-fab{display:flex !important}
 }
@@ -2125,15 +2125,31 @@ async function toggleWish(productId, btn) {
 <script>
 function mfToggle(open){
   const f = document.querySelector('.filters');
-  const b = document.getElementById('filter-backdrop');
   if (!f) return;
+  // backdrop: สร้างสดถ้ายังไม่มี
+  let b = document.getElementById('filter-backdrop');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'filter-backdrop';
+    b.addEventListener('click', () => mfToggle(false));
+    document.body.appendChild(b);
+  }
+  // หัวแผง: ปุ่มปิดชัดๆ (สร้างครั้งเดียว)
+  if (!f.querySelector('.mf-head')) {
+    const h = document.createElement('div');
+    h.className = 'mf-head';
+    h.style.cssText = 'position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;background:#fff;padding:14px 0 10px;border-bottom:2px solid #111;margin-bottom:12px';
+    h.innerHTML = '<b style="font-size:15px">🎛 ตัวกรองสินค้า</b>' +
+      '<button onclick="mfToggle(false)" style="border:1.5px solid #111;background:#111;color:#fff;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer">✕ ปิด</button>';
+    f.prepend(h);
+  }
   f.classList.toggle('open', open);
-  b.classList.toggle('on', open);
+  b.style.display = open ? 'block' : 'none';
   document.body.style.overflow = open ? 'hidden' : '';
 }
-// เลือก filter แล้วปิดแผงให้เอง (มือถือ)
+// เลือกเสร็จปิดเอง (มือถือ)
 document.addEventListener('change', e => {
-  if (window.innerWidth <= 900 && e.target.closest('.filters')) setTimeout(() => mfToggle(false), 350);
+  if (window.innerWidth <= 900 && e.target.closest('.filters')) setTimeout(() => mfToggle(false), 400);
 });
 </script>
 </body>
