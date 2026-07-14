@@ -1,3 +1,4 @@
+/* ✅ VERSION 3 — 2026-07-14 — height:auto + ann-scroll (ตัวจริง) */
 /* ═══════════════════════════════════════════════════════════════════
    📱 MOBILE NAV FIX v2 — Thailand Market (2026-07-14)
    หลัก: จอเล็กไม่เบียดทุกอย่างแถวเดียว — search แยกเป็นแถวเต็มกว้าง
@@ -23,6 +24,8 @@ html, body { overflow-x: hidden; }
     row-gap: 8px;
     padding: 8px 12px !important;
     align-items: center;
+    height: auto !important;      /* 🔑 ปลดล็อกความสูงตายตัว 56px — ต้นเหตุที่แถวใหม่ทะลักไปทับข้างล่าง */
+    min-height: 0 !important;
   }
   .nav-logo  { order: 1; font-size: 14px !important; margin-right: auto !important; }
   .nav-acts  { order: 2; margin-left: 0 !important; flex-shrink: 0 !important; gap: 2px; }
@@ -55,4 +58,31 @@ html, body { overflow-x: hidden; }
 @media (max-width: 420px) {
   .nav-logo { font-size: 13px !important; }
   .nav-btn  { padding: 5px !important; }
+}
+
+
+/* ── 📢 แถบประกาศบนสุด: มือถือ = บรรทัดเดียว เลื่อนวนอัตโนมัติ ── */
+@media (max-width: 900px) {
+  .ann {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    padding: 8px 0 !important;
+    gap: 0 !important;
+    position: relative;
+  }
+  .ann > span {
+    display: inline-block;
+    padding: 0 22px;
+    flex-shrink: 0;
+    animation: ann-scroll 14s linear infinite;
+    font-size: 12px !important;
+  }
+  @keyframes ann-scroll {
+    0%   { transform: translateX(100vw); }
+    100% { transform: translateX(-260%); }
+  }
+  .ann > span:nth-child(2) { animation-delay: 4.6s; }
+  .ann > span:nth-child(3) { animation-delay: 9.2s; }
 }
