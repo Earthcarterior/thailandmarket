@@ -420,6 +420,20 @@ img{max-width:100%;height:auto}
   .nav-top{padding:0 12px!important;gap:4px!important}
 }
 </style>
+<link rel="stylesheet" href="mobile-nav-fix.css">
+<style>/* 📱 chat mobile: จอเดียวสลับ รายชื่อ ⇄ ห้องแชท */
+@media (max-width: 900px){
+  .chat-layout{padding:8px !important;gap:0 !important}
+  .conv-sidebar{width:100% !important}
+  .chat-main{display:none !important}
+  /* เปิดห้อง: โชว์ห้องเต็มจอ ซ่อนรายชื่อ */
+  .chat-layout.mobile-convo .conv-sidebar{display:none !important}
+  .chat-layout.mobile-convo .chat-main{display:flex !important;width:100% !important}
+  #chat-back-btn{display:flex !important}
+}
+#chat-back-btn{display:none;align-items:center;gap:6px;background:#111;color:#fff;border:none;
+  padding:8px 14px;font-size:13px;font-weight:700;border-radius:4px;margin:0 0 8px;cursor:pointer}
+</style>
 </head>
 <body>
 <nav class="nav" style="position:relative">
@@ -1481,5 +1495,29 @@ function tmToast(msg){
 })();
 </script>
 
+<script>
+// 📱 chat mobile: จอเดียวสลับ รายชื่อ ⇄ ห้องแชท (lazy — รองรับ DOM ที่สร้างหลัง login)
+(function(){
+  function ensureBack(layout){
+    const main = layout.querySelector('.chat-main');
+    if (main && !document.getElementById('chat-back-btn')) {
+      const b = document.createElement('button');
+      b.id = 'chat-back-btn';
+      b.innerHTML = '← กลับไปรายชื่อแชท';
+      b.onclick = function(){ layout.classList.remove('mobile-convo'); };
+      main.prepend(b);
+    }
+  }
+  document.addEventListener('click', function(e){
+    if (window.innerWidth > 900) return;
+    const layout = document.querySelector('.chat-layout');
+    if (!layout) return;
+    if (e.target.closest('.conv-item')) {
+      layout.classList.add('mobile-convo');
+      ensureBack(layout);
+    }
+  });
+})();
+</script>
 </body>
 </html>
