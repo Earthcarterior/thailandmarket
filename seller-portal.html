@@ -1541,7 +1541,7 @@ window.renderDashboardLive = window.renderDashboardLive || function(){};
     <div class="sg sg3" style="margin-bottom:12px">
       <div class="sc"><div class="sc-lbl">💵 ยอดพร้อมถอน</div><div class="sc-val" id="fin-available">฿0</div><div class="sc-chg">พร้อมโอนเข้าบัญชี</div></div>
       <div class="sc"><div class="sc-lbl">🔒 รอเคลียร์ (Escrow)</div><div class="sc-val" id="fin-escrow">฿0</div><div class="sc-chg">รอจัดส่งสำเร็จ</div></div>
-      <div class="sc"><div class="sc-lbl">📊 รายได้รวมทั้งหมด</div><div class="sc-val" id="fin-total-earned">฿0</div><div class="sc-chg" style="color:var(--g500)">หลังหักค่าธรรมเนียม</div></div>
+      <div class="sc"><div class="sc-lbl">📊 รายได้รวมทั้งหมด</div><div class="sc-val" id="fin-total-earned">฿0</div><div class="sc-chg" style="color:var(--g500)" id="fin-total-sub">ยอดขายเต็ม (ก่อนหัก GP)</div></div>
     </div>
     <div class="sg sg3" style="margin-bottom:12px">
       <div class="sc"><div class="sc-lbl">⏳ กำลังขอถอน</div><div class="sc-val" id="fin-pending">฿0</div></div>
@@ -7672,7 +7672,7 @@ async function renderFinanceLive() {
     document.getElementById('fin-available').textContent = sfMoney(_finBalance.available || 0);
     document.getElementById('fin-escrow').textContent = sfMoney(_finBalance.escrow || 0);
     document.getElementById('fin-pending').textContent = sfMoney(_finBalance.pending_payout || 0);
-    document.getElementById('fin-total-earned').textContent = sfMoney(_finBalance.total_earned || 0);
+    document.getElementById('fin-total-earned').textContent = sfMoney(_finBalance.total_earned || 0); // ค่าเริ่มต้น — ทับด้วย gross ด้านล่างเมื่อ summary มา
     document.getElementById('fin-total-paid').textContent = sfMoney(_finBalance.total_paid_out || 0);
     document.getElementById('fin-total-refund').textContent = sfMoney(_finBalance.total_refunded || 0);
 
@@ -7686,9 +7686,12 @@ async function renderFinanceLive() {
             'สินค้า(หลัง GP) <b>' + sfMoney(fs.escrow_items||0) + '</b> + ค่าส่ง <b>' + sfMoney(fs.escrow_shipping||0) + '</b>';
         }
         const teEl = document.getElementById('fin-total-earned');
+        // รายได้รวมทั้งหมด = ยอดขายเต็ม (สินค้า + ค่าส่ง ก่อนหัก GP) — ตรงนิยามร้านค้า
+        if (teEl) teEl.textContent = sfMoney((fs.items_total||0) + (fs.shipping_total||0));
         if (teEl && teEl.nextElementSibling && teEl.nextElementSibling.classList.contains('sc-chg')) {
           teEl.nextElementSibling.innerHTML =
-            'สินค้า ' + sfMoney(fs.items_total||0) + ' − GP ' + sfMoney(fs.gp_total||0) + ' + ค่าส่ง ' + sfMoney(fs.shipping_total||0);
+            'สินค้า ' + sfMoney(fs.items_total||0) + ' + ค่าส่ง ' + sfMoney(fs.shipping_total||0)
+            + ' · สุทธิหลัง GP <b>' + sfMoney((fs.items_total||0) + (fs.shipping_total||0) - (fs.gp_total||0)) + '</b>';
         }
         // แถบสรุปแยกส่วน ใต้การ์ด
         let strip = document.getElementById('fin-split-strip');
