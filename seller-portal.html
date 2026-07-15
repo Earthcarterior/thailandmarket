@@ -7691,7 +7691,7 @@ async function renderFinanceLive() {
         if (teEl && teEl.nextElementSibling && teEl.nextElementSibling.classList.contains('sc-chg')) {
           teEl.nextElementSibling.innerHTML =
             'สินค้า ' + sfMoney(fs.items_total||0) + ' + ค่าส่ง ' + sfMoney(fs.shipping_total||0)
-            + ((fs.discount_total||0) > 0 ? ' − คูปอง ' + sfMoney(fs.discount_total||0) : '')
+            + ((fs.discount_total||0) > 0 ? ' − คูปองร้าน ' + sfMoney(fs.discount_total||0) : '')
             + ' · สุทธิหลัง GP <b>' + sfMoney((fs.items_total||0) + (fs.shipping_total||0) - (fs.gp_total||0) - (fs.discount_total||0)) + '</b>';
         }
         // แถบสรุปแยกส่วน ใต้การ์ด
@@ -7707,7 +7707,7 @@ async function renderFinanceLive() {
           '<div>🛍️ ยอดสินค้าสะสม<br><b style="font-size:16px;font-family:\'DM Mono\',monospace">' + sfMoney(fs.items_total||0) + '</b></div>' +
           '<div>🚚 ค่าส่งสะสม (ไม่หัก GP)<br><b style="font-size:16px;font-family:\'DM Mono\',monospace;color:#2563EB">' + sfMoney(fs.shipping_total||0) + '</b></div>' +
           '<div>📊 GP หักสะสม (ตามหมวด)<br><b style="font-size:16px;font-family:\'DM Mono\',monospace;color:#E63329">−' + sfMoney(fs.gp_total||0) + '</b></div>' +
-          '<div>🎟️ คูปองหักสะสม<br><b style="font-size:16px;font-family:\'DM Mono\',monospace;color:#E63329">−' + sfMoney(fs.discount_total||0) + '</b><br><span style="color:#999;font-size:10px">ร้าน ' + sfMoney(fs.shop_discount_total||0) + ' · platform ' + sfMoney(fs.platform_discount_total||0) + '</span></div>' +
+          '<div>🎟️ คูปองร้านหักสะสม<br><b style="font-size:16px;font-family:\'DM Mono\',monospace;color:#E63329">−' + sfMoney(fs.shop_discount_total||0) + '</b><br><span style="color:#10B981;font-size:10px">platform สมทบ ' + sfMoney(fs.platform_discount_total||0) + ' (ไม่หักร้าน)</span></div>' +
           '<div>💰 ร้านได้รับสุทธิ<br><b style="font-size:16px;font-family:\'DM Mono\',monospace;color:#10B981">' + sfMoney(fs.net_total||0) + '</b></div>';
 
         // ── ตารางสรุปรายใบ: สินค้า/คูปอง/GP/สุทธิ ──
@@ -7729,12 +7729,12 @@ async function renderFinanceLive() {
             ctb.innerHTML = '<div style="border:1px solid #EFEFEF;border-radius:8px;overflow:auto;margin:0 0 14px;background:#fff">'
               + '<div style="padding:10px 14px;font-weight:600;font-size:13px;border-bottom:1px solid #EFEFEF">🎟️ สรุปรายใบ — คูปอง & GP (20 ใบล่าสุด)</div>'
               + '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:760px">'
-              + '<tr style="background:#FAFAFA;color:#666"><th style="text-align:left;padding:8px 14px">ใบ</th><th style="text-align:right;padding:8px">สินค้า</th><th style="text-align:right;padding:8px">คูปองร้าน</th><th style="text-align:right;padding:8px">คูปอง Platform</th><th style="text-align:right;padding:8px">GP</th><th style="text-align:right;padding:8px">ค่าส่ง</th><th style="text-align:right;padding:8px 14px">ร้านได้สุทธิ</th><th style="text-align:center;padding:8px">สถานะ</th></tr>'
+              + '<tr style="background:#FAFAFA;color:#666"><th style="text-align:left;padding:8px 14px">ใบ</th><th style="text-align:right;padding:8px">สินค้า</th><th style="text-align:right;padding:8px">คูปองร้าน</th><th style="text-align:right;padding:8px">Platform สมทบ</th><th style="text-align:right;padding:8px">GP</th><th style="text-align:right;padding:8px">ค่าส่ง</th><th style="text-align:right;padding:8px 14px">ร้านได้สุทธิ</th><th style="text-align:center;padding:8px">สถานะ</th></tr>'
               + cSubs.map(s => '<tr style="border-top:1px solid #F3F3F3">'
                 + '<td style="padding:7px 14px;font-family:monospace">' + (s.sub_number||'') + '</td>'
                 + '<td style="padding:7px;text-align:right">' + cM(s.items_subtotal) + '</td>'
                 + '<td style="padding:7px;text-align:right;color:' + (Number(s.shop_discount)>0?'#E63329':'#BBB') + '">' + (Number(s.shop_discount)>0 ? '−'+cM(s.shop_discount) : '—') + '</td>'
-                + '<td style="padding:7px;text-align:right;color:' + (Number(s.platform_subsidy)>0?'#E63329':'#BBB') + '">' + (Number(s.platform_subsidy)>0 ? '−'+cM(s.platform_subsidy) : '—') + '</td>'
+                + '<td style="padding:7px;text-align:right;color:' + (Number(s.platform_subsidy)>0?'#10B981':'#BBB') + '">' + (Number(s.platform_subsidy)>0 ? cM(s.platform_subsidy) : '—') + '</td>'
                 + '<td style="padding:7px;text-align:right;color:#E63329">−' + cM(s.commission) + '</td>'
                 + '<td style="padding:7px;text-align:right;color:#2563EB">+' + cM(s.shipping_fee) + '</td>'
                 + '<td style="padding:7px 14px;text-align:right;font-weight:600;color:#10B981">' + cM(s.net_to_seller) + '</td>'

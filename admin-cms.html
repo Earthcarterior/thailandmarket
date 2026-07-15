@@ -9665,7 +9665,7 @@ window.orShowDetail = async function(orderId) {
               </div>
               <div style="font-size:12px;color:#666">🏪 ${orEsc(shopMap[s.seller_id]||'ร้าน')}</div>
               <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px">
-                <span>สินค้า: <b>${orFmtMoney(s.items_subtotal)}</b>${((Number(s.shop_discount)||0)+(Number(s.platform_subsidy)||0))>0?` − คูปอง ${orFmtMoney((Number(s.shop_discount)||0)+(Number(s.platform_subsidy)||0))}`:''}${s.shipping_fee>0?` + ส่ง ${orFmtMoney(s.shipping_fee)}`:''} = <b>${orFmtMoney(s.total)}</b> · ร้านได้ <b style="color:#10B981">${orFmtMoney(s.net_to_seller)}</b></span>
+                <span>สินค้า: <b>${orFmtMoney(s.items_subtotal)}</b>${(Number(s.shop_discount)||0)>0?` − คูปองร้าน ${orFmtMoney(s.shop_discount)}`:''}${(Number(s.platform_subsidy)||0)>0?` − คูปอง PF ${orFmtMoney(s.platform_subsidy)}`:''}${s.shipping_fee>0?` + ส่ง ${orFmtMoney(s.shipping_fee)}`:''} = <b>${orFmtMoney(s.total)}</b> · ร้านได้ <b style="color:#10B981">${orFmtMoney(s.net_to_seller)}</b></span>
                 ${s.tracking_number ? `<span style="font-family:monospace;color:#0891B2">📦 ${orEsc(s.tracking_number)}</span>` : '<span style="color:#999">ยังไม่มีเลขพัสดุ</span>'}
               </div>
               ${s.money_released ? `<div style="font-size:11px;color:#16A34A;margin-top:2px">✓ ปล่อยเงินแล้ว ฿${Number(s.net_to_seller||0).toLocaleString()}</div>` : ''}
@@ -9679,7 +9679,7 @@ window.orShowDetail = async function(orderId) {
               <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:680px">
                 <tr style="background:#FAFAFA;color:#666">
                   <th style="text-align:left;padding:6px 12px">ร้าน</th><th style="text-align:right;padding:6px">สินค้า</th>
-                  <th style="text-align:right;padding:6px">คูปองร้าน</th><th style="text-align:right;padding:6px">คูปอง Platform</th>
+                  <th style="text-align:right;padding:6px">คูปองร้าน</th><th style="text-align:right;padding:6px">PF สมทบ</th>
                   <th style="text-align:right;padding:6px">GP</th><th style="text-align:right;padding:6px">ค่าส่ง</th>
                   <th style="text-align:right;padding:6px">ร้านได้สุทธิ</th><th style="text-align:right;padding:6px 12px">ลูกค้าจ่าย</th>
                 </tr>
@@ -9687,7 +9687,7 @@ window.orShowDetail = async function(orderId) {
                   <td style="padding:5px 12px">${orEsc(shopMap[s.seller_id]||'ร้าน')} <span style="color:#999;font-family:monospace">${orEsc((s.sub_number||'').split('-').pop()||'')}</span></td>
                   <td style="padding:5px;text-align:right">${orFmtMoney(s.items_subtotal)}</td>
                   <td style="padding:5px;text-align:right;color:${(Number(s.shop_discount)||0)>0?'#E63329':'#BBB'}">${(Number(s.shop_discount)||0)>0?'−'+orFmtMoney(s.shop_discount):'—'}</td>
-                  <td style="padding:5px;text-align:right;color:${(Number(s.platform_subsidy)||0)>0?'#E63329':'#BBB'}">${(Number(s.platform_subsidy)||0)>0?'−'+orFmtMoney(s.platform_subsidy):'—'}</td>
+                  <td style="padding:5px;text-align:right;color:${(Number(s.platform_subsidy)||0)>0?'#10B981':'#BBB'}">${(Number(s.platform_subsidy)||0)>0?orFmtMoney(s.platform_subsidy):'—'}</td>
                   <td style="padding:5px;text-align:right;color:#E63329">−${orFmtMoney(s.commission)}</td>
                   <td style="padding:5px;text-align:right;color:#2563EB">+${orFmtMoney(s.shipping_fee)}</td>
                   <td style="padding:5px;text-align:right;font-weight:600;color:#10B981">${orFmtMoney(s.net_to_seller)}</td>
@@ -9697,7 +9697,7 @@ window.orShowDetail = async function(orderId) {
                   <td style="padding:6px 12px">รวม</td>
                   <td style="padding:6px;text-align:right">${orFmtMoney(tSum('items_subtotal'))}</td>
                   <td style="padding:6px;text-align:right;color:#E63329">−${orFmtMoney(tSum('shop_discount'))}</td>
-                  <td style="padding:6px;text-align:right;color:#E63329">−${orFmtMoney(tSum('platform_subsidy'))}</td>
+                  <td style="padding:6px;text-align:right;color:#10B981">${orFmtMoney(tSum('platform_subsidy'))}</td>
                   <td style="padding:6px;text-align:right;color:#E63329">−${orFmtMoney(tSum('commission'))}</td>
                   <td style="padding:6px;text-align:right;color:#2563EB">+${orFmtMoney(tSum('shipping_fee'))}</td>
                   <td style="padding:6px;text-align:right;color:#10B981">${orFmtMoney(tSum('net_to_seller'))}</td>
