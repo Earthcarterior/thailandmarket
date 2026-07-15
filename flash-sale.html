@@ -584,9 +584,9 @@ img{max-width:100%;height:auto}
       <div class="flash-logo">⚡ FLASH SALE</div>
       <div class="hero-sub">ดีลสุดคุ้ม ลดสูงสุด 80% · วันละ 3 รอบ</div>
       <div class="round-selector">
-        <div class="round-btn active" id="rb1" onclick="selRound(1)">รอบ 1: 10:00–12:00</div>
+        <div class="round-btn" id="rb1" onclick="selRound(1)">รอบ 1: 10:00–12:00</div>
         <div class="round-btn" id="rb2" onclick="selRound(2)">รอบ 2: 14:00–16:00</div>
-        <div class="round-btn upcoming" id="rb3" onclick="selRound(3)">รอบ 3: 20:00–22:00</div>
+        <div class="round-btn" id="rb3" onclick="selRound(3)">รอบ 3: 20:00–22:00</div>
       </div>
     </div>
     <div class="hero-right">
@@ -616,18 +616,17 @@ img{max-width:100%;height:auto}
 
 <!-- FILTERS -->
 <div class="filters">
-  <div class="filter-chip active" onclick="selFilter(this)">ทั้งหมด</div>
-  <div class="filter-chip" onclick="selFilter(this)">ลดมากกว่า 50%</div>
-  <div class="filter-chip" onclick="selFilter(this)">ใกล้หมด (≤10 ชิ้น)</div>
-  <div class="filter-chip" onclick="selFilter(this)">Shock Deal</div>
-  <div class="filter-chip" onclick="selFilter(this)">ส่งฟรี</div>
-  <div class="filter-chip" onclick="selFilter(this)">ผ่อน 0%</div>
-  <select class="sort-sel" onchange="toast('เรียง: '+this.options[this.selectedIndex].text)">
-    <option>เรียงตาม: ลดมากสุด</option>
-    <option>ราคาต่ำ → สูง</option>
-    <option>ราคาสูง → ต่ำ</option>
-    <option>เหลือน้อยสุด</option>
-    <option>ขายดีสุด</option>
+  <div class="filter-chip active" data-f="all" onclick="selFilter(this)">ทั้งหมด</div>
+  <div class="filter-chip" data-f="d50" onclick="selFilter(this)">ลดมากกว่า 50%</div>
+  <div class="filter-chip" data-f="low" onclick="selFilter(this)">ใกล้หมด (≤10 ชิ้น)</div>
+  <div class="filter-chip" data-f="shock" onclick="selFilter(this)">Shock Deal (ลด ≥60%)</div>
+  <div class="filter-chip" data-f="best" onclick="selFilter(this)">ขายดี</div>
+  <select class="sort-sel" onchange="selSort(this.value)">
+    <option value="disc">เรียงตาม: ลดมากสุด</option>
+    <option value="price_asc">ราคาต่ำ → สูง</option>
+    <option value="price_desc">ราคาสูง → ต่ำ</option>
+    <option value="stock">เหลือน้อยสุด</option>
+    <option value="sold">ขายดีสุด</option>
   </select>
 </div>
 
@@ -680,43 +679,79 @@ function buildGrid(prods){
 }
 document.getElementById('flash-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:48px;color:#888">⏳ กำลังโหลดสินค้า Flash Sale...</div>';
 
-let curRound=2;
-function selRound(r){
-  curRound=r;
+const FLASH_ROUNDS = [{s:10,e:12},{s:14,e:16},{s:20,e:22}];
+let curRound = null;
+function roundStatus(i, now){
+  const h = now.getHours() + now.getMinutes()/60 + now.getSeconds()/3600;
+  const r = FLASH_ROUNDS[i-1];
+  return (h >= r.s && h < r.e) ? 'live' : (h < r.s ? 'upcoming' : 'ended');
+}
+function pickCurrentRound(){
+  const now = new Date();
+  for (let i=1; i<=3; i++) if (roundStatus(i, now) === 'live') return i;
+  for (let i=1; i<=3; i++) if (roundStatus(i, now) === 'upcoming') return i;
+  return 1; // ทุกรอบวันนี้จบแล้ว → รอบ 1 พรุ่งนี้
+}
+function selRound(r){ curRound = r; tickRound(); }
+function tickRound(){
+  const now = new Date();
+  if (curRound === null) curRound = pickCurrentRound();
   [1,2,3].forEach(i=>{
-    const btn=document.getElementById('rb'+i);
-    btn.classList.toggle('active',i===r);
+    const b = document.getElementById('rb'+i); if(!b) return;
+    const st = roundStatus(i, now);
+    b.classList.toggle('active', i === curRound);
+    b.classList.toggle('upcoming', st === 'upcoming');
+    b.style.opacity = st === 'ended' ? '0.45' : '1';
   });
-  const labels={1:'รอบ 1 จบแล้ว',2:'หมดเวลารอบที่ 2 ใน',3:'รอบ 3 เริ่มใน'};
-  document.getElementById('cd-label').textContent=labels[r];
-  toast(`⚡ ดูสินค้ารอบที่ ${r}`);
+  const st = roundStatus(curRound, now);
+  const r  = FLASH_ROUNDS[curRound-1];
+  const target = new Date(now);
+  let label;
+  if (st === 'live')          { label = 'หมดเวลารอบที่ '+curRound+' ใน';  target.setHours(r.e,0,0,0); }
+  else if (st === 'upcoming') { label = 'รอบ '+curRound+' เริ่มใน';       target.setHours(r.s,0,0,0); }
+  else                        { label = 'รอบ '+curRound+' จบแล้ว · รอบ 1 พรุ่งนี้เริ่มใน'; target.setDate(target.getDate()+1); target.setHours(FLASH_ROUNDS[0].s,0,0,0); }
+  const lb = document.getElementById('cd-label'); if (lb) lb.textContent = label;
+  let diff = Math.max(0, target - now);
+  const hh = Math.floor(diff/3600000), mm = Math.floor((diff%3600000)/60000), ss = Math.floor((diff%60000)/1000);
+  const pad = n => String(n).padStart(2,'0');
+  const eh = document.getElementById('cd-h'), em = document.getElementById('cd-m'), es = document.getElementById('cd-s');
+  if (eh) eh.textContent = pad(hh);
+  if (em) em.textContent = pad(mm);
+  if (es) es.textContent = pad(ss);
 }
 
+const _ff = { cat:'all', chip:'all', sort:'disc' };
+function flashDisc(p){ return p.discount_percent || (p.compare_price ? Math.round((1-p.price/p.compare_price)*100) : 0); }
+function applyFlashFilters(){
+  let list = (window._flashProds||[]).slice();
+  if (_ff.cat !== 'all')    list = list.filter(p => (p.categories?.name_th||'อื่นๆ') === _ff.cat);
+  if (_ff.chip === 'd50')   list = list.filter(p => flashDisc(p) >= 50);
+  if (_ff.chip === 'low')   list = list.filter(p => (p.stock_quantity||0) <= 10);
+  if (_ff.chip === 'shock') list = list.filter(p => flashDisc(p) >= 60);
+  if (_ff.chip === 'best')  list = list.filter(p => (p.sold_count||0) > 0);
+  if (_ff.sort === 'disc')       list.sort((a,b)=>flashDisc(b)-flashDisc(a));
+  if (_ff.sort === 'price_asc')  list.sort((a,b)=>(a.price||0)-(b.price||0));
+  if (_ff.sort === 'price_desc') list.sort((a,b)=>(b.price||0)-(a.price||0));
+  if (_ff.sort === 'stock')      list.sort((a,b)=>(a.stock_quantity||0)-(b.stock_quantity||0));
+  if (_ff.sort === 'sold')       list.sort((a,b)=>(b.sold_count||0)-(a.sold_count||0));
+  renderFlashGrid(list);
+}
 function selCat(id,el){
   document.querySelectorAll('.rt').forEach(t=>t.classList.remove('active'));
   if(el) el.classList.add('active');
-  const all = window._flashProds || [];
-  const list = id==='all' ? all : all.filter(p => (p.categories?.name_th||'อื่นๆ') === id);
-  renderFlashGrid(list);
+  _ff.cat = id;
+  applyFlashFilters();
 }
 function selFilter(el){
   document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
-  toast('🔍 กรอง: '+el.textContent);
+  _ff.chip = el.dataset.f || 'all';
+  applyFlashFilters();
 }
+function selSort(v){ _ff.sort = v || 'disc'; applyFlashFilters(); }
 
-let sec=1*3600+34*60+22;
-setInterval(()=>{
-  sec--;if(sec<0)sec=7200;
-  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
-  document.getElementById('cd-h').textContent=String(h).padStart(2,'0');
-  document.getElementById('cd-m').textContent=String(m).padStart(2,'0');
-  document.getElementById('cd-s').textContent=String(s).padStart(2,'0');
-},1000);
-setInterval(()=>{
-  const o=parseInt(document.getElementById('ord-cnt').textContent.replace(',',''))+Math.floor(Math.random()*3);
-  document.getElementById('ord-cnt').textContent=o.toLocaleString();
-},4000);
+tickRound();
+setInterval(tickRound, 1000);
 
 function toast(msg){const w=document.getElementById('tw');const t=document.createElement('div');t.className='toast';t.textContent=msg;w.appendChild(t);setTimeout(()=>t.remove(),2800);}
 </script>
@@ -849,7 +884,7 @@ async function loadFlashProducts() {
     
     window._flashProds = prods || [];
     buildFlashCatTabs(window._flashProds);
-    renderFlashGrid(window._flashProds);
+    applyFlashFilters();
   } catch (e) { console.warn('flash load:', e); }
 }
 
