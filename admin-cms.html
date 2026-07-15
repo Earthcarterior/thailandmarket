@@ -6678,16 +6678,67 @@ let _pickerProducts    = [];
 let _flashCurrentProd  = null;
 let _flashFilterMode   = 'all';
 
+// ── ⏰ ตั้งค่ารอบเวลา Flash Sale (มีผลทั้งเว็บ) ──
+async function ensureFlashRoundPanel(){
+  const stats = document.getElementById('flash-stats');
+  if (!stats) return;
+  let el = document.getElementById('flash-rounds-cfg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'flash-rounds-cfg';
+    stats.parentElement.insertBefore(el, stats);
+  }
+  let rounds = [];
+  try {
+    const r = await sb.from('flash_rounds').select('*').order('round_no');
+    rounds = r.data || [];
+  } catch(_) {}
+  if (!rounds.length) rounds = [
+    { round_no:1, starts:'10:00', ends:'12:00' },
+    { round_no:2, starts:'14:00', ends:'16:00' },
+    { round_no:3, starts:'20:00', ends:'22:00' }];
+  const t = s => String(s||'').slice(0,5);
+  el.innerHTML = `<div style="border:1px solid var(--g200);background:#fff;padding:14px;margin-bottom:14px">
+    <div style="font-weight:700;margin-bottom:10px;font-size:13px">⏰ ตั้งค่ารอบเวลา Flash Sale <span style="font-weight:400;color:var(--g400);font-size:11px">— มีผลกับหน้าเว็บลูกค้าและ seller ทั้งหมด</span></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+      ${rounds.map(r => `<div style="display:flex;gap:6px;align-items:center;font-size:12px">
+        <b>รอบ ${r.round_no}</b>
+        <input type="time" id="fr-s-${r.round_no}" value="${t(r.starts)}" style="padding:5px;border:1px solid var(--g200)">
+        <span>–</span>
+        <input type="time" id="fr-e-${r.round_no}" value="${t(r.ends)}" style="padding:5px;border:1px solid var(--g200)">
+      </div>`).join('')}
+      <button onclick="saveFlashRounds()" style="background:var(--black);color:#fff;border:none;padding:8px 16px;font-size:12px;cursor:pointer">💾 บันทึกรอบเวลา</button>
+    </div></div>`;
+}
+window.saveFlashRounds = async function(){
+  try {
+    for (const n of [1,2,3]) {
+      const s = document.getElementById('fr-s-'+n)?.value;
+      const e = document.getElementById('fr-e-'+n)?.value;
+      if (!s || !e) continue;
+      if (e <= s) { alert('รอบ '+n+': เวลาจบต้องอยู่หลังเวลาเริ่ม'); return; }
+      const { error } = await sb.from('flash_rounds').upsert({ round_no:n, starts:s, ends:e, updated_at:new Date().toISOString() });
+      if (error) throw error;
+    }
+    alert('✅ บันทึกรอบเวลาแล้ว — หน้าเว็บใช้เวลาชุดใหม่ทันที');
+  } catch(e) { alert('❌ '+e.message); }
+};
+window.setFlashRound = async function(id, v){
+  const { error } = await sb.from('products').update({ flash_round: v ? Number(v) : null }).eq('id', id);
+  if (error) alert('❌ '+error.message);
+};
+
 async function loadFlash() {
   const tbody   = document.getElementById('flash-tbody');
   const statsEl = document.getElementById('flash-stats');
   if (!tbody) return;
+  ensureFlashRoundPanel();
 
   tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--g400)">⏳ กำลังโหลด...</td></tr>';
 
   try {
     const { data, error } = await sb.from('products')
-      .select('id,name_th,price,compare_price,flash_price,thumbnail,sold_count,stock_quantity,rating_avg,is_flash_sale,status,categories(name_th)')
+      .select('id,name_th,price,compare_price,flash_price,flash_round,thumbnail,sold_count,stock_quantity,rating_avg,is_flash_sale,status,categories(name_th)')
       .eq('status', 'active')
       .order('sold_count', { ascending: false })
       .limit(100);
@@ -6758,7 +6809,7 @@ function renderFlashTable(prods) {
           </div>
           <div style="min-width:0">
             <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">${p.name_th}</div>
-            <div style="font-size:11px;color:var(--g400)">${p.categories?.name_th || '—'}</div>
+            <div style="font-size:11px;color:var(--g400)">${p.categories?.name_th || '—'}${p.is_flash_sale ? ` · <select onchange="setFlashRound('${p.id}',this.value)" onclick="event.stopPropagation()" style="font-size:10px;border:1px solid var(--g200);padding:1px 3px;cursor:pointer"><option value="" ${!p.flash_round?'selected':''}>ทุกรอบ</option><option value="1" ${p.flash_round==1?'selected':''}>รอบ 1</option><option value="2" ${p.flash_round==2?'selected':''}>รอบ 2</option><option value="3" ${p.flash_round==3?'selected':''}>รอบ 3</option></select>` : ''}</div>
           </div>
         </div>
       </td>

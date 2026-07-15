@@ -679,12 +679,31 @@ function buildGrid(prods){
 }
 document.getElementById('flash-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:48px;color:#888">⏳ กำลังโหลดสินค้า Flash Sale...</div>';
 
-const FLASH_ROUNDS = [{s:10,e:12},{s:14,e:16},{s:20,e:22}];
+let FLASH_ROUNDS = [{s:600,e:720},{s:840,e:960},{s:1200,e:1320}]; // นาทีของวัน (ค่าเริ่มต้น)
 let curRound = null;
+function _tmin(t){ const a=String(t||'0:0').split(':'); return (Number(a[0])||0)*60 + (Number(a[1])||0); }
+async function loadFlashRounds(){
+  try {
+    const { data } = await _sbFlash.from('flash_rounds').select('*').order('round_no');
+    if (data && data.length) {
+      FLASH_ROUNDS = [1,2,3].map(n => {
+        const r = data.find(x => x.round_no === n);
+        return r ? { s:_tmin(r.starts), e:_tmin(r.ends) } : FLASH_ROUNDS[n-1];
+      });
+      data.forEach(r => {
+        const b = document.getElementById('rb'+r.round_no);
+        if (b) b.textContent = 'รอบ '+r.round_no+': '+String(r.starts).slice(0,5)+'–'+String(r.ends).slice(0,5);
+      });
+      curRound = null; // เลือกรอบปัจจุบันใหม่ตามเวลาชุดจริง
+      tickRound();
+      applyFlashFilters();
+    }
+  } catch(e) { console.warn('flash rounds:', e); }
+}
 function roundStatus(i, now){
-  const h = now.getHours() + now.getMinutes()/60 + now.getSeconds()/3600;
+  const m = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
   const r = FLASH_ROUNDS[i-1];
-  return (h >= r.s && h < r.e) ? 'live' : (h < r.s ? 'upcoming' : 'ended');
+  return (m >= r.s && m < r.e) ? 'live' : (m < r.s ? 'upcoming' : 'ended');
 }
 function pickCurrentRound(){
   const now = new Date();
@@ -692,7 +711,7 @@ function pickCurrentRound(){
   for (let i=1; i<=3; i++) if (roundStatus(i, now) === 'upcoming') return i;
   return 1; // ทุกรอบวันนี้จบแล้ว → รอบ 1 พรุ่งนี้
 }
-function selRound(r){ curRound = r; tickRound(); }
+function selRound(r){ curRound = r; tickRound(); applyFlashFilters(); }
 function tickRound(){
   const now = new Date();
   if (curRound === null) curRound = pickCurrentRound();
@@ -707,9 +726,9 @@ function tickRound(){
   const r  = FLASH_ROUNDS[curRound-1];
   const target = new Date(now);
   let label;
-  if (st === 'live')          { label = 'หมดเวลารอบที่ '+curRound+' ใน';  target.setHours(r.e,0,0,0); }
-  else if (st === 'upcoming') { label = 'รอบ '+curRound+' เริ่มใน';       target.setHours(r.s,0,0,0); }
-  else                        { label = 'รอบ '+curRound+' จบแล้ว · รอบ 1 พรุ่งนี้เริ่มใน'; target.setDate(target.getDate()+1); target.setHours(FLASH_ROUNDS[0].s,0,0,0); }
+  if (st === 'live')          { label = 'หมดเวลารอบที่ '+curRound+' ใน';  target.setHours(Math.floor(r.e/60), r.e%60, 0, 0); }
+  else if (st === 'upcoming') { label = 'รอบ '+curRound+' เริ่มใน';       target.setHours(Math.floor(r.s/60), r.s%60, 0, 0); }
+  else                        { label = 'รอบ '+curRound+' จบแล้ว · รอบ 1 พรุ่งนี้เริ่มใน'; target.setDate(target.getDate()+1); target.setHours(Math.floor(FLASH_ROUNDS[0].s/60), FLASH_ROUNDS[0].s%60, 0, 0); }
   const lb = document.getElementById('cd-label'); if (lb) lb.textContent = label;
   let diff = Math.max(0, target - now);
   const hh = Math.floor(diff/3600000), mm = Math.floor((diff%3600000)/60000), ss = Math.floor((diff%60000)/1000);
@@ -724,6 +743,7 @@ const _ff = { cat:'all', chip:'all', sort:'disc' };
 function flashDisc(p){ return p.discount_percent || (p.compare_price ? Math.round((1-p.price/p.compare_price)*100) : 0); }
 function applyFlashFilters(){
   let list = (window._flashProds||[]).slice();
+  if (curRound) list = list.filter(p => !p.flash_round || p.flash_round === curRound);
   if (_ff.cat !== 'all')    list = list.filter(p => (p.categories?.name_th||'อื่นๆ') === _ff.cat);
   if (_ff.chip === 'd50')   list = list.filter(p => flashDisc(p) >= 50);
   if (_ff.chip === 'low')   list = list.filter(p => (p.stock_quantity||0) <= 10);
@@ -877,7 +897,7 @@ function toast(msg, type) {
 async function loadFlashProducts() {
   try {
     const { data: prods } = await _sbFlash.from('products')
-      .select('id,name_th,price,compare_price,discount_percent,thumbnail,images,stock_quantity,sold_count,rating_avg,rating_count,categories(name_th)')
+      .select('id,name_th,price,compare_price,discount_percent,flash_round,thumbnail,images,stock_quantity,sold_count,rating_avg,rating_count,categories(name_th)')
       .eq('is_flash_sale', true)
       .eq('status', 'active')
       .order('sold_count', { ascending: false });
@@ -970,6 +990,7 @@ function updateFlashTimer() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  loadFlashRounds();
   loadFlashProducts();
   updateFlashTimer();
   setInterval(updateFlashTimer, 1000);

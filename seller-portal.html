@@ -3647,7 +3647,7 @@ async function loadSellerProducts() {
     }
     
     let q = _sb.from('products')
-      .select('id,name_th,name_en,slug,price,compare_price,discount_percent,stock_quantity,sold_count,status,rating_avg,rating_count,thumbnail,images,category_id,categories(name_th,icon),seller_id,sku,brand,tags,is_flash_sale,flash_price,is_featured,violation_reason,created_at,updated_at,variant_options,variant_skus,weight,description')
+      .select('id,name_th,name_en,slug,price,compare_price,discount_percent,stock_quantity,sold_count,status,rating_avg,rating_count,thumbnail,images,category_id,categories(name_th,icon),seller_id,sku,brand,tags,is_flash_sale,flash_price,flash_round,is_featured,violation_reason,created_at,updated_at,variant_options,variant_skus,weight,description')
       .eq('seller_id', _sellerSellerId)  // ← Force filter
       .order('created_at',{ ascending:false }).limit(200);
     const { data, error } = await q;
@@ -4927,7 +4927,7 @@ function renderFlashLive(){
         <td style="padding:10px;font-family:monospace;font-size:12px;color:#E63329">${disc>0?'-'+disc+'%':'—'}</td>
         <td style="padding:10px;font-family:monospace;font-size:12px">${fmt(p.sold_count)}</td>
         <td style="padding:10px;font-family:monospace;font-size:12px">${fmt(p.stock_quantity)}</td>
-        <td style="padding:10px"><span style="background:#DCFCE7;color:#16A34A;padding:2px 8px;font-size:10px;font-family:monospace">ACTIVE</span></td>
+        <td style="padding:10px"><span style="background:#DCFCE7;color:#16A34A;padding:2px 8px;font-size:10px;font-family:monospace">ACTIVE</span><div style="font-size:10px;color:#888;margin-top:3px">${p.flash_round?('⏰ รอบ '+p.flash_round):'ทุกรอบ'}</div></td>
         <td style="padding:10px;white-space:nowrap">
           <button onclick="openProductEdit('${p.id}')" style="background:none;border:1px solid #E5E5E5;padding:4px 8px;font-size:11px;cursor:pointer">✏️ แก้ไข</button>
           <button onclick="flashRemove('${p.id}')" style="background:none;border:1px solid #FECACA;color:#E63329;padding:4px 8px;font-size:11px;cursor:pointer">นำออก</button>
@@ -4957,7 +4957,19 @@ async function flashLoadRound(){
 }
 
 // ── modal สมัครสินค้าเข้า Flash Sale (เฉพาะสินค้าร้านตัวเอง) ──
-window.openFlashEnroll = function(){
+window.openFlashEnroll = async function(){
+  if (!window._flashRounds) {
+    try {
+      const r = await _sb.from('flash_rounds').select('*').order('round_no');
+      window._flashRounds = (r.data && r.data.length) ? r.data : null;
+    } catch(_) { window._flashRounds = null; }
+  }
+  const fr = window._flashRounds || [
+    { round_no:1, starts:'10:00', ends:'12:00' },
+    { round_no:2, starts:'14:00', ends:'16:00' },
+    { round_no:3, starts:'20:00', ends:'22:00' }];
+  const rOpts = '<option value="">ทุกรอบ</option>' + fr.map(r =>
+    `<option value="${r.round_no}">รอบ ${r.round_no} (${String(r.starts).slice(0,5)}–${String(r.ends).slice(0,5)})</option>`).join('');
   const cand=_sellerProds.filter(p=>p.status==='active' && !p.is_flash_sale);
   let ov=document.getElementById('flash-enroll-ov'); if(ov) ov.remove();
   ov=document.createElement('div'); ov.id='flash-enroll-ov';
@@ -4974,6 +4986,7 @@ window.openFlashEnroll = function(){
         <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name_th}</div>
         <div style="font-size:11px;color:#888">ปกติ ${fmtB(p.price)}</div></div>
         <input id="fp-${p.id}" type="number" value="${Math.max(1,Math.round((p.price||0)*0.9))}" min="1" style="width:100px;padding:6px;border:1px solid #E5E5E5;font-family:monospace;font-size:12px">
+        <select id="fr-${p.id}" style="padding:6px;border:1px solid #E5E5E5;font-size:11px">${rOpts}</select>
         <button onclick="flashEnroll('${p.id}')" style="background:#E63329;color:#fff;border:none;padding:7px 12px;font-size:11px;cursor:pointer;flex-shrink:0">เข้าร่วม</button>
       </div>`).join('')}
   </div>`;
@@ -4985,11 +4998,13 @@ window.flashEnroll = async function(pid){
   const prod=_sellerProds.find(p=>p.id===pid);
   if(!prod){ toast('❌ ไม่พบสินค้า','error'); return; }
   if(!price || price<=0 || price>=(prod.price||0)){ toast('⚠️ ราคา Flash ต้องมากกว่า 0 และต่ำกว่าราคาปกติ'); return; }
+  const rSel=document.getElementById('fr-'+pid);
+  const round=(rSel && rSel.value) ? Number(rSel.value) : null;
   const { error } = await _sb.from('products')
-    .update({ is_flash_sale:true, flash_price:price })
+    .update({ is_flash_sale:true, flash_price:price, flash_round:round })
     .eq('id', pid).eq('seller_id', _sellerSellerId);
   if(error){ toast('❌ '+error.message,'error'); return; }
-  prod.is_flash_sale=true; prod.flash_price=price;
+  prod.is_flash_sale=true; prod.flash_price=price; prod.flash_round=round;
   toast('✅ เข้าร่วม Flash Sale แล้ว','ok');
   const ov=document.getElementById('flash-enroll-ov'); if(ov) ov.remove();
   renderFlashLive();
