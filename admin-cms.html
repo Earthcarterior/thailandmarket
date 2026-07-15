@@ -9498,6 +9498,19 @@ window.orLoad = orLoad;
 
 // ── Order detail modal ──
 window.orShowDetail = async function(orderId) {
+  try {
+    if (!window._payMap) {
+      const pmSb = window._sb || window._sbAdmin || window.sb;
+      const pm = await pmSb.from('payment_methods').select('id,code,name_th,name');
+      window._payMap = {};
+      (pm.data||[]).forEach(p => {
+        const nm = p.name_th || p.name || p.code || '';
+        if (p.id) window._payMap[p.id] = nm;
+        if (p.code) window._payMap[p.code] = nm;
+      });
+      window._payMap['cod'] = window._payMap['cod'] || 'เก็บเงินปลายทาง';
+    }
+  } catch(_) {}
   const overlay = document.getElementById('or-modal-overlay');
   const body = document.getElementById('or-modal-body');
   const title = document.getElementById('or-modal-title');
@@ -9541,7 +9554,7 @@ window.orShowDetail = async function(orderId) {
         <div class="or-row"><div class="or-row-l">วันที่สั่ง</div><div class="or-row-r">${orFmtDate(order.created_at)}</div></div>
         <div class="or-row"><div class="or-row-l">สถานะออเดอร์</div><div class="or-row-r"><span class="or-pill ${status}">${status}</span></div></div>
         <div class="or-row"><div class="or-row-l">การชำระเงิน</div><div class="or-row-r"><span class="or-pill ${paymentStatus}">${paymentStatus}</span></div></div>
-        <div class="or-row"><div class="or-row-l">วิธีชำระ</div><div class="or-row-r">${orEsc(order.payment_method || '—')}</div></div>
+        <div class="or-row"><div class="or-row-l">วิธีชำระ</div><div class="or-row-r">${orEsc((window._payMap && window._payMap[order.payment_method]) || order.payment_method || '—')}</div></div>
         ${order.paid_at ? `<div class="or-row"><div class="or-row-l">ชำระเมื่อ</div><div class="or-row-r">${orFmtDate(order.paid_at)}</div></div>` : ''}
       </div>
 

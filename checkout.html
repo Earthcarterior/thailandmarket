@@ -1492,6 +1492,7 @@ async function applyCoupon(){
           name: voucherResult.name,
           discount: voucherResult.discount,
           type: voucherResult.discount_type,
+          seller_id: voucherResult.seller_id || cartSellerId,  // FIX: ระบุเจ้าของโค้ดร้าน — ให้ร้านรับภาระส่วนลดเอง (ไม่ใช่ platform)
           stackable: true,  // shop vouchers stack with platform coupons
           icon: '🎟️',
           source: 'shop_voucher'
@@ -2130,7 +2131,7 @@ async function doCheckout(){
       }])),
       total: total,
       total_amount: total,                     // เขียนทั้ง 2 column — กัน column split bug
-      payment_method: selPay,
+      payment_method: (typeof PAYS !== 'undefined' && Array.isArray(PAYS) && (PAYS.find(p => p.id === selPay) || {}).code) || selPay,  // เก็บเป็น code อ่านง่าย (qr_promptpay ฯลฯ) แทน UUID
       shipping_name: selectedAddr.name || '',
       shipping_phone: selectedAddr.phone || '',
       shipping_addr: selectedAddr.detail || '',

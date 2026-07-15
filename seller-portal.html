@@ -3732,6 +3732,20 @@ async function loadSellerOrders() {
         (or.data||[]).forEach(o => { ordMap[o.id] = o; });
       } catch(_) {}
 
+      // map ช่องทางชำระ (id/code → ชื่อไทย) โหลดครั้งเดียว
+      try {
+        if (!window._payMap) {
+          const pm = await _sb.from('payment_methods').select('id,code,name_th,name');
+          window._payMap = {};
+          (pm.data||[]).forEach(p => {
+            const nm = p.name_th || p.name || p.code || '';
+            if (p.id) window._payMap[p.id] = nm;
+            if (p.code) window._payMap[p.code] = nm;
+          });
+          window._payMap['cod'] = window._payMap['cod'] || 'เก็บเงินปลายทาง';
+        }
+      } catch(_) {}
+
       // query items ของแต่ละ sub_order (ทนต่อ error — ไม่ให้ล้มทั้ง block)
       const subIds = subs.map(s => s.id);
       let itemsBySub = {};
@@ -4179,7 +4193,7 @@ function renderOrdersLive() {
         <div style="font-size:12px;line-height:1.5;max-width:240px">${items.length?items.map(it=>`<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name_th||'—'}${(it.qty||it.quantity)>1?` <span style="color:#888">x${it.qty||it.quantity}</span>`:''}</div>`).join(''):'—'}</div></div></td>
       <td style="padding:10px 12px;font-size:12px">${o.shipping_name||'—'}</td>
       <td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600">${fmtB(o.seller_subtotal != null ? o.seller_subtotal : o.total_amount)}</td>
-      <td style="padding:10px 12px;font-size:11px;color:#888">${o.payment_method||'—'}</td>
+      <td style="padding:10px 12px;font-size:11px;color:#888">${(window._payMap && window._payMap[o.payment_method]) || o.payment_method || '—'}</td>
       <td style="padding:10px 12px"><span style="background:${stB[o.status]||'#F2F2F2'};color:${stC[o.status]||'#888'};padding:3px 10px;font-size:11px;font-family:monospace;white-space:nowrap">${stL[o.status]||o.status}</span></td>
       <td style="padding:10px 12px;font-size:11px;color:#888">${fmtDate(o.created_at)}</td>
       <td style="padding:10px 12px;white-space:nowrap">
