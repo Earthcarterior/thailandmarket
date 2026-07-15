@@ -353,6 +353,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);fon
 /* PRODUCT GRID */
 .section{max-width:1280px;margin:0 auto;padding:0 20px 32px}
 .prod-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+/* FIX: บังคับการ์ด Flash Sale สเกลเท่ากันทุกใบ */
+#flash-grid{display:grid !important;grid-template-columns:repeat(5,1fr) !important;gap:12px !important}
+#flash-grid>div{min-width:0}
+#flash-grid>div>div:first-child{aspect-ratio:1/1 !important;overflow:hidden !important}
+#flash-grid img{width:100% !important;height:100% !important;object-fit:cover !important;display:block}
+@media(max-width:1200px){#flash-grid{grid-template-columns:repeat(4,1fr) !important}}
+@media(max-width:900px){#flash-grid{grid-template-columns:repeat(3,1fr) !important}}
+@media(max-width:600px){#flash-grid{grid-template-columns:repeat(2,1fr) !important}}
 .prod-card{background:#fff;border-radius:4px;overflow:hidden;cursor:pointer;transition:all 0.2s;border:1px solid var(--g200);position:relative}
 .prod-card:hover{box-shadow:0 6px 20px rgba(0,0,0,0.1);transform:translateY(-2px);border-color:transparent}
 .pc-badge-tl{position:absolute;top:8px;left:8px;z-index:2;display:flex;flex-direction:column;gap:3px}
@@ -633,11 +641,9 @@ img{max-width:100%;height:auto}
 
 <!-- PRODUCT GRID -->
 <div class="section">
-  <div style="font-size:13px;color:var(--g500);margin-bottom:12px">แสดง <strong style="color:var(--g900)">24</strong> จาก 324 รายการ</div>
+  <div style="font-size:13px;color:var(--g500);margin-bottom:12px">แสดง <strong id="flash-count" style="color:var(--g900)">—</strong> รายการ</div>
   <div class="prod-grid" id="flash-grid"></div>
-  <div style="text-align:center;margin-top:20px">
-    <button style="padding:11px 32px;border:1.5px solid var(--accent);color:var(--accent);background:#fff;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer" onclick="toast('📦 โหลดสินค้าเพิ่มเติม...')">โหลดเพิ่มเติม →</button>
-  </div>
+
 </div>
 
 <div class="toast-wrap" id="tw"></div>
@@ -680,7 +686,7 @@ function buildGrid(prods){
     </div>`;
   }).join('');
 }
-buildGrid(FLASH_PRODS);
+document.getElementById('flash-grid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:48px;color:#888">⏳ กำลังโหลดสินค้า Flash Sale...</div>';
 
 let curRound=2;
 function selRound(r){
@@ -850,8 +856,14 @@ async function loadFlashProducts() {
       .eq('status', 'active')
       .order('sold_count', { ascending: false });
     
-    const grid = document.getElementById('flash-grid') || document.querySelector('.flash-grid, .products-grid, [class*="grid"]');
-    if (!grid || !prods?.length) return;
+    const grid = document.getElementById('flash-grid');
+    if (!grid) return;
+    const cnt = document.getElementById('flash-count');
+    if (cnt) cnt.textContent = (prods||[]).length;
+    if (!prods || !prods.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#888"><div style="font-size:36px;margin-bottom:10px">⚡</div>ยังไม่มีสินค้า Flash Sale ในรอบนี้</div>';
+      return;
+    }
     
     grid.innerHTML = prods.map(p => {
       const thumb = p.thumbnail || p.images?.[0];
