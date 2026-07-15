@@ -4927,7 +4927,7 @@ function renderFlashLive(){
         <td style="padding:10px;font-family:monospace;font-size:12px;color:#E63329">${disc>0?'-'+disc+'%':'—'}</td>
         <td style="padding:10px;font-family:monospace;font-size:12px">${fmt(p.sold_count)}</td>
         <td style="padding:10px;font-family:monospace;font-size:12px">${fmt(p.stock_quantity)}</td>
-        <td style="padding:10px"><span style="background:#DCFCE7;color:#16A34A;padding:2px 8px;font-size:10px;font-family:monospace">ACTIVE</span><div style="font-size:10px;color:#888;margin-top:3px">${p.flash_round?('⏰ รอบ '+p.flash_round):'ทุกรอบ'}</div></td>
+        <td style="padding:10px"><span style="background:#DCFCE7;color:#16A34A;padding:2px 8px;font-size:10px;font-family:monospace">ACTIVE</span><div style="margin-top:3px"><select onchange="flashSetRound('${p.id}',this.value)" style="font-size:10px;border:1px solid #E5E5E5;padding:2px;cursor:pointer"><option value="" ${!p.flash_round?'selected':''}>ทุกรอบ</option><option value="1" ${p.flash_round==1?'selected':''}>รอบ 1</option><option value="2" ${p.flash_round==2?'selected':''}>รอบ 2</option><option value="3" ${p.flash_round==3?'selected':''}>รอบ 3</option></select></div></td>
         <td style="padding:10px;white-space:nowrap">
           <button onclick="openProductEdit('${p.id}')" style="background:none;border:1px solid #E5E5E5;padding:4px 8px;font-size:11px;cursor:pointer">✏️ แก้ไข</button>
           <button onclick="flashRemove('${p.id}')" style="background:none;border:1px solid #FECACA;color:#E63329;padding:4px 8px;font-size:11px;cursor:pointer">นำออก</button>
@@ -5008,6 +5008,16 @@ window.flashEnroll = async function(pid){
   toast('✅ เข้าร่วม Flash Sale แล้ว','ok');
   const ov=document.getElementById('flash-enroll-ov'); if(ov) ov.remove();
   renderFlashLive();
+};
+window.flashSetRound = async function(pid, v){
+  const round = v ? Number(v) : null;
+  const { error } = await _sb.from('products')
+    .update({ flash_round: round })
+    .eq('id', pid).eq('seller_id', _sellerSellerId);
+  if(error){ toast('❌ '+error.message,'error'); return; }
+  const prod=_sellerProds.find(p=>p.id===pid);
+  if(prod) prod.flash_round=round;
+  toast('✅ เปลี่ยนเป็น'+(round?('รอบ '+round):'ทุกรอบ')+'แล้ว','ok');
 };
 window.flashRemove = async function(pid){
   if(!confirm('นำสินค้าออกจาก Flash Sale?')) return;
@@ -11299,5 +11309,6 @@ async function uploadShopImage(input, kind) {
 })();
 
 </script>
+<script>console.log("TM seller-portal build 2026-07-16-A (flash rounds editable)")</script>
 </body>
 </html>
