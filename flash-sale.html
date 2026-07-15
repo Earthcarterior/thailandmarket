@@ -333,7 +333,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--g900);fon
 .stat-l{font-size:10px;color:rgba(255,255,255,0.4);margin-top:1px}
 
 /* ROUND TABS */
-.round-tabs{background:#fff;border-bottom:1px solid var(--g200);position:sticky;top:50px;z-index:90}
+.round-tabs{background:#fff;border-bottom:1px solid var(--g200)}
 .rt-inner{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
 .rt-inner::-webkit-scrollbar{display:none}
 .rt{display:flex;align-items:center;gap:8px;padding:12px 20px;cursor:pointer;color:var(--g400);font-size:13px;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s}
@@ -611,14 +611,6 @@ img{max-width:100%;height:auto}
 <div class="round-tabs">
   <div class="rt-inner">
     <div class="rt active" onclick="selCat('all',this)">ทั้งหมด</div>
-    <div class="rt" onclick="selCat('home',this)">🏠 บ้าน <span class="rt-badge rb-live">LIVE</span></div>
-    <div class="rt" onclick="selCat('fashion',this)">👗 แฟชั่น</div>
-    <div class="rt" onclick="selCat('beauty',this)">💄 Beauty</div>
-    <div class="rt" onclick="selCat('tech',this)">💻 Tech</div>
-    <div class="rt" onclick="selCat('fmcg',this)">🛒 FMCG</div>
-    <div class="rt" onclick="selCat('pet',this)">🐾 สัตว์เลี้ยง</div>
-    <div class="rt" onclick="selCat('auto',this)">🚗 ยานยนต์</div>
-    <div class="rt" onclick="selCat('edu',this)">📚 การศึกษา</div>
   </div>
 </div>
 
@@ -702,11 +694,10 @@ function selRound(r){
 
 function selCat(id,el){
   document.querySelectorAll('.rt').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  if(id!=='all'){
-    const cats={home:'🏠',fashion:'👗',beauty:'💄',tech:'💻',fmcg:'🛒',pet:'🐾',auto:'🚗',edu:'📚'};
-    toast(`${cats[id]||''} กรอง: ${el.textContent.trim()}`);
-  }
+  if(el) el.classList.add('active');
+  const all = window._flashProds || [];
+  const list = id==='all' ? all : all.filter(p => (p.categories?.name_th||'อื่นๆ') === id);
+  renderFlashGrid(list);
 }
 function selFilter(el){
   document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
@@ -856,12 +847,34 @@ async function loadFlashProducts() {
       .eq('status', 'active')
       .order('sold_count', { ascending: false });
     
+    window._flashProds = prods || [];
+    buildFlashCatTabs(window._flashProds);
+    renderFlashGrid(window._flashProds);
+  } catch (e) { console.warn('flash load:', e); }
+}
+
+// สร้างแท็บหมวดจากหมวดของสินค้า flash จริง (พร้อมจำนวนต่อหมวด)
+function buildFlashCatTabs(prods){
+  const inner = document.querySelector('.round-tabs .rt-inner');
+  if (!inner) return;
+  const counts = {};
+  prods.forEach(p => {
+    const c = p.categories?.name_th || 'อื่นๆ';
+    counts[c] = (counts[c]||0) + 1;
+  });
+  inner.innerHTML = `<div class="rt active" onclick="selCat('all',this)">ทั้งหมด (${prods.length})</div>`
+    + Object.keys(counts).sort().map(c =>
+        `<div class="rt" onclick="selCat('${c.replace(/'/g,"\\'")}',this)">${c} (${counts[c]})</div>`
+      ).join('');
+}
+
+function renderFlashGrid(prods){
     const grid = document.getElementById('flash-grid');
     if (!grid) return;
     const cnt = document.getElementById('flash-count');
     if (cnt) cnt.textContent = (prods||[]).length;
     if (!prods || !prods.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#888"><div style="font-size:36px;margin-bottom:10px">⚡</div>ยังไม่มีสินค้า Flash Sale ในรอบนี้</div>';
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#888"><div style="font-size:36px;margin-bottom:10px">⚡</div>ยังไม่มีสินค้า Flash Sale ในหมวดนี้</div>';
       return;
     }
     
@@ -889,8 +902,6 @@ async function loadFlashProducts() {
         </div>
       </div>`;
     }).join('');
-    
-  } catch(e) { console.error(e); }
 }
 
 function addToCart(id, name, price) {
