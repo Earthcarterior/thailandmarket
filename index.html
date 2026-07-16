@@ -1707,6 +1707,21 @@ async function loadFlash() {
       return;
     }
 
+    // ป้ายสถานะช่วงเวลา flash (เหนือ grid)
+    (function(){
+      const d = new Date(), m = d.getHours()*60 + d.getMinutes();
+      let liveNo = null;
+      TM_ROUNDS.forEach((r,i) => { if (m >= r.s && m < r.e) liveNo = i+1; });
+      const mm2t = x => String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');
+      let note = document.getElementById('flash-time-note');
+      if (!note) { note = document.createElement('div'); note.id = 'flash-time-note'; grid.parentElement.insertBefore(note, grid); }
+      if (liveNo) {
+        note.innerHTML = `<div style="margin:0 0 12px;padding:8px 14px;background:rgba(230,51,41,.25);border:1px solid rgba(230,51,41,.5);color:#fff;font-size:12px">⚡ <b>รอบ ${liveNo} กำลังดำเนินอยู่</b> · ราคา Flash ถึง ${mm2t(TM_ROUNDS[liveNo-1].e)} น.</div>`;
+      } else {
+        const nxt = TM_ROUNDS.findIndex(r => m < r.s);
+        note.innerHTML = `<div style="margin:0 0 12px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.85);font-size:12px">⏰ <b>นอกช่วง Flash Sale — แสดงราคาปกติ</b> · ${nxt>=0 ? 'รอบถัดไปเริ่ม '+mm2t(TM_ROUNDS[nxt].s)+' น.' : 'รอบ 1 พรุ่งนี้ '+mm2t(TM_ROUNDS[0].s)+' น.'}</div>`;
+      }
+    })();
     grid.innerHTML = flashProds.map(p => {
       // คำนวณราคา flash
       const origPrice  = p.price || 0;

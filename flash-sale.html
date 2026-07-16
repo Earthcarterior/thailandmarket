@@ -632,6 +632,7 @@ img{max-width:100%;height:auto}
 
 <!-- PRODUCT GRID -->
 <div class="section">
+  <div id="flash-live-banner" style="margin-bottom:14px"></div>
   <div style="font-size:13px;color:var(--g500);margin-bottom:12px">แสดง <strong id="flash-count" style="color:var(--g900)">—</strong> รายการ</div>
   <div class="prod-grid" id="flash-grid"></div>
 
@@ -738,6 +739,40 @@ function tickRound(){
   if (eh) eh.textContent = pad(hh);
   if (em) em.textContent = pad(mm);
   if (es) es.textContent = pad(ss);
+
+  // ── แบนเนอร์สถานะ: ตอนนี้อยู่ใน/นอกช่วง Flash Sale ──
+  const bn = document.getElementById('flash-live-banner');
+  if (bn) {
+    const mm2t = x => String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0');
+    let liveNo = null;
+    for (let i=1; i<=3; i++) if (roundStatus(i, now) === 'live') { liveNo = i; break; }
+    if (liveNo) {
+      const key = 'live-'+liveNo;
+      if (bn.dataset.k !== key) {
+        bn.dataset.k = key;
+        bn.innerHTML = `<div style="background:linear-gradient(90deg,#E63329,#B91C1C);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13px">
+          <span style="font-size:18px">⚡</span>
+          <b>Flash Sale รอบ ${liveNo} กำลังดำเนินอยู่!</b>
+          <span style="opacity:.85">ราคา Flash ใช้ได้ถึง ${mm2t(FLASH_ROUNDS[liveNo-1].e)} น. — หมดรอบแล้วกลับเป็นราคาปกติ</span>
+        </div>`;
+      }
+    } else {
+      const nowMin = now.getHours()*60 + now.getMinutes();
+      const nxt = FLASH_ROUNDS.findIndex(r => nowMin < r.s);
+      const nxtTxt = nxt >= 0
+        ? 'รอบ '+(nxt+1)+' เริ่มเวลา '+mm2t(FLASH_ROUNDS[nxt].s)+' น.'
+        : 'รอบ 1 พรุ่งนี้ '+mm2t(FLASH_ROUNDS[0].s)+' น.';
+      const key = 'off-'+nxt;
+      if (bn.dataset.k !== key) {
+        bn.dataset.k = key;
+        bn.innerHTML = `<div style="background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13px">
+          <span style="font-size:18px">⏰</span>
+          <b>ขณะนี้อยู่นอกช่วงเวลา Flash Sale</b>
+          <span>สินค้าทั้งหมดแสดง<b>ราคาปกติ</b> · ${nxtTxt}</span>
+        </div>`;
+      }
+    }
+  }
 }
 
 const _ff = { cat:'all', chip:'all', sort:'disc' };
