@@ -1571,7 +1571,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(location.search);
   const slug = params.get('slug') || '';
   const catParam = params.get('cat') || '';
-  const brandName = params.get('brand_name') || '';
+  let brandName = params.get('brand_name') || '';
+  const brandId = params.get('brand') || '';   // รองรับลิงก์แบบส่ง id ของแบรนด์
   const collection = params.get('collection') || '';
   const searchParam = params.get('q') || params.get('search') || '';
 
@@ -1618,6 +1619,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // 3. ตั้งค่า search
+  // ถ้ามาด้วย ?brand=<id> → แปลงเป็นชื่อแบรนด์ก่อน
+  if (!brandName && brandId) {
+    try {
+      const { data: br } = await sb.from('brands').select('name').eq('id', brandId).maybeSingle();
+      if (br && br.name) brandName = br.name;
+    } catch(e) { console.warn('[cat] แปลง brand id ไม่ได้:', e.message); }
+  }
   // Priority: ?q= > ?search= > ?brand_name= > ?collection=
   let initSearch = searchParam;
   if (!initSearch && brandName) {

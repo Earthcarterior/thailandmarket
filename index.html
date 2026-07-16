@@ -1566,14 +1566,14 @@ async function loadBrands() {
       {icon:'💄',name:"L'Oreal"},{icon:'🐾',name:'Royal Canin'},
     ];
     el.innerHTML = def.map(b => `
-      <div class="brand-card" onclick="location.href='category.html'">
+      <div class="brand-card" onclick="location.href='category.html?brand_name=${encodeURIComponent(b.name)}'">
         <div class="brand-ico">${b.icon}</div>
         <div class="brand-name">${b.name}</div>
       </div>`).join('');
     return;
   }
   el.innerHTML = brands.map(b => `
-    <div class="brand-card" onclick="location.href='category.html?brand=${b.id}'">
+    <div class="brand-card" onclick="location.href='category.html?brand_name=${encodeURIComponent(b.name)}'">
       <div class="brand-ico">${b.icon || '🏷️'}</div>
       <div class="brand-name">${b.name}</div>
     </div>`).join('');
