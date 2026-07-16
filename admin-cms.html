@@ -6737,16 +6737,17 @@ async function loadFlash() {
   tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--g400)">⏳ กำลังโหลด...</td></tr>';
 
   try {
-    const { data, error } = await sb.from('products')
-      .select('id,name_th,price,compare_price,flash_price,flash_round,thumbnail,sold_count,stock_quantity,rating_avg,is_flash_sale,status,categories(name_th)')
-      .eq('status', 'active')
-      .order('sold_count', { ascending: false })
-      .limit(100);
-    if (error) throw error;
+    const sel = 'id,name_th,price,compare_price,flash_price,flash_round,thumbnail,sold_count,stock_quantity,rating_avg,is_flash_sale,status,categories(name_th)';
+    // ดึงสินค้า flash "ทั้งหมด" แยกต่างหาก (ไม่ให้ตกหล่นเพราะลิมิต) + top sellers สำหรับปุ่มเพิ่ม
+    const [flashRes, topRes] = await Promise.all([
+      sb.from('products').select(sel).eq('status','active').eq('is_flash_sale', true).order('sold_count', { ascending:false }),
+      sb.from('products').select(sel).eq('status','active').eq('is_flash_sale', false).order('sold_count', { ascending:false }).limit(50)
+    ]);
+    if (flashRes.error) throw flashRes.error;
 
-    _allFlashProducts = data || [];
-    const flashOnes   = _allFlashProducts.filter(p => p.is_flash_sale);
-    const topSellers  = _allFlashProducts.filter(p => !p.is_flash_sale).slice(0, 10);
+    const flashOnes  = flashRes.data || [];
+    const topSellers = topRes.data || [];
+    _allFlashProducts = flashOnes.concat(topSellers);
 
     // Stats
     if (statsEl) {

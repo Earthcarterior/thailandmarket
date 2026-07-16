@@ -4902,9 +4902,10 @@ function renderFinanceLegacy_DISABLED(){
   const s=_sellerStats;
 }
 
-function renderFlashLive(){
+async function renderFlashLive(){
   const page=$('page-flash'); if(!page) return;
   const tbl=page.querySelector('tbody'); if(!tbl) return;
+  await reloadSellerProductsForFlash();
   const fp=_sellerProds.filter(p=>p.is_flash_sale);
 
   // การ์ดสถิติ — เฉพาะร้านตัวเอง
@@ -4937,6 +4938,22 @@ function renderFlashLive(){
 }
 
 // ── รอบ Flash Sale ที่เปิดอยู่ (จาก flash_sale_events) ──
+async function reloadSellerProductsForFlash(){
+  try {
+    const { data } = await _sb.from('products')
+      .select('id,name_th,price,compare_price,thumbnail,stock_quantity,sold_count,status,is_flash_sale,flash_price,flash_round')
+      .eq('seller_id', _sellerSellerId);
+    if (data) {
+      // sync ธง flash ล่าสุดจาก DB เข้ากับ state (กันกรณี admin ปิด/เปิดจาก CMS)
+      const m = {}; data.forEach(d => m[d.id] = d);
+      _sellerProds.forEach(p => {
+        if (m[p.id]) { p.is_flash_sale = m[p.id].is_flash_sale; p.flash_price = m[p.id].flash_price; p.flash_round = m[p.id].flash_round; }
+      });
+      // เพิ่มตัวที่ยังไม่มีใน state
+      data.forEach(d => { if (!_sellerProds.find(p => p.id === d.id)) _sellerProds.push(d); });
+    }
+  } catch(e) { console.warn('reload flash:', e); }
+}
 async function flashLoadRound(){
   try{
     const { data } = await _sb.from('flash_sale_events')
