@@ -6749,21 +6749,31 @@ async function loadFlash() {
     const topSellers = topRes.data || [];
     _allFlashProducts = flashOnes.concat(topSellers);
 
+    // นับสินค้าทั้งหมดจริงในระบบ (ไม่ใช่จำนวนที่โหลดมาแสดง)
+    let totalActive = null;
+    try {
+      const { count } = await sb.from('products')
+        .select('id', { count:'exact', head:true })
+        .eq('status','active');
+      totalActive = count;
+    } catch(_) {}
+
     // Stats
     if (statsEl) {
       const totalRevenue = flashOnes.reduce((s, p) => s + (p.sold_count || 0) * (p.flash_price || p.price), 0);
+      const bestSeller = flashOnes.slice().sort((a,b)=>(b.sold_count||0)-(a.sold_count||0))[0];
       statsEl.innerHTML = [
         { l:'⚡ ใน Flash Sale', n: flashOnes.length, c:'#E63329', bg:'#FEE2E2' },
-        { l:'📦 สินค้าทั้งหมด', n: _allFlashProducts.length, c:'var(--black)', bg:'#F9FAFB' },
+        { l:'📦 สินค้า active ทั้งระบบ', n: (totalActive ?? '—'), c:'var(--black)', bg:'#F9FAFB' },
         { l:'💰 ยอดขาย Flash', n: '฿'+totalRevenue.toLocaleString(), c:'#16A34A', bg:'#DCFCE7', num:false },
-        { l:'🔥 ขายดีสุด', n: _allFlashProducts[0]?.name_th?.slice(0,12)||'—', c:'#D97706', bg:'#FEF3C7', num:false },
+        { l:'🔥 ขายดีสุดใน Flash', n: (bestSeller?.sold_count ? bestSeller.name_th.slice(0,12) : '—'), c:'#D97706', bg:'#FEF3C7', num:false },
       ].map(s => `<div style="background:${s.bg};border:1px solid ${s.c}30;padding:14px;text-align:center">
         <div style="font-size:${s.num===false?'13px':'22px'};font-weight:700;color:${s.c};font-family:${s.num===false?'inherit':'monospace'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.n}</div>
         <div style="font-size:11px;color:${s.c}">${s.l}</div>
       </div>`).join('');
     }
 
-    // Flash cnt badge
+    // badge ข้างปุ่ม "ทั้งหมด" = จำนวนแถวที่แสดงในตารางนี้ (flash + ตัวเลือกให้เพิ่ม)
     const cntEl = document.getElementById('flash-all-cnt');
     if (cntEl) cntEl.textContent = _allFlashProducts.length;
 
@@ -9820,6 +9830,6 @@ window.orVerifySlip = async function(slipId, status, orderId) {
 };
 </script>
 
-<script>console.log("TM admin-cms build 2026-07-16-B (flash count full)")</script>
+<script>console.log("TM admin-cms build 2026-07-16-C (real product count)")</script>
 </body>
 </html>
