@@ -753,14 +753,14 @@ nav, .nav {
 <div class="flash">
   <div class="flash-inner">
     <div class="flash-head">
-      <div class="flash-title">⚡ Flash Sale <span class="flash-live">LIVE NOW</span></div>
+      <div class="flash-title">⚡ Flash Sale <span class="flash-live" id="flash-live-badge" style="display:none">LIVE NOW</span></div>
       <div class="flash-timer">
-        <span class="timer-lbl">สิ้นสุดใน</span>
-        <div class="timer-box" id="t-h">02</div>
+        <span class="timer-lbl" id="t-lbl">กำลังโหลด...</span>
+        <div class="timer-box" id="t-h">--</div>
         <span class="timer-sep">:</span>
-        <div class="timer-box" id="t-m">47</div>
+        <div class="timer-box" id="t-m">--</div>
         <span class="timer-sep">:</span>
-        <div class="timer-box" id="t-s">30</div>
+        <div class="timer-box" id="t-s">--</div>
       </div>
     </div>
     <div class="flash-grid" id="flash-grid">
@@ -1581,24 +1581,40 @@ async function loadBrands() {
 
 // ── Timer (syncs with flash_sale_events table) ────────────
 async function startTimer() {
-  let totalSec = 2*3600 + 47*60 + 30; // default fallback
-
-  // Try to get real end time from DB
-  try {
-    const { data } = await sb.from('flash_sale_events')
-      .select('ends_at').eq('is_active', true)
-      .gt('ends_at', new Date().toISOString())
-      .order('ends_at', { ascending: true })
-      .limit(1);
-    if (data?.[0]?.ends_at) {
-      totalSec = Math.max(0, Math.floor((new Date(data[0].ends_at) - new Date()) / 1000));
-    }
-  } catch(e) {}
+  await tmLoadRounds();   // เวลารอบจริงจากตาราง flash_rounds (ตั้งใน CMS)
 
   const tick = () => {
-    if (totalSec <= 0) { totalSec = 3600; }
-    totalSec--;
-    const h = Math.floor(totalSec/3600), m = Math.floor((totalSec%3600)/60), s = totalSec%60;
+    const now = new Date();
+    const nowMin = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+
+    // หา: รอบที่กำลังเปิด → ถ้าไม่มี หารอบถัดไป → ถ้าหมดวัน ใช้รอบ 1 พรุ่งนี้
+    let liveIdx = TM_ROUNDS.findIndex(r => nowMin >= r.s && nowMin < r.e);
+    let target = new Date(now), label;
+
+    if (liveIdx >= 0) {
+      const r = TM_ROUNDS[liveIdx];
+      label = 'รอบ ' + (liveIdx+1) + ' สิ้นสุดใน';
+      target.setHours(Math.floor(r.e/60), r.e%60, 0, 0);
+    } else {
+      const nxt = TM_ROUNDS.findIndex(r => nowMin < r.s);
+      if (nxt >= 0) {
+        label = 'รอบ ' + (nxt+1) + ' เริ่มใน';
+        target.setHours(Math.floor(TM_ROUNDS[nxt].s/60), TM_ROUNDS[nxt].s%60, 0, 0);
+      } else {
+        label = 'รอบ 1 พรุ่งนี้เริ่มใน';
+        target.setDate(target.getDate()+1);
+        target.setHours(Math.floor(TM_ROUNDS[0].s/60), TM_ROUNDS[0].s%60, 0, 0);
+      }
+    }
+
+    // ป้าย LIVE NOW เฉพาะตอนอยู่ในรอบจริง
+    const badge = document.getElementById('flash-live-badge');
+    if (badge) badge.style.display = (liveIdx >= 0) ? '' : 'none';
+    const lbl = document.getElementById('t-lbl');
+    if (lbl) lbl.textContent = label;
+
+    const diff = Math.max(0, target - now);
+    const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
     const th = document.getElementById('t-h'), tm = document.getElementById('t-m'), ts = document.getElementById('t-s');
     if (th) th.textContent = String(h).padStart(2,'0');
     if (tm) tm.textContent = String(m).padStart(2,'0');
@@ -3751,5 +3767,6 @@ window.addEventListener('focus', () => window.tmUpdateCartBadge());
 
 
 </script>
+<script>console.log("TM index build 2026-07-16-F (real flash timer)")</script>
 </body>
 </html>
