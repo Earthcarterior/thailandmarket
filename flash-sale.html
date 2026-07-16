@@ -599,9 +599,9 @@ img{max-width:100%;height:auto}
         <div class="cd-unit"><div class="cd-num" id="cd-s">22</div><div class="cd-lbl">วินาที</div></div>
       </div>
       <div class="stats-row">
-        <div class="stat-item"><div class="stat-v" id="ord-cnt">1,248</div><div class="stat-l">ออเดอร์แล้ว</div></div>
-        <div class="stat-item"><div class="stat-v">฿8.4M</div><div class="stat-l">ยอดขาย</div></div>
-        <div class="stat-item"><div class="stat-v" id="prd-cnt">324</div><div class="stat-l">สินค้าในรอบนี้</div></div>
+        <div class="stat-item"><div class="stat-v" id="fs-sold">—</div><div class="stat-l">ขายแล้ว (ชิ้น)</div></div>
+        <div class="stat-item"><div class="stat-v" id="fs-maxdisc">—</div><div class="stat-l">ลดสูงสุด</div></div>
+        <div class="stat-item"><div class="stat-v" id="fs-round-cnt">—</div><div class="stat-l">สินค้าในรอบนี้</div></div>
       </div>
     </div>
   </div>
@@ -788,6 +788,18 @@ function flashLiveNow(p){
   return p.flash_round ? on(FLASH_ROUNDS[p.flash_round-1]) : FLASH_ROUNDS.some(on);
 }
 function applyFlashFilters(){
+  // hero stats — เชื่อมข้อมูลจริงชุดเดียวกับ CMS (products ที่ตั้ง flash)
+  try {
+    const all = window._flashProds || [];
+    const es = document.getElementById('fs-sold');
+    if (es) es.textContent = all.reduce((t,p)=>t+(p.sold_count||0),0).toLocaleString();
+    const ed = document.getElementById('fs-maxdisc');
+    if (ed) ed.textContent = all.length ? ('-'+Math.max(0, ...all.map(flashDisc))+'%') : '—';
+    const ec = document.getElementById('fs-round-cnt');
+    const inRound = curRound ? all.filter(p => !p.flash_round || p.flash_round === curRound) : all;
+    if (ec) ec.textContent = inRound.length;
+  } catch(_){}
+
   let list = (window._flashProds||[]).slice();
   if (curRound) list = list.filter(p => !p.flash_round || p.flash_round === curRound);
   if (_ff.cat !== 'all')    list = list.filter(p => (p.categories?.name_th||'อื่นๆ') === _ff.cat);
