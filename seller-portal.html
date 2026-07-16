@@ -4907,11 +4907,14 @@ async function renderFlashLive(){
   const tbl=page.querySelector('tbody'); if(!tbl) return;
   await reloadSellerProductsForFlash();
   const fp=_sellerProds.filter(p=>p.is_flash_sale);
+  const fpLive=fp.filter(p=>p.status==='active');
+  const nOff=fp.length-fpLive.length;
 
-  // การ์ดสถิติ — เฉพาะร้านตัวเอง
+  // การ์ดสถิติ — นับเฉพาะที่แสดงจริงบนเว็บ (active) ให้ตรงกับ CMS/หน้าลูกค้า
   const jv=document.getElementById('flash-join-val'), jsub=document.getElementById('flash-join-sub');
-  if(jv) jv.textContent = fp.length + ' ชิ้น';
-  if(jsub) jsub.textContent = '▲ ขายไปแล้ว ' + fmt(fp.reduce((t,p)=>t+(p.sold_count||0),0)) + ' ชิ้น';
+  if(jv) jv.textContent = fpLive.length + ' ชิ้น';
+  if(jsub) jsub.textContent = '▲ ขายไปแล้ว ' + fmt(fpLive.reduce((t,p)=>t+(p.sold_count||0),0)) + ' ชิ้น'
+    + (nOff ? ' · ⚠️ อีก '+nOff+' ชิ้นไม่แสดง (สินค้าปิดอยู่)' : '');
   flashLoadRound();
 
   tbl.innerHTML=!fp.length?
@@ -4928,7 +4931,9 @@ async function renderFlashLive(){
         <td style="padding:10px;font-family:monospace;font-size:12px;color:#E63329">${disc>0?'-'+disc+'%':'—'}</td>
         <td style="padding:10px;font-family:monospace;font-size:12px">${fmt(p.sold_count)}</td>
         <td style="padding:10px;font-family:monospace;font-size:12px">${fmt(p.stock_quantity)}</td>
-        <td style="padding:10px"><span style="background:#DCFCE7;color:#16A34A;padding:2px 8px;font-size:10px;font-family:monospace">ACTIVE</span><div style="margin-top:3px"><select onchange="flashSetRound('${p.id}',this.value)" style="font-size:10px;border:1px solid #E5E5E5;padding:2px;cursor:pointer"><option value="" ${!p.flash_round?'selected':''}>ทุกรอบ</option><option value="1" ${p.flash_round==1?'selected':''}>รอบ 1</option><option value="2" ${p.flash_round==2?'selected':''}>รอบ 2</option><option value="3" ${p.flash_round==3?'selected':''}>รอบ 3</option></select></div></td>
+        <td style="padding:10px">${p.status==='active'
+          ? '<span style="background:#DCFCE7;color:#16A34A;padding:2px 8px;font-size:10px;font-family:monospace">ACTIVE</span>'
+          : '<span title="สินค้าปิดอยู่ จึงไม่แสดงบนหน้า Flash Sale" style="background:#FEF3C7;color:#92400E;padding:2px 8px;font-size:10px;font-family:monospace">'+String(p.status||'-').toUpperCase()+' · ไม่แสดง</span>'}<div style="margin-top:3px"><select onchange="flashSetRound('${p.id}',this.value)" style="font-size:10px;border:1px solid #E5E5E5;padding:2px;cursor:pointer"><option value="" ${!p.flash_round?'selected':''}>ทุกรอบ</option><option value="1" ${p.flash_round==1?'selected':''}>รอบ 1</option><option value="2" ${p.flash_round==2?'selected':''}>รอบ 2</option><option value="3" ${p.flash_round==3?'selected':''}>รอบ 3</option></select></div></td>
         <td style="padding:10px;white-space:nowrap">
           <button onclick="openProductEdit('${p.id}')" style="background:none;border:1px solid #E5E5E5;padding:4px 8px;font-size:11px;cursor:pointer">✏️ แก้ไข</button>
           <button onclick="flashRemove('${p.id}')" style="background:none;border:1px solid #FECACA;color:#E63329;padding:4px 8px;font-size:11px;cursor:pointer">นำออก</button>
@@ -11326,6 +11331,6 @@ async function uploadShopImage(input, kind) {
 })();
 
 </script>
-<script>console.log("TM seller-portal build 2026-07-16-A (flash rounds editable)")</script>
+<script>console.log("TM seller-portal build 2026-07-16-B (flash status sync)")</script>
 </body>
 </html>
