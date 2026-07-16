@@ -8575,7 +8575,7 @@ async function loadSellers(statusFilter = 'pending') {
 
     const stC = { pending:'#D97706', active:'#16A34A', rejected:'#E63329', inactive:'#737373' };
     const stB = { pending:'#FEF3C7', active:'#DCFCE7', rejected:'#FEE2E2', inactive:'#F2F2F2' };
-    const stL = { pending:'รอดำเนินการ', active:'อนุมัติแล้ว', rejected:'ปฏิเสธแล้ว', inactive:'ระงับ' };
+    const stL = { pending:'รอดำเนินการ', active:'อนุมัติแล้ว', rejected:'ปฏิเสธแล้ว', inactive:'ปิดชั่วคราว', suspended:'ถูกระงับ', banned:'ถูกแบน' };
 
     listEl.innerHTML = sellers.map(s => `
       <div style="border:1px solid var(--border);margin-bottom:12px;overflow:hidden" id="seller-row-${s.id}">
@@ -8670,10 +8670,18 @@ async function suspendSeller(sellerId) {
   if (!confirm('ระงับร้านค้านี้? สินค้าของร้านจะถูกซ่อนจากเว็บ')) return;
   
   const _sb = window._sb || window.sb || sb;
-  const { data, error } = await _sb.rpc('admin_suspend_seller', { p_seller_id: sellerId });
-  
-  if (error) { toast('❌ ' + error.message, 'error'); return; }
-  
+  let { data, error } = await _sb.rpc('admin_suspend_seller', { p_seller_id: sellerId });
+
+  // fallback: ถ้า RPC ใช้ไม่ได้ → อัปเดตตรง (ต้องมีสิทธิ์ admin)
+  if (error) {
+    console.warn('[suspend] RPC ล้มเหลว → ลองอัปเดตตรง:', error.message);
+    const r = await _sb.from('sellers')
+      .update({ status: 'suspended', updated_at: new Date().toISOString() })
+      .eq('id', sellerId);
+    if (r.error) { toast('❌ ' + r.error.message, 'error'); return; }
+    data = { message: 'ระงับร้านค้าแล้ว' };
+  }
+
   toast('✅ ' + (data?.message || 'ระงับร้านค้าแล้ว'));
   if (typeof loadSellers === 'function') loadSellers('active');
 }
@@ -8709,7 +8717,7 @@ async function viewSellerDetail(sellerId) {
       } catch(_) { s.users = null; }
     }
     const stC = { pending:'#D97706', active:'#16A34A', rejected:'#E63329', inactive:'#737373' };
-    const stL = { pending:'รอดำเนินการ', active:'อนุมัติแล้ว', rejected:'ปฏิเสธแล้ว', inactive:'ระงับ' };
+    const stL = { pending:'รอดำเนินการ', active:'อนุมัติแล้ว', rejected:'ปฏิเสธแล้ว', inactive:'ปิดชั่วคราว', suspended:'ถูกระงับ', banned:'ถูกแบน' };
 
     content.innerHTML = `
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #E5E5E5">
@@ -9830,6 +9838,6 @@ window.orVerifySlip = async function(slipId, status, orderId) {
 };
 </script>
 
-<script>console.log("TM admin-cms build 2026-07-16-C (real product count)")</script>
+<script>console.log("TM admin-cms build 2026-07-16-E (suspend fix)")</script>
 </body>
 </html>
