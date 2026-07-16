@@ -802,6 +802,30 @@ const _sbCO = (window._sb) || supabase.createClient(
 );
 window._sb = _sbCO;
 
+// ── Flash rounds: ราคา Flash ใช้เฉพาะช่วงรอบ (คิดเงิน ณ เวลาจ่ายจริง) ──
+let TM_ROUNDS = [{s:600,e:720},{s:840,e:960},{s:1200,e:1320}];
+let _tmRoundsLoading = null;
+function tmLoadRounds(){
+  if (_tmRoundsLoading) return _tmRoundsLoading;
+  _tmRoundsLoading = (async () => {
+    try {
+      const { data } = await _sbCO.from('flash_rounds').select('*').order('round_no');
+      if (data && data.length) {
+        const tm = t => { const a = String(t||'').split(':'); return (+a[0]||0)*60 + (+a[1]||0); };
+        TM_ROUNDS = [1,2,3].map(n => { const r = data.find(x => x.round_no === n); return r ? {s:tm(r.starts), e:tm(r.ends)} : TM_ROUNDS[n-1]; });
+      }
+    } catch(_) {}
+  })();
+  return _tmRoundsLoading;
+}
+function _tmFlashLive(p){
+  if (!p || !p.is_flash_sale || !p.flash_price) return false;
+  const d = new Date(), m = d.getHours()*60 + d.getMinutes();
+  const on = r => r && m >= r.s && m < r.e;
+  return p.flash_round ? on(TM_ROUNDS[p.flash_round-1]) : TM_ROUNDS.some(on);
+}
+tmLoadRounds();
+
 // ── DATA — populated from Supabase by loadCheckoutData() ──
 const CART = [];
 const ADDRS = [];
@@ -2558,7 +2582,7 @@ async function loadCheckoutData() {
       if (pids.length) {
         try {
           const { data: prods } = await _sbCO.from('products')
-            .select('id,name_th,name_en,price,compare_price,thumbnail,images,seller_id,sellers(id,shop_name)')
+            .select('id,name_th,name_en,price,compare_price,flash_price,flash_round,is_flash_sale,thumbnail,images,seller_id,sellers(id,shop_name)')
             .in('id', pids);
           (prods || []).forEach(p => { 
             productMap[p.id] = p;
@@ -2567,10 +2591,12 @@ async function loadCheckoutData() {
         } catch(e) { console.warn('hydrate failed:', e); }
       }
       
+      await tmLoadRounds();
       cartItems = ls.map(c => {
         const p = productMap[c.id] || {};
         const imgs = Array.isArray(p.images) ? p.images : [];
         const img = imgs[0] || p.thumbnail || c.img || '';
+        const _fl = _tmFlashLive(p);   // อยู่ในช่วงรอบ flash ของสินค้านี้ไหม (ณ ตอนนี้)
         return {
           id: c.id,
           seller_id: p.seller_id || c.seller_id || null,
@@ -2580,12 +2606,13 @@ async function loadCheckoutData() {
           variants: c.variants || {},
           variantKey: (c.variants && Object.keys(c.variants||{}).length) ? Object.values(c.variants).join(' / ') : (c.variantKey || ''),
           shop: sellerMap[p.seller_id] || c.shop || 'Thailand Market',
-          price: Number(p.price || c.price || 0),
-          old: Number(p.compare_price || c.price_old || p.price || c.price || 0),
+          price: _fl ? (Number(p.flash_price) || Number(p.price) || 0) : (Number(p.price || c.price || 0)),
+          old: _fl ? Number(p.price || 0) : Number(p.compare_price || c.price_old || p.price || c.price || 0),
+          isFlash: _fl,
           qty: c.qty || c.quantity || 1
         };
       });
-      console.log('[checkout] loaded from localStorage:', cartItems.length, 'items');
+      console.log('[checkout] loaded from localStorage:', cartItems.length, 'items (reprice ตามช่วง flash แล้ว)');
     }
   } catch(e) { console.warn('localStorage parse failed:', e); }
   
