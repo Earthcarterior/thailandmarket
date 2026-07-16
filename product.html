@@ -540,6 +540,31 @@ function buyNow() {
 window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
 window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
 window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
+// ── Flash rounds: ราคา Flash ใช้เฉพาะช่วงรอบ (นอกรอบ = ราคาปกติ) ──
+let TM_ROUNDS = [{s:600,e:720},{s:840,e:960},{s:1200,e:1320}];
+let _tmRoundsLoading = null;
+function tmLoadRounds(){
+  if (_tmRoundsLoading) return _tmRoundsLoading;
+  _tmRoundsLoading = (async () => {
+    try {
+      const cli = window._sb; if (!cli) return;
+      const { data } = await cli.from('flash_rounds').select('*').order('round_no');
+      if (data && data.length) {
+        const tm = t => { const a = String(t||'').split(':'); return (+a[0]||0)*60 + (+a[1]||0); };
+        TM_ROUNDS = [1,2,3].map(n => { const r = data.find(x => x.round_no === n); return r ? {s:tm(r.starts), e:tm(r.ends)} : TM_ROUNDS[n-1]; });
+      }
+    } catch(_) {}
+  })();
+  return _tmRoundsLoading;
+}
+function _tmFlashLive(p){
+  if (!p || !p.is_flash_sale || !p.flash_price) return false;
+  const d = new Date(), m = d.getHours()*60 + d.getMinutes();
+  const on = r => r && m >= r.s && m < r.e;
+  return p.flash_round ? on(TM_ROUNDS[p.flash_round-1]) : TM_ROUNDS.some(on);
+}
+tmLoadRounds();
+
 </script>
 <!-- ═══════════════════════════════════════════════════════════════
      PRODUCT PAGE — MASTER OVERRIDE (2026-05-04 v4)
@@ -1249,7 +1274,7 @@ function renderProduct() {
     dt.textContent = '-' + pct + '%';
     dt.style.display = 'block';
   }
-  if (p.is_flash_sale) {
+  if (p.is_flash_sale && _tmFlashLive(p)) {
     document.getElementById('flash-tag-img').style.display = 'block';
   } else if (p.is_authentic) {
     document.getElementById('authentic-tag').style.display = 'block';
@@ -1283,9 +1308,16 @@ function renderProduct() {
   const filledStars = Math.round(rating);
   document.getElementById('stars').innerHTML = '★'.repeat(filledStars) + '<span style="color:#D4D4D4">' + '★'.repeat(5-filledStars) + '</span>';
 
-  // Price
-  document.getElementById('price-main').textContent = toBaht(p.price);
-  if (p.compare_price && p.compare_price > p.price) {
+  // Price — ราคา Flash เฉพาะช่วงรอบ นอกรอบใช้ราคาปกติ
+  const _fl = _tmFlashLive(p);
+  window._effPrice = _fl ? (Number(p.flash_price) || Number(p.price) || 0) : (Number(p.price) || 0);
+  document.getElementById('price-main').textContent = toBaht(window._effPrice);
+  if (_fl && Number(p.price) > window._effPrice) {
+    document.getElementById('price-old').textContent = toBaht(p.price);
+    document.getElementById('price-old').style.display = 'inline';
+    document.getElementById('price-save').textContent = '⚡ ราคา Flash ประหยัด ' + toBaht(p.price - window._effPrice) + ' (ถึงหมดรอบเท่านั้น)';
+    document.getElementById('price-save').style.display = 'inline';
+  } else if (p.compare_price && p.compare_price > p.price) {
     document.getElementById('price-old').textContent = toBaht(p.compare_price);
     document.getElementById('price-old').style.display = 'inline';
     document.getElementById('price-save').textContent = 'ประหยัด ' + toBaht(p.compare_price - p.price);
@@ -1758,7 +1790,7 @@ async function addToCart() {
     const img = _product.thumbnail || (_product.images || [])[0] || '';
     const name = _product.name_th || _product.name_en || 'สินค้า';
     // ราคา: ใช้ราคา variant ถ้ามี ไม่งั้นราคาหลัก
-    const price = (hasVariants && _selectedSku?.price) ? Number(_selectedSku.price) : (Number(_product.price) || 0);
+    const price = (hasVariants && _selectedSku?.price) ? Number(_selectedSku.price) : (Number(window._effPrice ?? _product.price) || 0);
 
     // ── Use shared helper that always reads localStorage fresh ──
     if (typeof window.tmAddToCart === 'function') {

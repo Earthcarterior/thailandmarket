@@ -24,6 +24,31 @@
 window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
 window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
 window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
+// ── Flash rounds: ราคา Flash ใช้เฉพาะช่วงรอบ (นอกรอบ = ราคาปกติ) ──
+let TM_ROUNDS = [{s:600,e:720},{s:840,e:960},{s:1200,e:1320}];
+let _tmRoundsLoading = null;
+function tmLoadRounds(){
+  if (_tmRoundsLoading) return _tmRoundsLoading;
+  _tmRoundsLoading = (async () => {
+    try {
+      const cli = window._sb; if (!cli) return;
+      const { data } = await cli.from('flash_rounds').select('*').order('round_no');
+      if (data && data.length) {
+        const tm = t => { const a = String(t||'').split(':'); return (+a[0]||0)*60 + (+a[1]||0); };
+        TM_ROUNDS = [1,2,3].map(n => { const r = data.find(x => x.round_no === n); return r ? {s:tm(r.starts), e:tm(r.ends)} : TM_ROUNDS[n-1]; });
+      }
+    } catch(_) {}
+  })();
+  return _tmRoundsLoading;
+}
+function _tmFlashLive(p){
+  if (!p || !p.is_flash_sale || !p.flash_price) return false;
+  const d = new Date(), m = d.getHours()*60 + d.getMinutes();
+  const on = r => r && m >= r.s && m < r.e;
+  return p.flash_round ? on(TM_ROUNDS[p.flash_round-1]) : TM_ROUNDS.some(on);
+}
+tmLoadRounds();
+
 </script>
 <style>
 /* ════════════════════════════════════════════════
@@ -1652,8 +1677,9 @@ async function loadFlash() {
 
   try {
     // ดึงสินค้า flash_sale ก่อน
+    await tmLoadRounds();
     let { data: flashProds } = await sb.from('products')
-      .select('id,name_th,price,compare_price,flash_price,thumbnail,sold_count,stock_quantity,rating_avg,is_flash_sale,discount_percent,categories(name_th,icon)')
+      .select('id,name_th,price,compare_price,flash_price,flash_round,thumbnail,sold_count,stock_quantity,rating_avg,is_flash_sale,discount_percent,categories(name_th,icon)')
       .eq('status', 'active')
       .eq('is_flash_sale', true)
       .order('sold_count', { ascending: false })
@@ -1684,15 +1710,14 @@ async function loadFlash() {
     grid.innerHTML = flashProds.map(p => {
       // คำนวณราคา flash
       const origPrice  = p.price || 0;
-      const flashPrice = p.flash_price || (p.is_flash_sale
-        ? Math.round(origPrice * 0.75)   // auto ลด 25% ถ้าไม่ได้ตั้ง flash_price
-        : origPrice);
-      const discPct = origPrice > 0
+      const _live      = _tmFlashLive(p);
+      const flashPrice = _live ? Number(p.flash_price || origPrice) : origPrice;
+      const discPct = (origPrice > 0 && flashPrice < origPrice)
         ? Math.round((1 - flashPrice / origPrice) * 100)
-        : (p.discount_percent || 0);
+        : 0;
       const fmtPrice = n => '฿' + Number(n).toLocaleString('th-TH');
       const stars    = n => '★'.repeat(Math.round(Math.min(5, n || 0))) + '☆'.repeat(5 - Math.round(Math.min(5, n || 0)));
-      const isFlash  = p.is_flash_sale;
+      const isFlash  = p.is_flash_sale && _live;
       const stockLow = p.stock_quantity > 0 && p.stock_quantity <= 20;
       const stockOut = p.stock_quantity <= 0;
 
