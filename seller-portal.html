@@ -8891,7 +8891,8 @@ async function shipLoadOrders() {
         .select('id,order_number,shipping_method,shipping_method_name,shipping_address,paid_at,created_at')
         .in('id', orderIds);
       (ords || []).forEach(o => { ordMap[o.id] = o; });
-    } catch(_) {}
+      console.log('[ship] parent orders loaded:', Object.keys(ordMap).length, '/', orderIds.length, ords && ords[0] ? {method: ords[0].shipping_method, name: ords[0].shipping_method_name, addr: !!ords[0].shipping_address} : '(ไม่มีข้อมูล — ตรวจ RLS orders)');
+    } catch(e) { console.warn('[ship] โหลดใบแม่ไม่ได้:', e.message); }
 
     // items ต่อ sub_order
     let itemsBySub = {};
@@ -9057,8 +9058,8 @@ function shipRenderTable() {
       <td style="font-family:'DM Mono',monospace;font-size:11px">${sfEsc(o.order_number || o.id.slice(0,12).toUpperCase())}</td>
       <td style="font-size:12px">${sfEsc(buyer)}</td>
       <td><div class="sp-courier-chip">
-        <b>${sfEsc(o.shipping_method_name || o.shipping_method || '—')}</b><br>
-        <span style="font-size:10px;color:#888">Standard Delivery - ส่งธรรมดาในประเทศ</span>
+        <b>${sfEsc(o.shipping_method_name || o.shipping_method || '⚠️ ไม่ระบุ')}</b><br>
+        <span style="font-size:10px;color:#888">${o.shipping_method_name || o.shipping_method ? 'ขนส่งที่ลูกค้าเลือก' + (o.shipping_method ? ' · '+sfEsc(o.shipping_method) : '') : 'ลูกค้าไม่ได้เลือกขนส่ง — เลือกเองได้ตอนกรอก Tracking'}</span>
       </div></td>
       <td style="font-family:'DM Mono',monospace;font-size:11px">${cfStr}</td>
       <td style="font-size:11px;color:#888;line-height:1.5">
@@ -9409,8 +9410,8 @@ function spRenderDocsTable() {
       <td style="font-family:'DM Mono',monospace;font-size:11px">${sfEsc(o.order_number || o.id.slice(0,12).toUpperCase())}</td>
       <td style="font-size:12px">${sfEsc(buyer)}</td>
       <td><div class="sp-courier-chip">
-        <b>${sfEsc(o.shipping_method_name || o.shipping_method || '—')}</b><br>
-        <span style="font-size:10px;color:#888">Standard Delivery</span>
+        <b>${sfEsc(o.shipping_method_name || o.shipping_method || '⚠️ ไม่ระบุ')}</b><br>
+        <span style="font-size:10px;color:#888">${o.shipping_method_name || o.shipping_method ? 'ขนส่งที่ลูกค้าเลือก' : 'ไม่ระบุ'}</span>
       </div></td>
       <td>${o.tracking_number ? `<span class="sp-tracking" onclick="toast('📦 Tracking: ${sfEsc(o.tracking_number)}','info')">${sfEsc(o.tracking_number)}</span>` : '<span style="color:#888;font-size:11px">—</span>'}</td>
       <td style="font-family:'DM Mono',monospace;font-size:11px">${cfStr}</td>
@@ -11331,6 +11332,6 @@ async function uploadShopImage(input, kind) {
 })();
 
 </script>
-<script>console.log("TM seller-portal build 2026-07-16-B (flash status sync)")</script>
+<script>console.log("TM seller-portal build 2026-07-16-D (real courier)")</script>
 </body>
 </html>
