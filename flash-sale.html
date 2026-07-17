@@ -478,6 +478,80 @@ img{max-width:100%;height:auto}
   .nav-top{padding:0 12px!important;gap:4px!important}
 }
 </style>
+<!-- ══════ TM THEME — โหมดสว่าง/มืด (สลับได้จากปุ่มบน header) ══════ -->
+<style id="tm-theme-css">
+html[data-theme="dark"]{
+  color-scheme: dark;
+  /* ชุดตัวแปรของ index/category */
+  --black:#EDEFF2; --white:#15171A;
+  --g50:#15171A; --g100:#1B1E22; --g200:#282C31; --g300:#3A3F46;
+  --g400:#8B929B; --g500:#A7AEB8; --g600:#C3C9D2; --g700:#DCE0E6; --g800:#EDEFF2; --g900:#F7F8FA;
+  --border:1px solid #282C31; --border-dark:1px solid #3A3F46;
+  /* ชุดตัวแปรของ flash-sale/product/checkout */
+  --primary:#EDEFF2; --bg:#0F1113; --accent2:#3A3F46; --gold:#282C31; --teal:#C3C9D2;
+}
+html[data-theme="dark"] body{background:#0F1113;color:#E6E9ED}
+/* จุดที่ฝังสีขาว/ดำไว้ใน inline style (เว็บนี้มีเยอะ) */
+html[data-theme="dark"] [style*="background:#fff"],
+html[data-theme="dark"] [style*="background:#FFF"],
+html[data-theme="dark"] [style*="background: #fff"],
+html[data-theme="dark"] [style*="background:white"],
+html[data-theme="dark"] [style*="background:#FAFAFA"],
+html[data-theme="dark"] [style*="background:#F9FAFB"],
+html[data-theme="dark"] [style*="background:#F2F2F2"],
+html[data-theme="dark"] [style*="background:#F3F3F3"]{background:#15171A !important}
+html[data-theme="dark"] [style*="color:#0A0A0A"],
+html[data-theme="dark"] [style*="color:#111"],
+html[data-theme="dark"] [style*="color:#000"]{color:#E6E9ED !important}
+html[data-theme="dark"] [style*="border:1px solid #E5E5E5"],
+html[data-theme="dark"] [style*="border:1px solid #EFEFEF"],
+html[data-theme="dark"] [style*="border:1px solid #F2F2F2"],
+html[data-theme="dark"] [style*="border-top:1px solid #F3F3F3"]{border-color:#2A2E34 !important}
+html[data-theme="dark"] img[src*="logo"]{filter:brightness(1.6)}
+/* ปุ่มสลับโหมด */
+.tm-theme-btn{background:none;border:none;cursor:pointer;padding:4px 8px;line-height:1.1;
+  display:flex;flex-direction:column;align-items:center;gap:3px;color:inherit;font-family:inherit}
+.tm-theme-btn b{font-size:17px;font-weight:400}
+.tm-theme-btn span{font-size:9px;letter-spacing:.05em;opacity:.75}
+.tm-theme-btn:hover{opacity:.7}
+</style>
+<script>
+(function(){
+  // อ่านค่าที่เคยเลือก / ตามระบบเครื่อง — ตั้งก่อนวาดจอ (ไม่กระพริบ)
+  var t=null;
+  try{ t=localStorage.getItem('tm_theme'); }catch(e){}
+  if(!t) t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  document.documentElement.setAttribute('data-theme',t);
+
+  window.tmThemeIcon=function(){
+    var d=document.documentElement.getAttribute('data-theme')==='dark';
+    return '<b>'+(d?'☀️':'🌙')+'</b><span>'+(d?'สว่าง':'มืด')+'</span>';
+  };
+  window.tmToggleTheme=function(){
+    var next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next);
+    try{ localStorage.setItem('tm_theme',next); }catch(e){}
+    document.querySelectorAll('.tm-theme-btn').forEach(function(b){ b.innerHTML=window.tmThemeIcon(); });
+  };
+  function mount(){
+    if(document.querySelector('.tm-theme-btn')) return;
+    var host=document.querySelector('.nav-acts, .nav-actions');
+    var b=document.createElement('button');
+    b.className='tm-theme-btn'; b.type='button';
+    b.title='สลับโหมดสว่าง / มืด';
+    b.onclick=window.tmToggleTheme;
+    b.innerHTML=window.tmThemeIcon();
+    if(host){ host.insertBefore(b,host.firstChild); }
+    else{ b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:9999;width:46px;height:46px;'+
+      'border-radius:50%;background:#15171A;color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.35);justify-content:center';
+      document.body.appendChild(b); }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount);
+  else mount();
+})();
+</script>
+<!-- ══════ /TM THEME ══════ -->
+
 </head>
 <body>
 <!-- ── ANNOUNCEMENT ── -->
@@ -1301,6 +1375,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
-<script>console.log("TM flash-sale build 2026-07-17-A (flash price fix)")</script>
+<script>console.log("TM flash-sale build 2026-07-17-B (dark mode)")</script>
 </body>
 </html>
