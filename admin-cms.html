@@ -1020,6 +1020,9 @@ window.addEventListener('DOMContentLoaded', () => {
           <button class="btn btn-sm btn-k" onclick="openFlashPicker()">
             ➕ เพิ่มสินค้า Flash Sale
           </button>
+          <input id="flash-search" type="search" placeholder="🔍 ค้นหาชื่อสินค้า / หมวด..."
+            oninput="flashSearch(this.value)"
+            style="padding:6px 10px;border:1px solid var(--g200);font-size:12px;min-width:220px;font-family:inherit">
         </div>
       </div>
 
@@ -1045,6 +1048,7 @@ window.addEventListener('DOMContentLoaded', () => {
             <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--g400)">⏳ กำลังโหลด...</td></tr>
           </tbody>
         </table>
+        <div id="flash-pager"></div>
       </div>
     </div>
 
@@ -6738,10 +6742,10 @@ async function loadFlash() {
 
   try {
     const sel = 'id,name_th,price,compare_price,flash_price,flash_round,thumbnail,sold_count,stock_quantity,rating_avg,is_flash_sale,status,categories(name_th)';
-    // ดึงสินค้า flash "ทั้งหมด" แยกต่างหาก (ไม่ให้ตกหล่นเพราะลิมิต) + top sellers สำหรับปุ่มเพิ่ม
+    // ดึงสินค้า active ทั้งหมด: กลุ่ม flash + กลุ่มที่ยังไม่ flash (ครบทุกตัว ไม่มีลิมิต)
     const [flashRes, topRes] = await Promise.all([
       sb.from('products').select(sel).eq('status','active').eq('is_flash_sale', true).order('sold_count', { ascending:false }),
-      sb.from('products').select(sel).eq('status','active').eq('is_flash_sale', false).order('sold_count', { ascending:false }).limit(50)
+      sb.from('products').select(sel).eq('status','active').eq('is_flash_sale', false).order('sold_count', { ascending:false })
     ]);
     if (flashRes.error) throw flashRes.error;
 
@@ -6777,30 +6781,102 @@ async function loadFlash() {
     const cntEl = document.getElementById('flash-all-cnt');
     if (cntEl) cntEl.textContent = _allFlashProducts.length;
 
-    renderFlashTable(_allFlashProducts);
+    _flashPage = 1;
+    renderFlashTable(flashFiltered());
 
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--red)">❌ ${e.message}</td></tr>`;
   }
 }
 
-function filterFlash(mode) {
-  _flashFilterMode = mode;
-  const prods = mode === 'flash'
+let _flashQuery = '';
+let _flashPage  = 1;
+const FLASH_PER_PAGE = 25;
+
+// รายการที่ผ่านตัวกรอง + คำค้น (ยังไม่ตัดหน้า)
+function flashFiltered() {
+  let list = _flashFilterMode === 'flash'
     ? _allFlashProducts.filter(p => p.is_flash_sale)
     : _allFlashProducts;
-  renderFlashTable(prods);
+  const q = _flashQuery.trim().toLowerCase();
+  if (q) {
+    list = list.filter(p =>
+      (p.name_th || '').toLowerCase().includes(q) ||
+      (p.categories?.name_th || '').toLowerCase().includes(q)
+    );
+  }
+  return list;
+}
+
+function filterFlash(mode) {
+  _flashFilterMode = mode;
+  _flashPage = 1;
+  renderFlashTable(flashFiltered());
+}
+
+function flashSearch(v) {
+  _flashQuery = v || '';
+  _flashPage = 1;
+  renderFlashTable(flashFiltered());
+}
+
+function flashGoPage(n) {
+  _flashPage = n;
+  renderFlashTable(flashFiltered());
+  const el = document.getElementById('flash-tbody');
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// แถบแบ่งหน้า
+function renderFlashPager(total) {
+  const wrap = document.getElementById('flash-pager');
+  if (!wrap) return;
+  const pages = Math.ceil(total / FLASH_PER_PAGE);
+  if (pages <= 1) { wrap.innerHTML = ''; return; }
+
+  const from = (_flashPage - 1) * FLASH_PER_PAGE + 1;
+  const to   = Math.min(_flashPage * FLASH_PER_PAGE, total);
+
+  // เลขหน้า: 1 ... (รอบๆ หน้าปัจจุบัน) ... สุดท้าย
+  const nums = [];
+  for (let i = 1; i <= pages; i++) {
+    if (i === 1 || i === pages || Math.abs(i - _flashPage) <= 2) nums.push(i);
+    else if (nums[nums.length-1] !== '…') nums.push('…');
+  }
+
+  const btn = (label, page, active, disabled) =>
+    `<button ${disabled ? 'disabled' : `onclick="flashGoPage(${page})"`}
+      style="min-width:32px;padding:5px 9px;border:1px solid ${active ? 'var(--red)' : 'var(--g200)'};
+      background:${active ? 'var(--red)' : '#fff'};color:${active ? '#fff' : (disabled ? 'var(--g300)' : 'var(--black)')};
+      font-family:monospace;font-size:12px;cursor:${disabled ? 'default' : 'pointer'}">${label}</button>`;
+
+  wrap.innerHTML = `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--g200)">
+      <span style="font-size:12px;color:var(--g500);margin-right:auto">แสดง ${from}–${to} จาก ${total} รายการ</span>
+      ${btn('‹ ก่อนหน้า', _flashPage-1, false, _flashPage === 1)}
+      ${nums.map(n => n === '…'
+          ? '<span style="color:var(--g400);padding:0 2px">…</span>'
+          : btn(n, n, n === _flashPage, false)).join('')}
+      ${btn('ถัดไป ›', _flashPage+1, false, _flashPage === pages)}
+    </div>`;
 }
 
 function renderFlashTable(prods) {
   const tbody = document.getElementById('flash-tbody');
   if (!tbody) return;
 
-  if (!prods.length) {
+  // ── แบ่งหน้า: หั่นเฉพาะช่วงของหน้าปัจจุบัน ──
+  const total = prods.length;
+  const maxPage = Math.max(1, Math.ceil(total / FLASH_PER_PAGE));
+  if (_flashPage > maxPage) _flashPage = maxPage;
+  const pageItems = prods.slice((_flashPage-1) * FLASH_PER_PAGE, _flashPage * FLASH_PER_PAGE);
+  renderFlashPager(total);
+  prods = pageItems;
+
+  if (!total) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--g400)">
-      <div style="font-size:32px;margin-bottom:8px">⚡</div>
-      <div>ยังไม่มีสินค้า Flash Sale</div>
-      <div style="font-size:12px;margin-top:6px">กด "เพิ่มสินค้า Flash Sale" เพื่อเริ่ม</div>
+      <div style="font-size:32px;margin-bottom:8px">${_flashQuery ? '🔍' : '⚡'}</div>
+      <div>${_flashQuery ? 'ไม่พบสินค้าที่ตรงกับ "'+_flashQuery+'"' : 'ยังไม่มีสินค้า Flash Sale'}</div>
+      <div style="font-size:12px;margin-top:6px">${_flashQuery ? 'ลองคำอื่น หรือล้างช่องค้นหา' : 'กด "เพิ่มสินค้า Flash Sale" เพื่อเริ่ม'}</div>
     </td></tr>`;
     return;
   }
@@ -9838,6 +9914,6 @@ window.orVerifySlip = async function(slipId, status, orderId) {
 };
 </script>
 
-<script>console.log("TM admin-cms build 2026-07-16-E (suspend fix)")</script>
+<script>console.log("TM admin-cms build 2026-07-17-D (pagination + search)")</script>
 </body>
 </html>
