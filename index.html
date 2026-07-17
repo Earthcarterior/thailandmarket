@@ -24,6 +24,29 @@
 window.TM_SB_URL='https://qmgyimsptzewwyafvjzk.supabase.co';
 window.TM_SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
 window._sb=supabase.createClient(window.TM_SB_URL,window.TM_SB_KEY);
+
+// ── สลับรูปสินค้า: hover = รูปที่ 2 · มือถือ(ไม่มี hover) = สลับเองทุก 3.5 วิ ──
+function tmImgIn(el){
+  el.style.transform = 'scale(1.05)';
+  const b = el.dataset.b;
+  if (b) { if (!el.dataset.a) el.dataset.a = el.src; el.src = b; }
+}
+function tmImgOut(el){
+  el.style.transform = '';
+  if (el.dataset.a) el.src = el.dataset.a;
+}
+function tmStartAutoSwap(){
+  // เฉพาะอุปกรณ์ที่ hover ไม่ได้ (มือถือ/แท็บเล็ต)
+  if (!window.matchMedia || !window.matchMedia('(hover: none)').matches) return;
+  if (window._tmSwapTimer) return;
+  window._tmSwapTimer = setInterval(() => {
+    document.querySelectorAll('img[data-b]:not([data-b=""])').forEach(el => {
+      if (!el.dataset.a) el.dataset.a = el.src;
+      el.src = (el.src === el.dataset.b) ? el.dataset.a : el.dataset.b;
+    });
+  }, 3500);
+}
+
 // ── Flash rounds: ราคา Flash ใช้เฉพาะช่วงรอบ (นอกรอบ = ราคาปกติ) ──
 let TM_ROUNDS = [{s:600,e:720},{s:840,e:960},{s:1200,e:1320}];
 let _tmRoundsLoading = null;
@@ -1695,11 +1718,10 @@ async function loadFlash() {
     // ดึงสินค้า flash_sale ก่อน
     await tmLoadRounds();
     let { data: flashProds } = await sb.from('products')
-      .select('id,name_th,price,compare_price,flash_price,flash_round,thumbnail,sold_count,stock_quantity,rating_avg,is_flash_sale,discount_percent,categories(name_th,icon)')
+      .select('id,name_th,price,compare_price,flash_price,flash_round,thumbnail,images,sold_count,stock_quantity,rating_avg,is_flash_sale,discount_percent,categories(name_th,icon)')
       .eq('status', 'active')
       .eq('is_flash_sale', true)
-      .order('sold_count', { ascending: false })
-      .limit(6);
+      .order('sold_count', { ascending: false });   // ดึงทั้งหมด → ใช้เป็นคลังสุ่ม
 
     // ถ้า flash_sale น้อยกว่า 6 → เติมจาก top-selling
     if (!flashProds || flashProds.length < 6) {
@@ -1738,7 +1760,22 @@ async function loadFlash() {
         note.innerHTML = `<div style="margin:0 0 12px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.85);font-size:12px">⏰ <b>นอกช่วง Flash Sale — แสดงราคาปกติ</b> · ${nxt>=0 ? 'รอบถัดไปเริ่ม '+mm2t(TM_ROUNDS[nxt].s)+' น.' : 'รอบ 1 พรุ่งนี้ '+mm2t(TM_ROUNDS[0].s)+' น.'}</div>`;
       }
     })();
-    grid.innerHTML = flashProds.map(p => {
+    // ── คลังสินค้า flash → สุ่มลำดับ แล้วหมุนโชว์ทีละ 6 ──
+    const _shuffle = arr => { const a = arr.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+    window._fsPool = _shuffle(flashProds || []);
+    window._fsIdx  = 0;
+
+    window.renderFlashStrip = function(fade){
+      const grid = document.getElementById('flash-grid');
+      const pool = window._fsPool || [];
+      if (!grid || !pool.length) return;
+
+      // หยิบ 6 ตัวจากตำแหน่งปัจจุบัน (วนกลับต้นถ้าถึงท้าย)
+      const show = [];
+      for (let k = 0; k < Math.min(6, pool.length); k++) show.push(pool[(window._fsIdx + k) % pool.length]);
+
+      const paint = () => {
+        grid.innerHTML = show.map(p => {
       // คำนวณราคา flash
       const origPrice  = p.price || 0;
       const _live      = _tmFlashLive(p);
@@ -1751,6 +1788,10 @@ async function loadFlash() {
       const isFlash  = p.is_flash_sale && _live;
       const stockLow = p.stock_quantity > 0 && p.stock_quantity <= 20;
       const stockOut = p.stock_quantity <= 0;
+
+      const _imgs = Array.isArray(p.images) ? p.images.filter(Boolean) : [];
+      const _img1 = p.thumbnail || _imgs[0] || '';
+      const _img2 = _imgs.find(x => x && x !== _img1) || '';
 
       return `<a class="flash-card" href="product.html?id=${p.id}"
           style="display:block;text-decoration:none;color:inherit;background:rgba(255,255,255,.06);
@@ -1776,10 +1817,10 @@ async function loadFlash() {
         </div>` : ''}
 
         <div style="aspect-ratio:1;overflow:hidden;background:rgba(255,255,255,.04)">
-          ${p.thumbnail
-            ? `<img src="${p.thumbnail}" alt="${p.name_th}" loading="lazy"
-                style="width:100%;height:100%;object-fit:cover;transition:transform .3s"
-                onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform=''"
+          ${_img1
+            ? `<img src="${_img1}" data-b="${_img2}" alt="${p.name_th}" loading="lazy"
+                style="width:100%;height:100%;object-fit:cover;transition:transform .3s,opacity .2s"
+                onmouseover="tmImgIn(this)" onmouseout="tmImgOut(this)"
                 onerror="this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;font-size:40px\\'>📦</div>'">`
             : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:40px">📦</div>'}
         </div>
@@ -1810,7 +1851,38 @@ async function loadFlash() {
           </div>` : ''}
         </div>
       </a>`;
-    }).join('');
+        }).join('');
+
+        // preload รูปที่ 2 + auto-swap บนมือถือ
+        show.forEach(p => {
+          const im = Array.isArray(p.images) ? p.images.filter(Boolean) : [];
+          const second = im.find(x => x && x !== (p.thumbnail || im[0]));
+          if (second) { const i = new Image(); i.src = second; }
+        });
+        tmStartAutoSwap();
+        grid.style.opacity = '1';
+      };
+
+      if (fade) {
+        grid.style.transition = 'opacity .35s';
+        grid.style.opacity = '0';
+        setTimeout(paint, 350);
+      } else {
+        paint();
+      }
+    };
+
+    window.renderFlashStrip(false);
+
+    // หมุนเวียนชุดสินค้าทุก 8 วิ (เฉพาะเมื่อมีมากกว่า 6 ตัว)
+    if (window._fsRotTimer) clearInterval(window._fsRotTimer);
+    if ((window._fsPool || []).length > 6) {
+      window._fsRotTimer = setInterval(() => {
+        if (document.hidden) return;                       // แท็บไม่ได้เปิดอยู่ → พัก
+        window._fsIdx = (window._fsIdx + 6) % window._fsPool.length;
+        window.renderFlashStrip(true);
+      }, 8000);
+    }
 
     // ── อัปเดต countdown timer ──────────────────────────────────────────
     startFlashCountdown();
@@ -3767,6 +3839,6 @@ window.addEventListener('focus', () => window.tmUpdateCartBadge());
 
 
 </script>
-<script>console.log("TM index build 2026-07-16-F (real flash timer)")</script>
+<script>console.log("TM index build 2026-07-16-H (random rotating flash)")</script>
 </body>
 </html>
