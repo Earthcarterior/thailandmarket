@@ -776,13 +776,36 @@ function tickRound(){
 }
 
 const _ff = { cat:'all', chip:'all', sort:'disc' };
+
+// ── สลับรูปสินค้า: hover = รูปที่ 2 · มือถือ = สลับเองทุก 3.5 วิ ──
+function tmImgIn(el){
+  el.style.transform = 'scale(1.05)';
+  const b = el.dataset.b;
+  if (b) { if (!el.dataset.a) el.dataset.a = el.src; el.src = b; }
+}
+function tmImgOut(el){
+  el.style.transform = '';
+  if (el.dataset.a) el.src = el.dataset.a;
+}
+function tmStartAutoSwap(){
+  if (!window.matchMedia || !window.matchMedia('(hover: none)').matches) return;
+  if (window._tmSwapTimer) return;
+  window._tmSwapTimer = setInterval(() => {
+    document.querySelectorAll('#flash-grid img[data-b]:not([data-b=""])').forEach(el => {
+      if (!el.dataset.a) el.dataset.a = el.src;
+      el.src = (el.src === el.dataset.b) ? el.dataset.a : el.dataset.b;
+    });
+  }, 3500);
+}
+
 function flashDisc(p){
   if (p.flash_price && p.price > p.flash_price) return Math.round((1 - p.flash_price/p.price) * 100);
   return p.discount_percent || (p.compare_price ? Math.round((1-p.price/p.compare_price)*100) : 0);
 }
 // ราคา Flash ใช้เฉพาะช่วงรอบของสินค้านั้น (นอกรอบ = ราคาปกติ)
 function flashLiveNow(p){
-  if (!p || !p.is_flash_sale || !p.flash_price) return false;
+  // หน้านี้ query กรอง is_flash_sale=true มาแล้ว → ไม่บังคับต้องมี field นี้
+  if (!p || !p.flash_price) return false;
   const d = new Date(), m = d.getHours()*60 + d.getMinutes();
   const on = r => r && m >= r.s && m < r.e;
   return p.flash_round ? on(FLASH_ROUNDS[p.flash_round-1]) : FLASH_ROUNDS.some(on);
@@ -955,7 +978,7 @@ function toast(msg, type) {
 async function loadFlashProducts() {
   try {
     const { data: prods } = await _sbFlash.from('products')
-      .select('id,name_th,price,compare_price,discount_percent,flash_price,flash_round,thumbnail,images,stock_quantity,sold_count,rating_avg,rating_count,categories(name_th)')
+      .select('id,name_th,price,compare_price,discount_percent,is_flash_sale,flash_price,flash_round,thumbnail,images,stock_quantity,sold_count,rating_avg,rating_count,categories(name_th)')
       .eq('is_flash_sale', true)
       .eq('status', 'active')
       .order('sold_count', { ascending: false });
@@ -992,14 +1015,16 @@ function renderFlashGrid(prods){
     }
     
     grid.innerHTML = prods.map(p => {
-      const thumb = p.thumbnail || p.images?.[0];
+      const _imgs = Array.isArray(p.images) ? p.images.filter(Boolean) : [];
+      const thumb = p.thumbnail || _imgs[0];
+      const _img2 = _imgs.find(x => x && x !== thumb) || '';
       const disc  = flashDisc(p);
       const live  = flashLiveNow(p);
       const eff   = live ? Number(p.flash_price || p.price) : Number(p.price || 0);
       const roundTxt = p.flash_round ? ('รอบ '+p.flash_round) : 'รอบถัดไป';
       return `<div style="border:1px solid #E5E5E5;background:#fff;cursor:pointer" onclick="location.href='product.html?id=${p.id}'">
         <div style="aspect-ratio:1;background:#F2F2F2;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
-          ${thumb?`<img src="${thumb}" style="width:100%;height:100%;object-fit:cover">`:'<span style="font-size:50px">📦</span>'}
+          ${thumb?`<img src="${thumb}" data-b="${_img2}" loading="lazy" style="width:100%;height:100%;object-fit:cover;transition:transform .3s" onmouseover="tmImgIn(this)" onmouseout="tmImgOut(this)">`:'<span style="font-size:50px">📦</span>'}
           ${live
             ? `<div style="position:absolute;top:8px;left:8px;background:#E63329;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 8px">⚡ -${disc}%</div>`
             : `<div style="position:absolute;top:8px;left:8px;background:#525252;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 8px">⚡ ${roundTxt}</div>`}
@@ -1025,6 +1050,14 @@ function renderFlashGrid(prods){
         </div>
       </div>`;
     }).join('');
+
+    // preload รูปที่ 2 + auto-swap บนมือถือ
+    prods.forEach(p => {
+      const im = Array.isArray(p.images) ? p.images.filter(Boolean) : [];
+      const second = im.find(x => x && x !== (p.thumbnail || im[0]));
+      if (second) { const i = new Image(); i.src = second; }
+    });
+    tmStartAutoSwap();
 }
 
 function addToCart(id, name, price) {
@@ -1268,5 +1301,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.tmUpdateCartBadge = tmUpdateCartBadge;
 })();
 </script>
+<script>console.log("TM flash-sale build 2026-07-17-A (flash price fix)")</script>
 </body>
 </html>
