@@ -22,7 +22,7 @@ body{font-family:var(--font);background:var(--white);color:var(--black);font-siz
 a{text-decoration:none;color:inherit}button{font-family:var(--font);cursor:pointer}
 
 /* ── LOGIN SCREEN ── */
-.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--black);padding:24px}
+.login-screen{position:fixed;inset:0;z-index:99999;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--black);padding:24px;overflow:auto}
 .login-box{width:440px;max-width:100%;background:var(--white)}
 .login-head{padding:32px 36px 28px;border-bottom:var(--border)}
 .login-logo{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--black);margin-bottom:20px;display:block}
@@ -5254,7 +5254,7 @@ function showApp(user, role) {
   // ── ซ่อน login, แสดง app ────────────────────────────────
   const loginEl = document.getElementById('login-screen');
   const appEl   = document.getElementById('app');
-  if (loginEl) loginEl.style.display = 'none';
+  if (loginEl) { loginEl.style.display = 'none'; loginEl.style.visibility = 'hidden'; }
   if (appEl)   { appEl.style.display = 'flex'; appEl.style.visibility = 'visible'; }
 
   // ── ตั้งข้อมูล user ────────────────────────────────────────
@@ -5293,11 +5293,10 @@ function showApp(user, role) {
 }
 
 async function doLogout() {
-  await sb.auth.signOut();
+  try { await sb.auth.signOut(); } catch(_) {}
   currentUser = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  toast('ออกจากระบบแล้ว');
+  // ออกจากระบบ → กลับหน้าแรกเว็บ (เหมือนปุ่มใน dropdown) กันหน้า login+CMS ซ้อนกัน
+  location.href = 'index.html';
 }
 
 function exportCSV(type) {
@@ -9914,6 +9913,6 @@ window.orVerifySlip = async function(slipId, status, orderId) {
 };
 </script>
 
-<script>console.log("TM admin-cms build 2026-07-17-D (pagination + search)")</script>
+<script>console.log("TM admin-cms build 2026-07-18-A (logout fix)")</script>
 </body>
 </html>
