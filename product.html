@@ -2624,6 +2624,41 @@ loadProduct();
 })();
 </script>
 
-<script>console.log("TM product build 2026-07-17-B (dark mode)")</script>
+<script>console.log("TM product build 2026-07-19-A (cart right)")</script>
+<!-- ══════ TM: ย้าย CART ไปขวาสุดของ header (ทุกหน้า) ══════ -->
+<script>
+(function(){
+  function findCartBtn(){
+    // ปุ่มที่ลิงก์ไป cart.html หรือมี badge ตะกร้า
+    var cb = document.getElementById('cart-badge');
+    if (cb) { var b = cb.closest('button, a'); if (b) return b; }
+    var all = document.querySelectorAll('.nav-acts button, .nav-acts a, .nav-actions button, .nav-actions a');
+    for (var i=0;i<all.length;i++){
+      var el=all[i];
+      if ((el.getAttribute('onclick')||'').indexOf('cart.html')>-1) return el;
+      if ((el.getAttribute('href')||'').indexOf('cart.html')>-1) return el;
+    }
+    return null;
+  }
+  function reorder(){
+    var cart = findCartBtn();
+    if (!cart) return;
+    var host = cart.parentElement;
+    if (!host) return;
+    // ปุ่ม theme (🌙) ที่เราเพิ่ม → ให้ไปซ้ายสุด (ไม่เกะกะ)
+    var theme = host.querySelector('.tm-theme-btn');
+    if (theme && host.firstChild !== theme) host.insertBefore(theme, host.firstChild);
+    // ย้าย CART ไปเป็นลูกตัวสุดท้าย = ขวาสุด
+    if (host.lastElementChild !== cart) host.appendChild(cart);
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', reorder);
+  else reorder();
+  // เผื่อ header ถูก render/ประกอบทีหลัง
+  setTimeout(reorder, 400);
+  setTimeout(reorder, 1200);
+})();
+</script>
+<!-- ══════ /TM cart reorder ══════ -->
+
 </body>
 </html>
