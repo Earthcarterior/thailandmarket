@@ -1306,8 +1306,10 @@ function updateActiveTags() {
   if(search) tags.push({label:`"${search}"`, clear:()=>{document.getElementById('search-inp').value='';currentPage=1;loadProds();updateActiveTags();}});
 
   container.style.display = tags.length ? 'flex' : 'none';
+  /* PATCH 2026-07-21: เดิม serialize closure เป็น string ใน onclick → ตัวแปรใน closure (เช่น svc) หายตอนรัน ทำให้กด ✕ ลบไม่ได้ — เปลี่ยนเป็นอ้างอิง array แทน */
+  window._activeTags = tags;
   container.innerHTML = tags.map((t,i) =>
-    `<span class="active-tag" onclick="(${t.clear.toString()})()">${t.label} <span class="active-tag-x">✕</span></span>`
+    `<span class="active-tag" onclick="window._activeTags[${i}].clear()">${t.label} <span class="active-tag-x">✕</span></span>`
   ).join('');
 }
 
