@@ -1,0 +1,114 @@
+/* ✅ VERSION 3 — 2026-07-14 — height:auto + ann-scroll (ตัวจริง) */
+/* ═══════════════════════════════════════════════════════════════════
+   📱 MOBILE NAV FIX v2 — Thailand Market (2026-07-14)
+   หลัก: จอเล็กไม่เบียดทุกอย่างแถวเดียว — search แยกเป็นแถวเต็มกว้าง
+   แถว 1: โลโก้ ←→ ปุ่มไอคอน | แถว 2: ช่องค้นหาเต็มจอ | แถว 3: เมนูเลื่อนได้
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* กันหน้าเลื่อนข้าง + dropdown ค้นหาอยู่เหนือทุกชั้น */
+html, body { overflow-x: hidden; }
+.nav, .nav-top { position: relative; z-index: 300; }
+#search-dd { z-index: 400 !important; }
+
+@media (max-width: 1100px) {
+  .nav-btn { padding: 6px 8px !important; font-size: 10px !important; }
+  .nav-btn-ico { font-size: 14px !important; }
+  .nav-search { max-width: 240px !important; }
+}
+
+/* ── จุดเปลี่ยน: จัดใหม่เป็น 3 แถว ── */
+@media (max-width: 900px) {
+  .nav-top {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    row-gap: 8px;
+    padding: 8px 12px !important;
+    align-items: center;
+    height: auto !important;      /* 🔑 ปลดล็อกความสูงตายตัว 56px — ต้นเหตุที่แถวใหม่ทะลักไปทับข้างล่าง */
+    min-height: 0 !important;
+  }
+  .nav-logo  { order: 1; font-size: 14px !important; margin-right: auto !important; }
+  .nav-acts  { order: 2; margin-left: 0 !important; flex-shrink: 0 !important; gap: 2px; }
+  .nav-btn-lbl { display: none !important; }   /* เก็บเฉพาะไอคอน */
+
+  /* 🔍 ช่องค้นหา: แถวของตัวเอง เต็มความกว้าง — ไม่ซ้อนกับอะไรอีก */
+  .nav-search {
+    order: 3;
+    display: flex !important;
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  .nav-search input { padding: 9px 12px !important; font-size: 16px !important; } /* 16px กัน iOS ซูม */
+
+  /* เมนูหมวด: แถวล่าง เลื่อนแนวนอน */
+  .nav-links {
+    order: 4;
+    display: flex !important;
+    flex: 1 1 100% !important;
+    max-width: none !important;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    gap: 14px;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+}
+
+@media (max-width: 420px) {
+  .nav-logo { font-size: 13px !important; }
+  .nav-btn  { padding: 5px !important; }
+}
+
+
+/* ── 📢 แถบประกาศบนสุด: มือถือ = บรรทัดเดียว วิ่งเป็นขบวนเดียว (ทับกันไม่ได้) ── */
+@media (max-width: 900px) {
+  .ann {
+    display: block !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    padding: 9px 0 !important;
+    text-align: left !important;
+  }
+  /* ทุกข้อความใช้ transform เดียวกัน ไม่มี delay → เกาะกันเป็นแถวเดียว
+     ระยะห่างมาจาก padding จริงใน layout จึงชนกันไม่ได้ */
+  .ann > span {
+    display: inline-block;
+    padding: 0 26px 0 0;
+    font-size: 12px !important;
+    animation: ann-train 16s linear infinite;
+    will-change: transform;
+  }
+  @keyframes ann-train {
+    0%   { transform: translateX(100vw); }
+    100% { transform: translateX(calc(-100vw - 1200px)); }
+  }
+}
+
+/* ช่องค้นหาที่มีไอคอนแว่น (category/search) — กันไอคอนทับข้อความ */
+@media (max-width: 900px) {
+  .nav-search .nav-search-inp { padding-left: 38px !important; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ปุ่ม "ค้นหา" — เปลี่ยนจากดำ → gradient ส้ม-แดง (ทุกหน้า)
+   สไตล์ตามธีมแอป: pill โค้งมน + เงาแดงเรืองนุ่มๆ
+   ══════════════════════════════════════════════════════════ */
+.nav-search { border-radius: 999px; overflow: hidden; }
+.nav-search button,
+button[onclick*="doSearch"] {
+  background: linear-gradient(135deg, #F26430 0%, #D70326 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 999px !important;
+  padding: 8px 18px !important;
+  margin: 3px !important;
+  box-shadow: 0 4px 12px -4px rgba(215, 3, 38, .55);
+  transition: filter .15s, box-shadow .15s;
+}
+.nav-search button:hover,
+button[onclick*="doSearch"]:hover {
+  background: linear-gradient(135deg, #F26430 0%, #D70326 100%) !important;
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px -4px rgba(215, 3, 38, .75);
+}
