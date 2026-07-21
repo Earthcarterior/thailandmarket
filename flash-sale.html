@@ -552,6 +552,7 @@ html[data-theme="dark"] img[src*="logo"]{filter:brightness(1.6)}
 </script>
 <!-- ══════ /TM THEME ══════ -->
 
+<link rel="stylesheet" href="mobile-nav-fix.css">
 </head>
 <body>
 <!-- ── ANNOUNCEMENT ── -->
@@ -1434,5 +1435,12 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 <!-- ══════ /TM header logo ══════ -->
+<script>
+/* PATCH 2026-07-21: หน้านี้เรียก doSearch() แต่ไม่มีฟังก์ชัน — เพิ่มให้เหมือน index */
+function doSearch() {
+  const q = document.getElementById('search-inp')?.value?.trim();
+  if (q) window.location.href = `category.html?q=${encodeURIComponent(q)}`;
+}
+</script>
 </body>
 </html>
