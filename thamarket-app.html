@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thailand.Market App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0A0A0A;--bg:#F6F5F3;--card:#fff;--line:#eae7e1;--mut:#8a8680;--mut2:#a5a19a;--red:#E5484D;--redbg:#FDEBEC;--amber:#FFB84D;--green:#3a7a3f;--mono:'IBM Plex Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'IBM Plex Sans Thai',sans-serif;background:#EDEBE7;color:var(--ink);font-size:15px;-webkit-font-smoothing:antialiased}
+.phone{max-width:430px;margin:0 auto;min-height:100dvh;background:var(--bg);position:relative;padding-bottom:74px}
+img{display:block}
+.pimg{width:100%;height:100%;object-fit:cover;background:#f3f1ed}
+.ph{background:repeating-linear-gradient(45deg,#eceae6 0 8px,#f3f1ed 8px 16px);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--mut2)}
+.screen{display:none}.screen.on{display:block}
+/* ── header ── */
+.hd{background:var(--ink);color:#fff;padding:12px 16px 14px}
+.hd-row{display:flex;align-items:center;gap:10px}
+.hd-logo{font-weight:700;font-size:17px;flex:1}.hd-logo span{color:#FF5A5F}
+.hd-ico{font-size:18px;position:relative;cursor:pointer;background:none;border:none;color:#fff}
+.hd-search{margin-top:10px;background:#fff;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;color:var(--mut);font-size:14px;cursor:pointer}
+.hd-ann{margin-top:10px;font-size:11.5px;color:#c9c6c0}
+.subhd{background:#fff;padding:10px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.back{font-size:18px;background:none;border:none;cursor:pointer;color:var(--ink)}
+.subhd-t{font-weight:700;font-size:17px;flex:1}
+/* ── chips ── */
+.chips{display:flex;gap:8px;padding:12px 16px 4px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{background:#fff;border:1px solid #e4e1db;border-radius:20px;padding:6px 12px;font-size:12.5px;white-space:nowrap;cursor:pointer;color:var(--ink)}
+.chip.on{background:var(--ink);color:#fff;font-weight:600;border-color:var(--ink)}
+/* ── flash card (home) ── */
+.fcard{margin:12px 16px;background:var(--ink);border-radius:16px;padding:14px 14px 16px;color:#fff;cursor:pointer}
+.fcard-row{display:flex;align-items:center;gap:10px}
+.fcard-t{font-weight:700;font-size:15px}
+.cd{display:flex;gap:4px;align-items:center;font-family:var(--mono);font-size:12px}
+.cd b{background:var(--red);border-radius:6px;padding:3px 6px;font-weight:700}
+.fcard-all{flex:1;text-align:right;font-size:12px;color:#c9c6c0}
+.fmini{display:flex;gap:10px;margin-top:12px}
+.fmini-i{flex:1;background:#171717;border-radius:12px;overflow:hidden;min-width:0}
+.fmini-img{height:74px;overflow:hidden}
+.fmini-b{padding:7px 8px 9px}
+.fmini-p{color:#FF6B6F;font-weight:700;font-size:13.5px}
+.fmini-w{font-size:10px;color:var(--mut);text-decoration:line-through;min-height:13px}
+/* ── section / cats ── */
+.sec{padding:10px 16px 4px}
+.sec-t{font-weight:700;font-size:15.5px;margin-bottom:10px}
+.cats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 8px;text-align:center}
+.cat{cursor:pointer}
+.cat-ic{width:52px;height:52px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.cat-n{font-size:11px;margin-top:5px;color:#4a4741;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ── product grid ── */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 16px 16px}
+.pc{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer}
+.pc-img{height:150px;position:relative;overflow:hidden}
+.pc-badge{position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:6px;padding:2px 6px}
+.pc-b{padding:9px 10px 11px}
+.pc-n{font-size:12.5px;line-height:1.35;height:34px;overflow:hidden;color:#38352f}
+.pc-pr{margin-top:5px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pc-p{color:var(--red);font-weight:700;font-size:15px}
+.pc-w{font-size:11px;color:var(--mut2);text-decoration:line-through}
+.pc-m{font-size:10.5px;color:var(--mut);margin-top:3px}
+/* ── search screen ── */
+.sinp{flex:1;background:#F1EFEB;border-radius:12px;padding:9px 14px;display:flex;align-items:center;gap:8px;font-size:14px}
+.sinp input{flex:1;border:none;background:none;outline:none;font-family:inherit;font-size:14px;min-width:0}
+.tabs{background:#fff;display:flex;padding:0 16px;border-bottom:1px solid var(--line);font-size:13px;position:sticky;top:53px;z-index:40}
+.tab{padding:10px 0;margin-right:20px;color:#6b675f;cursor:pointer;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;font-size:13px}
+.tab.on{font-weight:700;border-bottom:2px solid var(--red);color:var(--red)}
+.tab.pricetab{margin-left:auto;margin-right:0}
+.count{padding:10px 16px 0;font-size:12px;color:var(--mut)}
+/* ── flash screen ── */
+.fhd{background:var(--ink);color:#fff;padding:10px 16px 16px}
+.rounds{display:flex;background:#171717;color:var(--mut);text-align:center;font-size:13px}
+.round{flex:1;padding:12px 0;cursor:pointer}
+.round b{font-family:var(--mono);font-weight:700;display:block}
+.round small{font-size:11px}
+.round.live{background:var(--red);color:#fff}
+.round.live small{font-weight:700}
+.flist{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.fitem{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;gap:12px;cursor:pointer}
+.fitem-img{width:104px;height:104px;flex-shrink:0;border-radius:10px;overflow:hidden}
+.fitem-b{flex:1;display:flex;flex-direction:column;min-width:0}
+.fitem-n{font-size:13px;line-height:1.35;color:#38352f;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fitem-pr{margin-top:auto;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.fitem-p{color:var(--red);font-weight:700;font-size:17px}
+.off{background:var(--redbg);color:var(--red);font-size:10px;font-weight:700;border-radius:5px;padding:2px 5px}
+.fbar-row{margin-top:7px;display:flex;align-items:center;gap:8px}
+.fbar{flex:1;height:14px;background:var(--redbg);border-radius:7px;position:relative;overflow:hidden}
+.fbar-fill{position:absolute;inset:0;background:linear-gradient(90deg,#E5484D,#FF7A45)}
+.fbar-txt{position:relative;font-size:9px;font-weight:700;color:#fff;text-align:center;line-height:14px}
+.buy{background:var(--ink);color:#fff;border-radius:14px;padding:5px 13px;font-size:12px;font-weight:700;border:none;cursor:pointer;white-space:nowrap}
+/* ── detail ── */
+.dt-hero{position:relative;height:340px;overflow:hidden;background:#fff}
+.dt-nav{position:absolute;top:14px;left:14px;width:34px;height:34px;background:rgba(10,10,10,.55);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;font-size:15px}
+.dt-card{background:#fff;padding:14px 16px}
+.dt-price{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.dt-p{color:var(--red);font-weight:700;font-size:24px}
+.dt-w{font-size:13px;color:var(--mut2);text-decoration:line-through}
+.dt-flash{margin-left:auto;background:var(--ink);color:#fff;font-size:10px;font-weight:700;border-radius:6px;padding:3px 7px}
+.dt-n{margin-top:8px;font-size:15px;font-weight:600;line-height:1.4}
+.dt-m{margin-top:7px;font-size:12px;color:var(--mut)}
+.dt-seller{background:#fff;margin-top:8px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.dt-slogo{width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0}
+.dt-desc{background:#fff;margin-top:8px;padding:12px 16px 16px;font-size:13px;line-height:1.6;color:#4a4741;white-space:pre-wrap;word-break:break-word}
+.dt-actions{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;align-items:stretch;background:#fff;border-top:1px solid var(--line);padding:10px 12px calc(14px + env(safe-area-inset-bottom));gap:8px;z-index:90}
+.dt-chat{width:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10.5px;color:#6b675f;text-decoration:none}
+.dt-cart{flex:1;border:1.5px solid var(--ink);border-radius:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;text-decoration:none;color:var(--ink)}
+.dt-buy{flex:1;background:var(--red);color:#fff;border-radius:24px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;padding:11px 0;text-decoration:none}
+/* ── bottom nav ── */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:#fff;border-top:1px solid var(--line);padding:9px 6px calc(12px + env(safe-area-inset-bottom));text-align:center;z-index:100}
+.bnav a{flex:1;color:var(--mut2);text-decoration:none;cursor:pointer}
+.bnav a.on{color:var(--ink)}
+.bnav .ic{font-size:19px}
+.bnav .lb{font-size:10px}
+.bnav a.on .lb{font-weight:700}
+/* ── misc ── */
+.spin{padding:40px;text-align:center;color:var(--mut);font-family:var(--mono);font-size:12px}
+.err{margin:14px 16px;background:#FDEBEC;border:1px solid #f5c6c9;border-radius:12px;padding:11px 14px;font-size:13px;color:#a12930}
+.live-strip{margin:14px 16px 0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.more-btn{margin:0 16px 18px;background:#fff;border:1px solid #ddd9d2;border-radius:12px;padding:11px 0;width:calc(100% - 32px);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="phone">
+
+<!-- ═══ HOME ═══ -->
+<div class="screen on" id="scr-home">
+  <div class="hd">
+    <div class="hd-row">
+      <div class="hd-logo" style="display:flex;align-items:center;gap:8px"><img src="data:image/png;base64,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" alt="logo" style="width:28px;height:28px;border-radius:7px"><span style="font-weight:700">Thailand<span style="color:#FF5A5F">.</span>Market</span></div>
+      <button class="hd-ico" onclick="openWeb('wishlist.html')">♡</button>
+      <button class="hd-ico" onclick="openWeb('account.html')">🔔</button>
+    </div>
+    <div class="hd-search" onclick="go('search')"><span>🔍</span> ค้นหาสินค้า แบรนด์ ร้านค้า…</div>
+    <div class="hd-ann">🚚 ส่งฟรีทุกออเดอร์เมื่อซื้อครบ ฿500 · รับคูปองใหม่ทุกวัน</div>
+  </div>
+  <div class="chips">
+    <div class="chip on" onclick="go('flash')">⚡ Flash Sale</div>
+    <div class="chip" onclick="openWeb('index.html#live')">🔴 Live</div>
+    <div class="chip" onclick="openWeb('index.html')">Brand Day</div>
+    <div class="chip" onclick="go('coupon')">🎟️ Coupon</div>
+    <div class="chip" onclick="openWeb('loyalty.html')">Loyalty</div>
+  </div>
+  <div class="fcard" onclick="go('flash')">
+    <div class="fcard-row">
+      <div class="fcard-t">⚡ FLASH SALE</div>
+      <div class="cd"><b id="cdH">--</b>:<b id="cdM">--</b>:<b id="cdS">--</b></div>
+      <div class="fcard-all">ทั้งหมด →</div>
+    </div>
+    <div class="fmini" id="flash-mini"><div class="spin" style="flex:1;color:#8a8680">กำลังโหลด…</div></div>
+  </div>
+  <div class="sec">
+    <div class="sec-t">หมวดหมู่สินค้า</div>
+    <div class="cats" id="home-cats"></div>
+  </div>
+  <div class="live-strip" onclick="openWeb('index.html')">
+    <div style="background:var(--red);color:#fff;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700">🔴 LIVE</div>
+    <div style="flex:1"><div style="font-weight:600;font-size:13.5px">ดูไลฟ์และดีลพิเศษบนเว็บ</div><div style="font-size:11.5px;color:var(--mut)">thailandmarket.com</div></div>
+    <div style="font-size:13px;color:var(--mut)">ดู →</div>
+  </div>
+  <div class="sec" style="padding-top:16px">
+    <div class="sec-t">✨ แนะนำสำหรับคุณ</div>
+  </div>
+  <div class="grid" id="home-recos"><div class="spin" style="grid-column:1/-1">กำลังโหลดสินค้า…</div></div>
+</div>
+
+<!-- ═══ SEARCH / CATEGORY ═══ -->
+<div class="screen" id="scr-search">
+  <div class="subhd">
+    <button class="back" onclick="go('home')">←</button>
+    <div class="sinp"><span>🔍</span><input id="q" placeholder="ค้นหาสินค้า แบรนด์ ร้านค้า…" onkeydown="if(event.key==='Enter')doSearch()"><span onclick="clearQ()" style="color:var(--mut2);cursor:pointer">✕</span></div>
+    <button class="back" onclick="openWeb('cart.html')">🛒</button>
+  </div>
+  <div class="chips" id="cat-chips" style="background:#fff;padding-top:10px;padding-bottom:10px;border-bottom:1px solid var(--line)"></div>
+  <div class="tabs">
+    <button class="tab on" data-sort="pop" onclick="setSort('pop',this)">ยอดนิยม</button>
+    <button class="tab" data-sort="new" onclick="setSort('new',this)">สินค้าใหม่</button>
+    <button class="tab" data-sort="sold" onclick="setSort('sold',this)">ขายดี</button>
+    <button class="tab pricetab" data-sort="price" onclick="setSort('price',this)">ราคา <span id="price-arrow">↑↓</span></button>
+  </div>
+  <div class="count" id="s-count"></div>
+  <div class="grid" id="s-grid"><div class="spin" style="grid-column:1/-1">กำลังโหลด…</div></div>
+  <button class="more-btn" id="s-more" style="display:none" onclick="loadSearch(true)">โหลดเพิ่ม</button>
+</div>
+
+<!-- ═══ FLASH SALE ═══ -->
+<div class="screen" id="scr-flash">
+  <div class="fhd">
+    <div class="hd-row">
+      <button class="back" style="color:#fff" onclick="go('home')">←</button>
+      <div class="subhd-t" style="color:#fff">⚡ Flash Sale</div>
+      <button class="hd-ico" onclick="go('search')">🔍</button>
+    </div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+      <div style="font-size:12.5px;color:#c9c6c0" id="f-cd-label">รอบนี้จะจบใน</div>
+      <div class="cd" style="font-size:15px"><b id="fcdH" style="padding:5px 8px;border-radius:8px">--</b>:<b id="fcdM" style="padding:5px 8px;border-radius:8px">--</b>:<b id="fcdS" style="padding:5px 8px;border-radius:8px">--</b></div>
+    </div>
+  </div>
+  <div class="rounds" id="f-rounds"></div>
+  <div class="flist" id="f-list"><div class="spin">กำลังโหลด…</div></div>
+</div>
+
+<!-- ═══ COUPON HUB ═══ -->
+<div class="screen" id="scr-coupon">
+  <div class="fhd">
+    <div class="hd-row">
+      <button class="back" style="color:#fff" onclick="go('home')">←</button>
+      <div class="subhd-t" style="color:#fff">🎟️ Coupon Hub</div>
+    </div>
+  </div>
+  <div style="padding:14px 16px 4px;font-size:12px;color:var(--mut)">เก็บก่อนหมด · กด "เก็บ" เพื่อล็อกอินและเก็บคูปองบนเว็บ</div>
+  <div id="c-list" style="padding:8px 16px 18px;display:flex;flex-direction:column;gap:12px"><div class="spin">กำลังโหลด…</div></div>
+</div>
+
+<!-- ═══ PRODUCT DETAIL ═══ -->
+<div class="screen" id="scr-detail">
+  <div id="dt-body"><div class="spin">กำลังโหลด…</div></div>
+</div>
+
+<!-- ═══ BOTTOM NAV ═══ -->
+<div class="bnav" id="bnav">
+  <a data-s="home" class="on" onclick="go('home')"><div class="ic">🏠</div><div class="lb">หน้าแรก</div></a>
+  <a data-s="search" onclick="go('search')"><div class="ic">▦</div><div class="lb">หมวดหมู่</div></a>
+  <a data-s="flash" onclick="go('flash')"><div class="ic">⚡</div><div class="lb">Flash</div></a>
+  <a onclick="openWeb('cart.html')"><div class="ic">🛒</div><div class="lb">ตะกร้า</div></a>
+  <a onclick="openWeb('account.html')"><div class="ic">👤</div><div class="lb">ฉัน</div></a>
+</div>
+
+</div>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Thailand.Market Mobile App — ดึงข้อมูลจริงจาก Supabase
+   backend ตัวเดียวกับ www.thailandmarket.com
+   ═══════════════════════════════════════════════════════════ */
+const SB_URL = 'https://qmgyimsptzewwyafvjzk.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtZ3lpbXNwdHpld3d5YWZ2anprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NjA4NDIsImV4cCI6MjA5MzAzNjg0Mn0.pcexjwmQndb_RhZHfKVZ6m2_21sn09iNAMyESjLOVJ0';
+const SITE = 'https://www.thailandmarket.com/';
+
+async function sb(path) {
+  const r = await fetch(SB_URL + '/rest/v1/' + path, {
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY, Prefer: 'count=exact' }
+  });
+  if (!r.ok) throw new Error('SB ' + r.status);
+  const total = parseInt((r.headers.get('content-range') || '').split('/')[1]) || 0;
+  const data = await r.json();
+  data._total = total;
+  return data;
+}
+const money = n => Number(n).toLocaleString('th-TH');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const openWeb = p => window.open(SITE + p, '_blank');
+
+/* ── navigation ── */
+function go(s) {
+  document.querySelectorAll('.screen').forEach(e => e.classList.remove('on'));
+  document.getElementById('scr-' + s).classList.add('on');
+  document.querySelectorAll('#bnav a').forEach(a => a.classList.toggle('on', a.dataset.s === s));
+  window.scrollTo(0, 0);
+  if (s === 'search' && !_searchLoaded) { _searchLoaded = true; loadSearch(); }
+  if (s === 'flash' && !_flashLoaded) { _flashLoaded = true; loadFlashScreen(); }
+  if (s === 'coupon' && !_couponLoaded) { _couponLoaded = true; loadCoupons(); }
+  if (s === 'search') setTimeout(() => document.getElementById('q').focus(), 100);
+}
+
+/* ── flash rounds + countdown (ตาราง flash_rounds จริง) ── */
+let ROUNDS = [{round_no:1,starts:'10:00:00',ends:'12:00:00'},{round_no:2,starts:'14:00:00',ends:'16:00:00'},{round_no:3,starts:'20:00:00',ends:'22:30:00'}];
+const toSec = t => { const [h,m,s] = t.split(':').map(Number); return h*3600 + m*60 + (s||0); };
+const nowSec = () => { const d = new Date(); return d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds(); };
+function currentRound() { const n = nowSec(); return ROUNDS.find(r => n >= toSec(r.starts) && n < toSec(r.ends)) || null; }
+function nextRound() { const n = nowSec(); return ROUNDS.find(r => n < toSec(r.starts)) || null; }
+function tickCd() {
+  const cur = currentRound(), nx = nextRound();
+  let left, label;
+  if (cur) { left = toSec(cur.ends) - nowSec(); label = 'รอบนี้จะจบใน'; }
+  else if (nx) { left = toSec(nx.starts) - nowSec(); label = 'รอบถัดไปเริ่มใน'; }
+  else { left = (24*3600 - nowSec()) + toSec(ROUNDS[0].starts); label = 'รอบถัดไปเริ่มใน'; }
+  const p2 = n => String(n).padStart(2,'0');
+  const H = p2(Math.floor(left/3600)), M = p2(Math.floor(left/60)%60), S = p2(left%60);
+  for (const [i,v] of [['cdH',H],['cdM',M],['cdS',S],['fcdH',H],['fcdM',M],['fcdS',S]]) {
+    const el = document.getElementById(i); if (el) el.textContent = v;
+  }
+  const lb = document.getElementById('f-cd-label'); if (lb) lb.textContent = label;
+}
+
+/* ── flash products (logic เดียวกับเว็บ: is_flash_sale + flash_price + รอบตรง) ── */
+function flashOn(p) {
+  if (!p.is_flash_sale || !p.flash_price) return false;
+  const cur = currentRound();
+  if (!p.flash_round) return !!cur;
+  return cur ? cur.round_no === p.flash_round : false;
+}
+const PSEL = 'id,name_th,name_en,price,compare_price,discount_percent,thumbnail,sold_count,rating_avg,rating_count,is_flash_sale,flash_price,flash_round,is_featured,stock_quantity,category_id,sellers(shop_name,logo_url)';
+
+let _allFlash = [];
+async function loadFlashProducts() {
+  _allFlash = await sb(`products?select=${PSEL}&status=eq.active&is_flash_sale=eq.true&not.flash_price.is.null&order=sold_count.desc&limit=40`);
+  return _allFlash;
+}
+
+/* ── HOME ── */
+async function loadHome() {
+  try {
+    ROUNDS = (await sb('flash_rounds?select=*&order=round_no')) || ROUNDS;
+  } catch (e) {}
+  tickCd(); setInterval(tickCd, 1000);
+
+  // flash mini (3 ชิ้น)
+  try {
+    const fl = await loadFlashProducts();
+    const act = fl.filter(flashOn).slice(0,3);
+    const list = act.length ? act : fl.slice(0,3);
+    document.getElementById('flash-mini').innerHTML = list.length ? list.map(p => `
+      <div class="fmini-i">
+        <div class="fmini-img">${p.thumbnail ? `<img class="pimg" src="${esc(p.thumbnail)}" loading="lazy" alt="">` : '<div class="ph" style="height:74px">no img</div>'}</div>
+        <div class="fmini-b"><div class="fmini-p">฿${money(p.flash_price || p.price)}</div><div class="fmini-w">${p.flash_price && p.price > p.flash_price ? '฿'+money(p.price) : (p.compare_price ? '฿'+money(p.compare_price) : '')}</div></div>
+      </div>`).join('')
+      : '<div style="flex:1;font-size:12px;color:#8a8680;padding:10px 0">ยังไม่มีสินค้า Flash Sale ในรอบนี้</div>';
+  } catch (e) {
+    document.getElementById('flash-mini').innerHTML = '<div style="flex:1;font-size:12px;color:#8a8680">โหลดไม่สำเร็จ</div>';
+  }
+
+  // categories (8 แรก)
+  try {
+    CATS = await sb('categories?select=id,name_th,icon,slug&order=sort_order.asc.nullslast&limit=60');
+  } catch (e) { try { CATS = await sb('categories?select=id,name_th,icon,slug&limit=60'); } catch(e2) { CATS = []; } }
+  document.getElementById('home-cats').innerHTML = CATS.slice(0,8).map(c => `
+    <div class="cat" onclick="openCat('${c.id}')">
+      <div class="cat-ic">${esc(c.icon || '📦')}</div><div class="cat-n">${esc(c.name_th)}</div>
+    </div>`).join('') || '<div class="spin" style="grid-column:1/-1">ไม่มีหมวดหมู่</div>';
+
+  // แนะนำ: featured ก่อน ถ้าไม่มีใช้ขายดี
+  try {
+    let recos = await sb(`products?select=${PSEL}&status=eq.active&is_featured=eq.true&order=sold_count.desc&limit=8`);
+    if (recos.length < 8) {
+      const fill = await sb(`products?select=${PSEL}&status=eq.active&order=sold_count.desc.nullslast&limit=12`);
+      const have = new Set(recos.map(p => p.id));
+      for (const p of fill) { if (!have.has(p.id) && recos.length < 8) { recos.push(p); have.add(p.id); } }
+    }
+    document.getElementById('home-recos').innerHTML = recos.map(cardHTML).join('') || '<div class="spin" style="grid-column:1/-1">ยังไม่มีสินค้า</div>';
+  } catch (e) {
+    document.getElementById('home-recos').innerHTML = '<div class="err" style="grid-column:1/-1">โหลดสินค้าไม่สำเร็จ — เช็คอินเทอร์เน็ตแล้วลองใหม่</div>';
+  }
+}
+
+function cardHTML(p) {
+  const fl = flashOn(p);
+  const price = fl ? p.flash_price : p.price;
+  const was = fl ? p.price : p.compare_price;
+  const badge = fl ? '⚡ FLASH' : (p.discount_percent > 0 ? '-' + p.discount_percent + '%' : '');
+  return `<div class="pc" onclick="openDetail('${p.id}')">
+    <div class="pc-img">${p.thumbnail ? `<img class="pimg" src="${esc(p.thumbnail)}" loading="lazy" alt="">` : '<div class="ph" style="height:150px">no image</div>'}
+      ${badge ? `<div class="pc-badge">${badge}</div>` : ''}</div>
+    <div class="pc-b">
+      <div class="pc-n">${esc(p.name_th || p.name_en)}</div>
+      <div class="pc-pr"><span class="pc-p">฿${money(price)}</span>${was && was > price ? `<span class="pc-w">฿${money(was)}</span>` : ''}</div>
+      <div class="pc-m">★ ${p.rating_avg ? Number(p.rating_avg).toFixed(1) : '—'} · ขายแล้ว ${money(p.sold_count || 0)}</div>
+    </div></div>`;
+}
+
+/* ── SEARCH / CATEGORY ── */
+let CATS = [], _searchLoaded = false, _sort = 'pop', _priceAsc = true, _cat = '', _page = 0;
+const PAGE = 20;
+function renderCatChips() {
+  document.getElementById('cat-chips').innerHTML =
+    `<div class="chip ${!_cat?'on':''}" onclick="setCat('')">ทั้งหมด</div>` +
+    CATS.map(c => `<div class="chip ${_cat===c.id?'on':''}" onclick="setCat('${c.id}')">${esc(c.icon||'')} ${esc(c.name_th)}</div>`).join('');
+}
+function setCat(id) { _cat = id; renderCatChips(); loadSearch(); }
+function openCat(id) { _cat = id; _searchLoaded = true; go('search'); renderCatChips(); loadSearch(); }
+function setSort(s, el) {
+  if (s === 'price' && _sort === 'price') _priceAsc = !_priceAsc;
+  _sort = s;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t === el));
+  document.getElementById('price-arrow').textContent = _sort === 'price' ? (_priceAsc ? '↑' : '↓') : '↑↓';
+  loadSearch();
+}
+function clearQ() { document.getElementById('q').value = ''; loadSearch(); }
+function doSearch() { loadSearch(); }
+async function loadSearch(more) {
+  const grid = document.getElementById('s-grid');
+  if (!more) { _page = 0; grid.innerHTML = '<div class="spin" style="grid-column:1/-1">กำลังค้นหา…</div>'; }
+  if (!CATS.length) { try { CATS = await sb('categories?select=id,name_th,icon,slug&limit=60'); } catch(e){} }
+  renderCatChips();
+  const q = document.getElementById('q').value.trim();
+  let path = `products?select=${PSEL}&status=eq.active`;
+  if (q) path += `&or=(name_th.ilike.*${encodeURIComponent(q)}*,name_en.ilike.*${encodeURIComponent(q)}*)`;
+  if (_cat) path += `&category_id=eq.${_cat}`;
+  const order = { pop: 'sold_count.desc.nullslast', new: 'created_at.desc', sold: 'sold_count.desc.nullslast', price: 'price.' + (_priceAsc ? 'asc' : 'desc') }[_sort];
+  path += `&order=${order}&offset=${_page * PAGE}&limit=${PAGE}`;
+  try {
+    const rows = await sb(path);
+    document.getElementById('s-count').textContent = `พบ ${money(rows._total)} รายการ`;
+    const html = rows.map(cardHTML).join('');
+    if (more) grid.insertAdjacentHTML('beforeend', html);
+    else grid.innerHTML = html || '<div class="spin" style="grid-column:1/-1">ไม่พบสินค้า ลองคำอื่นดูครับ</div>';
+    _page++;
+    document.getElementById('s-more').style.display = (_page * PAGE < rows._total) ? 'block' : 'none';
+  } catch (e) {
+    grid.innerHTML = '<div class="err" style="grid-column:1/-1">ค้นหาไม่สำเร็จ — ลองใหม่อีกครั้ง</div>';
+  }
+}
+
+/* ── FLASH SCREEN ── */
+let _flashLoaded = false, _viewRound = null;
+function loadFlashScreen() {
+  renderRounds();
+  renderFlashList();
+}
+function renderRounds() {
+  const cur = currentRound();
+  _viewRound = _viewRound || (cur ? cur.round_no : null);
+  const n = nowSec();
+  document.getElementById('f-rounds').innerHTML = ROUNDS.map(r => {
+    const live = cur && cur.round_no === r.round_no;
+    const past = n >= toSec(r.ends);
+    const sel = _viewRound === r.round_no;
+    return `<div class="round ${live?'live':''}" style="${sel && !live ? 'background:#2a2a2a;color:#fff' : ''}" onclick="_viewRound=${r.round_no};renderRounds();renderFlashList()">
+      <b>${r.starts.slice(0,5)}</b><small>${live ? '● LIVE NOW' : past ? 'จบแล้ว' : 'เร็วๆ นี้'}</small></div>`;
+  }).join('');
+}
+async function renderFlashList() {
+  const box = document.getElementById('f-list');
+  box.innerHTML = '<div class="spin">กำลังโหลด…</div>';
+  try {
+    if (!_allFlash.length) await loadFlashProducts();
+    const list = _allFlash.filter(p => !p.flash_round || p.flash_round === _viewRound || !_viewRound);
+    box.innerHTML = list.length ? list.map(p => {
+      const off = p.price > 0 && p.flash_price ? Math.round((1 - p.flash_price / p.price) * 100) : 0;
+      const pct = p.stock_quantity > 0 ? Math.min(99, Math.round((p.sold_count || 0) / (p.sold_count + p.stock_quantity) * 100)) : 0;
+      return `<div class="fitem" onclick="openDetail('${p.id}')">
+        <div class="fitem-img">${p.thumbnail ? `<img class="pimg" src="${esc(p.thumbnail)}" loading="lazy" alt="">` : '<div class="ph" style="height:104px">no img</div>'}</div>
+        <div class="fitem-b">
+          <div class="fitem-n">${esc(p.name_th || p.name_en)}</div>
+          <div class="fitem-pr"><span class="fitem-p">฿${money(p.flash_price || p.price)}</span>${p.flash_price && p.price > p.flash_price ? `<span class="pc-w">฿${money(p.price)}</span><span class="off">-${off}%</span>` : ''}</div>
+          <div class="fbar-row">
+            <div class="fbar"><div class="fbar-fill" style="width:${pct}%"></div><div class="fbar-txt">ขายแล้ว ${pct}%</div></div>
+            <button class="buy" onclick="event.stopPropagation();openWeb('product.html?id=${p.id}')">ซื้อเลย</button>
+          </div>
+        </div></div>`;
+    }).join('') : '<div class="spin">ยังไม่มีสินค้า Flash Sale ในรอบนี้</div>';
+  } catch (e) { box.innerHTML = '<div class="err">โหลดไม่สำเร็จ — ลองใหม่อีกครั้ง</div>'; }
+}
+
+/* ── DETAIL ── */
+async function openDetail(id) {
+  go('detail');
+  const box = document.getElementById('dt-body');
+  box.innerHTML = '<div class="spin">กำลังโหลด…</div>';
+  try {
+    const rows = await sb(`products?select=*,sellers(shop_name,logo_url,rating_avg),categories(name_th,icon)&id=eq.${id}&limit=1`);
+    const p = rows[0];
+    if (!p) { box.innerHTML = '<div class="err">ไม่พบสินค้า</div>'; return; }
+    const fl = flashOn(p);
+    const price = fl ? p.flash_price : p.price;
+    const was = fl ? p.price : p.compare_price;
+    const imgs = Array.isArray(p.images) && p.images.length ? p.images : (p.thumbnail ? [p.thumbnail] : []);
+    box.innerHTML = `
+      <div class="dt-hero">${imgs[0] ? `<img class="pimg" src="${esc(imgs[0])}" alt="">` : '<div class="ph" style="height:340px">no image</div>'}
+        <button class="dt-nav" onclick="go('home')">←</button>
+        ${imgs.length > 1 ? `<div style="position:absolute;bottom:12px;right:14px;background:rgba(10,10,10,.55);color:#fff;border-radius:12px;padding:3px 10px;font-size:11px;font-family:var(--mono)">1/${imgs.length}</div>` : ''}
+      </div>
+      <div class="dt-card">
+        <div class="dt-price"><span class="dt-p">฿${money(price)}</span>${was && was > price ? `<span class="dt-w">฿${money(was)}</span><span class="off">-${Math.round((1-price/was)*100)}%</span>` : ''}${fl ? '<span class="dt-flash">⚡ FLASH</span>' : ''}</div>
+        <div class="dt-n">${esc(p.name_th || p.name_en)}</div>
+        <div class="dt-m">★ ${p.rating_avg ? Number(p.rating_avg).toFixed(1) : '—'} (${money(p.rating_count || 0)} รีวิว) · ขายแล้ว ${money(p.sold_count || 0)} · คงเหลือ ${money(p.stock_quantity ?? 0)}</div>
+      </div>
+      <div class="dt-seller">
+        <div class="dt-slogo">${p.sellers?.logo_url ? `<img class="pimg" src="${esc(p.sellers.logo_url)}" alt="">` : '<div class="ph" style="width:44px;height:44px;border-radius:50%">logo</div>'}</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:14px">${esc(p.sellers?.shop_name || 'ร้านค้า')}</div>
+        <div style="font-size:11.5px;color:var(--mut)">${p.categories ? esc((p.categories.icon||'') + ' ' + p.categories.name_th) : ''}</div></div>
+        <button class="buy" style="background:none;border:1px solid var(--ink);color:var(--ink)" onclick="openWeb('store.html?id=${p.seller_id}')">ดูร้าน</button>
+      </div>
+      ${p.description_th || p.description ? `<div class="dt-desc">${esc(p.description_th || p.description)}</div>` : ''}
+      <div style="height:80px"></div>
+      <div class="dt-actions">
+        <a class="dt-chat" href="${SITE}chat.html" target="_blank"><span style="font-size:17px">💬</span>แชท</a>
+        <a class="dt-cart" href="${SITE}product.html?id=${p.id}" target="_blank">🛒 เพิ่มลงตะกร้า</a>
+        <a class="dt-buy" href="${SITE}product.html?id=${p.id}" target="_blank">ซื้อเลย</a>
+      </div>`;
+  } catch (e) { box.innerHTML = '<div class="err">โหลดสินค้าไม่สำเร็จ — ลองใหม่อีกครั้ง</div>'; }
+}
+
+/* ── COUPON HUB (ตาราง coupons จริง) ── */
+let _couponLoaded = false;
+function couponAmount(c) {
+  const t = (c.type || c.discount_type || '').toLowerCase();
+  const v = c.value ?? c.discount_value ?? 0;
+  if (t.includes('ship')) return { a: 'ฟรี', s: 'ค่าส่ง' };
+  if (t.includes('cashback')) return { a: v + '%', s: 'คืนเป็น Coin' };
+  if (t.includes('percent')) return { a: v + '%', s: c.max_discount ? 'สูงสุด ฿' + money(c.max_discount) : 'ส่วนลด' };
+  return { a: '฿' + money(v), s: 'ส่วนลด' };
+}
+async function loadCoupons() {
+  const box = document.getElementById('c-list');
+  try {
+    const now = new Date().toISOString();
+    const rows = await sb(`coupons?select=*&is_active=eq.true&visibility=eq.public&expires_at=gt.${now}&order=priority.desc.nullslast&limit=30`);
+    box.innerHTML = rows.length ? rows.map(c => {
+      const { a, s } = couponAmount(c);
+      const exp = c.expires_at ? new Date(c.expires_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) : '—';
+      const leftPct = c.max_uses ? Math.max(1, Math.round((1 - (c.used_count || 0) / c.max_uses) * 100)) : null;
+      return `<div style="background:#fff;border-radius:14px;display:flex;overflow:hidden;border:1px solid var(--line)">
+        <div style="width:96px;background:${esc(c.banner_color || '#E5484D')};color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px;border-right:2px dashed var(--bg)">
+          <div style="font-size:20px;font-weight:700;line-height:1">${esc(a)}</div>
+          <div style="font-size:10px;margin-top:3px;opacity:.85">${esc(s)}</div>
+        </div>
+        <div style="flex:1;padding:11px 12px;display:flex;flex-direction:column;min-width:0">
+          <div style="font-size:13px;font-weight:600">${esc(c.icon || '🎟️')} ${esc(c.title || c.name)}</div>
+          <div style="font-size:11px;color:var(--mut);margin-top:3px">ขั้นต่ำ ฿${money(c.min_purchase ?? c.min_order_amount ?? 0)} · หมดอายุ ${exp} · โค้ด <b style="font-family:var(--mono)">${esc(c.code)}</b></div>
+          ${leftPct !== null ? `<div style="margin-top:7px;display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:5px;background:#F1EFEB;border-radius:3px;overflow:hidden"><div style="height:100%;width:${leftPct}%;background:var(--amber)"></div></div>
+            <div style="font-size:10px;color:#b0854a;font-weight:600">เหลือ ${leftPct}%</div></div>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;padding-right:12px">
+          <button class="buy" style="background:var(--red);border-radius:16px" onclick="openWeb('index.html')">เก็บ</button>
+        </div>
+      </div>`;
+    }).join('') : '<div class="spin">ยังไม่มีคูปองตอนนี้</div>';
+  } catch (e) { box.innerHTML = '<div class="err">โหลดคูปองไม่สำเร็จ — ลองใหม่อีกครั้ง</div>'; }
+}
+
+loadHome();
+</script>
+</body>
+</html>
