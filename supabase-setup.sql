@@ -560,7 +560,7 @@ FROM products WHERE status = 'active' LIMIT 3;
 -- หมายเหตุ: รัน SQL นี้หลังจาก Login ใน admin-cms.html ครั้งแรกแล้ว
 -- แทนที่ admin@yoursite.com ด้วย email ที่ใช้สมัคร Supabase Auth
 INSERT INTO users (email, display_name, role, is_active)
-VALUES ('admin@thailandmarket.com', 'Admin', 'admin', true)
+VALUES ('admin@thailandmarket.ai', 'Admin', 'admin', true)
 ON CONFLICT (email) DO UPDATE SET role = 'admin', is_active = true;
 
 -- ══════════════════════════════════════════════════════════════
