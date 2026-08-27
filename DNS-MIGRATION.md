@@ -3,6 +3,23 @@
 เว็บนี้ deploy ด้วย **GitHub Pages** (ดูได้จากไฟล์ `CNAME` ที่ root ของ repo)
 การย้ายโดเมนมี 3 ส่วน: **ในโค้ด (repo)** → **ในหน้า Settings ของ GitHub** → **ที่ผู้ให้บริการโดเมน (DNS)**
 
+ทั้ง `thailandmarket.com` และ `thailandmarket.ai` อยู่ที่ **GoDaddy** ทั้งคู่
+
+## ลำดับการทำ (ห้ามสลับ)
+
+| # | ทำอะไร | ที่ไหน | ดูหัวข้อ |
+|---|---|---|---|
+| 1 | Merge PR ที่เปลี่ยนไฟล์ `CNAME` | GitHub | §1 |
+| 2 | ตั้ง DNS records ของ **`.ai`** | GoDaddy → thailandmarket.ai | §3 ขั้น 4 |
+| 3 | ยืนยัน custom domain + รอ DNS check ผ่าน | GitHub Settings → Pages | §2 |
+| 4 | ติ๊ก Enforce HTTPS (รอ cert ออกก่อน) | GitHub Settings → Pages | §3 ขั้น 7 |
+| 5 | **เช็คว่า `https://www.thailandmarket.ai` เข้าได้จริง** | เบราว์เซอร์ | §3 ขั้น 6 |
+| 6 | ลบ DNS เดิมของ **`.com`** + ตั้ง 301 forwarding | GoDaddy → thailandmarket.com | §4 |
+| 7 | ตั้ง MX + สร้างกล่องเมล `admin@thailandmarket.ai` | GoDaddy → thailandmarket.ai | §5 |
+
+> ข้อ 6 ต้องทำ **หลัง** ข้อ 5 ผ่านแล้วเท่านั้น ถ้ารื้อ `.com` ก่อนที่ `.ai` จะขึ้น
+> จะไม่มีโดเมนไหนใช้งานได้เลยระหว่างรอ DNS propagate
+
 ---
 
 ## 1) ในโค้ด (ทำแล้วใน PR นี้)
@@ -102,28 +119,45 @@ nslookup -type=NS thailandmarket.ai
 > GitHub จะ redirect `thailandmarket.ai` → `www.thailandmarket.ai` ให้เองอัตโนมัติ
 > เพราะไฟล์ `CNAME` ในรีโประบุ `www` ไว้
 
-### ขั้น 4 — จุดที่แต่ละเจ้าต่างกัน
+### ขั้น 4 — GoDaddy: คลิกตรงไหนบ้าง (โดเมนใหม่ .ai)
 
-**Cloudflare**
-- ไปที่ DNS → Records → Add record
-- ตั้ง **Proxy status = DNS only (เมฆสีเทา)** ทั้ง `www` และ `@`
-  ถ้าเปิด proxy (เมฆส้ม) ไว้ **GitHub จะออก SSL cert ไม่ได้** ค้างที่ "certificate provisioning" ตลอด
-- ถ้าอยากเปิด proxy ทีหลัง ให้รอจน GitHub ติ๊ก Enforce HTTPS ได้ก่อน แล้วค่อยเปิด
-  และต้องตั้ง SSL/TLS mode = **Full (strict)** ไม่ใช่ Flexible (Flexible จะทำให้ redirect loop)
-- Cloudflare รองรับ CNAME flattening ที่ apex ได้ — จะใช้ `CNAME @ → earthcarterior.github.io` แทน A record 4 ตัวก็ได้
+1. เข้า godaddy.com → มุมขวาบนคลิกชื่อตัวเอง → **My Products**
+2. หมวด **Domains** → หา `thailandmarket.ai` → คลิกปุ่ม **DNS**
+   (บางบัญชีเป็น: คลิกชื่อโดเมน → แท็บ **DNS** → **DNS Records**)
+3. ในตาราง **DNS Records** ให้จัดการของเดิมก่อน:
+   - แถว **CNAME / Name = `www`** ที่ Value เป็น `@` → กดดินสอ **แก้เป็น** `earthcarterior.github.io`
+     (GoDaddy ใส่ `www → @` มาให้ตอนซื้อโดเมนทุกครั้ง ตัวนี้ต้องแก้ ไม่ใช่เพิ่มใหม่)
+   - แถว **A / Name = `@`** ที่ Value เป็น `Parked` หรือ IP แปลก ๆ → **ลบทิ้ง** (ถังขยะ)
+   - แถว **CNAME `_domainconnect`** → ปล่อยไว้ ไม่ต้องยุ่ง
+4. กด **Add New Record** เพิ่ม A record ทีละตัว รวม 4 ตัว:
 
-**GoDaddy**
-- My Products → Domain → DNS → Manage Zones
-- GoDaddy จะมี A record `@` ชี้ไป `Parked` มาให้ ต้องแก้/ลบทิ้ง
-- GoDaddy ให้ A record ชื่อซ้ำหลายตัวได้ กด "Add More Records"
+   | Type | Name | Value | TTL |
+   |---|---|---|---|
+   | A | `@` | `185.199.108.153` | 1 Hour |
+   | A | `@` | `185.199.109.153` | 1 Hour |
+   | A | `@` | `185.199.110.153` | 1 Hour |
+   | A | `@` | `185.199.111.153` | 1 Hour |
 
-**Namecheap**
-- Domain List → Manage → Advanced DNS
-- ลบ "URL Redirect Record" และ CNAME `www` → `parkingpage.namecheap.com` ที่ติดมาตอนซื้อ
-- CNAME ใช้ Type = `CNAME Record`, Host = `www`
+   GoDaddy ยอมให้มี A record ชื่อ `@` ซ้ำได้หลายตัว — เพิ่มให้ครบทั้ง 4
+5. กด **Save** ทุกครั้งหลังเพิ่มแต่ละแถว
 
-**Porkbun**
-- Domain Management → DNS → ลบ A record ของ parking ออกก่อน
+**ผลลัพธ์ที่ควรเห็นในตาราง GoDaddy:**
+
+```
+A       @      185.199.108.153
+A       @      185.199.109.153
+A       @      185.199.110.153
+A       @      185.199.111.153
+CNAME   www    earthcarterior.github.io
+```
+
+> **⚠️ ห้ามใช้ Domain Forwarding บนโดเมน `.ai`** — ถ้าตั้ง forwarding ไว้ GoDaddy จะเขียนทับ
+> A record `@` ด้วย IP ของ GoDaddy เอง แล้ว GitHub Pages จะพัง หน้านี้ต้องเป็น DNS records ล้วน ๆ
+
+**หมายเหตุสำหรับเจ้าอื่น** (เผื่อย้าย DNS ในอนาคต): Cloudflare ต้องตั้ง proxy เป็น
+**DNS only (เมฆเทา)** ไม่งั้น GitHub ออก SSL cert ไม่ได้ · Namecheap ต้องลบ
+"URL Redirect Record" และ CNAME `parkingpage.namecheap.com` ออกก่อน
+
 
 ### ขั้น 5 — เช็ค CAA record (ถ้ามี)
 
@@ -178,29 +212,96 @@ curl -I https://www.thailandmarket.ai
 
 ---
 
-## 4) จัดการโดเมนเดิม (thailandmarket.com)
+## 4) โดเมนเดิม `thailandmarket.com` ที่ GoDaddy
 
-GitHub Pages ใช้ custom domain ได้ **repo ละ 1 โดเมน** — ใส่ทั้ง `.com` และ `.ai` พร้อมกันไม่ได้
-ถ้าอยากให้คนที่พิมพ์ `.com` เด้งไป `.ai` เลือกอย่างใดอย่างหนึ่ง:
+GitHub Pages ผูก custom domain ได้ **repo ละ 1 โดเมน** — ใส่ทั้ง `.com` และ `.ai` พร้อมกันไม่ได้
+โดเมนเดิมจึงต้องเปลี่ยนบทบาทเป็น "ตัว redirect" แทน
 
-- **ง่ายสุด:** ใช้ฟีเจอร์ *Domain Forwarding / URL Redirect* ของ registrar ที่ถือ `.com` อยู่
-  ตั้ง 301 redirect `www.thailandmarket.com` → `https://www.thailandmarket.ai`
-- **ผ่าน Cloudflare:** ใช้ Redirect Rule (301) ที่ zone ของ `.com`
-- **ผ่าน GitHub:** สร้าง repo ใหม่แยกอีกอัน ใส่ `CNAME` = `www.thailandmarket.com`
-  และ `index.html` ที่มี `<meta http-equiv="refresh" content="0; url=https://www.thailandmarket.ai/">`
-  (วิธีนี้เป็น redirect ฝั่ง client ไม่ใช่ 301 จริง — SEO ด้อยกว่า 2 วิธีบน)
+### ⚠️ ลำดับสำคัญ — ทำผิดลำดับเว็บดับ
 
-**อย่าปล่อย DNS ของ `.com` ชี้ไปที่ GitHub Pages ทิ้งไว้เฉย ๆ** หลังถอด custom domain
-เพราะเสี่ยงโดน subdomain takeover
+ทำ **หลัง** จาก `.ai` ใช้งานได้จริงแล้วเท่านั้น (เข้า `https://www.thailandmarket.ai` แล้วเห็นเว็บ)
+ถ้ารื้อ `.com` ก่อน จะไม่มีโดเมนไหนใช้ได้เลยระหว่างรอ DNS
+
+### 4.1 — ลบ record เก่าที่ชี้มาที่ GitHub ทิ้งก่อน
+
+My Products → `thailandmarket.com` → **DNS** → ในตาราง DNS Records:
+
+- ลบ **CNAME `www` → `earthcarterior.github.io`**
+- ลบ **A `@` → 185.199.1xx.153** ทั้ง 4 ตัว (ถ้าเคยตั้งไว้)
+
+> 🔒 **ขั้นนี้ห้ามข้าม** ถ้าปล่อย CNAME ชี้มาที่ `earthcarterior.github.io` ค้างไว้
+> ทั้งที่ GitHub ไม่ได้ถือโดเมนนี้แล้ว คนอื่นเอาโดเมนคุณไปผูกกับ Pages ของเขาได้
+> (subdomain takeover) แล้วปลอมเป็นเว็บคุณ
+
+### 4.2 — ตั้ง Forwarding ที่ GoDaddy
+
+ยังอยู่ที่หน้าโดเมน `thailandmarket.com` → เลื่อนหาหัวข้อ **Forwarding**
+(อยู่ใต้ตาราง DNS Records หรือในแท็บ Domain Settings)
+
+**ตัวที่ 1 — Domain (root):** กด **Add Forwarding**
+
+| ช่อง | ค่าที่ใส่ |
+|---|---|
+| Forward to | `https://www.thailandmarket.ai` |
+| Forward type | **Permanent (301)** |
+| Settings | **Forward only** |
+
+**ตัวที่ 2 — Subdomain `www`:** กด **Add Forwarding** อีกครั้ง เลือกหัวข้อ **Subdomain**
+
+| ช่อง | ค่าที่ใส่ |
+|---|---|
+| Subdomain | `www` |
+| Forward to | `https://www.thailandmarket.ai` |
+| Forward type | **Permanent (301)** |
+| Settings | **Forward only** |
+
+- เลือก **301 Permanent** เท่านั้น — 302 ไม่ส่งค่า SEO ไปโดเมนใหม่
+- เลือก **Forward only** ห้ามเลือก *Forward with masking* เพราะ masking จะครอบ URL เดิมไว้
+  ทำให้ Google มองว่าเป็นเนื้อหาซ้ำ และ URL บนเบราว์เซอร์ไม่เปลี่ยน
+- ตั้ง forwarding แล้ว GoDaddy จะสร้าง A record `@` ชี้ IP ของ GoDaddy ให้เอง — อันนี้ถูกต้องแล้ว
+  สำหรับโดเมน `.com` (ต่างจากโดเมน `.ai` ที่ห้ามใช้ forwarding)
+
+### 4.3 — ข้อจำกัดเรื่อง HTTPS ของ GoDaddy Forwarding
+
+GoDaddy forwarding รองรับ `http://` ได้แน่นอน แต่ `https://www.thailandmarket.com`
+อาจขึ้นเตือน certificate ถ้าโดเมนนั้นไม่มี SSL ผูกอยู่ — ลิงก์เก่าที่คนแชร์ไว้เป็น `https://`
+จะเจอหน้าเตือนก่อนเด้ง ให้ทดสอบจริงหลังตั้งเสร็จ:
+
+```bash
+curl -I http://www.thailandmarket.com    # ควรได้ 301 → https://www.thailandmarket.ai
+curl -I https://www.thailandmarket.com   # เช็คว่ามี cert error ไหม
+```
+
+ถ้าเจอ cert error และรับไม่ได้ ทางแก้ที่ฟรีและได้ผลชัวร์คือ **ย้าย nameserver ของ `.com`
+ไป Cloudflare (แผนฟรี)** แล้วตั้ง Redirect Rule 301 ที่นั่นแทน — Cloudflare ออก SSL
+ให้โดเมนฟรี ทำให้ `https://` ฝั่งเก่าใช้ได้ด้วย
+
+### 4.4 — อย่าปล่อยโดเมนเดิมหมดอายุ
+
+ต่ออายุ `thailandmarket.com` ไว้อย่างน้อย 1–2 ปีหลังย้าย เพื่อให้ 301 ทำงานต่อ
+จนกว่า Google จะย้าย index มาที่ `.ai` ครบและลูกค้าจำโดเมนใหม่ได้
 
 ---
+
 
 ## 5) สิ่งที่ต้องตามเก็บหลังย้าย
 
 - [ ] Google Search Console — เพิ่ม property ใหม่ `.ai` + ใช้ Change of Address จาก `.com`
 - [ ] Supabase → Authentication → URL Configuration: อัปเดต Site URL และ Redirect URLs เป็น `.ai`
 - [ ] อัปเดตลิงก์ในโซเชียล / LINE OA / โฆษณา
-- [ ] **อีเมล:** ในโค้ดเปลี่ยนเป็น `admin@thailandmarket.ai` หมดแล้ว (จากเดิม `support@thailandmarket.com`
-      และ `admin@thailandmarket.com`) — ต้องตั้ง **MX record** ของ `thailandmarket.ai` ที่ registrar
-      และสร้างกล่องเมล `admin@thailandmarket.ai` ให้เรียบร้อย ไม่งั้นเมลที่ส่งมาจะตีกลับ
-      แนะนำตั้ง forward จาก `support@thailandmarket.com` เดิมมาที่อยู่ใหม่ไว้ช่วงเปลี่ยนผ่าน
+- [ ] **อีเมล `admin@thailandmarket.ai`** — ในโค้ดเปลี่ยนหมดแล้ว (จากเดิม `support@thailandmarket.com`
+      และ `admin@thailandmarket.com`) แต่ **ที่อยู่นี้ยังใช้ไม่ได้จนกว่าจะตั้ง MX**
+
+  MX เป็นคนละเรื่องกับ A/CNAME ของเว็บ — ตั้งที่ GoDaddy → `thailandmarket.ai` → DNS
+  โดยใส่ค่าตามที่ผู้ให้บริการเมลบอก เช่น
+
+  - **Google Workspace:** MX `@` → `smtp.google.com` (Priority 1)
+  - **Microsoft 365:** MX `@` → `thailandmarket-ai.mail.protection.outlook.com` (Priority 0)
+  - **Zoho Mail (มีแผนฟรี):** MX `@` → `mx.zoho.com` (10), `mx2.zoho.com` (20), `mx3.zoho.com` (50)
+
+  พร้อมกับ TXT record สำหรับ SPF/DKIM ที่เจ้านั้นให้มา แล้วค่อยสร้างกล่อง `admin@`
+  ในระบบเมล — MX อย่างเดียวไม่ได้สร้างกล่องให้
+
+  แนะนำตั้ง forward จาก `support@thailandmarket.com` เดิมมาที่อยู่ใหม่ไว้ช่วงเปลี่ยนผ่านด้วย
+  (GoDaddy → thailandmarket.com → Email → Forwarding) — ถ้ายกเลิกเมลของ `.com` ทันที
+  ลูกค้าเก่าที่ส่งมาที่อยู่เดิมจะโดนตีกลับ
