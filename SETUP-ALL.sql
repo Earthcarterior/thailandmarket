@@ -719,9 +719,9 @@ ON CONFLICT (key) DO NOTHING;
 -- ════════════════════════════════════════════════════════════════
 -- STEP 15: ADMIN USER (แก้ email ให้ตรงกับที่สมัคร Supabase Auth)
 -- ════════════════════════════════════════════════════════════════
--- ⚠️  แทนที่ admin@thailandmarket.com ด้วย email จริงของคุณ
+-- ⚠️  แทนที่ admin@thailandmarket.ai ด้วย email จริงของคุณ
 INSERT INTO users (email, display_name, role, is_active)
-VALUES ('admin@thailandmarket.com', 'Admin', 'admin', true)
+VALUES ('admin@thailandmarket.ai', 'Admin', 'admin', true)
 ON CONFLICT (email) DO UPDATE SET role = 'admin', is_active = true;
 
 -- ════════════════════════════════════════════════════════════════

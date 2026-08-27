@@ -83,5 +83,7 @@ GitHub Pages ใช้ custom domain ได้ **repo ละ 1 โดเมน**
 - [ ] Google Search Console — เพิ่ม property ใหม่ `.ai` + ใช้ Change of Address จาก `.com`
 - [ ] Supabase → Authentication → URL Configuration: อัปเดต Site URL และ Redirect URLs เป็น `.ai`
 - [ ] อัปเดตลิงก์ในโซเชียล / LINE OA / โฆษณา
-- [ ] **อีเมล:** `support@thailandmarket.com` และ `admin@thailandmarket.com` ในโค้ด **ยังไม่ได้เปลี่ยน**
-      เพราะอีเมลขึ้นกับ MX record ไม่เกี่ยวกับเว็บ — ถ้าย้ายกล่องเมลไป `.ai` แล้ว บอกได้ จะแก้ให้
+- [ ] **อีเมล:** ในโค้ดเปลี่ยนเป็น `admin@thailandmarket.ai` หมดแล้ว (จากเดิม `support@thailandmarket.com`
+      และ `admin@thailandmarket.com`) — ต้องตั้ง **MX record** ของ `thailandmarket.ai` ที่ registrar
+      และสร้างกล่องเมล `admin@thailandmarket.ai` ให้เรียบร้อย ไม่งั้นเมลที่ส่งมาจะตีกลับ
+      แนะนำตั้ง forward จาก `support@thailandmarket.com` เดิมมาที่อยู่ใหม่ไว้ช่วงเปลี่ยนผ่าน
